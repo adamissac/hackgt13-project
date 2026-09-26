@@ -70,3 +70,12 @@ Each owner adds their area's commands here in the same commit that first makes t
 - mobile (Adam, Akshar): not set yet
 - ml (Alan, Arjun): not set yet
 - dashboard (Arjun): not set yet
+
+## Run and test: `ml/` (FastAPI service)
+```
+cd ml && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+cp ../.env.example ../.env   # fill DATABASE_URL, SUPABASE_URL, SUPABASE_JWT_SECRET (if legacy HS256), QR_SIGNING_KEY, ANTHROPIC_API_KEY
+uvicorn app.main:app --host 0.0.0.0 --port 8000        # GET /health is public; everything else needs the Supabase JWT
+cloudflared tunnel --url http://localhost:8000          # separate terminal: public URL for phones; share it as ML_API_URL
+TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests   # DB tests need an EMPTY throwaway Postgres+pgvector (it is wiped)
+```
