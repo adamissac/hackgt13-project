@@ -78,11 +78,7 @@ export function useProximity(enabled: boolean): ProximityState {
 
   // People: the server resolves tokens and ranks matches.
   useEffect(() => {
-    if (!enabled) {
-      setPeers([]);
-      setFetchError(null);
-      return;
-    }
+    if (!enabled) return;
     let cancelled = false;
     let inFlight = false; // never stack polls on a slow server
     const load = () => {
@@ -103,6 +99,8 @@ export function useProximity(enabled: boolean): ProximityState {
     load();
     const t = setInterval(load, POLL_MS);
     return () => {
+      setPeers([]); // stopped: forget who was nearby
+      setFetchError(null);
       cancelled = true;
       clearInterval(t);
     };

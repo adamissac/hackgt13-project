@@ -3,7 +3,6 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { sendMagicLink, signInWithLinkedIn, useAuth } from '@/lib/auth';
-import { env } from '@/lib/env';
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
