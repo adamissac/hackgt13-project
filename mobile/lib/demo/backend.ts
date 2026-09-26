@@ -191,8 +191,8 @@ export function matches(): { event_id: number; model: string; matches: Match[] }
       rank: i + 1,
       highlight: p.score >= 0.8,
       why: p.shared.map((s) => s.name).slice(0, 3),
-      // Proximity bands only exist while this phone is discoverable.
-      proximity: state.openToMeet ? p.band : null,
+      // Simulated Bluetooth distance band (the Nearby map's scan switch shows these).
+      proximity: p.band,
     })),
   };
 }

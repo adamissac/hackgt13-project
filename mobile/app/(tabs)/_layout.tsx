@@ -42,6 +42,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="graph"
+        options={{ title: 'Graph', tabBarIcon: icon({ ios: 'point.3.connected.trianglepath.dotted', android: 'hub', web: 'hub' }) }}
+      />
+      <Tabs.Screen
         name="chats"
         options={{ title: 'Messages', tabBarIcon: icon({ ios: 'bubble.left.and.bubble.right.fill', android: 'forum', web: 'forum' }) }}
       />

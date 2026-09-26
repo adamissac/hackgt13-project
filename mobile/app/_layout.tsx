@@ -62,7 +62,6 @@ function RootLayoutNav() {
           <Stack.Screen name="chat/[id]" options={{ title: 'Chat', headerBackTitle: 'Back' }} />
           <Stack.Screen name="checklist/[id]" options={{ title: 'Checklist', headerBackTitle: 'Back' }} />
           <Stack.Screen name="connections" options={{ title: 'Your connections', headerBackTitle: 'Back' }} />
-          <Stack.Screen name="graph" options={{ title: 'Connection graph', headerBackTitle: 'Back' }} />
           <Stack.Screen name="feed" options={{ title: 'Feed', headerBackTitle: 'Back' }} />
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
           <Stack.Screen name="meetup/[id]" options={{ title: 'Find each other', headerBackTitle: 'Back' }} />

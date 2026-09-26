@@ -167,7 +167,6 @@ export default function ProfileScreen() {
         {([
           { title: 'Edit profile', detail: 'Headline, resume, GitHub, what you’re looking for', route: '/accounts' },
           { title: 'Your connections', detail: 'Who you met, when, and what you talked about', route: '/connections' },
-          { title: 'Connection graph', detail: 'You, your matches, and the topics that link you', route: '/graph' },
           { title: 'Feed', detail: 'What your connections are building', route: '/feed' },
           { title: 'Your network', detail: 'How your network has grown', route: '/network' },
           { title: 'My connect QR & invites', detail: 'Connect with someone you already know', route: '/invites' },

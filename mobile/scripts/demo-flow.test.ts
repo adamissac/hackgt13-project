@@ -21,9 +21,8 @@ const step = (name: string, fn: () => void) => {
 
 demo.resetDemo();
 
-step('Open to Meet OFF: no suggestions, no proximity', () => {
+step('Open to Meet OFF: no suggestions', () => {
   assert.equal(demo.suggestions().suggestions.length, 0);
-  assert.ok(demo.matches().matches.every((m) => m.proximity === null));
 });
 
 step('Open to Meet ON: Maya is an 87% match, very close, top suggestion', () => {
