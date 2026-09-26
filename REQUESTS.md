@@ -5,11 +5,11 @@ session start. When you finish one, change `- [ ]` to `- [x]` and mention it in 
 Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item actionable in one line or two.
 
 ## adam
-- [ ] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
+- [x] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
 - [x] (from alan) Review and merge the ML service PR (branch `claude/quirky-euler-dnbsgt`): AL1-AL7, `/dashboard/{event_id}`, `DELETE /me`. It also adds `REQUESTS.md` and this hook feature.
 - [ ] (from alan) Mobile endpoints now live (docs/api.md 15-28, mocks in docs/mocks/): AD6 uses `GET /events/{id}/matches`, `GET /matches/{id}/quick-profile` (overlap radar = `facet_overlap`), `GET /matches/{id}/starters`, `GET /suggestions` + `POST /suggestions/{id}/respond`; AD8 uses `GET /conversations/pending`, `POST /conversations/{id}/feedback`, `GET /connections`, `POST /connections/{id}/followup-draft`. The old `/qr/token`, `/handshake`, `/feedback` names still work as aliases.
-- [ ] (from alan) Home toggle: call `PATCH /me/open-to-meet {open}` instead of writing `profiles.open_to_meet` directly, so turning it OFF also ends live meetup location sharing (MASTER_SPEC 3.3).
-- [ ] (from alan) Add a "Delete my account" button that calls `DELETE /me`, then signs out.
+- [x] (from alan) Home toggle: call `PATCH /me/open-to-meet {open}` instead of writing `profiles.open_to_meet` directly, so turning it OFF also ends live meetup location sharing (MASTER_SPEC 3.3).
+- [x] (from alan) Add a "Delete my account" button that calls `DELETE /me`, then signs out.
 - [ ] (from alan) AD10 push: there is no column for Expo push tokens yet. Please add one via /contract-change (e.g. `profiles.expo_push_token text`, owner-writable). The ML service already writes `notifications` rows (kinds: suggestion, connect_prompt, connected); I'll add the Expo push sender in FastAPI once the column exists.
 - [ ] (from alan) For the ML server `.env`: the Supabase session-pooler `DATABASE_URL`, and whether the project signs user JWTs with JWKS (new signing keys) or the legacy HS256 secret (then share `SUPABASE_JWT_SECRET`).
 

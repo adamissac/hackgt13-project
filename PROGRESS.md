@@ -5,12 +5,36 @@
 **Status:** done (tested with a scripted adversarial model; live replies need ANTHROPIC_API_KEY)
 **What I did:**
 - `ml/app/assistant.py`: Sonnet manual tool loop (max 6 turns, strict tool schemas, cached system prompt); the viewer id is bound in Python and no tool takes one. Tools reuse the REST scope rules: search_event_attendees (checked-in event only, Open to Meet only, candidate-pool exclusions, first name/role/shared topics), get_match_profile (matching.relationship), get_connections_activity (my connections' feed, 1-14 days), get_my_profile.
-- `ml/app/routers/assistant.py`: POST /assistant/chat {messages[], event_id?} -> {reply}; 503 when Claude is unreachable. docs/api.md 33 + docs/mocks/assistant_chat.json.
+- `ml/app/routers/assistant.py`: POST /assistant/chat {messages[], event_id?} -> {reply}; 503 when Claude is unreachable. docs/api.md 35 + docs/mocks/assistant_chat.json.
 - Tests (`ml/tests/test_assistant.py`): an adversarial fake model asking for a connection's connections, another event's attendees, and a stranger's profile gets only 'not available' results; no tool output contains connection lists or counts; Open-to-Meet-off and other-event people never surface.
 **How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_assistant.py`
 **Next step for whoever continues:** All Section 13 AL tasks now have code. Remaining for Alan: (1) with real keys, finish AL1 (tunnel URL) and AL2 (tune extraction on the four real profiles), and try the chatbot's adversarial prompts live; (2) when Adam adds a push-token column, add the Expo push sender in `ml/app/social.py::notify`; (3) when Akshar's AK2/AK6 land, retrain with `python scripts/train_encounter.py` and check the real same-table false-positive rate; (4) pitch prep (Sunday): IDF overlap, complementarity, ranker, encounter limitation, every number labeled simulated vs real.
 **Known issues / blockers:** Chatbot quality untested against the live model (no key in the cloud container).
-**Contract changes:** docs/api.md: new 33 POST /assistant/chat; docs/mocks/assistant_chat.json. No owner currently has the chat screen in Section 13; mention to Adam if there is time.
+**Contract changes:** docs/api.md: new 35 POST /assistant/chat (renumbered from 33 on merge with Arjun's 33-34); docs/mocks/assistant_chat.json. No owner currently has the chat screen in Section 13; mention to Adam if there is time.
+
+## 2026-09-26 01:20 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR8 GitHub activity poller + AR7 personal dashboard and feed insights
+**Status:** done (code + tests); live data needs connected GitHub accounts and Supabase
+**What I did:**
+- AR8: `ml/app/github_activity.py`, worker `github_activity` every 10 min (registered via import in app/main.py). Public events (new repo, push, release) with ETags + `/user/repos` pushed_at catch-up for events-API lag, deduped by payload.key, bge-embedded, into feed_items(kind='github'). Tests: `ml/tests/test_github_activity.py`.
+- AR7 API: `GET /me/dashboard` (`ml/app/routers/me_dashboard.py`, api.md 34): total, cumulative growth, how_met, top shared topics (+ talked). Private: only the caller's connections. DB tests: `ml/tests/test_me_dashboard.py`.
+- AR7 pages: dashboard `/me` (hero count, growth line with crosshair, in-person vs invite donut, shared-topic bars) and `/insights` (activity sparkline, by-kind counts, trending topics; uses Alan's /feed/insights). Both take the WebView token via postMessage, mocks otherwise. Components: `dashboard/components/charts.tsx`.
+- Ran the full ML suite against a real local Postgres+pgvector: 106 pass (only failure: Alan's LightGBM test needs `brew install libomp`).
+**How to run/test it:** DB tests locally: `/opt/homebrew/bin/python3.12 -m venv /tmp/pgenv && /tmp/pgenv/bin/pip install pgserver`, start it (`pgserver.get_server(dir).psql("create database fc_test")`), then `cd ml && TEST_DATABASE_URL="postgresql://postgres@/fc_test?host=<dir>" .venv/bin/python -m pytest -q tests`. Dashboard: `cd dashboard && npm run dev` -> /me, /insights.
+**Next step for whoever continues:** Adam: embed `/me` and `/insights` in the app (same postMessage auth as /graph). Then Arjun's remaining: AR9 datasets, AR10 web mentions (stretch). Blocked items unchanged: Supabase keys (seed_synthetic.py), GitHub OAuth app, Vercel deploy.
+**Known issues / blockers:** same as below (credentials).
+**Contract changes:** docs/api.md 34 `GET /me/dashboard` (new, additive).
+
+## 2026-09-26 05:30 | adam | Claude Code
+**Task:** AD4-AD6 UI redesign + Alan's requests
+**Status:** in progress
+**What I did:**
+- Merged PR #1 (Alan AL1-AL8). Root `.env` written on Adam's Mac (gitignored); only ANTHROPIC_API_KEY is empty. Project uses JWKS (ES256), so SUPABASE_JWT_SECRET stays empty. `scripts/start-ml.sh` runs uvicorn + cloudflared (installed at ~/.local/bin).
+- Mobile: design system (constants/Colors.ts tokens, components/ui.tsx), redesigned Home (Open to Meet via PATCH /me/open-to-meet, AI suggestions with silent yes/no, match cards), new `app/match/[id].tsx` (quick-profile + AI starters + facet overlap), redesigned Profile (AI interests by facet, confirm/hide, delete account). tsc clean.
+**How to run/test it:** `./scripts/start-ml.sh` (separate terminal), then put the printed URL in mobile/.env as EXPO_PUBLIC_API_BASE_URL with EXPO_PUBLIC_USE_MOCKS=0; `cd mobile && npx expo start --go --lan`.
+**Next step for whoever continues:** Add ANTHROPIC_API_KEY to root .env, run `./scripts/start-ml.sh`, switch mobile/.env to the tunnel URL, sign in by email on the phone (needs `npx supabase config push` first). Then redesign Nearby/Feed/Graph/sign-in with components/ui.tsx, and add `profiles.expo_push_token` via /contract-change (REQUESTS.md).
+**Known issues / blockers:** Supabase auth redirect URLs not pushed yet. Arjun and Akshar have no commits yet. Adam's DB password was shared in chat: rotate it after the hackathon.
+**Contract changes:** none
 
 ## 2026-09-26 04:27 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL8 Bluetooth verification
@@ -194,6 +218,7 @@
 **Next step for whoever continues:** Start AL1: create `ml/app/main.py` (FastAPI + `/health`), `ml/app/auth.py` (Supabase JWT via PyJWT), `ml/app/db.py` (psycopg pool).
 **Known issues / blockers:** Supabase project ref still unset in `.mcp.json` (Adam).
 **Contract changes:** none
+
 ## 2026-09-26 02:45 | adam | Claude Code
 **Task:** AD2 Auth
 **Status:** in progress (code done; needs Supabase redirect config pushed, LinkedIn app, and a phone test)
@@ -221,6 +246,19 @@
 **Known issues / blockers:** No Xcode/EAS on Adam's Mac yet. mobile/.env is local only (gitignored); teammates copy .env.example and get the anon key via `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`.
 **Contract changes:** none (added docs/mocks matching api.md)
 
+## 2026-09-26 01:30 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR4 Dashboard and Connection Graph (matches mode) on mocks
+**Status:** in progress
+**What I did:**
+- `dashboard/`: Next.js 16 + TypeScript strict. `/graph` page: `components/ConnectionGraph.tsx` (react-force-graph-2d, loaded client-only via `components/GraphCanvas.tsx`), self pinned at center, node size by score, green ring = top match (dashed = Open to Meet), dashed suggested links, facet-colored topic nodes with shape per facet (validated colorblind-safe palette in `lib/theme.ts`), tap to focus + side panel (why you matched, their topics), ranked list doubles as table view. Matches / My network tabs, min-score slider, facet filter, search, Export PNG (posts `{type:"export_png", dataUrl}` to the RN WebView, downloads in a browser). Light + dark.
+- `lib/auth.ts`: `useEmbeddedToken()` listens for `{type:"auth", token}` on window AND document, token kept in memory only. `lib/api.ts`: live `GET ${NEXT_PUBLIC_ML_API_URL}/graph?event_id=&mode=` with Bearer token when both exist, else `/mocks/graph_<mode>.json`. `lib/privacy.ts` drops any person-person edge client-side.
+- Mocks: `docs/mocks/graph_matches.json`, `graph_network.json` generated by `ml/scripts/make_graph_mocks.py` (synthetic; PROVISIONAL shape, see below).
+- Checked in the browser at 390x844 and 1440x900, dark and light: renders, tap-to-select works, no console errors. `npm run build` passes.
+**How to run/test it:** `cd dashboard && npm install && npm run dev` -> http://localhost:3000/graph ; checks: `npm run typecheck && npm run lint && npm run build`
+**Next step for whoever continues:** Deploy `dashboard/` to Vercel (root dir `dashboard`, env `NEXT_PUBLIC_ML_API_URL`) and send the HTTPS URL to Adam for AD9. Then, when MASTER_SPEC.md lands, compare Section 9's `/graph` example to `dashboard/lib/types.ts` + `docs/mocks/graph_*.json` and align (regenerate mocks with `cd ml && .venv/bin/python scripts/make_graph_mocks.py && cd ../dashboard && npm run sync-mocks`). Then AR5 expand (merge by id into the stable node cache in ConnectionGraph.tsx, `d3ReheatSimulation`).
+**Known issues / blockers:** `/graph` response shape is my proposal, not from MASTER_SPEC (file missing) and not yet in docs/api.md: agree with Alan (AL7) before he builds it. Vercel account needed from Arjun. In a hidden browser tab the canvas doesn't paint until visible (rAF paused), which is expected. Not pushed yet: waiting on Arjun's `gh auth login`.
+**Contract changes:** none yet; proposed `/graph` payload lives in `docs/mocks/graph_*.json` (to be added to docs/api.md after Alan agrees)
+
 ## 2026-09-26 01:15 | adam | Claude Code
 **Task:** AD1 Supabase project
 **Status:** done
@@ -235,6 +273,19 @@
 **Known issues / blockers:** Spec lists no event zones, so none seeded. organizations/org_members/org_subscriptions/event_posts have no client policies (FastAPI only) since 8.3 doesn't name them. event_registrations is owner-only.
 **Contract changes:** docs/schema.sql extended with Section 8.1/8.2 exactly as in the spec.
 
+## 2026-09-26 00:45 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR1-AR6 (rebased onto Alan's AL1-AL10 + Adam's latest)
+**Status:** in progress (code done + tested locally; NOT PUSHED yet: Arjun's `gh auth login` pending)
+**What I did:**
+- AR1: `ml/app/routers/github.py` inside Alan's app (his `current_user`, `db`, `profile_store.ingest_text`): `GET /connect/github/start`, `GET /connect/github/callback` (signed state, Fernet token in linked_accounts, 302 to `formalconnect://connect/github`), `ingest_github(user_id)` (ETag-cached repo digest -> raw_documents -> shared extraction pipeline). Helpers: `ml/ml/github_oauth.py`, `ml/ml/github_ingest.py`. Tests: `ml/tests/test_github_connect.py`, `test_github_oauth.py`.
+- AR2: `ml/ml/resume_text.py` (pdfplumber + scanned detection + `extract_interests_from_pdf` Claude document fallback; Alan's /profile/ingest currently 400s on scanned PDFs and could call it).
+- AR3: `ml/scripts/seed_synthetic.py` (80 attendees via Supabase admin API, is_synthetic, registered + checked in, 35% Open to Meet, bge-small vectors, 6 RL demo boosters; `--dry-run`, `--delete`). Uses `ml/ml/supa.py` (PostgREST + service key).
+- AR4/AR5: dashboard `/graph` renders Alan's /graph shape (api.md 26/27): controls, left panel + search, expand merge, My Network timeline, privacy guards. AR6: `/map` organizer community map for api.md 14.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (all pass except Alan's test_ranker_job on Macs without `brew install libomp`); `cd dashboard && npm install && npm run typecheck && npm run lint && npm test && npm run build`; dev: `cd dashboard && npm run dev` -> /graph, /map.
+**Next step for whoever continues:** (1) `git push` (needs Arjun's GitHub login). (2) Fill `.env` (SUPABASE_URL, SUPABASE_SERVICE_KEY) and run `cd ml && .venv/bin/python scripts/seed_synthetic.py --n 80`. (3) GitHub OAuth app (callback `<ML_API_URL>/connect/github/callback`) + GITHUB_CLIENT_ID/SECRET + TOKEN_ENCRYPTION_KEY, then test connect on a phone. (4) Vercel deploy of `dashboard/` with NEXT_PUBLIC_ML_API_URL, URL to Adam (AD9). (5) AR8 GitHub poller.
+**Known issues / blockers:** no Supabase/GitHub OAuth/Vercel credentials on Arjun's Mac. Organizer map labels are small on phones (big-screen design).
+**Contract changes:** docs/api.md 33 (GitHub connect). New env var APP_GITHUB_REDIRECT.
+
 ## 2026-09-26 00:30 | adam | Claude Code
 **Task:** AD1 Supabase project
 **Status:** in progress
@@ -246,6 +297,19 @@
 **Next step for whoever continues:** Get MASTER_SPEC.md into the repo, then write migrations for Section 8.1 alters, 8.2 new tables (messages, location_shares, notifications -> add to supabase_realtime publication), 8.3 exact RLS policies, and event_zones seed. Then write the RLS isolation script (user A anon session cannot read user B rows).
 **Known issues / blockers:** MASTER_SPEC.md still missing. `profiles` has no email column so the trigger stores name and picture only. RLS isolation test not written yet.
 **Contract changes:** none (RLS/trigger/bucket only; no table or column changes)
+
+## 2026-09-26 00:20 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR1 GitHub connect and ingestion (offline core) + AR2 Resume text
+**Status:** in progress
+**What I did:**
+- `ml/ml/github_ingest.py`: `fetch_repos(token=|username=, cache=)` lists public non-fork repos, fetches languages + README (1,200 chars, badges stripped), ETag cache so re-ingest is 304s. `digest_meta()` for `raw_documents.meta`. Feeds `llm.github_to_text()`.
+- `ml/ml/github_oauth.py`: signed 10-min `state` bound to user_id (HMAC from TOKEN_ENCRYPTION_KEY), `authorize_url()` with scope `read:user` only, `exchange_code()`, Fernet `encrypt_token/decrypt_token`, `linked_account_row()`, `app_redirect()` deep link.
+- `ml/ml/resume_text.py`: `download_resume(path)` from private `resumes` bucket (service key), `pdf_to_text()` via pdfplumber with scanned detection, `extract_interests_from_pdf()` fallback that sends the PDF to Claude as a document block.
+- Repo-local setup done on Arjun's Mac (owner.local, .gitignore lines, core.hooksPath). Global `~/.claude/settings.json` step of `scripts/claude-setup.sh` NOT run (Arjun to run it himself).
+**How to run/test it:** `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest -q tests` ; live GitHub check: `.venv/bin/python -m ml.github_ingest octocat 3`
+**Next step for whoever continues:** When Alan's FastAPI app exists, add routes `GET /connect/github/start` (JWT -> `{"url": github_oauth.authorize_url(user_id)}`) and `GET /connect/github/callback` (verify_state -> exchange_code -> GET /user for login -> upsert `linked_account_row` -> 302 `app_redirect("ok")`), and make `POST /profile/ingest {"source":"github"}` call `fetch_repos(token=decrypt_token(...))` -> `github_to_text` -> `raw_documents` -> `llm.extract_interests`. Record the two /connect routes in docs/api.md with Adam (AD4). Needs GITHUB_CLIENT_ID/SECRET from Arjun's GitHub OAuth app.
+**Known issues / blockers:** MASTER_SPEC.md still missing from repo. No FastAPI app yet (Alan). No GitHub OAuth app yet (Arjun). Supabase storage download URL (`/storage/v1/object/resumes/<path>`) not yet tested against the real project. Not pushed yet: Arjun's `gh auth login` pending.
+**Contract changes:** none (new env var `APP_GITHUB_REDIRECT` added to .env.example)
 
 ## 2026-09-25 23:45 | adam | Claude Code
 **Task:** Kit install (pre-AD1)

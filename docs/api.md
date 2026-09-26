@@ -315,7 +315,29 @@ Aggregate activity across my connections (not my own items):
   "by_kind": { "github": 0, "post": 2, "update": 1 } }
 ```
 
-## 33. POST /assistant/chat
+## 33. GitHub connect (MASTER_SPEC 5.2, 5.3)   owner: Arjun (AR1)
+`GET /connect/github/start` (Bearer JWT) -> the app opens `url` in a browser (it can't send headers there,
+so the user id rides in a signed, 10-minute `state`):
+```json
+{ "url": "https://github.com/login/oauth/authorize?client_id=...&redirect_uri=<ML_API_URL>/connect/github/callback&scope=read%3Auser&state=<signed>&allow_signup=false" }
+```
+`GET /connect/github/callback?code=...&state=...` (called by GitHub, no JWT): verifies `state`, exchanges the
+code server-side, stores the Fernet-encrypted token in `linked_accounts`, runs GitHub ingestion in the background
+(repo digest -> `raw_documents` -> extraction -> `user_interests` with evidence), then `302` to the app deep link
+`APP_GITHUB_REDIRECT?status=ok` (or `status=error&reason=denied|oauth`). Default deep link
+`formalconnect://connect/github`. Tokens never reach the client. Scope is `read:user` only (public repos).
+
+## 34. GET /me/dashboard?days=30   owner: Arjun (AR7)
+Private personal dashboard. Only the caller's own connections; nobody else's count or list is ever computed.
+```json
+{ "total": 12, "days": 30,
+  "growth": [ { "date": "2026-09-20", "total": 3 } ],          // cumulative, one row per day
+  "how_met": { "in_person": 9, "invite": 3 },
+  "top_topics": [ { "name": "reinforcement learning", "facet": "technical", "connections": 5, "talked": 3 } ] }
+```
+`connections` = how many of my connections share the topic; `talked` = conversations where I checked it as discussed.
+
+## 35. POST /assistant/chat   owner: Alan (AL11)
 Request `{ "messages": [ { "role": "user", "content": "Who at this event works in quant finance?" } ], "event_id": 1 }`
 (the full conversation so far, last message from the user; the server keeps no chat history)
 Response `{ "reply": "Quinn (recruiter) lists quantitative finance ..." }`. `503 the assistant is unavailable right now` if Claude can't be reached.
