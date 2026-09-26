@@ -252,7 +252,7 @@ export default function ConnectionGraph({
         onEngineStop={() => {
           if (!fitted.current) {
             fitted.current = true;
-            fg.current?.zoomToFit(500, 48);
+            fg.current?.zoomToFit(500, 64);
           }
         }}
       />

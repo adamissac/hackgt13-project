@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync-mocks": "cp ../docs/mocks/graph_*.json public/mocks/",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "d3-force-3d": "^3.0.6",

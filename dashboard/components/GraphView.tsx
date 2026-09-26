@@ -280,7 +280,11 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
                       <span className={p.highlight ? "dot on" : "dot"} aria-hidden />
                       <span className="name">{p.label}</span>
                       <span className="muted topic">{p.top_topic}</span>
-                      <span className="num">{pct(p.score)}</span>
+                      <span className="num">
+                        {p.connected_at
+                          ? new Date(p.connected_at).toLocaleString([], { weekday: "short", hour: "numeric", minute: "2-digit" })
+                          : pct(p.score)}
+                      </span>
                     </button>
                   </li>
                 ))}
