@@ -2,6 +2,31 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 10:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK2 / AK3 / AK4 / AK6 live on Alan's service + team merge
+
+**Status:** in progress (server side live and tested on Postgres; everything Bluetooth still untested on phones)
+
+**What I did:**
+- Merged 57 + 8 team commits (AL1-AL11, AR1-AR8, Adam's redesign). Invites contract is now api.md **36** (15 and 35 were taken). Removed `ml/tests/__init__.py`, which broke Alan's `from conftest import`.
+- `ble` and `invites` added to `ROUTERS` in `ml/app/main.py`, with `PgBleStore` and `PgInviteStore` on Alan's pool and `app/deps.py:get_user_id` on `auth.current_user`. Invite accept is one locked transaction: connection (`how_met='invite'`, `invite_id`), invite accepted, `social.ensure_chat` + `connected` notifications for both, then `population.invalidate()`. Fixed a UUID-vs-str bug the DB tests caught.
+- `ml/tests/test_ak_db.py`: invites + BLE through the real app with JWTs on Postgres, including the exact `sightings join ephemeral_ids` AL8 uses.
+- AK3 `mobile/app/verify.tsx` now uses `GET /qr/verify-token` + `POST /qr/verify`, then shows the checklist (toggle topics, "something else"), a silent "Do you want to connect?" → `POST /conversations/{id}/feedback`, and the same "we'll let you know" screen for waiting. New client calls `verifyToken`, `qrVerify`, `conversationFeedback`.
+- AK6 `ml/scripts/ak6_to_sessions.py` now writes Alan's CSV format to `ml/datasets/ble_labeled/`; the test runs the output through `app.encounters.load_labeled`.
+
+**How to run/test it:**
+- Throwaway DB: `docker run -d --name fc_test_pg -e POSTGRES_HOST_AUTH_METHOD=trust -e POSTGRES_DB=fc_test -p 5433:5432 pgvector/pgvector:pg16`
+- `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test .venv/bin/python -m pytest -q tests` → 146 passed; 2 LightGBM failures on Macs without `libomp` (`brew install libomp`), not code.
+- `cd mobile && npx tsc --noEmit && npx expo lint` (my files clean; the remaining lint errors are in `(tabs)/_layout.tsx`, `+not-found.tsx`, `useClientOnlyValue.web.ts`).
+- Note: ml needs Python 3.10+. On Akshar's Mac: `~/.local/bin/uv venv -p 3.12 .venv && ~/.local/bin/uv pip install -p .venv/bin/python -r requirements.txt`.
+
+**Next step for whoever continues:** Get a dev build on two phones (Xcode `npx expo run:ios --device` or `npx eas-cli build --profile development`). Expo Go can't do Bluetooth. With the ML tunnel URL in `mobile/.env` (`EXPO_PUBLIC_API_BASE_URL`, `EXPO_PUBLIC_USE_MOCKS=0`): Nearby toggle on both phones → check `sightings` rows appear → QR verify between them → both see the checklist. Then AK6 recordings → `python scripts/ak6_to_sessions.py ak6_*.json` → `python scripts/train_encounter.py`.
+
+**Known issues / blockers:** No hardware test yet. `sightings` drops `event_id`/`device_model`/`foreground` (no columns; asked Alan in REQUESTS). No `stationary` signal. The QR checklist lives inside `verify.tsx` until Adam's AD8 screen exists. The invite https redirect page on the dashboard doesn't exist yet (links are `formalconnect://invite/...`).
+
+**Contract changes:** api.md invites renumbered to 36 (content unchanged). New client calls only; no schema change.
+
 ## 2026-09-26 07:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK2 Tokens, advertising, scanning, uploads + AK5 Proximity radar
@@ -21,6 +46,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Nothing tested on hardware. Expo Go can show the UI on mocks but can never do Bluetooth; a dev build is required. `sightings` has no `device_model`/`foreground`/`event_id` columns yet; the router passes them to the store, which can drop them until Adam adds columns. Quick-profile tap target is an inline card until Adam's AD6 screen exists. Cross-folder: `app/(tabs)/nearby.tsx` (radar as list header, removed the forever-loading branch), `lib/api.ts` (bleTokens, bleSightings).
 
 **Contract changes:** `docs/api.md` section 12 rewritten additively: token format (8 lowercase base32), idempotent batch, optional `device_model`/`foreground` on sightings, sightings response `{accepted, dropped}`, drop rules. New mocks `ble_tokens.json`, `ble_sightings.json`.
+
+## 2026-09-26 06:10 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR4 deploy + AD9 embed (Arjun)
+**Status:** done (dashboard live; app wired)
+**What I did:**
+- Deployed `dashboard/` to Vercel production: https://formal-connection-dashboard.vercel.app (/graph, /me, /insights, /map), public, HTTPS. Vercel team `hackgt13`, project `formal-connection-dashboard`.
+- `mobile/lib/env.ts` default `DEFAULT_DASHBOARD_URL` already points there, so the Graph tab and Profile -> Your network / Feed insights load it in Expo Go with no extra env.
+**How to run/test it:** `cd mobile && npm install && npx expo start` -> Expo Go -> Graph tab. Redeploy dashboard: `cd dashboard && npx vercel@latest deploy --prod --yes`.
+**Next step for whoever continues:** Pages show preview (mock) data until the app points at a live ML server (EXPO_PUBLIC_API_BASE_URL + EXPO_PUBLIC_USE_MOCKS=0); then they call /graph, /me/dashboard, /feed/insights with the user's token. Vercel auto-deploy on git push is NOT connected (needs the repo owner, Adam, to install the Vercel GitHub app): until then, redeploy manually after dashboard changes.
+**Known issues / blockers:** Supabase keys + GitHub OAuth app still needed for real data (see older entries).
+**Contract changes:** none
 
 ## 2026-09-26 05:40 | akshar | Claude Code (Opus 5.5)
 

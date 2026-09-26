@@ -97,6 +97,14 @@ export interface SuggestionsResponse { suggestions: Suggestion[] }
 // "waiting" covers every outcome except a mutual yes, whatever the other person did.
 export type SuggestionRespondResponse = { status: 'waiting' } | { status: 'matched'; chat_id: number };
 
+// QR verification + post-conversation flow (sections 19, 20, 23). Silent: "waiting" whatever the other said.
+export interface QrVerifyResponse extends HandshakeResponse { conversation_id: number }
+export interface ConversationFeedbackRequest { talked_about: number[]; other_topic: string; wants_connect: boolean }
+export type ConversationFeedbackResponse =
+  | { status: 'waiting' }
+  | { status: 'connected'; connection: { user_id: string; name: string }; chat_id: number }
+  | { status: 'no_connection' };
+
 // Bluetooth (section 12). Tokens rotate every 10 minutes; only the server maps them to users.
 export interface BleToken { token: string; valid_from: string; valid_to: string }
 export interface BleSighting { token: string; rssi: number; ts: string; zone_id: number | null }
@@ -150,6 +158,8 @@ const mocks = {
   suggestions: () => require('../../docs/mocks/suggestions.json') as SuggestionsResponse,
   suggestionRespond: () => require('../../docs/mocks/suggestion_respond.json') as SuggestionRespondResponse,
   openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
+  qrVerify: () => require('../../docs/mocks/qr_verify.json') as QrVerifyResponse,
+  conversationFeedback: () => require('../../docs/mocks/conversation_feedback.json') as ConversationFeedbackResponse,
   bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
   bleSightings: () => require('../../docs/mocks/ble_sightings.json') as { accepted: number; dropped: number },
   inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
@@ -215,6 +225,13 @@ export const api = {
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),
   feedback: (body: FeedbackRequest) => call(mocks.feedback, () => request<FeedbackResponse>('POST', '/feedback', body)),
   connections: () => call(mocks.connections, () => request<ConnectionsResponse>('GET', '/connections')),
+  verifyToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/verify-token')),
+  qrVerify: (body: { payload: string; signature: string; event_id?: number }) =>
+    call(mocks.qrVerify, () => request<QrVerifyResponse>('POST', '/qr/verify', body)),
+  conversationFeedback: (conversationId: number, body: ConversationFeedbackRequest) =>
+    call(mocks.conversationFeedback, () =>
+      request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
+    ),
   bleTokens: () => call(mocks.bleTokens, () => request<{ tokens: BleToken[] }>('POST', '/ble/tokens', {})),
   bleSightings: (body: BleSightingsRequest) =>
     call(mocks.bleSightings, () => request<{ accepted: number; dropped: number }>('POST', '/ble/sightings', body)),

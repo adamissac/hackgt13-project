@@ -18,7 +18,7 @@ log = logging.getLogger("app")
 
 # One module per area in app/routers/. Order does not matter.
 ROUTERS = ["health", "profile", "events", "matches", "me", "suggestions", "verification",
-           "connections", "graph", "dashboard", "feed", "github", "me_dashboard", "assistant", "ble", "invites"]
+           "connections", "graph", "dashboard", "feed", "github", "me_dashboard", "assistant", "ble", "invites", "location"]
 
 
 @asynccontextmanager
