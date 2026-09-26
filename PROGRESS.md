@@ -115,6 +115,19 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 19:55 | adam | Claude Code
+**Task:** Fix the intermittent live stall (matches / graph / quick profile / dashboard hang), final verification
+**Status:** done, verified live
+**What I did:**
+- Found live: /dashboard/1 hung 936 s and /events/1/matches timed out while /health stayed fast. Every event-model request waited on one per-event build lock, so any slow rebuild stalled everyone; UMAP (numba, not thread-safe) could run in several threads at once; PyTorch/numba used one thread per reported CPU.
+- Fix (ml/app/population.py, __init__.py, tasks.py, ranker_job.py, routers/dashboard.py): serve the cached model while another thread rebuilds (only the first build waits), HEAVY_LOCK so one UMAP/HDBSCAN/global-embed job runs at a time, native math threads capped at 2 (override with Railway vars / ML_THREADS), global vectors skip users deleted mid-run. +2 tests; 216/216 with Postgres.
+- Live after deploy: `ml/scripts/load_check.py` 6 min across the heavy-job cycle: matches median 2.5 s (max 6.7 s cold), graph 1.9 s, dashboard 1.5 s, zero errors. Smoke 36/36. Core loop e2e passes.
+- Removed 2 leftover "Sam Smoke" test accounts (a killed smoke run had skipped cleanup and they appeared as matches). Scripts now clean up on SIGTERM/SIGHUP; `ml/scripts/cleanup_test_accounts.py` finds strays.
+**How to run/test it:** `cd ml/scripts && npx @railway/cli run ../.venv/bin/python -u load_check.py 6`
+**Next step for whoever continues:** Keep one deployer, from up-to-date main. Adam: `gh auth refresh -h github.com -s workflow`, then commit .github/workflows/ci.yml.
+**Known issues / blockers:** Matches ~2.5 s per call is acceptable but could be cached per viewer if it matters for the demo.
+**Contract changes:** none
+
 ## 2026-09-26 23:30 | adam | Claude Code
 **Task:** Full pre-demo audit (repo, server, app, database, live API, dashboard)
 **Status:** done
