@@ -28,6 +28,7 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-ble-plx": "^3.5.1",
+    "react-native-maps": "1.27.2",
     "react-native-nitro-modules": "^0.37.1",
     "react-native-qrcode-svg": "^6.3.26",
     "react-native-reanimated": "4.5.1",
