@@ -17,3 +17,5 @@ Railway gives trial credit; the Hobby plan is about **$5/month** after that. (Re
 9. After deploy, set **Variables** `ML_API_URL` to the same Railway URL (GitHub OAuth callback). Set GitHub OAuth app callback to `https://<your-domain>/connect/github/callback`.
 
 This service was uploaded from `ml/` (`npx @railway/cli up --detach --path-as-root .`). It keeps running after the Mac is off. GitHub auto-deploy is not connected yet: the repo root is not the Docker context, so a GitHub source must use root directory `ml` or the next build will not find the Dockerfile. Until then, redeploy from `ml/` with that same `up` command. Logs: service → **Deployments** → **View logs**.
+
+**Where every key comes from (click-by-click):** see [`docs/secrets-setup.md`](secrets-setup.md).

@@ -2,6 +2,17 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 03:32 | adam | Adam
+**Task:** Document where every API key comes from for Alan / Arjun / Railway
+**Status:** done
+**What I did:**
+- Added `docs/secrets-setup.md`: click-by-click for Supabase URL/anon/service/DATABASE_URL, Anthropic, GitHub OAuth, signing keys, Railway variables, and `mobile/.env`. No secret values in the file.
+- Linked it from `docs/deploy.md` and pointed Alan’s open ask at §4 / §8.
+**How to run/test it:** Open `docs/secrets-setup.md`. Teammates fill a local `.env` from it; never commit the values.
+**Next step for whoever continues:** Alan: do the open `(from adam)` ask (callback + AirDrop three values). Adam: when they arrive, set them on Railway `ml`.
+**Known issues / blockers:** none for the doc itself.
+**Contract changes:** none
+
 ## 2026-09-26 03:26 | adam | Adam
 **Task:** Fix the Alan GitHub/Railway ask (Alan has no Railway access)
 **Status:** done
