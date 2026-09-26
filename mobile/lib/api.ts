@@ -105,6 +105,16 @@ export type ConversationFeedbackResponse =
   | { status: 'connected'; connection: { user_id: string; name: string }; chat_id: number }
   | { status: 'no_connection' };
 
+// Meetup location sharing (section 37). Only after a mutual yes; ends when they meet or after 30 min.
+export interface LocationShareState {
+  suggestion_id: number;
+  other: { user_id: string; name: string | null };
+  sharing: boolean;
+  expires_at: string | null;
+  their_location: { lat: number; lng: number; updated_at: string } | null;
+}
+export interface Meetup { suggestion_id: number; other: Person }
+
 // Bluetooth (section 12). Tokens rotate every 10 minutes; only the server maps them to users.
 export interface BleToken { token: string; valid_from: string; valid_to: string }
 export interface BleSighting { token: string; rssi: number; ts: string; zone_id: number | null }
@@ -160,6 +170,8 @@ const mocks = {
   openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
   qrVerify: () => require('../../docs/mocks/qr_verify.json') as QrVerifyResponse,
   conversationFeedback: () => require('../../docs/mocks/conversation_feedback.json') as ConversationFeedbackResponse,
+  locationShare: () => require('../../docs/mocks/location_share.json') as LocationShareState,
+  meetups: () => require('../../docs/mocks/location_meetups.json') as { meetups: Meetup[] },
   bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
   bleSightings: () => require('../../docs/mocks/ble_sightings.json') as { accepted: number; dropped: number },
   inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
@@ -232,6 +244,16 @@ export const api = {
     call(mocks.conversationFeedback, () =>
       request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
     ),
+  meetups: () => call(mocks.meetups, () => request<{ meetups: Meetup[] }>('GET', '/location-shares')),
+  shareLocation: (suggestionId: number, point: { lat: number; lng: number }) =>
+    call(
+      () => ({ sharing: true, expires_at: new Date(Date.now() + 30 * 60_000).toISOString() }),
+      () => request<{ sharing: boolean; expires_at: string }>('POST', `/location-shares/${suggestionId}`, point),
+    ),
+  locationShare: (suggestionId: number) =>
+    call(mocks.locationShare, () => request<LocationShareState>('GET', `/location-shares/${suggestionId}`)),
+  stopLocationShare: (suggestionId: number) =>
+    call(() => ({ sharing: false }), () => request<{ sharing: boolean }>('DELETE', `/location-shares/${suggestionId}`)),
   bleTokens: () => call(mocks.bleTokens, () => request<{ tokens: BleToken[] }>('POST', '/ble/tokens', {})),
   bleSightings: (body: BleSightingsRequest) =>
     call(mocks.bleSightings, () => request<{ accepted: number; dropped: number }>('POST', '/ble/sightings', body)),
