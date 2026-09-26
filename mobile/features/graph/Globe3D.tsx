@@ -112,15 +112,24 @@ export function Globe3D({
   // name labels: front-facing people only, strongest first, skipping any that would overlap a placed one
   const labeled = new Set<string>();
   if (!selectedId) {
-    const boxes: { x: number; y: number }[] = [];
+    const boxes: { l: number; r: number; t: number; b: number }[] = [];
     [...drawn]
       .filter((d) => d.z < 0.15)
       .sort((a, c) => c.b.t - a.b.t)
       .forEach((d) => {
-        const ly = d.sy + 16 * d.s + 15;
-        if (boxes.some((bx) => Math.abs(bx.x - d.sx) < 70 && Math.abs(bx.y - ly) < 18)) return;
-        if (drawn.some((o) => o !== d && Math.hypot(o.sx - d.sx, o.sy - ly) < 16 * o.s)) return;
-        boxes.push({ x: d.sx, y: ly });
+        const ly = d.sy + 16 * d.s + 15; // text baseline
+        const w = (d.b.p.first.length + 4) * 7; // approx label width at 12px
+        const box = { l: d.sx - w / 2, r: d.sx + w / 2, t: ly - 12, b: ly + 3 };
+        const hitsLabel = boxes.some((o) => box.l < o.r && box.r > o.l && box.t < o.b && box.b > o.t);
+        const hitsBall = drawn.some((o) => {
+          if (o === d) return false;
+          const rr = 16 * o.s;
+          const cx = Math.max(box.l, Math.min(o.sx, box.r));
+          const cy = Math.max(box.t, Math.min(o.sy, box.b));
+          return Math.hypot(o.sx - cx, o.sy - cy) < rr;
+        });
+        if (hitsLabel || hitsBall) return;
+        boxes.push(box);
         labeled.add(d.b.p.id);
       });
   } else labeled.add(selectedId);

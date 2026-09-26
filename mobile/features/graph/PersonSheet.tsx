@@ -23,7 +23,7 @@ async function load(p: Person, mode: GraphMode): Promise<Detail> {
   if (env.useMocks) {
     // Sample data: the mock endpoints return one fixed person, so build the sheet from the graph's own data.
     return {
-      headline: p.role === 'recruiter' ? `Recruiting for ${p.shared[0] ?? 'tech'} roles` : `Student into ${p.shared.slice(0, 2).join(' and ')}`,
+      headline: p.role === 'recruiter' ? `Hiring for ${p.shared[0] ?? 'tech'} roles` : `Into ${p.shared.slice(0, 2).join(' and ')}`,
       seeking: p.role === 'recruiter' ? `Students with ${p.shared[0] ?? 'ML'} experience` : `Internships and collaborators in ${p.shared[0] ?? 'tech'}`,
       offering: p.role === 'recruiter' ? 'Internship and new grad roles' : `Projects in ${p.shared.slice(0, 2).join(', ')}`,
       interests: p.shared.map((name) => ({ name, evidence: '' })),
@@ -64,7 +64,7 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
   const d = state.status === 'ready' ? state.data : null;
 
   return (
-    <Card highlight>
+    <Card>
       <View style={styles.head}>
         <Avatar name={p.name} size={56} />
         <View style={{ flex: 1 }}>
