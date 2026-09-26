@@ -13,6 +13,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Teammates with unpushed commits must rebase them onto the updated `main`. The old `claude/quirky-euler-dnbsgt` and `adami/ad1-verify-fe21` branches are already merged and should be deleted.
 **Contract changes:** none
 
+## 2026-09-26 14:40 | arjun | Arjun
+**Task:** AR3 synthetic attendees: SEEDED INTO LIVE SUPABASE
+**Status:** done
+**What I did:**
+- Ran `ml/scripts/seed_hackathon_attendees.py` against the live project (mwfzgkikbmnghueolfnw) in its new API mode (SUPABASE_URL + SUPABASE_SECRET_KEY, no DATABASE_URL needed): 80 synthetic attendees (is_synthetic, synth-NNN@example.com), all checked in to HackGT 13 (event 1), 43 open_to_meet, 171 canonical interests with bge embeddings, 903 user_interests (weights = Alan's 1-exp(-sum interest_weight)), 80 raw_documents with meta.extraction (interest ids) so profile_store.rebuild_user_interests reproduces them.
+- Verified counts with read-only REST queries.
+**How to run/test it:** re-run (idempotent): `cd ml && SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co SUPABASE_SECRET_KEY=... .venv/bin/python scripts/seed_hackathon_attendees.py`; remove all: same with `--delete`.
+**Next step for whoever continues:** Start the ML server against this project (Alan/Adam: DATABASE_URL + keys in ml/.env, `./scripts/start-ml.sh` or Railway). Its workers compute profile_vectors/IDF/clusters for the 80 within 5 min; then `GET /events/1/matches` ranks them. SECURITY: the Supabase secret key was pasted in chat; rotate it (Project Settings -> API Keys) before real attendees.
+**Known issues / blockers:** profile_vectors not written by the seeder (the ML service's global_vectors worker does it on startup/every 5 min).
+**Contract changes:** none
+
 ## 2026-09-26 02:55 | adam | Adam
 **Task:** Put the ML API on Railway so a laptop does not have to stay on
 **Status:** done
