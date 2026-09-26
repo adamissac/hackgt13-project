@@ -86,11 +86,14 @@ def test_candidate_pool_exclusions(dbclient, db, event):
     db.execute("insert into blocks values (%s, %s), (%s, %s)", (me, i_blocked, blocked_me, me))
     a, b = sorted([me, connected])
     db.execute("insert into connections (user_a, user_b) values (%s, %s)", (a, b))
-    a, b = sorted([me, declined])
-    db.execute("insert into suggestions (user_a, user_b, context, event_id, b_response) values (%s, %s, 'event', %s, 'no')",
-               (a, b, event))
+    declined_me = seed_person(db, "DeclinedMe", [("robotics", "technical", 0.9)], event_id=event)
+    for other, who_said_no in ((declined, me), (declined_me, declined_me)):
+        a, b = sorted([me, other])
+        col = "a_response" if who_said_no == a else "b_response"
+        db.execute(f"insert into suggestions (user_a, user_b, context, event_id, {col}) values (%s, %s, 'event', %s, 'no')",
+                   (a, b, event))
     ids = {m["user_id"] for m in matches(dbclient, me, event).json()["matches"]}
-    assert ids == {ok}
+    assert ids == {ok, declined_me}      # my "no" hides them; their "no" must stay invisible to me
     assert not_here not in ids
 
 
