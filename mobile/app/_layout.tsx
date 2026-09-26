@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
 import { AuthProvider, useAuth } from '@/lib/auth';
 
 export {
@@ -53,7 +54,7 @@ function RootLayoutNav() {
   const signedIn = Boolean(session) || guest;
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={navTheme(colorScheme)}>
       <Stack>
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -66,4 +67,13 @@ function RootLayoutNav() {
       </Stack>
     </ThemeProvider>
   );
+}
+
+function navTheme(scheme: 'light' | 'dark') {
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const c = Colors[scheme];
+  return {
+    ...base,
+    colors: { ...base.colors, primary: c.tint, background: c.background, card: c.surface, text: c.text, border: c.border },
+  };
 }
