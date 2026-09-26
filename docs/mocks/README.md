@@ -28,3 +28,4 @@ change to `docs/api.md`.
 | feed.json | GET /feed |
 | feed_insights.json | GET /feed/insights |
 | feed_reply_suggestion.json | POST /feed/{item_id}/reply-suggestion |
+| assistant_chat.json | POST /assistant/chat |

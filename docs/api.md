@@ -314,3 +314,11 @@ Aggregate activity across my connections (not my own items):
   "activity": [ { "date": "2026-09-20", "count": 0 } ],
   "by_kind": { "github": 0, "post": 2, "update": 1 } }
 ```
+
+## 33. POST /assistant/chat
+Request `{ "messages": [ { "role": "user", "content": "Who at this event works in quant finance?" } ], "event_id": 1 }`
+(the full conversation so far, last message from the user; the server keeps no chat history)
+Response `{ "reply": "Quinn (recruiter) lists quantitative finance ..." }`. `503 the assistant is unavailable right now` if Claude can't be reached.
+Tools are scoped server-side: Open to Meet attendees of events I'm checked in to, quick profiles of current
+matches/suggestions/connections only, my own connections feed, my own profile. It never reveals anyone's connections,
+connection count, or whether someone declined.
