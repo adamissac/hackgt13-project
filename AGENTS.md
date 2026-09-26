@@ -80,4 +80,5 @@ cp ../.env.example ../.env   # fill DATABASE_URL, SUPABASE_URL, SUPABASE_JWT_SEC
 uvicorn app.main:app --host 0.0.0.0 --port 8000        # GET /health is public; everything else needs the Supabase JWT
 cloudflared tunnel --url http://localhost:8000          # separate terminal: public URL for phones; share it as ML_API_URL
 TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests   # DB tests need an EMPTY throwaway Postgres+pgvector (it is wiped)
+python scripts/train_ranker.py --source auto      # AL9: retrain ranker; report says 'simulated' or 'real outcomes'
 ```

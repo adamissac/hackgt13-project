@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 04:20 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL9 Learned ranker
+**Status:** done (speed-dating validation not done: optional, needs Arjun's prepared data)
+**What I did:**
+- `ml/app/ranker_job.py` + `ml/scripts/train_ranker.py`: trains V1 vs logistic regression vs LightGBM LambdaRank, split by user; `--source auto` uses real outcomes (verified conversations + checklist answers, is_synthetic profiles excluded, needs >= 60 rows / 8 viewers / both outcomes) and otherwise simulated outcomes. Report `ml/data/ranker_report.json` always carries `data: simulated outcomes | real outcomes` plus counts of real data available.
+- Simulated run (200 people, SIMULATED OUTCOMES): AUC V1 0.73 / LR 0.82 / LambdaRank 0.81; NDCG@10 0.85 / 0.89 / 0.87; top LR coefficients idf_overlap 0.66, sim_personal 0.65, role_pair 0.64 (matches MASTER_SPEC 6.7). Note: this container used the hashed fallback embedder.
+- Serving: `MATCH_MODEL=lr` makes /events/{id}/matches rank with data/ranker_lr.pkl (hot-reloaded), responses and impressions say `model: lr`; default stays V1.
+- 80 tests pass (`ml/tests/test_ranker_job.py`).
+**How to run/test it:** `cd ml && . .venv/bin/activate && python scripts/train_ranker.py --source synthetic --n 200` (about 25 s); with DATABASE_URL set, `--source auto`.
+**Next step for whoever continues:** AL8 sessionizer + encounter classifier on `sightings` (Akshar's AK2 shape, api.md 12): `ml/app/encounters.py` with a @every(30) worker: resolve observed_token -> user via ephemeral_ids, sessionize per pair with gaps < 60 s (`ml.encounter.sessionize`), features (`ml.encounter.session_features`), p = GBM model (train from synth now; add AK6 labeled CSVs weighted 3x later), verify when p >= 0.7 AND >= 3 min above -65 dBm -> `conversations.create_conversation(method='ble', minutes, p_conversation)`. Then AL11 chatbot.
+**Known issues / blockers:** Speed-dating validation (optional) waits on Arjun preparing the Kaggle data. Nightly retrain isn't scheduled; run the script (or add a cron) once real conversations exist.
+**Contract changes:** none (.env.example: MATCH_MODEL name only; `model` in api.md 5 can now be `lr`)
+
 ## 2026-09-26 04:18 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL10 Feed
 **Status:** done (summaries/replies use templates until ANTHROPIC_API_KEY is set)

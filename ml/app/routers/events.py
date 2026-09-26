@@ -33,11 +33,12 @@ def matches(event_id: int, limit: int = Query(20, ge=1, le=100), user: User = De
         raise ApiError(403, "check in to this event first")
     ranked, m = matching.rank_for_viewer(user.id, event_id)
     top = ranked[:limit]
-    matching.log_impressions(user.id, event_id, top)
+    model = matching.model_name()
+    matching.log_impressions(user.id, event_id, top, model)
     out = []
     for r in top:
         p = m.people[r["id"]]
         out.append({"user_id": r["id"], "name": p.get("name"), "photo_url": p.get("photo_url"),
                     "role": p.get("role"), "score": round(r["score"], 4), "rank": r["rank"] + 1,
                     "highlight": r["highlight"], "why": r["why"], "proximity": None})
-    return {"event_id": event_id, "model": "v1", "matches": out}
+    return {"event_id": event_id, "model": model, "matches": out}

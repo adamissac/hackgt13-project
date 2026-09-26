@@ -55,8 +55,14 @@ def rank_for_viewer(viewer: str, event_id: int, explore_eps: float = 0.1, rng=No
     banned = excluded_ids(viewer)
     others = [p for pid, p in m.people.items() if pid != viewer and pid not in banned]
     cluster = m.cluster or None
+    from .ranker_job import serving_model
     return scoring.rank_candidates(me, others, m.index, cluster=cluster, explore_eps=explore_eps,
-                                   rng=rng or np.random.default_rng()), m
+                                   model=serving_model(), rng=rng or np.random.default_rng()), m
+
+
+def model_name() -> str:
+    from .ranker_job import serving_model
+    return "lr" if serving_model() is not None else "v1"
 
 
 def pair_score(a: dict, b: dict, index, cluster=None) -> tuple[float, dict]:
