@@ -2,6 +2,33 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 04:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK4 Invites
+
+**Status:** in progress (backend logic + screens done; needs AL1's FastAPI app to go live)
+
+**What I did:**
+- `ml/app/routers/invites.py`: `POST /invites`, `GET /invites`, `DELETE /invites/{id}`, `GET /invites/resolve/{token}`, `POST /invites/{token}/respond`. Token `secrets.token_urlsafe(16)`, stored only as SHA-256, 7-day expiry, single use, revocable, 10 per sender per rolling 24h. Decline writes nothing (indistinguishable from ignore). Blocked pairs get `not_found`. Accept inserts `connections` with `how_met='invite'`, `invite_id`.
+- Storage is behind an `InviteStore` protocol with `MemoryInviteStore` as the reference; `ml/tests/test_invites.py` (18 tests) covers create/resolve/accept/decline/revoke/expiry/limit/blocks/self-invite/privacy.
+- Mobile: `app/invites.tsx` (create link + QR via `react-native-qrcode-svg`, share sheet, list + revoke), `app/invite/[token].tsx` (deep-link accept screen: "Have you talked with X, and do you want to connect?"), "Invite someone you know" link on the Profile tab. New native dep `react-native-svg` → dev build must be rebuilt.
+- Cross-folder edits (additive only): Adam's `mobile/lib/api.ts` (invite types + 5 calls + mocks) and `mobile/app/(tabs)/profile.tsx` (one Link). Alan's `ml/requirements.txt` (fastapi, httpx, pytest).
+
+**How to run/test it:**
+- `cd ml && python3 -m venv .venv && .venv/bin/pip install fastapi httpx pytest && .venv/bin/python -m pytest tests/test_invites.py -q` → 18 passed.
+- `cd mobile && npx tsc --noEmit && npx expo export --platform ios` (clean). With `EXPO_PUBLIC_USE_MOCKS=1`: Profile → "Invite someone you know"; deep link `npx uri-scheme open formalconnect://invite/abc --ios` (or open it on a device) shows the accept screen.
+
+**Next step for whoever continues:** When Alan's AL1 app (`ml/app/main.py`) lands: write `SupabaseInviteStore` in `ml/app/routers/invites.py` implementing the `InviteStore` methods against tables `invites`, `profiles`, `blocks`, `connections` (service key), then in main.py `app.include_router(invites.router)` and override `invites.get_user_id` (JWT verify) and `invites.get_invite_store`. Then run the flow on two phones.
+
+**Known issues / blockers:**
+- Not live: no FastAPI app yet (AL1). Router raises NotImplementedError until the two dependencies are overridden.
+- `INVITE_BASE_URL` defaults to `formalconnect://invite` (only opens in the app). The https redirect page on the dashboard (`/invite/[token]` → `formalconnect://invite/<token>`) isn't built; dashboard is Arjun's.
+- Recipient's "how we know each other" note isn't stored (no column); if the token was opened while signed out, the user must reopen the link after signing in.
+- `.claude/rules/mobile.md` lists "invites UI" under Adam; Akshar's brief assigns the AK4 app side to Akshar. Adam: shout if you'd rather own these two screens.
+- Still can't `git push` from Akshar's laptop (GitHub auth). Commits are local until Akshar logs in.
+
+**Contract changes:** `docs/api.md` new section 15 (invites; section 13's `POST /invites/{invite_id}/respond` now points to 15 and is keyed by token, per MASTER_SPEC/AK4). New mocks `docs/mocks/invites_{create,list,resolve,respond}.json`. New env var `INVITE_BASE_URL` in `.env.example` (ML service only). No schema change: uses existing `invites` table and `connections.how_met/invite_id`.
+
 ## 2026-09-26 02:45 | adam | Claude Code
 **Task:** AD2 Auth
 **Status:** in progress (code done; needs Supabase redirect config pushed, LinkedIn app, and a phone test)
