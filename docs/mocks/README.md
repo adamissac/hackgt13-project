@@ -25,3 +25,6 @@ change to `docs/api.md`.
 | conversation_feedback.json | POST /conversations/{id}/feedback (mutual-yes case) |
 | followup_draft.json | POST /connections/{user_id}/followup-draft |
 | graph.json | GET /graph?mode=matches (real output of the service on seeded data) |
+| feed.json | GET /feed |
+| feed_insights.json | GET /feed/insights |
+| feed_reply_suggestion.json | POST /feed/{item_id}/reply-suggestion |

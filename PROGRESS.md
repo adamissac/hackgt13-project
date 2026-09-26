@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 04:18 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL10 Feed
+**Status:** done (summaries/replies use templates until ANTHROPIC_API_KEY is set)
+**What I did:**
+- `ml/app/feed.py`: visibility = my items + my connections' items allowed by their feed_prefs; embeddings filled on first read (AR8's poller can leave them null); score 0.6*cos + 0.3*exp(-h/48) + 0.1*talked-topic mention; bursts (>=3 items/24 h) collapse into one Haiku summary (cached); insights = trending topics (authors' interests mentioned in items), 7-day activity, counts by kind.
+- `ml/app/routers/feed.py`: GET /feed (offset cursor), POST /feed/posts, POST /feed/{id}/reply-suggestion, GET /feed/insights. `ml/ml/generation.py`: feed_summary, reply_suggestion + templates.
+- docs/api.md 29-32 and mocks feed.json, feed_insights.json, feed_reply_suggestion.json.
+- 77 tests pass (`ml/tests/test_feed.py`: strangers and disallowed kinds never shown, relevance/recency/talked-topic ordering, burst summary, pagination, post + reply scope, insights exclude own items).
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_feed.py`
+**Next step for whoever continues:** AL9 learned ranker: add `ml/scripts/train_ranker.py` that (a) runs the synthetic loop from run_demo (make_population -> simulate_meetings -> ranker.build_dataset -> train_and_evaluate, split by user) and (b) when there are real verified conversations with feedback in Postgres, builds rows from conversations+feedback (y = both wants_connect, rel 2/1/0), writes `ml/data/ranker_report.json` with AUC/NDCG@10 for V1 vs logistic vs LambdaRank labeled 'simulated outcomes' or 'real outcomes', and saves ranker_lr.pkl.
+**Known issues / blockers:** Feed pagination is offset-based over a ranked list rebuilt per request (fine at hackathon scale; items can shift between pages if new ones arrive).
+**Contract changes:** docs/api.md: new 29-32 (feed). docs/mocks: feed.json, feed_insights.json, feed_reply_suggestion.json. Affects Adam (AD11) and Arjun (AR7 feed insights page, AR8 poller).
+
 ## 2026-09-26 04:15 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** Coordination: asks from Alan to Adam, Arjun, Akshar
 **Status:** done

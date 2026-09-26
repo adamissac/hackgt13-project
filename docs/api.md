@@ -282,3 +282,35 @@ kept with the reference cleared), other people's raw Bluetooth sightings of thei
 { "deleted": true, "storage_objects_deleted": 1, "auth_user_deleted": true, "errors": [] }
 ```
 `storage_objects_deleted` / `auth_user_deleted` are `null` if the server has no service key. The app should sign out after this.
+
+## 29. GET /feed?cursor=&limit=20
+My own items plus my connections' items (only kinds each author allows in `feed_prefs`), ranked by
+0.6 x relevance to my interests + 0.3 x recency (48 h decay) + 0.1 x "mentions a topic I checked as discussed with them".
+An author with 3+ items in 24 h appears as one `summary` entry instead.
+```json
+{ "items": [
+    { "type": "item", "item_id": 5, "author": { "user_id": "uuid", "name": "Sam Lee", "photo_url": null },
+      "kind": "post", "title": null, "body": "Wrote up my robotics notes", "url": null,
+      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.61, "talked_about": ["robotics"] },
+    { "type": "summary", "author": { "user_id": "uuid", "name": "Priya S.", "photo_url": null },
+      "summary": "Priya launched a new app and is hiring a frontend intern.", "item_ids": [7, 8, 9],
+      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.55 } ],
+  "next_cursor": "MjA=" }
+```
+
+## 30. POST /feed/posts
+Request `{ "kind": "post" | "update", "body": "Started a new role at ...", "title": null, "url": null }`
+Response `201 { "item_id": 12, "kind": "update", "title": null, "body": "...", "url": null, "created_at": "..." }`
+(GitHub items come from the poller, AR8, not from this endpoint.)
+
+## 31. POST /feed/{item_id}/reply-suggestion
+`{ "reply": "Nice one, Sam. Does this connect to the robotics work we talked about?" }` — only for items in my feed
+(else `404 item not found`); grounded in the item and the topics we discussed when we met.
+
+## 32. GET /feed/insights?days=7
+Aggregate activity across my connections (not my own items):
+```json
+{ "days": 7, "trending_topics": [ { "name": "robotics", "count": 2 } ],
+  "activity": [ { "date": "2026-09-20", "count": 0 } ],
+  "by_kind": { "github": 0, "post": 2, "update": 1 } }
+```
