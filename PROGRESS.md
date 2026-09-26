@@ -2,6 +2,16 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 03:25 | adam | Adam
+**Task:** Ask Alan to finish GitHub connect on Railway
+**Status:** done
+**What I did:**
+- Added an open ask in Alan's `REQUESTS.md` section: add the Railway callback on the GitHub OAuth app, then set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (and confirm `ML_API_URL` + `TOKEN_ENCRYPTION_KEY`) on the Railway `ml` service. Secret stays out of git and chat.
+**How to run/test it:** After Alan marks it done, on a phone open Profile → Manage sources → Connect GitHub against `https://ml-production-04c0.up.railway.app`.
+**Next step for whoever continues:** Alan: do the open `(from adam)` GitHub/Railway item at the top of his `REQUESTS.md` section. Adam: redeploy Railway for Arjun's population cache fix (`cd ml && npx @railway/cli up --detach --path-as-root .`).
+**Known issues / blockers:** GitHub connect stays off on Railway until those vars are set. `GITHUB_CLIENT_SECRET` must not be committed.
+**Contract changes:** none
+
 ## 2026-09-26 15:10 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 follow-up: live server didn't see the 80 seeded attendees (edit in Alan's `ml/app/population.py`, flagged for Alan)
 **Status:** fixed in code; NEEDS A RAILWAY REDEPLOY to take effect
