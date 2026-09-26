@@ -2,6 +2,24 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 09:10 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Verify the HTTP 500 fix on the live server after Adam's Railway redeploy
+
+**Status:** done (live API healthy; phones should now work; one intermittent stall left for Adam to check in the Railway logs)
+
+**What I did:**
+- Live replay with two throwaway accounts (created and deleted with the admin key, never printed): check-in 0.9 s, Open to Meet 0.8 s, suggestions 0.4 s, matches 3.7 s (was 96 s), `/ble/tokens` 1.0 s (was 41 s), tap claim → verified ~2 s, QR verify ~1.8 s. 5 runs over 6 minutes.
+- Intermittent: 3 single requests hung ~60 s in the first ~12 minutes after the deploy. A 9-minute probe afterwards showed no hangs, only `/health` at 3-7 s a few times while a no-DB 404 stayed instant (so the process isn't frozen; it's waiting on the DB pool or threads). I tested and discarded a "move UMAP to a subprocess" change: locally UMAP doesn't block other threads, so it wasn't the cause.
+
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`; phone sequence in the entry below.
+
+**Next step for whoever continues:** Phones: force-quit and reopen the app → Nearby → Event Mode ON on both → Tap phones. Rebuild the Release app when convenient to pick up the mobile hardening (30 s timeout, no stacked polls, Event Mode error text), which keeps a brief server stall from snowballing.
+
+**Known issues / blockers:** The ~60 s stall cause is unconfirmed without the Railway logs (asked Adam in REQUESTS). Don't redeploy right before or during the demo.
+
+**Contract changes:** none
+
 ## 2026-09-26 10:05 | alan | Claude Code (Opus 5)
 **Task:** Verify Adam's Railway redeploy; record two findings that were only living in a chat window
 **Status:** redeploy confirmed good; one open question on Railway, one gap in push
