@@ -92,6 +92,19 @@
 **Next step for whoever continues:** Start AL1: create `ml/app/main.py` (FastAPI + `/health`), `ml/app/auth.py` (Supabase JWT via PyJWT), `ml/app/db.py` (psycopg pool).
 **Known issues / blockers:** Supabase project ref still unset in `.mcp.json` (Adam).
 **Contract changes:** none
+## 2026-09-26 02:45 | adam | Claude Code
+**Task:** AD2 Auth
+**Status:** in progress (code done; needs Supabase redirect config pushed, LinkedIn app, and a phone test)
+**What I did:**
+- `mobile/lib/auth.tsx`: LinkedIn OIDC via signInWithOAuth (linkedin_oidc, skipBrowserRedirect) + openAuthSessionAsync + exchangeCodeForSession; email magic link via signInWithOtp; AuthProvider; guest skip only in mock mode.
+- `mobile/app/sign-in.tsx` (includes Section 3.5 proximity disclosure), `mobile/app/auth/callback.tsx`, Stack.Protected auth gate in `app/_layout.tsx`, sign out in Profile.
+- `supabase/config.toml`: site_url and additional_redirect_urls = formalconnect://auth/callback, exp://**, http://localhost:8081/**; every other auth setting set to match the live project.
+- Verified: tsc clean, iOS and web bundles build.
+**How to run/test it:** `npx supabase config push` (answer y for auth, n for storage), then on a dev build: enter email, tap the link on the phone.
+**Next step for whoever continues:** Push the auth redirect URLs to the live project: `npx supabase config push` (y for auth, n for storage). Then build the dev client (`npx eas-cli login`, then `cd mobile && npx eas-cli build --profile development --platform ios`) and test the magic link on a phone. Then LinkedIn app setup (prompts/adam.md AD2).
+**Known issues / blockers:** Redirect URLs not yet on the live project (agent was not permitted to push shared auth config). LinkedIn developer app not created. No Xcode/EAS login on Adam's Mac.
+**Contract changes:** none
+
 ## 2026-09-26 02:10 | adam | Claude Code
 **Task:** AD3 Expo app shell
 **Status:** in progress (code done; needs a dev build on a physical phone)
