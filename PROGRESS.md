@@ -2,6 +2,17 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 13:00 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** Graph = "atom" data viz (Arjun's direction)
+**Status:** done in code (mock data); motion to confirm on a phone
+**What I did:**
+- `mobile/features/graph/Atom.tsx`: you = nucleus, 12 best matches = electrons on tilted orbits (one plane per interest group), color = shared interest (3 color-blind-safe hues + gray "other"), opacity = strength (solid = strong, see-through = weaker), stronger = inner/faster orbit. All motion on the UI thread (Reanimated useFrameCallback + useAnimatedProps on SVG); drag writes shared values (no React re-render) -> smooth. Tap pauses spin + opens the profile sheet.
+- `mobile/features/graph/PersonSheet.tsx`: tap -> headline, shared interests with evidence, looking for / can offer; for connections: how/when met, minutes, last talked about (GET /connections/{id}, added `api.connection`).
+**How to run/test it:** `scripts/start-app.sh` -> Expo Go -> Explore the demo -> Graph.
+**Next step for whoever continues:** Real data once the ML server is live (EXPO_PUBLIC_USE_MOCKS=0).
+**Known issues / blockers:** Expo web preview doesn't animate in a hidden tab (expected); verify spin on a device.
+**Contract changes:** none
+
 ## 2026-09-26 | adam | Codex
 **Task:** AD3 Expo app shell — shared local-preview synchronization instructions
 **Status:** done

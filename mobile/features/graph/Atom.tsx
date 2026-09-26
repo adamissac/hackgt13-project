@@ -58,10 +58,11 @@ export const alphaFor = (t: number) => 0.22 + 0.78 * t;
 
 // orbital planes per group: inclination (around X) and node angle (around Y)
 const PLANES = [
-  { inc: 0.35, node: 0 },
-  { inc: 1.15, node: 1.2 },
-  { inc: 0.8, node: 2.6 },
-  { inc: 1.45, node: 4.0 },
+  // classic atom: orbits tilted open and turned 120 degrees apart around you
+  { inc: 1.2, node: 0 },
+  { inc: 1.2, node: (2 * Math.PI) / 3 },
+  { inc: 1.2, node: (4 * Math.PI) / 3 },
+  { inc: 0.45, node: Math.PI / 2 },
 ];
 
 interface Electron {
@@ -155,7 +156,7 @@ export function Atom({
   // time + view angles live on the UI thread
   const time = useSharedValue(0);
   const yaw = useSharedValue(0.4);
-  const pitch = useSharedValue(-0.35);
+  const pitch = useSharedValue(-0.25);
   const spin = useSharedValue(1); // 0 = paused
   const startYaw = useSharedValue(0);
   const startPitch = useSharedValue(0);
