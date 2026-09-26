@@ -111,6 +111,7 @@ class EventModel:
 
 _events: dict[int, EventModel] = {}
 _clusters: dict[int, dict] = {}         # event_id -> {user_id: label}, refreshed every 5 minutes
+_layouts: dict[int, dict] = {}          # event_id -> {user_id: (x, y)} 2-D UMAP, refreshed with the clusters
 
 
 def attendee_ids(event_id: int) -> list[str]:
@@ -144,6 +145,9 @@ def recompute_clusters(event_id: int) -> dict:
         labels = {p["id"]: -1 for p in people}
     else:
         labels = communities(people, min_cluster_size=5)
+    from ml.viz import layout
+    xy = layout(people) if len(people) >= 5 else [(0.0, 0.0)] * len(people)
+    _layouts[event_id] = {p["id"]: (float(x), float(y)) for p, (x, y) in zip(people, xy)}
     _clusters[event_id] = labels
     m.cluster = labels
     return labels

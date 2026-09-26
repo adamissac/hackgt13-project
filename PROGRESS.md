@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 04:08 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** Organizer community map data (MASTER_SPEC 6.13; feeds Arjun's AR6)
+**Status:** done
+**What I did:**
+- `ml/app/routers/dashboard.py`: api.md 14 shape via `ml/ml/viz.py::dashboard_json`; node ids are per-event HMAC hashes (no user ids, no names); clusters < 5 folded into -1; gaps = expected (sum of clipped V1 scores over each person's top-10) vs connections formed at this event; 10 s cache.
+- `ml/app/population.py::recompute_clusters` now also stores the 2-D UMAP layout, so polling the dashboard never runs UMAP; newcomers sit at their cluster center until the 5-minute worker places them.
+- Checked on 60 synthetic attendees with real UMAP + HDBSCAN: 6 clusters with sensible c-TF-IDF labels (e.g. 'stochastic calculus + statistics + time series analysis'), top gap between the climate and robotics clusters. First build ~19 s (numba JIT), the worker does it at startup.
+- 69 tests pass (`ml/tests/test_dashboard.py`: no ids or names leak, min group size, live edge, gaps exclude -1).
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_dashboard.py`; live: `curl localhost:8000/dashboard/1`.
+**Next step for whoever continues:** Build `DELETE /me` (unassigned, Alan's per the brief) in `ml/app/routers/me.py`: delete the caller's rows in every table (profiles cascade covers most; also chats/messages/feedback/handshakes/impressions/notifications/suggestions/conversations/invites/web_mentions/location_shares), their Storage objects under resumes/<user_id>/ and the auth user via the Supabase admin API (SUPABASE_URL + SUPABASE_SERVICE_KEY). Then AL10 feed (`GET /feed`, `POST /feed/posts`, `GET /feed/insights`).
+**Known issues / blockers:** Gaps use V1 scores as stand-in probabilities until AL9's logistic ranker is served (said in the module docstring and api.md).
+**Contract changes:** docs/api.md 14: notes on anonymized ids, min group size, extra `event_id`/`people` fields, refresh cadence, DASHBOARD_REQUIRE_AUTH. .env.example: DASHBOARD_REQUIRE_AUTH, QUIET_HOURS (names only). Affects Arjun (AR6).
+
 ## 2026-09-26 04:05 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL7 Graph data
 **Status:** done (shape needs a quick look from Arjun for AR4; event mode is /dashboard/{event_id}, not built yet)

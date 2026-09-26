@@ -150,7 +150,10 @@ Only the caller's own connections. Never return counts of other users' connectio
   "gaps":     [ { "clusters": [1, 5], "expected": 7.6, "actual": 0, "gap": 7.6, "ratio": 0.0 } ]
 }
 ```
-No names in dashboard data.
+No names in dashboard data. Node ids are opaque per-event hashes (not user ids). Clusters smaller than 5 are folded
+into `-1` (unclustered); gaps are only between real clusters. Also returns `"event_id"` and `"people"` (attendee count).
+Clusters and the 2-D layout refresh every 5 minutes; edges (connections formed at the event) are live, 10 s cache.
+Public for the demo; set `DASHBOARD_REQUIRE_AUTH=1` to require a member of the event's organization.
 
 ## 15. GET /matches/{other_user_id}/quick-profile
 Only for a current match (both checked in to the same event, not blocked/declined/connected-elsewhere), an open
