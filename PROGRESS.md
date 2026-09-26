@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 12:10 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
+**Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)
+**What I did:**
+- Nearby tab (`mobile/app/(tabs)/nearby.tsx`, `mobile/features/nearby/`): real map via react-native-maps (in Expo Go: Google Maps on Android, Apple Maps on iOS; Google on iOS needs a key + dev build). You = blue dot, 3 circles = Bluetooth distance bands (3/8/16 m, rough), match pins inside their band at a stable angle (direction is not real and the screen says so), band-grouped list, person card -> /match/[id]. Your coordinates never leave the phone. Web preview falls back to Akshar's Radar. Akshar's Event Mode card, QR link and dev links kept.
+- Graph tab: now one purpose, "Your next conversations": 6 fully labeled people around you (name, match %, #1 shared topic), line thickness = match strength, topic chips re-pick the 6, list of the rest. Old ring view removed.
+- docs/mocks/event_matches.json: +5 mock matches with proximity so Nearby isn't empty in mock mode.
+**How to run/test it:** `scripts/start-app.sh` -> scan with Expo Go -> "Skip sign-in (mock mode)" -> Nearby (turn scanning on) and Graph.
+**Next step for whoever continues:** Akshar: check the Nearby map with real BLE bands on a dev build. Replace mock data with the live ML server when it's up.
+**Known issues / blockers:** none new.
+**Contract changes:** none (mock additions only)
+
 ## 2026-09-26 05:31 UTC | adam | Cursor cloud agent
 **Task:** AD1 Supabase project
 **Status:** done

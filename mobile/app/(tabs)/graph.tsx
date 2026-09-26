@@ -4,19 +4,27 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
-import { buildView, placeOnRings, whySentence, type Person } from '@/features/graph/model';
-import { RingGraph } from '@/features/graph/RingGraph';
+import { buildView, whySentence, type Person } from '@/features/graph/model';
+import { SpokeGraph } from '@/features/graph/SpokeGraph';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { useAsync } from '@/lib/useAsync';
 
-// Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun (AR4/AR5/AD9) to answer one question:
-// "who should I meet, and why?" You are in the middle; closer = stronger match.
-// Tap a topic to see who shares it, tap a person to see why you matched.
+// Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun. One job: show the handful of people you
+// should talk to next and why. Everyone on the diagram is labeled; topics change who's shown.
 
-const EXPLAIN: Record<GraphMode, string> = {
-  matches: 'People at HackGT 13 you should meet. The closer someone is to you, the stronger the match.',
-  network: 'People you’ve connected with. The closer someone is, the more you have in common.',
+const FEATURED = 6;
+const LIST_PREVIEW = 5;
+
+const COPY: Record<GraphMode, { title: string; explain: string }> = {
+  matches: {
+    title: 'Your next conversations',
+    explain: 'The 6 people here you’d click with most. Thicker line = stronger match. Tap anyone to see why.',
+  },
+  network: {
+    title: 'Who you’re closest to',
+    explain: 'The connections you have the most in common with. Tap anyone to see what you share.',
+  },
 };
 
 function merge(a: GraphResponse, b: GraphResponse): GraphResponse {
@@ -33,31 +41,32 @@ function merge(a: GraphResponse, b: GraphResponse): GraphResponse {
 export default function GraphScreen() {
   const c = useColors();
   const { width } = useWindowDimensions();
-  const size = Math.min(width - 32, 420);
+  const size = Math.min(width - 32, 400);
   const [mode, setMode] = useState<GraphMode>('matches');
   const { state, reload } = useAsync(() => api.graph(mode, HACKGT_EVENT_ID), [mode]);
   const [extra, setExtra] = useState<{ mode: GraphMode; data: GraphResponse } | null>(null);
   const [topic, setTopic] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
   const [expanding, setExpanding] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   const graph = state.status === 'ready' ? (extra?.mode === mode ? merge(state.data, extra.data) : state.data) : null;
   const view = useMemo(() => (graph ? buildView(graph) : null), [graph]);
-  const layout = useMemo(() => (view ? placeOnRings(view.people, size, mode) : null), [view, size, mode]);
+  const pool = useMemo(() => (view ? view.people.filter((p) => !topic || p.shared.includes(topic)) : []), [view, topic]);
+  const featured = pool.slice(0, FEATURED);
   const selected = view?.people.find((p) => p.id === selectedId) ?? null;
   const topicObj = view?.topics.find((t) => t.label === topic) ?? null;
-  const focus = useMemo(() => {
-    if (selected) return new Set([selected.id]);
-    if (topic && view) return new Set(view.people.filter((p) => p.shared.includes(topic)).map((p) => p.id));
-    return null;
-  }, [selected, topic, view]);
 
+  const reset = () => {
+    setSelectedId(null);
+    setNote(null);
+    setShowAll(false);
+  };
   const switchMode = (m: GraphMode) => {
     setMode(m);
     setTopic(null);
-    setSelectedId(null);
-    setNote(null);
+    reset();
   };
 
   const findMore = async () => {
@@ -94,16 +103,17 @@ export default function GraphScreen() {
 
   if (state.status === 'loading') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<Loading label="Finding your people…" /></View>;
   if (state.status === 'error') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<ErrorState message={state.message} onRetry={reload} /></View>;
-  if (!view || !layout) return null;
+  if (!view) return null;
 
-  const empty = view.people.length === 0;
+  const rest = pool.slice(FEATURED);
+  const listed = showAll ? rest : rest.slice(0, LIST_PREVIEW);
+  const chips = [{ id: '__all', label: 'Everyone', count: view.people.length }, ...view.topics];
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
       {Segmented}
-      <Text style={[styles.explain, { color: c.muted }]}>{EXPLAIN[mode]}</Text>
 
-      {empty ? (
+      {view.people.length === 0 ? (
         <Card>
           <Text style={[styles.cardTitle, { color: c.text }]}>{mode === 'matches' ? 'No matches yet' : 'No connections yet'}</Text>
           <Text style={[styles.body, { color: c.muted }]}>
@@ -114,112 +124,86 @@ export default function GraphScreen() {
         </Card>
       ) : (
         <>
+          <View>
+            <Text style={[styles.h1, { color: c.text }]}>{topic ? `Top people into ${topic}` : COPY[mode].title}</Text>
+            <Text style={[styles.body, { color: c.muted }]}>{COPY[mode].explain}</Text>
+          </View>
+
           {view.topics.length > 0 && (
-            <View>
-              <Text style={[styles.label, { color: c.muted }]}>Tap a topic to see who shares it with you</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-                {view.topics.map((t) => {
-                  const on = topic === t.label;
-                  return (
-                    <Pressable
-                      key={t.id}
-                      onPress={() => {
-                        setSelectedId(null);
-                        setNote(null);
-                        setTopic(on ? null : t.label);
-                      }}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: on }}
-                      style={[styles.topic, { backgroundColor: on ? c.tint : c.surface, borderColor: on ? c.tint : c.border }]}>
-                      <Text style={[styles.topicText, { color: on ? c.onTint : c.text }]}>
-                        {t.label} <Text style={{ color: on ? c.onTint : c.muted }}>· {t.count}</Text>
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+              {chips.map((t) => {
+                const on = t.id === '__all' ? topic === null : topic === t.label;
+                return (
+                  <Pressable
+                    key={t.id}
+                    onPress={() => {
+                      reset();
+                      setTopic(t.id === '__all' || on ? null : t.label);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: on }}
+                    style={[styles.topic, { backgroundColor: on ? c.tint : c.surface, borderColor: on ? c.tint : c.border }]}>
+                    <Text style={[styles.topicText, { color: on ? c.onTint : c.text }]}>
+                      {t.label} <Text style={{ color: on ? c.onTint : c.muted }}>{t.count}</Text>
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
           )}
 
           <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-            <RingGraph
-              size={size}
-              placed={layout.placed}
-              radii={layout.radii}
-              mode={mode}
-              focus={focus}
-              selectedId={selectedId}
-              onSelect={(id) => {
-                setSelectedId(id);
-                setNote(null);
-              }}
-            />
-            <View style={styles.key}>
-              {mode === 'matches' && <KeyItem swatch={<View style={[styles.keyRing, { borderColor: c.success }]} />} label="Top match" />}
-              <KeyItem swatch={<View style={[styles.keyDot, { backgroundColor: c.text }]} />} label="Student" />
-              <KeyItem swatch={<View style={[styles.keyDot, { backgroundColor: c.ai }]} />} label="Recruiter" />
-            </View>
-            {layout.hidden > 0 && (
-              <Text style={[styles.small, { color: c.muted }]}>Showing the closest {layout.placed.length}. Everyone is in the list below.</Text>
-            )}
+            <SpokeGraph size={size} people={featured} selectedId={selectedId} onSelect={setSelectedId} showScore={mode === 'matches'} />
           </View>
 
           {selected ? (
             <PersonCard p={selected} mode={mode} onClose={() => setSelectedId(null)} />
-          ) : topicObj ? (
+          ) : topicObj && mode === 'matches' ? (
             <Card>
-              <Text style={[styles.cardTitle, { color: c.text }]}>{topicObj.label}</Text>
-              <Text style={[styles.body, { color: c.muted }]}>
-                {topicObj.count} {topicObj.count === 1 ? 'person' : 'people'} {mode === 'matches' ? 'here' : 'in your network'} share this with you.
-                They’re connected to you by a line.
+              <Text style={[styles.body, { color: c.text }]}>
+                {topicObj.count} {topicObj.count === 1 ? 'person' : 'people'} here share {topicObj.label} with you.
               </Text>
-              {mode === 'matches' && <Button label={`Find more people into ${topicObj.label}`} variant="secondary" onPress={findMore} loading={expanding} />}
+              <Button label={`Find more people into ${topicObj.label}`} variant="secondary" onPress={findMore} loading={expanding} />
               {note && <Text style={[styles.small, { color: c.muted }]}>{note}</Text>}
             </Card>
           ) : null}
 
-          <SectionTitle>{mode === 'matches' ? 'Everyone, best match first' : 'Your connections'}</SectionTitle>
-          <Card style={{ paddingVertical: 4 }}>
-            {view.people
-              .filter((p) => !topic || p.shared.includes(topic))
-              .map((p, i, arr) => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => setSelectedId(p.id)}
-                  accessibilityRole="button"
-                  style={[styles.row, i < arr.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }]}>
-                  <Avatar name={p.name} size={36} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.rowName, { color: c.text }]}>
-                      {p.name}
-                      {p.top ? <Text style={{ color: c.success }}>  ● top</Text> : null}
+          {pool.length > FEATURED && (
+            <>
+              <SectionTitle>{mode === 'matches' ? `More people you could meet (${rest.length})` : `More connections (${rest.length})`}</SectionTitle>
+              <Card style={{ paddingVertical: 4 }}>
+                {listed.map((p, i) => (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => setSelectedId(p.id)}
+                    accessibilityRole="button"
+                    style={[styles.row, i < listed.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }]}>
+                    <Avatar name={p.name} size={36} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.rowName, { color: c.text }]}>{p.name}</Text>
+                      <Text style={[styles.small, { color: c.muted }]} numberOfLines={1}>
+                        {p.shared.slice(0, 2).join(' · ') || 'Profiles overlap'}
+                      </Text>
+                    </View>
+                    <Text style={[styles.rowRight, { color: c.muted }]}>
+                      {mode === 'network' && p.metAt
+                        ? new Date(p.metAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
+                        : `${Math.round(p.score * 100)}%`}
                     </Text>
-                    <Text style={[styles.small, { color: c.muted }]} numberOfLines={1}>
-                      {p.shared.slice(0, 2).join(' · ') || 'Profiles overlap'}
-                    </Text>
-                  </View>
-                  <Text style={[styles.rowRight, { color: c.muted }]}>
-                    {mode === 'network' && p.metAt
-                      ? new Date(p.metAt).toLocaleDateString([], { month: 'short', day: 'numeric' })
-                      : `${Math.round(p.score * 100)}%`}
-                  </Text>
-                </Pressable>
-              ))}
-          </Card>
+                  </Pressable>
+                ))}
+                {rest.length > LIST_PREVIEW && (
+                  <Pressable onPress={() => setShowAll((s) => !s)} accessibilityRole="button" style={styles.more}>
+                    <Text style={[styles.moreText, { color: c.tint }]}>{showAll ? 'Show less' : `Show all ${rest.length}`}</Text>
+                  </Pressable>
+                )}
+              </Card>
+            </>
+          )}
           {view.synthetic && <Text style={[styles.small, { color: c.muted, textAlign: 'center' }]}>Showing sample people for the demo.</Text>}
         </>
       )}
     </ScrollView>
-  );
-}
-
-function KeyItem({ swatch, label }: { swatch: React.ReactNode; label: string }) {
-  const c = useColors();
-  return (
-    <View style={styles.keyItem}>
-      {swatch}
-      <Text style={[styles.small, { color: c.muted }]}>{label}</Text>
-    </View>
   );
 }
 
@@ -233,7 +217,8 @@ function PersonCard({ p, mode, onClose }: { p: Person; mode: GraphMode; onClose:
           <Text style={[styles.cardTitle, { color: c.text }]}>{p.name}</Text>
           <Text style={[styles.small, { color: c.muted }]}>
             {p.role === 'recruiter' ? 'Recruiter' : 'Student'}
-            {p.openToMeet ? ' · Open to meet now' : ''}
+            {p.top && mode === 'matches' ? ' · top match' : ''}
+            {p.openToMeet ? ' · open to meet now' : ''}
             {mode === 'network' && p.howMet ? ` · met ${p.howMet === 'invite' ? 'by invite' : 'in person'}` : ''}
           </Text>
         </View>
@@ -259,16 +244,11 @@ const styles = StyleSheet.create({
   seg: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   segItem: { flex: 1, minHeight: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: 15, fontWeight: '700' },
-  explain: { fontSize: 15, lineHeight: 21 },
-  label: { fontSize: 13, fontWeight: '600', marginBottom: 8 },
+  h1: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
   chips: { gap: 8, paddingRight: 16 },
   topic: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   topicText: { fontSize: 14, fontWeight: '600' },
-  chartCard: { borderRadius: 18, borderWidth: 1, alignItems: 'center', paddingVertical: 8, gap: 6 },
-  key: { flexDirection: 'row', gap: 16, paddingHorizontal: 12, paddingBottom: 6, flexWrap: 'wrap', justifyContent: 'center' },
-  keyItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  keyRing: { width: 14, height: 14, borderRadius: 7, borderWidth: 2.5 },
-  keyDot: { width: 12, height: 12, borderRadius: 6 },
+  chartCard: { borderRadius: 18, borderWidth: 1, alignItems: 'center', paddingVertical: 4 },
   cardTitle: { fontSize: 19, fontWeight: '800' },
   body: { fontSize: 15, lineHeight: 21 },
   small: { fontSize: 13, lineHeight: 18 },
@@ -278,4 +258,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, minHeight: 56 },
   rowName: { fontSize: 16, fontWeight: '700' },
   rowRight: { fontSize: 15, fontWeight: '600', fontVariant: ['tabular-nums'] },
+  more: { minHeight: 48, alignItems: 'center', justifyContent: 'center' },
+  moreText: { fontSize: 15, fontWeight: '700' },
 });
