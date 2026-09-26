@@ -2,6 +2,17 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 16:00 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR3 live verification (with Adam on Railway)
+**Status:** done
+**What I did:**
+- After a Railway restart the ML service reported `"db": false` (30 s timeouts): Supabase's session pooler (5432) connection cap. Adam switched Railway's DATABASE_URL to the transaction pooler (port 6543; `app/db.py` already disables prepared statements for it) and stopped other servers on the same DB. `/health` -> `{"ok":true,"db":true}` in 0.4 s.
+- Live `GET /dashboard/1`: 80 people, 6 interest clusters (health tech; CS/CE; hardware + C++; math + reinforcement learning + quant research; design + sports analytics; business + fintech), 4 unclustered, 10 gaps.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`; `curl -s https://ml-production-04c0.up.railway.app/dashboard/1`.
+**Next step for whoever continues:** Keep ONE ML server per database (Railway). Local dev servers should use a separate DB or port 6543 too. Sign in on a phone (EXPO_PUBLIC_USE_MOCKS=0) and check the Graph/matches show these people.
+**Known issues / blockers:** Rotate the Supabase secret key and the Anthropic key (both were pasted in chat).
+**Contract changes:** none
+
 ## 2026-09-26 03:32 | adam | Adam
 **Task:** Document where every API key comes from for Alan / Arjun / Railway
 **Status:** done
