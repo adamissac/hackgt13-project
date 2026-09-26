@@ -1,0 +1,15 @@
+{
+  "user_id": "00000000-0000-0000-0000-000000000001",
+  "seeking": "quant research internship",
+  "offering": "RL and time-series projects",
+  "interests": [
+    { "interest_id": 42, "name": "reinforcement learning", "facet": "technical", "weight": 0.91, "source": "github",
+      "evidence": "Built an RL trading agent (repo: rl-trader)", "confirmed": false, "hidden": false },
+    { "interest_id": 17, "name": "time series analysis", "facet": "technical", "weight": 0.78, "source": "resume",
+      "evidence": "Forecasting project in CS 4641", "confirmed": true, "hidden": false },
+    { "interest_id": 7, "name": "rock climbing", "facet": "personal", "weight": 0.55, "source": "manual",
+      "evidence": "\"I love rock climbing\"", "confirmed": true, "hidden": false },
+    { "interest_id": 88, "name": "quantitative finance", "facet": "career", "weight": 0.52, "source": "resume",
+      "evidence": "Seeking: quant research internship", "confirmed": false, "hidden": false }
+  ]
+}

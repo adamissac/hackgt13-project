@@ -1,10 +1,16 @@
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Tabs } from 'expo-router';
+import type { ColorValue } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+
+type IconName = SymbolViewProps['name'];
+
+function icon(name: IconName) {
+  return ({ color }: { color: ColorValue }) => <SymbolView name={name} tintColor={color} size={26} />;
+}
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -19,51 +25,26 @@ export default function TabLayout() {
       }}>
       <Tabs.Screen
         name="index"
+        options={{ title: 'Home', tabBarIcon: icon({ ios: 'house.fill', android: 'home', web: 'home' }) }}
+      />
+      <Tabs.Screen
+        name="nearby"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          title: 'Nearby',
+          tabBarIcon: icon({ ios: 'dot.radiowaves.left.and.right', android: 'wifi_tethering', web: 'wifi_tethering' }),
         }}
       />
       <Tabs.Screen
-        name="two"
-        options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
-          ),
-        }}
+        name="graph"
+        options={{ title: 'Graph', tabBarIcon: icon({ ios: 'point.3.connected.trianglepath.dotted', android: 'hub', web: 'hub' }) }}
+      />
+      <Tabs.Screen
+        name="feed"
+        options={{ title: 'Feed', tabBarIcon: icon({ ios: 'newspaper.fill', android: 'feed', web: 'feed' }) }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{ title: 'Profile', tabBarIcon: icon({ ios: 'person.crop.circle', android: 'person', web: 'person' }) }}
       />
     </Tabs>
   );
