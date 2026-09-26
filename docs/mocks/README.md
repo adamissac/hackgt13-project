@@ -16,6 +16,8 @@ change to `docs/api.md`.
 | handshake.json | POST /handshake |
 | feedback.json | POST /feedback |
 | connections.json | GET /connections |
+| ble_tokens.json | POST /ble/tokens (3 of the 144 tokens) |
+| ble_sightings.json | POST /ble/sightings |
 | invites_create.json | POST /invites |
 | invites_list.json | GET /invites |
 | invites_resolve.json | GET /invites/resolve/{token} |

@@ -23,6 +23,8 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from app.deps import get_user_id  # noqa: F401  (re-exported; the app overrides it)
+
 INVITE_TTL = timedelta(days=7)
 DAILY_LIMIT = 10
 # https link served by the dashboard (works from any camera app), which redirects to
@@ -107,10 +109,6 @@ class MemoryInviteStore:
 
 
 # ---------- dependencies (overridden by the app) ----------
-
-def get_user_id() -> str:
-    raise NotImplementedError("wire Supabase JWT verification (AL1) via app.dependency_overrides")
-
 
 def get_invite_store() -> InviteStore:
     raise NotImplementedError("wire a Supabase-backed InviteStore (AL1) via app.dependency_overrides")

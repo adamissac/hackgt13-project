@@ -125,9 +125,15 @@ Only the caller's own connections. Never return counts of other users' connectio
                      "minutes_talked": 12 } ] }
 ```
 
-## 12. Bluetooth (Saturday)
-- `POST /ble/tokens` -> `{ "tokens": [ { "token": "k3j9x2p1", "valid_from": "...", "valid_to": "..." } ] }`
-- `POST /ble/sightings` <- `{ "event_id": 1, "sightings": [ { "token": "k3j9x2p1", "rssi": -58, "ts": "...", "zone_id": null } ] }`
+## 12. Bluetooth (AK2, Akshar; code in `ml/app/routers/ble.py`)
+- `POST /ble/tokens` (body `{}`) -> `{ "tokens": [ { "token": "k3j9x2p1", "valid_from": "...", "valid_to": "..." } ] }`
+  One token per 10-minute window, from the current window through the next 24 hours (144 tokens). Idempotent:
+  calling again returns the same token for windows already issued. Token = 8 lowercase base32 chars (5 random bytes),
+  advertised as the BLE local name next to the service UUID. The token -> user mapping never leaves the server.
+- `POST /ble/sightings` <- `{ "event_id": 1, "device_model": "iPhone 15", "foreground": true, "sightings": [ { "token": "k3j9x2p1", "rssi": -58, "ts": "...", "zone_id": null } ] }`
+  -> `{ "accepted": 1, "dropped": 0 }`. `device_model` and `foreground` are optional (the observer's own phone).
+  Max 2000 sightings per batch. Dropped silently: unknown tokens, tokens not live at `ts`, the caller's own tokens,
+  `ts` older than 24 h or more than 2 minutes in the future. Raw sightings are deleted after 24 h.
 
 ## 13. Presence / open to chat (nice to have)
 - `POST /presence` <- `{ "building_id": "student_center", "open_to_chat": true }`
