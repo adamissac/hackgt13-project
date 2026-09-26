@@ -22,6 +22,16 @@ export default function NearbyScreen() {
       <Link href="/verify" style={styles.verifyLink}>
         Just talked with someone? Verify with QR
       </Link>
+      {__DEV__ ? (
+        <View style={styles.devLinks}>
+          <Link href="/ble-debug" style={styles.devLink}>
+            BLE hello world
+          </Link>
+          <Link href="/record" style={styles.devLink}>
+            Record session (AK6)
+          </Link>
+        </View>
+      ) : null}
       {error ? (
         <ErrorState message={error} onRetry={() => setScan(true)} />
       ) : !scan ? (
@@ -47,6 +57,8 @@ export default function NearbyScreen() {
 }
 
 const styles = StyleSheet.create({
+  devLinks: { flexDirection: 'row', gap: 16, paddingHorizontal: 16 },
+  devLink: { fontSize: 14, color: '#2f95dc', paddingVertical: 8 },
   verifyLink: { fontSize: 16, fontWeight: '600', color: '#2f95dc', paddingHorizontal: 16, paddingVertical: 12 },
   container: { flex: 1, padding: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 56 },
