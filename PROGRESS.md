@@ -25,6 +25,30 @@
 **Next step for whoever continues:** On Adam's Mac: `npx supabase config push` (y for auth, n for storage) so magic-link redirects to `formalconnect://auth/callback` work, then sign in by email on the phone (AD2). Then add `push_tokens` (owner-only table) via /contract-change for AD10 per REQUESTS.md.
 **Known issues / blockers:** This cloud VM has no Supabase MCP or keys, so live state was not re-queried here; Adam's Claude session verified it via CLI at 01:15. The DB password was pasted in chat: rotate it (Supabase > Project Settings > Database) and update root `.env`.
 **Contract changes:** none
+## 2026-09-26 04:30 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL11 Chatbot
+**Status:** done (tested with a scripted adversarial model; live replies need ANTHROPIC_API_KEY)
+**What I did:**
+- `ml/app/assistant.py`: Sonnet manual tool loop (max 6 turns, strict tool schemas, cached system prompt); the viewer id is bound in Python and no tool takes one. Tools reuse the REST scope rules: search_event_attendees (checked-in event only, Open to Meet only, candidate-pool exclusions, first name/role/shared topics), get_match_profile (matching.relationship), get_connections_activity (my connections' feed, 1-14 days), get_my_profile.
+- `ml/app/routers/assistant.py`: POST /assistant/chat {messages[], event_id?} -> {reply}; 503 when Claude is unreachable. docs/api.md 35 + docs/mocks/assistant_chat.json.
+- Tests (`ml/tests/test_assistant.py`): an adversarial fake model asking for a connection's connections, another event's attendees, and a stranger's profile gets only 'not available' results; no tool output contains connection lists or counts; Open-to-Meet-off and other-event people never surface.
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_assistant.py`
+**Next step for whoever continues:** All Section 13 AL tasks now have code. Remaining for Alan: (1) with real keys, finish AL1 (tunnel URL) and AL2 (tune extraction on the four real profiles), and try the chatbot's adversarial prompts live; (2) when Adam adds a push-token column, add the Expo push sender in `ml/app/social.py::notify`; (3) when Akshar's AK2/AK6 land, retrain with `python scripts/train_encounter.py` and check the real same-table false-positive rate; (4) pitch prep (Sunday): IDF overlap, complementarity, ranker, encounter limitation, every number labeled simulated vs real.
+**Known issues / blockers:** Chatbot quality untested against the live model (no key in the cloud container).
+**Contract changes:** docs/api.md: new 35 POST /assistant/chat (renumbered from 33 on merge with Arjun's 33-34); docs/mocks/assistant_chat.json. No owner currently has the chat screen in Section 13; mention to Adam if there is time.
+
+## 2026-09-26 01:20 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR8 GitHub activity poller + AR7 personal dashboard and feed insights
+**Status:** done (code + tests); live data needs connected GitHub accounts and Supabase
+**What I did:**
+- AR8: `ml/app/github_activity.py`, worker `github_activity` every 10 min (registered via import in app/main.py). Public events (new repo, push, release) with ETags + `/user/repos` pushed_at catch-up for events-API lag, deduped by payload.key, bge-embedded, into feed_items(kind='github'). Tests: `ml/tests/test_github_activity.py`.
+- AR7 API: `GET /me/dashboard` (`ml/app/routers/me_dashboard.py`, api.md 34): total, cumulative growth, how_met, top shared topics (+ talked). Private: only the caller's connections. DB tests: `ml/tests/test_me_dashboard.py`.
+- AR7 pages: dashboard `/me` (hero count, growth line with crosshair, in-person vs invite donut, shared-topic bars) and `/insights` (activity sparkline, by-kind counts, trending topics; uses Alan's /feed/insights). Both take the WebView token via postMessage, mocks otherwise. Components: `dashboard/components/charts.tsx`.
+- Ran the full ML suite against a real local Postgres+pgvector: 106 pass (only failure: Alan's LightGBM test needs `brew install libomp`).
+**How to run/test it:** DB tests locally: `/opt/homebrew/bin/python3.12 -m venv /tmp/pgenv && /tmp/pgenv/bin/pip install pgserver`, start it (`pgserver.get_server(dir).psql("create database fc_test")`), then `cd ml && TEST_DATABASE_URL="postgresql://postgres@/fc_test?host=<dir>" .venv/bin/python -m pytest -q tests`. Dashboard: `cd dashboard && npm run dev` -> /me, /insights.
+**Next step for whoever continues:** Adam: embed `/me` and `/insights` in the app (same postMessage auth as /graph). Then Arjun's remaining: AR9 datasets, AR10 web mentions (stretch). Blocked items unchanged: Supabase keys (seed_synthetic.py), GitHub OAuth app, Vercel deploy.
+**Known issues / blockers:** same as below (credentials).
+**Contract changes:** docs/api.md 34 `GET /me/dashboard` (new, additive).
 
 ## 2026-09-26 05:30 | adam | Claude Code
 **Task:** AD4-AD6 UI redesign + Alan's requests

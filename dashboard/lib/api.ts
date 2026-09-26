@@ -1,5 +1,13 @@
 import { enforceGraphPrivacy } from "./privacy";
-import { isEventMap, isGraphPayload, type EventMap, type GraphMode, type GraphPayload } from "./types";
+import {
+  isEventMap,
+  isFeedInsights,
+  isGraphPayload,
+  isMeDashboard,
+  type EventMap,
+  type GraphMode,
+  type GraphPayload,
+} from "./types";
 
 const API = process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ?? "";
 
@@ -94,3 +102,17 @@ export function anonymizeMap(m: EventMap): EventMap {
     gaps: m.gaps.filter((g) => !small.has(g.clusters[0]) && !small.has(g.clusters[1])),
   };
 }
+
+async function authed<T>(path: string, mock: string, token: string | null, check: (v: unknown) => v is T,
+  signal?: AbortSignal): Promise<{ data: T; source: Source }> {
+  const live = isLive(token);
+  const body = await getJson(live ? `${API}${path}` : mock, live ? token : null, signal);
+  if (!check(body)) throw new Error(`Unexpected ${path.split("?")[0]} response`);
+  return { data: body, source: live ? "live" : "mock" };
+}
+
+export const fetchMeDashboard = (token: string | null, days = 30, signal?: AbortSignal) =>
+  authed(`/me/dashboard?days=${days}`, "/mocks/me_dashboard.json", token, isMeDashboard, signal);
+
+export const fetchFeedInsights = (token: string | null, days = 7, signal?: AbortSignal) =>
+  authed(`/feed/insights?days=${days}`, "/mocks/feed_insights.json", token, isFeedInsights, signal);

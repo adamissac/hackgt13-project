@@ -336,3 +336,11 @@ Private personal dashboard. Only the caller's own connections; nobody else's cou
   "top_topics": [ { "name": "reinforcement learning", "facet": "technical", "connections": 5, "talked": 3 } ] }
 ```
 `connections` = how many of my connections share the topic; `talked` = conversations where I checked it as discussed.
+
+## 35. POST /assistant/chat   owner: Alan (AL11)
+Request `{ "messages": [ { "role": "user", "content": "Who at this event works in quant finance?" } ], "event_id": 1 }`
+(the full conversation so far, last message from the user; the server keeps no chat history)
+Response `{ "reply": "Quinn (recruiter) lists quantitative finance ..." }`. `503 the assistant is unavailable right now` if Claude can't be reached.
+Tools are scoped server-side: Open to Meet attendees of events I'm checked in to, quick profiles of current
+matches/suggestions/connections only, my own connections feed, my own profile. It never reveals anyone's connections,
+connection count, or whether someone declined.
