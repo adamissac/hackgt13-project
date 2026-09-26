@@ -46,6 +46,16 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error;
 }
 
+/** Same email, typed in the app. Works when the phone's mail app will not open the link. */
+export async function verifyEmailCode(email: string, token: string): Promise<void> {
+  const { error } = await supabase.auth.verifyOtp({
+    email: email.trim(),
+    token: token.trim(),
+    type: 'email',
+  });
+  if (error) throw error;
+}
+
 type AuthState = {
   session: Session | null;
   loading: boolean;

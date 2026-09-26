@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
-import { sendMagicLink, signInWithLinkedIn, useAuth } from '@/lib/auth';
+import { sendMagicLink, signInWithLinkedIn, useAuth, verifyEmailCode } from '@/lib/auth';
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
@@ -10,10 +10,11 @@ export default function SignInScreen() {
   const text = useThemeColor({}, 'text');
   const muted = useThemeColor({}, 'muted');
   const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState<'linkedin' | 'email' | null>(null);
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState<'linkedin' | 'email' | 'code' | null>(null);
   const [message, setMessage] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
 
-  const run = async (kind: 'linkedin' | 'email', fn: () => Promise<void>, success?: string) => {
+  const run = async (kind: 'linkedin' | 'email' | 'code', fn: () => Promise<void>, success?: string) => {
     setBusy(kind);
     setMessage(null);
     try {
@@ -27,6 +28,7 @@ export default function SignInScreen() {
   };
 
   const validEmail = /^\S+@\S+\.\S+$/.test(email.trim());
+  const validCode = /^\d{6,10}$/.test(code.trim());
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -58,10 +60,28 @@ export default function SignInScreen() {
         />
         <Pressable
           style={[styles.button, styles.outline, { borderColor: tint, opacity: validEmail ? 1 : 0.5 }]}
-          onPress={() => run('email', () => sendMagicLink(email), 'Check your email and tap the link on this phone.')}
+          onPress={() => run('email', () => sendMagicLink(email), 'Check your email. Open the link on this phone, or type the code below.')}
           disabled={!validEmail || busy !== null}
           accessibilityRole="button">
           {busy === 'email' ? <ActivityIndicator /> : <Text style={[styles.buttonText, { color: tint }]}>Email me a link</Text>}
+        </Pressable>
+        <TextInput
+          style={[styles.input, { color: text, borderColor: '#8886' }]}
+          placeholder="Code from the email"
+          placeholderTextColor="#888"
+          autoCapitalize="none"
+          autoComplete="one-time-code"
+          keyboardType="number-pad"
+          accessibilityLabel="Email sign-in code"
+          value={code}
+          onChangeText={setCode}
+        />
+        <Pressable
+          style={[styles.button, styles.outline, { borderColor: tint, opacity: validEmail && validCode ? 1 : 0.5 }]}
+          onPress={() => run('code', () => verifyEmailCode(email, code))}
+          disabled={!validEmail || !validCode || busy !== null}
+          accessibilityRole="button">
+          {busy === 'code' ? <ActivityIndicator /> : <Text style={[styles.buttonText, { color: tint }]}>Sign in with code</Text>}
         </Pressable>
 
         {message && <Text style={[styles.message, message.kind === 'error' && styles.error]}>{message.text}</Text>}

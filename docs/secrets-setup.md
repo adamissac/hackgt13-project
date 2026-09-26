@@ -35,7 +35,7 @@ Fixed for this project:
 https://mwfzgkikbmnghueolfnw.supabase.co
 ```
 
-Same value goes in `mobile/.env` as `EXPO_PUBLIC_SUPABASE_URL`.
+Same value goes in `mobile/.env` as `EXPO_PUBLIC_SUPABASE_URL`. The phone app also has this address built in, so a blank `mobile/.env` still reaches this project.
 
 ### `SUPABASE_ANON_KEY` (publishable)
 
@@ -44,7 +44,7 @@ Same value goes in `mobile/.env` as `EXPO_PUBLIC_SUPABASE_URL`.
 3. Put it in root `.env` as `SUPABASE_ANON_KEY`.  
 4. Put the **same** value in `mobile/.env` as `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
-Safe to ship inside the app. Still don’t paste it into random public chats if you can avoid it.
+Safe to ship inside the app. `mobile/.env.example` and `mobile/lib/env.ts` already include it, so teammates can sign in without copying a key by hand. Still don’t paste it into random public chats if you can avoid it.
 
 ### `SUPABASE_SERVICE_KEY` (secret — server only)
 

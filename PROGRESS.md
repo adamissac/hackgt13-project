@@ -2,6 +2,17 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 04:40 | adam | Adam
+**Task:** AD2 sign-in for every phone, not only a filled-in mobile/.env
+**Status:** done
+**What I did:**
+- The publishable Supabase URL, anon key, and Railway API address are now the defaults in `mobile/lib/env.ts` and `mobile/.env.example`. A blank `mobile/.env` still signs into the team project.
+- Sign-in accepts the email code in the app (`verifyEmailCode`) when the phone's mail app will not open the magic link.
+**How to run/test it:** Reload Expo Go on `exp://bej2jrm-adamissac-8081.exp.direct`. LinkedIn opens LinkedIn and returns through `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`. Email: send a link, then open it on that phone or type the code.
+**Next step for whoever continues:** If LinkedIn still rejects a teammate, add that LinkedIn account on the developer app (client id `78lllikuxa9uve`, app id `266531181`). The Supabase provider is already enabled.
+**Known issues / blockers:** none in the app. LinkedIn may still limit sign-in to people listed on that developer app.
+**Contract changes:** none
+
 ## 2026-09-26 16:00 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 live verification (with Adam on Railway)
 **Status:** done
