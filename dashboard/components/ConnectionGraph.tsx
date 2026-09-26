@@ -23,7 +23,7 @@ export interface ConnectionGraphProps {
 function radius(n: GraphNode): number {
   if (n.type === "self") return 15;
   if (n.type === "person") return 5 + 9 * Math.max(0, Math.min(1, n.score));
-  return 4.5;
+  return 6;
 }
 
 function firstName(label: string) {
@@ -98,13 +98,15 @@ export default function ConnectionGraph({
     const link = g.d3Force("link");
     link?.distance?.((l: L) => {
       const w = Math.max(0.05, Math.min(1, l.weight ?? 0.5));
-      return l.kind === "interest" ? 22 + 50 * (1 - w) : 40 + 140 * (1 - w);
+      if (l.kind !== "interest") return 70 + 170 * (1 - w);
+      return endId(l.source) === data.self_id ? 95 : 30 + 45 * (1 - w);
     });
-    link?.strength?.((l: L) => (l.kind === "interest" ? 0.5 : 0.35));
+    link?.strength?.((l: L) => (l.kind === "interest" ? (endId(l.source) === data.self_id ? 0.25 : 0.45) : 0.3));
     g.d3Force("charge")?.strength?.((n: N) => (n.type === "topic" ? -60 : n.type === "self" ? -200 : -120));
-    g.d3Force("collide", forceCollide((n: N) => n.r + 4));
+    g.d3Force("collide", forceCollide((n: N) => n.r + (n.type === "topic" ? 14 : 4)));
     g.d3ReheatSimulation();
-  }, [graphData]);
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __fg?: unknown }).__fg = { g, graphData };
+  }, [graphData, data.self_id]);
 
   useEffect(() => {
     onReady?.(wrap.current?.querySelector("canvas") ?? null);
@@ -162,7 +164,8 @@ export default function ConnectionGraph({
           ctx.textBaseline = "middle";
           ctx.fillText(initials(node.label), x, y + node.r * 0.04);
         }
-        const showLabel = selected || node.id === hoverId || node.highlight || scale > 1.9;
+        const focused = selected || node.id === hoverId;
+        const showLabel = focused || node.highlight || scale > 2.2;
         if (showLabel && lit) {
           const top = y + node.r + px(node.highlight || node.open_to_meet ? 9 : 5);
           ctx.textAlign = "center";
@@ -173,10 +176,12 @@ export default function ConnectionGraph({
           ctx.strokeText(firstName(node.label), x, top);
           ctx.fillStyle = palette.ink;
           ctx.fillText(firstName(node.label), x, top);
-          ctx.font = `400 ${labelSize * 0.86}px system-ui, -apple-system, sans-serif`;
-          ctx.strokeText(node.top_topic, x, top + labelSize * 1.15);
-          ctx.fillStyle = palette.inkSecondary;
-          ctx.fillText(node.top_topic, x, top + labelSize * 1.15);
+          if (focused) {
+            ctx.font = `400 ${labelSize * 0.86}px system-ui, -apple-system, sans-serif`;
+            ctx.strokeText(node.top_topic, x, top + labelSize * 1.15);
+            ctx.fillStyle = palette.inkSecondary;
+            ctx.fillText(node.top_topic, x, top + labelSize * 1.15);
+          }
         }
       } else {
         const color = palette.facet[node.facet];
@@ -186,7 +191,7 @@ export default function ConnectionGraph({
         ctx.lineWidth = px(1.5);
         ctx.strokeStyle = palette.surface;
         ctx.stroke();
-        const showLabel = lit && (scale > 0.9 || node.id === selectedId || node.id === hoverId);
+        const showLabel = lit && (scale > 0.45 || node.id === selectedId || node.id === hoverId);
         if (showLabel) {
           ctx.font = `500 ${labelSize * 0.9}px system-ui, -apple-system, sans-serif`;
           ctx.textAlign = "left";
