@@ -126,3 +126,26 @@ export interface EventMap {
 export function isEventMap(v: unknown): v is EventMap {
   return isObj(v) && Array.isArray(v.nodes) && Array.isArray(v.clusters) && Array.isArray(v.edges) && Array.isArray(v.gaps);
 }
+
+// GET /me/dashboard (api.md 34): private to the viewer.
+export interface MeDashboard {
+  total: number;
+  days: number;
+  growth: { date: string; total: number }[];
+  how_met: { in_person: number; invite: number };
+  top_topics: { name: string; facet: Facet; connections: number; talked: number }[];
+}
+export function isMeDashboard(v: unknown): v is MeDashboard {
+  return isObj(v) && typeof v.total === "number" && Array.isArray(v.growth) && isObj(v.how_met) && Array.isArray(v.top_topics);
+}
+
+// GET /feed/insights (api.md 32): aggregate over the viewer's connections.
+export interface FeedInsights {
+  days: number;
+  trending_topics: { name: string; count: number }[];
+  activity: { date: string; count: number }[];
+  by_kind: { github: number; post: number; update: number };
+}
+export function isFeedInsights(v: unknown): v is FeedInsights {
+  return isObj(v) && Array.isArray(v.trending_topics) && Array.isArray(v.activity) && isObj(v.by_kind);
+}
