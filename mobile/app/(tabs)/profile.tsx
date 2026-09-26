@@ -154,8 +154,8 @@ export default function ProfileScreen() {
 
       <SectionTitle>Your network</SectionTitle>
       <Card>
-        <Button label="Your network dashboard" variant="secondary" onPress={() => router.push('/web/network')} />
-        <Button label="Feed insights" variant="secondary" onPress={() => router.push('/web/insights')} />
+        <Button label="Your network" variant="secondary" onPress={() => router.push('/network')} />
+        <Button label="Feed insights" variant="secondary" onPress={() => router.push('/insights')} />
       </Card>
 
       <SectionTitle>Account</SectionTitle>
