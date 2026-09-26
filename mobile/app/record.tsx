@@ -17,6 +17,7 @@ import {
   type Recording,
   type RecordingLabel,
 } from '@/features/ble/recording';
+import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from '@/features/ble/native';
 import { requestScanPermission, startScan, stopScan } from '@/features/ble/scanner';
 
 // AK6 debug screen: record a labeled Bluetooth session on each phone of a pair, then share the JSON
@@ -58,6 +59,10 @@ export default function RecordScreen() {
 
   const start = async () => {
     setError(null);
+    if (!bleAvailable()) {
+      setError(BLE_UNAVAILABLE_MESSAGE);
+      return;
+    }
     const [scanOk, advOk] = await Promise.all([requestScanPermission(), requestAdvertisePermission()]);
     if (!scanOk || !advOk) {
       setError('Bluetooth permission was denied. Allow it in Settings and try again.');

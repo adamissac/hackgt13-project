@@ -14,6 +14,7 @@ import {
   startScan,
   stopScan,
 } from '@/features/ble/scanner';
+import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from '@/features/ble/native';
 
 // AK1: Bluetooth hello world. Done when two physical phones running this
 // screen see each other's localName and RSSI. See PROGRESS.md and
@@ -29,6 +30,10 @@ export default function BleHelloWorld() {
   }, []);
 
   const start = useCallback(async () => {
+    if (!bleAvailable()) {
+      setStatus(BLE_UNAVAILABLE_MESSAGE);
+      return;
+    }
     setStatus('Requesting permissions...');
     const [scanOk, advertiseOk] = await Promise.all([
       requestScanPermission(),

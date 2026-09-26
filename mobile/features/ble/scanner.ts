@@ -1,9 +1,7 @@
 import { PermissionsAndroid, Platform } from 'react-native';
-import { BleManager, type Device } from 'react-native-ble-plx';
 
 import { BLE_SERVICE_UUID } from './constants';
-
-export const bleManager = new BleManager();
+import { BLE_UNAVAILABLE_MESSAGE, getBleManager } from './native';
 
 export async function requestScanPermission(): Promise<boolean> {
   if (Platform.OS !== 'android') {
@@ -11,9 +9,7 @@ export async function requestScanPermission(): Promise<boolean> {
     return true;
   }
   if (Number(Platform.Version) < 31) {
-    const granted = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
-    );
+    const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
     return granted === PermissionsAndroid.RESULTS.GRANTED;
   }
   const granted = await PermissionsAndroid.requestMultiple([
@@ -33,10 +29,15 @@ export type DiscoveredPeer = {
   lastSeenAt: number;
 };
 
-export function startScan(onPeerSeen: (peer: DiscoveredPeer) => void): void {
-  bleManager.startDeviceScan([BLE_SERVICE_UUID], { allowDuplicates: true }, (error, device: Device | null) => {
+/** One long-running scan filtered by our service UUID (Android throttles >5 scan starts per 30 s,
+ *  so never restart this in a loop). Throws when Bluetooth isn't in this build. */
+export function startScan(onPeerSeen: (peer: DiscoveredPeer) => void, onError?: (message: string) => void): void {
+  const manager = getBleManager();
+  if (!manager) throw new Error(BLE_UNAVAILABLE_MESSAGE);
+  manager.startDeviceScan([BLE_SERVICE_UUID], { allowDuplicates: true }, (error, device) => {
     if (error) {
       console.warn('[ble] scan error', error);
+      onError?.(error.message);
       return;
     }
     if (!device) return;
@@ -50,5 +51,5 @@ export function startScan(onPeerSeen: (peer: DiscoveredPeer) => void): void {
 }
 
 export function stopScan(): void {
-  bleManager.stopDeviceScan();
+  getBleManager()?.stopDeviceScan();
 }
