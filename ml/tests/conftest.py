@@ -18,6 +18,9 @@ REPO = ML_DIR.parent
 sys.path.insert(0, str(ML_DIR))
 
 TEST_SECRET = "test-jwt-secret-at-least-32-bytes-long!!"
+os.environ["FC_NO_DOTENV"] = "1"   # a developer's real .env must never leak into tests
+for _k in ("SUPABASE_SERVICE_KEY", "ANTHROPIC_API_KEY", "QUIET_HOURS", "GITHUB_CLIENT_ID", "GITHUB_CLIENT_SECRET"):
+    os.environ.pop(_k, None)
 os.environ.update({
     "SUPABASE_JWT_SECRET": TEST_SECRET,
     "SUPABASE_URL": "https://example.supabase.co",

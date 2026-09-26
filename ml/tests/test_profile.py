@@ -180,7 +180,7 @@ def test_resume_upload(dbclient, db, llm, monkeypatch):
     assert interests(dbclient, uid)["interests"][0]["source"] == "resume"
     r = dbclient.post("/profile/ingest", headers=auth(uid), data={"source": "resume"},
                       files={"file": ("x.pdf", b"not a pdf", "application/pdf")})
-    assert r.status_code == 400 and r.json() == {"error": "file must be a PDF"}
+    assert r.status_code == 400 and r.json() == {"error": "file must be a PDF or a Word (.docx) document"}
 
 
 def test_resume_uses_sonnet_and_bulk_uses_haiku():

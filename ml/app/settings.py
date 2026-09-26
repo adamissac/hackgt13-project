@@ -6,7 +6,9 @@ so /health and the test suite run without them.
 import os
 from dataclasses import dataclass, field
 
-try:  # optional: load ml/.env or the repo-root .env for local runs
+try:  # optional: load ml/.env or the repo-root .env for local runs (never in tests: FC_NO_DOTENV=1)
+    if os.getenv("FC_NO_DOTENV") == "1":
+        raise ImportError("dotenv disabled")
     from dotenv import load_dotenv
 
     _here = os.path.dirname(os.path.abspath(__file__))

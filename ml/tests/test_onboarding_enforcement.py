@@ -76,15 +76,21 @@ def test_every_provider_signup_lands_in_onboarding(db, provider):
     body = _sql()
     fn = "create or replace function public.on_create_account()" + \
          body.split("create or replace function public.on_create_account()")[-1].split("$$;")[0] + "$$;"
-    with db.conn() as c:
-        c.execute("alter table auth.users add column if not exists raw_user_meta_data jsonb, "
-                  "add column if not exists raw_app_meta_data jsonb")
-        c.execute(fn)
-        c.execute("drop trigger if exists on_auth_user_created on auth.users")
-        c.execute("create trigger on_auth_user_created after insert on auth.users "
-                  "for each row execute function public.on_create_account()")
-        uid = str(uuid.uuid4())
-        c.execute("insert into auth.users (id, raw_user_meta_data, raw_app_meta_data) values (%s, %s, %s)",
-                  (uid, '{"name": "New Person"}', f'{{"provider": "{provider}"}}'))
-    row = db.fetchone("select name, onboarding_status from profiles where id = %s", (uid,))
+    uid = str(uuid.uuid4())
+    try:
+        with db.conn() as c:
+            c.execute("alter table auth.users add column if not exists raw_user_meta_data jsonb, "
+                      "add column if not exists raw_app_meta_data jsonb")
+            c.execute(fn)
+            c.execute("drop trigger if exists on_auth_user_created on auth.users")
+            c.execute("create trigger on_auth_user_created after insert on auth.users "
+                      "for each row execute function public.on_create_account()")
+            c.execute("insert into auth.users (id, raw_user_meta_data, raw_app_meta_data) values (%s, %s, %s)",
+                      (uid, '{"name": "New Person"}', f'{{"provider": "{provider}"}}'))
+        row = db.fetchone("select name, onboarding_status from profiles where id = %s", (uid,))
+    finally:
+        # The test DB is shared by the whole session: other tests create profiles themselves, so the
+        # trigger must not outlive this test.
+        with db.conn() as c:
+            c.execute("drop trigger if exists on_auth_user_created on auth.users")
     assert row == {"name": "New Person", "onboarding_status": "pending"}

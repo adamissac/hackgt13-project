@@ -62,9 +62,9 @@ TOOLS = [
      "input_schema": {"type": "object", "additionalProperties": False, "required": ["user_id"],
                       "properties": {"user_id": {"type": "string"}}}},
     {"name": "search_event_attendees",
-     "description": "Find people at an event the user is checked in to whose interests match a topic "
-                    "(semantic match, e.g. 'RAG' finds retrieval-augmented generation). Returns user_id, first name, "
-                    "role, matching topics, topics shared with the user, and whether they're Open to Meet.",
+     "description": "Find Open to Meet attendees at an event the user is checked in to whose interests match a "
+                    "topic (semantic match, e.g. 'RAG' finds retrieval-augmented generation). Returns user_id, first "
+                    "name, role, matching topics, and topics shared with the user.",
      "strict": True,
      "input_schema": {"type": "object", "additionalProperties": False, "required": ["event_id", "topic"],
                       "properties": {"event_id": {"type": "integer"},
@@ -103,6 +103,8 @@ class Tools:
         me = m.people[self.viewer]
         out = []
         for r in ranked:
+            if r["id"] not in open_ids:  # privacy rule (tests/test_assistant.py): search only Open to Meet attendees
+                continue
             p = m.people[r["id"]]
             hits = [m.index.names[i] for i in p["interests"]
                     if topic.lower() in m.index.names[i] or float(m.index.vecs[i] @ q) >= TOPIC_SIM]
@@ -110,7 +112,6 @@ class Tools:
                 continue
             shared = [s["name"] for s in scoring.shared_interests(me, p, m.index, 5)]
             out.append({"user_id": p["id"], "first_name": (p.get("name") or "").split(" ")[0], "role": p.get("role"),
-                        "match_percent": round(100 * r["score"]), "open_to_meet": p["id"] in open_ids,
                         "matching_topics": hits[:5], "shared_topics_with_user": shared})
             if len(out) >= 8:
                 break

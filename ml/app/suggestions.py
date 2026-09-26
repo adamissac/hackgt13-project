@@ -30,10 +30,13 @@ EXPIRES_MIN = 30
 
 
 def quiet_now(now: dt.datetime | None = None) -> bool:
-    spec = os.getenv("QUIET_HOURS", "")
-    if not spec:
+    # Tolerant: a copied .env.example can leave a comment as the value ("QUIET_HOURS=  # e.g. 23-8").
+    # Anything that isn't "H-H" means "never quiet" instead of crashing the suggestion worker.
+    import re
+    m = re.fullmatch(r"\s*(\d{1,2})\s*-\s*(\d{1,2})\s*", os.getenv("QUIET_HOURS", "") or "")
+    if not m:
         return False
-    start, end = (int(x) for x in spec.split("-"))
+    start, end = int(m.group(1)), int(m.group(2))
     h = (now or dt.datetime.now()).hour
     return (start <= h or h < end) if start > end else (start <= h < end)
 

@@ -89,11 +89,12 @@ async def ingest(request: Request, background: BackgroundTasks, user: User = Dep
                 text = pdf_to_text(data)
             except ApiError:
                 text = ""
-            if len(text) < 200:  # image-only / scanned PDF: let Claude read the pages
+            if len(text) < 200:  # little or no text layer (scanned / image-only): let Claude read the pages
                 try:
-                    text = resume_structure.pdf_text_via_llm(data)
+                    text = resume_structure.pdf_text_via_llm(data) or text
                 except Exception:
-                    log.exception("scanned PDF transcription failed")
+                    log.warning("scanned PDF transcription unavailable; using the PDF's own text (%d chars)", len(text))
+                if not text:
                     raise ApiError(400, "couldn't read that PDF. Try exporting it again as a text PDF, or upload a .docx")
         elif resume_structure.is_docx(data, filename):
             mime = resume_structure.DOCX_MIME
