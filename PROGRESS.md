@@ -2,6 +2,19 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 06:50 | alan | Claude Code (Opus 5)
+**Task:** AL1 finish — GitHub OAuth wired on a second laptop; ML service running from Alan's Mac
+**Status:** in progress (OAuth verified; `/health` still `db:false` until DATABASE_URL lands)
+**What I did:**
+- Stood the ML service up on Alan's Mac from scratch: `uv` + a fetched Python 3.12 (`ml/.venv`), `cloudflared` and Node 22.23.3 into `~/.local/bin` (no Homebrew, no sudo). `mobile/` deps installed, `npx tsc --noEmit` clean.
+- GitHub OAuth app credentials into the root `.env`; tunnel run **standalone** so uvicorn can restart without changing the public URL. Verified callback URL / client_id / `read:user` scope / state signing / Fernet token round-trip all pass against the live config.
+- Fixed a landmine in `.env.example`: python-dotenv returns a trailing `# comment` as the VALUE when a key is left empty. `SUPABASE_JWT_SECRET=` (blank = "use JWKS") arrived as comment text, so the service would have tried HS256 with garbage and rejected every login; `CORS_ORIGINS` and `MATCH_MODEL` broke the same way. Comments now sit on their own line. Same 23 keys, none added or renamed.
+- LightGBM on macOS without Homebrew fails on `@rpath/libomp.dylib`; symlinked the copy scikit-learn already ships. `ml` suite now 68 passed, 105 skipped (skips are the DB tests).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (note: `.venv` is uv's 3.12, not `python3 -m venv` — the Mac's system python is 3.14 and numba has no wheels for it). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`, tunnel separately: `cloudflared tunnel --url http://localhost:8000`. `curl -s localhost:8000/health`.
+**Next step for whoever continues:** Put `DATABASE_URL` (Supabase session pooler, 5432), `SUPABASE_SERVICE_KEY`, and `ANTHROPIC_API_KEY` in the root `.env`, restart uvicorn only, confirm `/health` shows `"db":true`, then test Profile -> Manage sources -> Connect GitHub on a phone. Without the DB the callback finishes consent and *then* fails writing `linked_accounts`, which looks like an OAuth error but is not.
+**Known issues / blockers:** The trycloudflare hostname dies with its process, and the GitHub Redirect URI is pinned to it — `docs/deploy.md` (Railway) is the stable option for demo day. An older server on `offset-suffered-prospect-issues.trycloudflare.com` is still live on an unidentified machine; its Redirect URI is still registered and should be deleted once that host is confirmed dead, since trycloudflare names get recycled. `mobile/.env` still needs the Expo Supabase keys before a phone can sign in.
+**Contract changes:** none (`.env.example` reformatted only — no variable added, removed, or renamed)
+
 ## 2026-09-26 02:37 | adam | Cursor (Grok 4.7)
 **Task:** AD11 Feed screen and post composer, plus the assistant screen
 **Status:** done in mock mode
@@ -73,7 +86,6 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** On two signed-in phones, scan QR (`mobile/app/verify.tsx`), both finish the checklist, and confirm one “no” leaves no trace on the other phone. Then send the follow-up from `mobile/app/chat/[id].tsx`.
 **Known issues / blockers:** Live Supabase chat Realtime (AD7) and this checklist are still untested on phones.
 **Contract changes:** none (mock `connections.json` now includes `how_met` and `headline`, already in api.md 11)
-
 ## 2026-09-26 02:11 | adam | Cursor (Grok 4.7)
 **Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
 **Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)
