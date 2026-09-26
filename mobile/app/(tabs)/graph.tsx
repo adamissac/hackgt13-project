@@ -155,7 +155,7 @@ export default function GraphScreen() {
               }}
             />
             <View style={styles.key}>
-              <KeyItem swatch={<View style={[styles.keyRing, { borderColor: c.success }]} />} label={mode === 'matches' ? 'Top match' : 'Top connection'} />
+              {mode === 'matches' && <KeyItem swatch={<View style={[styles.keyRing, { borderColor: c.success }]} />} label="Top match" />}
               <KeyItem swatch={<View style={[styles.keyDot, { backgroundColor: c.text }]} />} label="Student" />
               <KeyItem swatch={<View style={[styles.keyDot, { backgroundColor: c.ai }]} />} label="Recruiter" />
             </View>
@@ -248,7 +248,7 @@ function PersonCard({ p, mode, onClose }: { p: Person; mode: GraphMode; onClose:
           <Chip key={t} label={t} tone="tint" />
         ))}
       </View>
-      {mode === 'matches' && <Button label="See profile and conversation starters" onPress={() => router.push(`/match/${p.userId}`)} />}
+      {mode === 'matches' && <Button label="See profile + icebreakers" onPress={() => router.push(`/match/${p.userId}`)} />}
     </Card>
   );
 }

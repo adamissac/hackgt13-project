@@ -2,42 +2,6 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
-## 2026-09-26 05:50 | adam | Cursor cloud agent
-**Task:** Infra: one-command Expo start
-**Status:** done
-**What I did:**
-- Added `scripts/start-app.sh` so Expo can be started from any folder (Adam hit `ConfigError` running `npx expo start` from `~`).
-- Script finds the repo (`git rev-parse --show-toplevel` from the script dir, or walks up), `cd`s to `mobile`, copies `mobile/.env.example` → `mobile/.env` if missing and tells him to fill it, warns if `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_API_BASE_URL` is empty, `npm install`s only when `node_modules` is missing, then `npx expo start --go --lan --clear`.
-- Documented the command on the AGENTS.md mobile run-and-test line.
-**How to run/test it:** From any folder: `<this-repo>/scripts/start-app.sh`. Syntax check: `bash -n scripts/start-app.sh`.
-**Next step for whoever continues:** Adam: on his Mac run the full path to this repo's `scripts/start-app.sh` (often `~/hackgt13-project/scripts/start-app.sh`). Open Expo Go and scan the QR. Do not run `npx expo start` from `$HOME`.
-**Known issues / blockers:** Expo Go cannot do Bluetooth (needs a dev build). If `mobile/.env` is new, fill the Supabase publishable values or keep `EXPO_PUBLIC_USE_MOCKS=1`.
-**Contract changes:** none
-
-## 2026-09-26 05:45 | adam | Cursor cloud agent
-**Task:** Infra: Railway deploy for ml + auto-update mobile/.env
-**Status:** done
-**What I did:**
-- Added `ml/Dockerfile` (Python 3.12-slim, CPU torch, pre-bakes `BAAI/bge-small-en-v1.5`, uvicorn on `$PORT`), `ml/.dockerignore`, and `ml/railway.json` (Dockerfile builder, `/health` check, 300s timeout).
-- Wrote `docs/deploy.md` (plain Railway click-by-click for Adam) and extended AGENTS.md ml run/deploy commands.
-- `scripts/start-ml.sh` + `scripts/set-mobile-api-url.py` now set `EXPO_PUBLIC_API_BASE_URL` / `EXPO_PUBLIC_USE_MOCKS=0` in `mobile/.env` when cloudflared prints a URL (macOS-safe Python rewrite).
-**How to run/test it:** `python3 scripts/set-mobile-api-url.py https://example.trycloudflare.com /tmp/test.env` (temp file). Local ML: `./scripts/start-ml.sh`. Railway: follow `docs/deploy.md`. Docker smoke (laptop): `docker build -t fc-ml ml && docker run --rm -p 8000:8000 -e DATABASE_URL=postgresql://invalid fc-ml` then `curl localhost:8000/health` (not run here: Docker socket permission denied in cloud VM).
-**Next step for whoever continues:** Adam completes Railway deploy per `docs/deploy.md`, posts the permanent URL in chat, and sets GitHub OAuth callback + `ML_API_URL`. Teammates set `EXPO_PUBLIC_API_BASE_URL` in `mobile/.env`.
-**Known issues / blockers:** Cloud agent could not `docker build` (permission denied on `/var/run/docker.sock`). Trained pickles under `ml/data/` are not in the image; encounter classifier retrains at runtime, ranker uses V1 unless `MATCH_MODEL=lr` and a pickle is added later.
-**Contract changes:** none
-
-## 2026-09-26 05:30 | adam | Cursor cloud agent
-**Task:** Team process: no team lead
-**Status:** done
-**What I did:**
-- Adam is not a team lead. Removed lead/architect/referee/approver wording: AGENTS.md (new "There is no team lead" line, owners table role now "full-stack", conflict and contract-change rules), CLAUDE.md, `adam.md` + `prompts/adam.md`, the "Ask <owner> only for" lines in all alan/arjun/akshar briefs (root and `prompts/`), `/next-task` and `/contract-change` skills, REQUESTS.md header, and the role label in `.claude/hooks/session_context.py`.
-- New rule for everyone: decide within your own area without asking Adam or anyone. A contract change affecting another owner: make the smallest additive change yourself, record it under Contract changes, and add a `- [ ] (from <you>)` item in that owner's REQUESTS.md section. Merge conflicts: whoever hits the conflict resolves it (keep both sides).
-- Not changed: MASTER_SPEC.md Section 13 still says "Adam (lead full-stack, architect)" (spec content, left as is); lines about asking Adam for the team kit files (physical file handoff).
-**How to run/test it:** `rg -n -i "architect|referee|ask adam" --glob '!MASTER_SPEC.md' --glob '!PROGRESS.md'` shows only the team-kit handoff lines.
-**Next step for whoever continues:** Nothing for this task. If the team wants the spec aligned too, change "Adam (lead full-stack, architect)" to "Adam (full-stack)" in MASTER_SPEC.md Section 13.
-**Known issues / blockers:** none
-**Contract changes:** none
-
 ## 2026-09-26 13:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Tap to verify ("hold your phones together"), extends AK3 verification
@@ -76,6 +40,19 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Known issues / blockers:** Kotlin never compiled locally. iOS can't scan in the background (platform limit, spec 7.2), so the pitch line is "at least one phone foregrounded". Cross-folder: Adam's `app/(tabs)/nearby.tsx` (card added).
 
+**Contract changes:** none
+
+## 2026-09-26 11:30 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR4/AR5/AR7 moved native into the app (Arjun's call: no WebView), clarity pass
+**Status:** done (mock data verified in Expo web; iOS bundle builds)
+**What I did:**
+- Graph tab (`mobile/app/(tabs)/graph.tsx`, `mobile/features/graph/{model.ts,RingGraph.tsx}`): native react-native-svg. You in the center, up to 20 people on 3 labeled rings (inner = best match), green ring = top match only, topic chips (your strongest interests first) that highlight + draw lines to people who share them, "Find more people into X" (/graph/expand), tap a person -> card with a plain "You both have X, Y and Z in common." + link to /match/[id], full list under the chart. My network mode = same view of your connections.
+- `mobile/app/network.tsx` (Profile -> Your network, /me/dashboard) and `mobile/app/insights.tsx` (Profile -> Feed insights, /feed/insights): big number + one sentence, then simple bars.
+- api client: `api.graph`, `api.graphExpand`, `api.meDashboard`, `api.feedInsights` (+ mocks from docs/mocks). Removed react-native-webview and the WebView screens.
+- The web dashboard (Vercel) stays for the organizer big-screen map `/map`; its /graph, /me, /insights pages are no longer used by the app.
+**How to run/test it:** `cd mobile && npm install && npx expo start` (Expo Go) -> Graph tab, Profile -> Your network / Feed insights. Quick look without a phone: `cd mobile && EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, "Skip sign-in (mock mode)". Checks: `npx tsc --noEmit`, `npx expo export --platform ios`.
+**Next step for whoever continues:** Point the app at the live ML server (EXPO_PUBLIC_USE_MOCKS=0, EXPO_PUBLIC_API_BASE_URL) and seed synthetic attendees so the graph shows real people.
+**Known issues / blockers:** Supabase keys still needed for seeding (see older entries).
 **Contract changes:** none
 
 ## 2026-09-26 11:30 | akshar | Claude Code (Opus 5.5)
@@ -153,6 +130,29 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Supabase keys + GitHub OAuth app still needed for real data (see older entries).
 **Contract changes:** none
 
+## 2026-09-26 05:50 | adam | Cursor cloud agent
+**Task:** Infra: one-command Expo start
+**Status:** done
+**What I did:**
+- Added `scripts/start-app.sh` so Expo can be started from any folder (Adam hit `ConfigError` running `npx expo start` from `~`).
+- Script finds the repo (`git rev-parse --show-toplevel` from the script dir, or walks up), `cd`s to `mobile`, copies `mobile/.env.example` → `mobile/.env` if missing and tells him to fill it, warns if `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_API_BASE_URL` is empty, `npm install`s only when `node_modules` is missing, then `npx expo start --go --lan --clear`.
+- Documented the command on the AGENTS.md mobile run-and-test line.
+**How to run/test it:** From any folder: `<this-repo>/scripts/start-app.sh`. Syntax check: `bash -n scripts/start-app.sh`.
+**Next step for whoever continues:** Adam: on his Mac run the full path to this repo's `scripts/start-app.sh` (often `~/hackgt13-project/scripts/start-app.sh`). Open Expo Go and scan the QR. Do not run `npx expo start` from `$HOME`.
+**Known issues / blockers:** Expo Go cannot do Bluetooth (needs a dev build). If `mobile/.env` is new, fill the Supabase publishable values or keep `EXPO_PUBLIC_USE_MOCKS=1`.
+**Contract changes:** none
+
+## 2026-09-26 05:45 | adam | Cursor cloud agent
+**Task:** Infra: Railway deploy for ml + auto-update mobile/.env
+**Status:** done
+**What I did:**
+- Added `ml/Dockerfile` (Python 3.12-slim, CPU torch, pre-bakes `BAAI/bge-small-en-v1.5`, uvicorn on `$PORT`), `ml/.dockerignore`, and `ml/railway.json` (Dockerfile builder, `/health` check, 300s timeout).
+- Wrote `docs/deploy.md` (plain Railway click-by-click for Adam) and extended AGENTS.md ml run/deploy commands.
+- `scripts/start-ml.sh` + `scripts/set-mobile-api-url.py` now set `EXPO_PUBLIC_API_BASE_URL` / `EXPO_PUBLIC_USE_MOCKS=0` in `mobile/.env` when cloudflared prints a URL (macOS-safe Python rewrite).
+**How to run/test it:** `python3 scripts/set-mobile-api-url.py https://example.trycloudflare.com /tmp/test.env` (temp file). Local ML: `./scripts/start-ml.sh`. Railway: follow `docs/deploy.md`. Docker smoke (laptop): `docker build -t fc-ml ml && docker run --rm -p 8000:8000 -e DATABASE_URL=postgresql://invalid fc-ml` then `curl localhost:8000/health` (not run here: Docker socket permission denied in cloud VM).
+**Next step for whoever continues:** Adam completes Railway deploy per `docs/deploy.md`, posts the permanent URL in chat, and sets GitHub OAuth callback + `ML_API_URL`. Teammates set `EXPO_PUBLIC_API_BASE_URL` in `mobile/.env`.
+**Known issues / blockers:** Cloud agent could not `docker build` (permission denied on `/var/run/docker.sock`). Trained pickles under `ml/data/` are not in the image; encounter classifier retrains at runtime, ranker uses V1 unless `MATCH_MODEL=lr` and a pickle is added later.
+
 ## 2026-09-26 05:40 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK6 Labeled Bluetooth recordings
@@ -170,6 +170,18 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Known issues / blockers:** Untested on hardware. Uses the AK1 per-launch local name as the peer ID (fine for recordings; AK2 swaps in rotating tokens). No keep-awake yet: keep the screen on while recording.
 
+**Contract changes:** none
+
+## 2026-09-26 05:30 | adam | Cursor cloud agent
+**Task:** Team process: no team lead
+**Status:** done
+**What I did:**
+- Adam is not a team lead. Removed lead/architect/referee/approver wording: AGENTS.md (new "There is no team lead" line, owners table role now "full-stack", conflict and contract-change rules), CLAUDE.md, `adam.md` + `prompts/adam.md`, the "Ask <owner> only for" lines in all alan/arjun/akshar briefs (root and `prompts/`), `/next-task` and `/contract-change` skills, REQUESTS.md header, and the role label in `.claude/hooks/session_context.py`.
+- New rule for everyone: decide within your own area without asking Adam or anyone. A contract change affecting another owner: make the smallest additive change yourself, record it under Contract changes, and add a `- [ ] (from <you>)` item in that owner's REQUESTS.md section. Merge conflicts: whoever hits the conflict resolves it (keep both sides).
+- Not changed: MASTER_SPEC.md Section 13 still says "Adam (lead full-stack, architect)" (spec content, left as is); lines about asking Adam for the team kit files (physical file handoff).
+**How to run/test it:** `rg -n -i "architect|referee|ask adam" --glob '!MASTER_SPEC.md' --glob '!PROGRESS.md'` shows only the team-kit handoff lines.
+**Next step for whoever continues:** Nothing for this task. If the team wants the spec aligned too, change "Adam (lead full-stack, architect)" to "Adam (full-stack)" in MASTER_SPEC.md Section 13.
+**Known issues / blockers:** none
 **Contract changes:** none
 
 ## 2026-09-26 05:30 | adam | Claude Code

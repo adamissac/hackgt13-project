@@ -41,7 +41,7 @@ export default function InsightsScreen() {
         <Text style={[styles.body, { color: c.muted }]}>
           {total === 0
             ? 'Quiet so far. Updates appear when your connections post or push code to GitHub.'
-            : `${d.by_kind.github} from GitHub, ${d.by_kind.post} posts, ${d.by_kind.update} updates.${busiest.count ? ` Busiest day: ${dayName(busiest.date)}.` : ''}`}
+            : `${d.by_kind.github} from GitHub, ${plural(d.by_kind.post, 'post')}, ${plural(d.by_kind.update, 'status update')}.${busiest.count ? ` Busiest day: ${dayName(busiest.date)}.` : ''}`}
         </Text>
       </Card>
 
@@ -82,6 +82,7 @@ export default function InsightsScreen() {
   );
 }
 
+const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`;
 const dayName = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString([], { weekday: 'long' });
 const dayShort = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString([], { weekday: 'narrow' });
 
