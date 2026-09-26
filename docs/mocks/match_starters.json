@@ -1,0 +1,2 @@
+{ "why": "You both build trading models with reinforcement learning.",
+  "openers": ["Ask how they backtest their RL agent.", "Compare notes on reward design for trading."] }
