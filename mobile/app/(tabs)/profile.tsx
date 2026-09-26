@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'expo-router';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
@@ -38,6 +39,11 @@ export default function ProfileScreen() {
         </Pressable>
       )}
 
+      {/* AK4 (Akshar): private invite link and QR for people you already know. */}
+      <Link href="/invites" style={styles.inviteLink}>
+        Invite someone you know
+      </Link>
+
       <Text style={styles.section}>Your interests</Text>
       {state.status === 'loading' && <Loading label="Loading your interests…" />}
       {state.status === 'error' && <ErrorState message={state.message} onRetry={reload} />}
@@ -71,4 +77,5 @@ const styles = StyleSheet.create({
   muted: { fontSize: 14, opacity: 0.65 },
   signOut: { minHeight: 48, justifyContent: 'center' },
   signOutText: { fontSize: 16, color: '#d33', fontWeight: '600' },
+  inviteLink: { fontSize: 16, fontWeight: '600', color: '#2f95dc', paddingVertical: 12 },
 });
