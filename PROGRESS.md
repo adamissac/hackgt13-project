@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 10:05 | alan | Claude Code (Opus 5)
+**Task:** Verify Adam's Railway redeploy; record two findings that were only living in a chat window
+**Status:** redeploy confirmed good; one open question on Railway, one gap in push
+**What I did:**
+- **Railway redeploy verified.** `/health` `{"ok":true,"db":true}`; cold `/dashboard/1` **6.0 s** then 0.4 s warm (Akshar measured 96 s before `2ce6860`), 80 attendees present. Route parity with local on `/me/accounts`, `/connect/github/start`, `/assistant/chat`, `/suggestions`, `/conversations/pending` (401/405 on both), so the deployed build is current. Akshar's demo-blocker is cleared.
+- **Open question — Railway and a laptop cluster the same 80 people differently.** local `[20,20,12,15,8,5]` (6 clusters) vs Railway `[65,14,1]` (3, one 65-person blob). Both deterministic over 3 requests each, so not randomness. Ruled out: clustering params are not env-tunable (only `EMBED_MODEL`/`EMBED_DEVICE`/LLM ids are), `ml/Dockerfile` bakes bge-small in with `HF_HUB_OFFLINE=1`, and route parity rules out a stale build. **Two diagnostics for whoever has Railway access:** grep the deploy logs for `[embed] sentence-transformers unavailable` (that fallback is the hashed n-gram embedder — `ml/ml/embed.py` calls it "fine for testing plumbing, NOT for demo", and it would explain the blob), and confirm `EMBED_MODEL` is not overridden in Railway variables. If both are clean, the likely remainder is float differences between torch builds amplified by UMAP/HDBSCAN. Matters because the organizer map is a headline demo visual.
+- **Push notifications are half-built and will not work in the demo.** Server side is done (`ml/app/push.py` worker every 5 s, `push_tokens` migrated), but the client never registers: `expo-notifications` is absent from `mobile/package.json` and nothing under `mobile/app|lib|features` calls `getExpoPushTokenAsync`, so the worker has no tokens to send to. Finishing it is client work plus a dev-client rebuild, and Android standalone builds would additionally need Firebase/FCM credentials in EAS (`eas.json` builds Android APKs). Firebase is not used anywhere else and is not needed for GitHub connect.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Compare clustering across hosts: `curl -s <host>/dashboard/1 | python3 -c "import json,sys;d=json.load(sys.stdin);print([c['size'] for c in d['clusters']])"`.
+**Next step for whoever continues:** Complete one GitHub connect on a phone against Railway (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Still the only unproven path; failures come back on the deep link as `reason=oauth` (state/exchange) or `reason=denied`.
+**Known issues / blockers:** The clustering divergence above. `dashboard/.env.local` points at `localhost:8000`, which is what produces the nicer 6-cluster map — decide deliberately whether to demo the dashboard off the laptop (better visual, laptop dependency) or off Railway. GitHub client secret and the Supabase DB password were pasted into a chat transcript; rotate after the hackathon, coordinating the DB one with Adam since Railway's `DATABASE_URL` embeds it.
+**Contract changes:** none
+
 ## 2026-09-26 09:20 | alan | Claude Code (Opus 5)
 **Task:** AL1 stability — server aborted mid-session on an Apple GPU assertion; LinkedIn + GitHub config verified
 **Status:** done (local, Railway and tunnel all `{"ok":true,"db":true}`; 71 passed, 108 skipped)
