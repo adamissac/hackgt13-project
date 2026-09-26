@@ -20,7 +20,6 @@ const FACETS: { key: Facet; label: string }[] = [
 
 const NETWORK: { title: string; detail: string; icon: string; route: Href }[] = [
   { title: 'Your connections', detail: 'Who you met and what you talked about', icon: '🤝', route: '/connections' },
-  { title: 'Feed', detail: 'What your connections are building', icon: '📰', route: '/feed' },
   { title: 'Your network', detail: 'How your network has grown', icon: '📈', route: '/network' },
   { title: 'My connect QR & invites', detail: 'Connect with someone you already know', icon: '▦', route: '/invites' },
 ];

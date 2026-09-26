@@ -126,7 +126,7 @@ export default function NearbyScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, gap: 20, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  container: { padding: 24, gap: 20, paddingBottom: 110, width: '100%', maxWidth: 640, alignSelf: 'center' },
   emptyNearby: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   h1: { fontSize: 18, fontWeight: '800' },

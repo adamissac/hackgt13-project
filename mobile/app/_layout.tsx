@@ -90,7 +90,11 @@ function RootLayoutNav() {
           <Stack.Screen name="chat/[id]" options={{ title: 'Chat', headerBackTitle: 'Back' }} />
           <Stack.Screen name="checklist/[id]" options={{ title: 'Checklist', headerBackTitle: 'Back' }} />
           <Stack.Screen name="connections" options={{ title: 'Your connections', headerBackTitle: 'Back' }} />
-          <Stack.Screen name="feed" options={{ title: 'Feed', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="profile" options={{ title: 'Profile', headerBackTitle: 'Back' }} />
+          <Stack.Screen
+            name="assistant"
+            options={{ title: '✦ Assistant', presentation: 'modal', animation: 'slide_from_bottom', headerBackTitle: 'Close' }}
+          />
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
           <Stack.Screen name="meetup/[id]" options={{ title: 'Find each other', headerBackTitle: 'Back' }} />
           <Stack.Screen name="verify" options={{ title: 'Verify a conversation', headerBackTitle: 'Back' }} />

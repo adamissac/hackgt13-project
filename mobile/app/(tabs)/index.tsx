@@ -3,10 +3,10 @@ import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HeaderActions } from '@/components/HeaderActions';
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { listChats } from '@/features/chat/store';
-import { useUnreadCount } from '@/features/notifications/useUnread';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
@@ -19,7 +19,6 @@ export default function HomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const presence = useOpenToMeet();
-  const unread = useUnreadCount();
   const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), [], ['relationships', 'profile']);
   const next = useAsync(
     async () => {
@@ -49,18 +48,7 @@ export default function HomeScreen() {
           <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
           <Text style={[styles.title, { color: c.text }]}>Meet people worth meeting</Text>
         </View>
-        <Pressable
-          onPress={() => router.push('/notifications')}
-          accessibilityRole="button"
-          accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'}
-          style={[styles.bell, { backgroundColor: c.surface, borderColor: c.border }]}>
-          <Text style={{ fontSize: 20 }}>🔔</Text>
-          {unread > 0 && (
-            <View style={[styles.badge, { backgroundColor: c.danger }]}>
-              <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
-            </View>
-          )}
-        </Pressable>
+        <HeaderActions />
       </View>
 
       <FinishProfileBanner />
@@ -90,13 +78,6 @@ export default function HomeScreen() {
           </Card>
         ))}
 
-      <Pressable
-        onPress={() => router.push({ pathname: '/assistant', params: { q: 'Who should I meet?' } })}
-        accessibilityRole="button"
-        style={[styles.ask, { backgroundColor: c.aiSoft }]}>
-        <Text style={[styles.askTitle, { color: c.ai }]}>✦ Ask the assistant</Text>
-        <Text style={[styles.body, { color: c.text }]}>“Who should I meet?” · “What should I ask Maya?”</Text>
-      </Pressable>
     </ScrollView>
   );
 }
@@ -314,7 +295,7 @@ function MatchRow({ match, divider }: { match: Match; divider: boolean }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 16, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  container: { padding: 20, gap: 16, paddingBottom: 110, width: '100%', maxWidth: 640, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   eyebrow: { fontSize: 13, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
   title: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },

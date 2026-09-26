@@ -19,7 +19,7 @@ export default function ChatsScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
-      contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}>
+      contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 110 }]}>
       <Text style={[styles.lead, { color: c.muted }]}>
         A chat opens only after you both say yes. Nobody else can see these.
       </Text>

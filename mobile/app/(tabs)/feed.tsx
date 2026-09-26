@@ -154,7 +154,7 @@ function FeedCard({ item }: { item: FeedEntry }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, paddingBottom: 40 },
+  container: { padding: 16, gap: 12, paddingBottom: 110 },
   lead: { fontSize: 15, lineHeight: 21 },
   kinds: { flexDirection: 'row', gap: 8 },
   kind: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },

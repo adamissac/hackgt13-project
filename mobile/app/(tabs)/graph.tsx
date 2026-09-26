@@ -243,7 +243,7 @@ export default function GraphScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, padding: 16, gap: 12 },
-  container: { padding: 16, gap: 16, paddingBottom: 40, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  container: { padding: 16, gap: 16, paddingBottom: 110, width: '100%', maxWidth: 560, alignSelf: 'center' },
   chartHeading: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 18, paddingTop: 18 },
   modalBackdrop: { flex: 1, backgroundColor: '#0007', justifyContent: 'flex-end', alignItems: 'center' },
   sheet: { width: '100%', maxWidth: 560, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
