@@ -24,6 +24,7 @@ _jwks_client: jwt.PyJWKClient | None = None
 class User:
     id: str          # uuid string (profiles.id)
     email: str | None = None
+    provider: str | None = None   # sign-in method from app_metadata: "linkedin_oidc" | "email" | ...
 
 
 def _jwks() -> jwt.PyJWKClient:
@@ -58,7 +59,8 @@ def verify_token(token: str) -> User:
         uuid.UUID(sub)
     except (ValueError, TypeError):
         raise ApiError(401, "invalid token")
-    return User(id=sub, email=claims.get("email"))
+    app_meta = claims.get("app_metadata") or {}
+    return User(id=sub, email=claims.get("email"), provider=app_meta.get("provider"))
 
 
 def current_user(authorization: str | None = Header(default=None)) -> User:

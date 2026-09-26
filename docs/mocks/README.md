@@ -45,3 +45,5 @@ change to `docs/api.md`.
 | tap_claim.json | POST /tap/claim (verified case; otherwise {"status": "waiting"}) |
 
 Graph mocks are generated: `cd ml && .venv/bin/python scripts/make_graph_mocks.py` (then `cd dashboard && npm run sync-mocks`).
+| profile_manual.json | PATCH /profile/manual |
+| me_accounts.json | GET /me/accounts |

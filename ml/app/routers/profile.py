@@ -34,17 +34,32 @@ def pdf_to_text(data: bytes) -> str:
         raise ApiError(400, "could not read that PDF")
 
 
-def _manual_document(user_id: str, body: IngestBody) -> str:
+def _previous_interests_text(user_id: str) -> str:
+    doc = profile_store.latest_document(user_id, "manual")
+    return ((doc or {}).get("meta") or {}).get("interests_text", "") if doc else ""
+
+
+def _manual_document(user_id: str, text: str | None = None, seeking: str | None = None,
+                     offering: str | None = None) -> str:
+    """Everything the user typed, as one document. Missing fields fall back to what's already saved,
+    so editing one field never drops the others from the next extraction."""
     prof = db.fetchone("select headline, experience, seeking, offering from profiles where id = %s",
                        (user_id,)) or {}
     parts = [
         ("Headline", prof.get("headline")),
         ("Experience", prof.get("experience")),
-        ("Interests and background", body.text),
-        ("Looking for", body.seeking if body.seeking is not None else prof.get("seeking")),
-        ("Can offer", body.offering if body.offering is not None else prof.get("offering")),
+        ("Interests and background", text if text is not None else _previous_interests_text(user_id)),
+        ("Looking for", seeking if seeking is not None else prof.get("seeking")),
+        ("Can offer", offering if offering is not None else prof.get("offering")),
     ]
     return "\n".join(f"{k}: {v}" for k, v in parts if v and str(v).strip())
+
+
+def _queue_manual(background: BackgroundTasks, user_id: str, doc: str, interests_text: str) -> str:
+    job_id = jobs.create(user_id)
+    background.add_task(jobs.run, job_id,
+                        lambda: profile_store.ingest_text(user_id, "manual", doc, {"interests_text": interests_text}))
+    return job_id
 
 
 @router.post("/ingest", status_code=202)
@@ -87,12 +102,11 @@ async def ingest(request: Request, background: BackgroundTasks, user: User = Dep
         if body.seeking is not None or body.offering is not None:
             db.execute("update profiles set seeking = coalesce(%s, seeking), offering = coalesce(%s, offering) "
                        "where id = %s", (body.seeking, body.offering, user.id))
-        text = _manual_document(user.id, body)
+        text = _manual_document(user.id, body.text or None, body.seeking, body.offering)
         if not text:
             raise ApiError(400, "nothing to extract: add some text, seeking, or offering")
-        job_id = jobs.create(user.id)
-        background.add_task(jobs.run, job_id, lambda: profile_store.ingest_text(user.id, "manual", text))
-        return {"job_id": job_id, "status": "queued"}
+        interests_text = body.text or _previous_interests_text(user.id)
+        return {"job_id": _queue_manual(background, user.id, text, interests_text), "status": "queued"}
 
     # github / facebook: the connect flow (Arjun, AR1) stores a digest in raw_documents; extract the newest.
     doc = profile_store.latest_document(user.id, body.source)
@@ -138,3 +152,30 @@ def patch_interests(body: PatchInterests, user: User = Depends(current_user)):
             raise ApiError(400, f"'{a.name}' can't be added: sensitive topics are not used for matching")
     return profile_store.patch_interests(user.id, body.confirm, body.hide,
                                          [a.model_dump() for a in body.add])
+
+
+class ManualBody(BaseModel):
+    """MASTER_SPEC 9: PATCH /profile/manual. Every field optional; only the ones sent change."""
+    headline: str | None = Field(default=None, max_length=200)
+    experience: str | None = Field(default=None, max_length=8000)
+    interests_text: str | None = Field(default=None, max_length=4000)
+    seeking: str | None = Field(default=None, max_length=2000)
+    offering: str | None = Field(default=None, max_length=2000)
+
+
+@router.patch("/manual")
+def patch_manual(body: ManualBody, background: BackgroundTasks, user: User = Depends(current_user)):
+    """Save the LinkedIn-style fields the user types (LinkedIn itself is sign-in only, MASTER_SPEC 5.1), then
+    re-run manual extraction over everything they've typed so interests stay in sync."""
+    ensure_profile(user.id)
+    cols = {k: v.strip() for k, v in body.model_dump().items() if v is not None and k != "interests_text"}
+    if cols:
+        db.execute(f"update profiles set {', '.join(f'{k} = %s' for k in cols)} where id = %s",
+                   [*cols.values(), user.id])
+    interests_text = body.interests_text.strip() if body.interests_text is not None else _previous_interests_text(user.id)
+    doc = _manual_document(user.id, interests_text)
+    job_id = _queue_manual(background, user.id, doc, interests_text) if doc else None
+    prof = db.fetchone("select headline, experience, seeking, offering from profiles where id = %s", (user.id,))
+    return {"profile": {**{k: prof[k] or "" for k in ("headline", "experience", "seeking", "offering")},
+                        "interests_text": interests_text},
+            "job_id": job_id, "status": "queued" if job_id else "nothing_to_extract"}

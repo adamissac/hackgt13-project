@@ -420,3 +420,30 @@ at touching range (smoothed RSSI >= -50 dBm) for ~2 s. The app repeats the claim
 Verified only when BOTH phones claim each other within 15 s. Creates a `conversations` row with method `ble` (no schema
 change) and `connect_prompt` notifications, same as 20. Errors: `400 too_far`, `400 self_scan`, `404 not_found` (token not live),
 `403 this profile isn't available` (blocked). QR (19-20) stays the fallback.
+
+## 39. PATCH /profile/manual   owner: Alan (MASTER_SPEC 9)
+LinkedIn-style fields the user types (LinkedIn is sign-in only, nothing is fetched from it). Every field optional; only sent fields change.
+Request `{ "headline": "CS @ Georgia Tech", "experience": "...", "interests_text": "I build robots", "seeking": "...", "offering": "..." }`
+```json
+{ "profile": { "headline": "CS @ Georgia Tech", "experience": "...", "seeking": "...", "offering": "...", "interests_text": "I build robots" },
+  "job_id": "a1b2c3", "status": "queued" }
+```
+Re-runs manual extraction over everything typed so far (poll 2 `GET /profile/status`). `status: "nothing_to_extract"`, `job_id: null` when all fields are empty.
+
+## 40. GET /me/accounts   owner: Alan
+The caller's sign-in method and profile sources for the "Your sources" screen. Never returns tokens.
+```json
+{ "sign_in": { "provider": "linkedin", "email": "maya@gatech.edu" },
+  "profile": { "name": "Maya Rao", "photo_url": null, "headline": "", "experience": "", "seeking": "", "offering": "", "web_search_opt_in": false },
+  "sources": {
+    "github":   { "available": true, "connected": true, "login": "maya-codes", "last_synced_at": "2026-09-26T15:04:05+00:00",
+                  "added": true, "updated_at": "2026-09-26T15:04:05+00:00", "interests": 9 },
+    "resume":   { "added": true, "updated_at": "2026-09-26T14:00:00+00:00", "interests": 12 },
+    "manual":   { "added": false, "updated_at": null, "interests": 0 },
+    "facebook": { "available": false, "connected": false } } }
+```
+`sign_in.provider` is `linkedin | email` (or Supabase's raw provider name). `github.available` is false when the server has no GitHub OAuth app configured.
+
+## 41. DELETE /profile/sources/{source}   owner: Alan
+`source` = `github | resume | manual`. Removes that source's documents and rebuilds interests from what's left (interests added on the review
+screen stay). `github` also deletes the stored OAuth token and the user's GitHub feed items. Response: `{ "removed": "github", ...same shape as 3 }`.
