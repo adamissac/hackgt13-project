@@ -63,12 +63,46 @@ def load_people(user_ids: list[str]) -> tuple[list[dict], dict, dict, dict]:
         emb = r["embedding"]
         vecs[iid] = np.asarray(emb.to_numpy() if hasattr(emb, "to_numpy") else emb, dtype=np.float32)
         p["interests"][iid] = {"weight": float(r["weight"]), "facet": r["facet"], "evidence": r["evidence"] or ""}
+    # Active skill profile (docs/ONBOARDING.md): skills found only there (frameworks from manifests,
+    # languages by bytes, resume skill lists) join the person's interests. No profile = nothing added.
+    for r in _active_profile_skills(user_ids):
+        p = people.get(r["user_id"])
+        iid = r["interest_id"]
+        if p is None or r["embedding"] is None or iid in p["interests"] or iid in r["hidden"]:
+            continue
+        names[iid], facets[iid] = r["canonical_name"], r["facet"]
+        emb = r["embedding"]
+        vecs[iid] = np.asarray(emb.to_numpy() if hasattr(emb, "to_numpy") else emb, dtype=np.float32)
+        p["interests"][iid] = {"weight": SKILL_PROFILE_WEIGHT * float(r["confidence"]), "facet": r["facet"],
+                               "evidence": f"From your {' and '.join(r['sources'])}"}
     for s in summaries:
         p = people.get(s["user_id"])
         for f, text in (s["summary"] or {}).items():
             if p and f in p["summary"] and text:
                 p["summary"][f] = (p["summary"][f] + " " + text).strip()[:600]
     return [people[u] for u in user_ids if u in people], names, facets, vecs
+
+
+SKILL_PROFILE_WEIGHT = 0.8  # profile-only skills count a little less than LLM-extracted interests
+
+
+def _active_profile_skills(user_ids: list[str]) -> list[dict]:
+    """(user_id, interest_id, confidence, sources, canonical_name, facet, embedding, hidden) for every skill
+    with an interest id in each user's active skill profile. Empty if the table doesn't exist yet."""
+    try:
+        return db.fetchall(
+            "select usp.user_id::text as user_id, (s->>'interest_id')::bigint as interest_id, "
+            "(s->>'confidence')::float as confidence, coalesce(s->'sources', '[]'::jsonb) as sources, "
+            "i.canonical_name, i.facet, i.embedding, "
+            "coalesce((select array_agg(ui.interest_id) from user_interests ui "
+            "          where ui.user_id = usp.user_id and ui.hidden), '{}') as hidden "
+            "from user_skill_profiles usp cross join lateral jsonb_array_elements(usp.skills) s "
+            "join interests i on i.id = (s->>'interest_id')::bigint "
+            "where usp.is_active and usp.user_id = any(%s::uuid[]) and s->>'interest_id' is not null",
+            (user_ids,))
+    except Exception as e:  # missing table (older DB) or bad row: match on user_interests alone
+        log.warning("skill profiles not loaded: %s", e)
+        return []
 
 
 def compute_idf(people: list[dict], interest_ids) -> dict:

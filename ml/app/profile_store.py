@@ -101,6 +101,9 @@ def store_extraction(user_id: str, doc_id: int, source: str, result: extraction.
                   (result.seeking, result.offering, user_id))
         rebuild_user_interests(c, user_id)
     population.invalidate()
+    # Merge this source into the versioned skill profile (docs/ONBOARDING.md). Never raises.
+    from . import skill_profile
+    skill_profile.build_safely(user_id, source if source in skill_profile.TRIGGERS else "rebuild")
     return payload
 
 

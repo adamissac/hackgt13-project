@@ -20,6 +20,7 @@ API = "https://api.github.com"
 API_VERSION = "2022-11-28"
 README_CHARS = 1200
 MAX_REPOS = 30          # most recently pushed; keeps the digest and API calls bounded
+DEEP_REPOS = 8          # manifests + commit activity only for the top N (by stars, then recency)
 
 
 class GitHubError(Exception):
@@ -99,13 +100,77 @@ def fetch_repos(token=None, username=None, cache=None, max_repos=MAX_REPOS):
             "topics": r.get("topics") or [],
             "readme": _clean_readme(readme)[:README_CHARS],
             "stars": r.get("stargazers_count", 0),
+            "forks": r.get("forks_count", 0),
             "fork": False,
             "pushed_at": r.get("pushed_at"),
             "html_url": r.get("html_url"),
         })
         if len(repos) >= max_repos:
             break
+    enrich(repos, token, cache)
     return repos, cache
+
+
+def _manifests(full, token, cache):
+    """Frameworks from dependency manifests in the repo root (package.json, requirements.txt, ...)."""
+    from .skill_taxonomy import MANIFESTS, frameworks_from_manifest
+    root = _get(f"/repos/{full}/contents/", token, cache) or []
+    names = {f.get("name") for f in root if isinstance(f, dict) and f.get("type") == "file"}
+    found = []
+    for m in MANIFESTS:
+        if m in names:
+            text = _get(f"/repos/{full}/contents/{m}", token, cache, accept="application/vnd.github.raw+json") or ""
+            for fw in frameworks_from_manifest(m, text if isinstance(text, str) else ""):
+                if fw not in found:
+                    found.append(fw)
+    return found
+
+
+def _commits_last_year(full, token, cache):
+    """Owner's commits in the last 52 weeks (GitHub may answer 202 while it computes: then None)."""
+    try:
+        stats = _get(f"/repos/{full}/stats/participation", token, cache)
+    except GitHubError:
+        return None
+    if isinstance(stats, dict) and isinstance(stats.get("owner"), list):
+        return int(sum(stats["owner"]))
+    return None
+
+
+def pinned_repo_names(token):
+    """Names of the user's pinned repositories (GraphQL; needs a token). Empty on any failure."""
+    if not token:
+        return []
+    query = '{"query":"{ viewer { pinnedItems(first: 6, types: REPOSITORY) { nodes { ... on Repository { name } } } } }"}'
+    req = urllib.request.Request(API + "/graphql", data=query.encode(), method="POST", headers={
+        "Authorization": f"Bearer {token}", "User-Agent": "formal-connection", "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            data = json.loads(resp.read().decode())
+        nodes = data["data"]["viewer"]["pinnedItems"]["nodes"]
+        return [n["name"] for n in nodes if n and n.get("name")]
+    except Exception:
+        return []
+
+
+def enrich(repos, token=None, cache=None):
+    """Add frameworks, commits_52w and pinned to the most significant repos. Best effort: a failure on
+    one repo never loses the digest."""
+    pinned = set(pinned_repo_names(token))
+    for r in repos:
+        r["pinned"] = r["name"] in pinned
+        r.setdefault("frameworks", [])
+        r.setdefault("commits_52w", None)
+    recent_first = sorted(repos, key=lambda r: r.get("pushed_at") or "", reverse=True)
+    top = sorted(recent_first, key=lambda r: (not r["pinned"], -r.get("stars", 0)))  # stable: ties stay recent-first
+    for r in top[:DEEP_REPOS]:
+        full = r.get("full_name") or f"{r.get('owner')}/{r['name']}"
+        try:
+            r["frameworks"] = _manifests(full, token, cache)
+        except GitHubError:
+            pass
+        r["commits_52w"] = _commits_last_year(full, token, cache)
+    return repos
 
 
 def _clean_readme(text):
@@ -132,8 +197,11 @@ def language_shares(repos):
 def digest_meta(repos):
     """Small JSON for raw_documents.meta (no tokens, no README bodies)."""
     return {"repo_count": len(repos),
-            "repos": [{"name": r["name"], "stars": r["stars"], "pushed_at": r["pushed_at"],
-                       "url": r["html_url"]} for r in repos],
+            "repos": [{"name": r["name"], "stars": r["stars"], "forks": r.get("forks", 0),
+                       "pushed_at": r["pushed_at"], "url": r.get("html_url"), "description": r.get("description", ""),
+                       "languages": sorted(r.get("languages", {}), key=lambda k: -r["languages"][k])[:3],
+                       "frameworks": r.get("frameworks", []), "commits_52w": r.get("commits_52w"),
+                       "pinned": r.get("pinned", False)} for r in repos],
             "language_shares": language_shares(repos)}
 
 

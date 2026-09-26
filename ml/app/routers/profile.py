@@ -6,7 +6,9 @@ from typing import Literal
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, Request
 from pydantic import BaseModel, Field, ValidationError
 
-from .. import db, jobs, profile_store
+from ml import resume_structure
+
+from .. import db, jobs, profile_store, resumes, skill_profile
 from ..auth import User, current_user
 from ..errors import ApiError
 from ..users import ensure_profile
@@ -75,17 +77,24 @@ async def ingest(request: Request, background: BackgroundTasks, user: User = Dep
         if upload is None or not hasattr(upload, "read"):
             raise ApiError(400, "missing file")
         data = await upload.read()
+        filename = getattr(upload, "filename", "") or "resume"
         if len(data) > MAX_PDF_BYTES:
-            raise ApiError(413, "PDF is larger than 10 MB")
-        if not data.startswith(b"%PDF"):
-            raise ApiError(400, "file must be a PDF")
-        text = pdf_to_text(data)
+            raise ApiError(413, "file is larger than 10 MB")
+        if data.startswith(b"%PDF"):
+            mime, text = "application/pdf", pdf_to_text(data)
+        elif resume_structure.is_docx(data, filename):
+            mime = resume_structure.DOCX_MIME
+            try:
+                text = resume_structure.docx_to_text(data)
+            except Exception:
+                raise ApiError(400, "could not read that Word document")
+        else:
+            raise ApiError(400, "file must be a PDF or a Word (.docx) document")
         if not text:
-            raise ApiError(400, "no text found in that PDF (is it a scanned image?)")
+            raise ApiError(400, "no text found in that file (is it a scanned image?)")
+        resume_id = resumes.record_upload(user.id, data, filename, mime)
         job_id = jobs.create(user.id)
-        background.add_task(jobs.run, job_id,
-                            lambda: profile_store.ingest_text(user.id, source, text,
-                                                              {"filename": getattr(upload, "filename", "")}))
+        background.add_task(jobs.run, job_id, lambda: resumes.process(user.id, resume_id, source, text, filename))
         return {"job_id": job_id, "status": "queued"}
 
     try:
@@ -179,3 +188,11 @@ def patch_manual(body: ManualBody, background: BackgroundTasks, user: User = Dep
     return {"profile": {**{k: prof[k] or "" for k in ("headline", "experience", "seeking", "offering")},
                         "interests_text": interests_text},
             "job_id": job_id, "status": "queued" if job_id else "nothing_to_extract"}
+
+
+@router.get("/skills")
+def get_skill_profile(user: User = Depends(current_user)):
+    """The caller's active structured skill profile (docs/ONBOARDING.md), or an empty one."""
+    return skill_profile.active_profile(user.id) or {
+        "user_id": user.id, "skills": [], "experience_years_estimate": None, "domains": [],
+        "project_highlights": [], "generated_at": None, "profile_version": 0}

@@ -75,5 +75,7 @@ def ingest_github(user_id: str) -> dict | None:
         return profile_store.ingest_text(user_id, "github", text, meta)
     except Exception:
         log.exception("github extraction failed for %s", user_id)
+        from ..skill_profile import mark_partial
+        mark_partial(user_id)
         raise
 

@@ -46,6 +46,12 @@ def run(job_id: str, fn: Callable[[], object]) -> None:
         _set(job_id, status="done")
     except Exception as e:
         log.exception("job %s failed", job_id)
+        # Parse/extraction failure: onboarding becomes 'partial' (never blocks the user).
+        from .skill_profile import mark_partial
+        with _lock:
+            owner = _jobs.get(job_id, {}).get("user_id")
+        if owner:
+            mark_partial(owner)
         from ml.extraction import ExtractionError
         msg = str(e) if isinstance(e, (ExtractionError, ValueError)) else "extraction failed"
         _set(job_id, status="error", error=msg)

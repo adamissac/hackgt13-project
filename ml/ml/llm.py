@@ -72,8 +72,11 @@ def github_to_text(repos):
         if r.get("fork"):
             continue
         langs = ", ".join(sorted(r.get("languages", {}), key=lambda k: -r["languages"][k])[:3])
-        parts.append(f"REPO {r['name']} (stars {r.get('stars', 0)}, last push {r.get('pushed_at', '?')})\n"
-                     f"langs: {langs}\ntopics: {', '.join(r.get('topics', []))}\n"
+        pin = " PINNED" if r.get("pinned") else ""
+        parts.append(f"REPO {r['name']}{pin} (stars {r.get('stars', 0)}, forks {r.get('forks', 0)}, "
+                     f"last push {r.get('pushed_at', '?')})\n"
+                     f"langs: {langs}\nframeworks: {', '.join(r.get('frameworks', []))}\n"
+                     f"topics: {', '.join(r.get('topics', []))}\n"
                      f"desc: {r.get('description') or ''}\nreadme: {(r.get('readme') or '')[:1200]}")
     return "\n\n".join(parts)
 
