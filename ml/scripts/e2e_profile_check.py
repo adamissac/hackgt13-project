@@ -13,6 +13,12 @@ import time
 import urllib.error
 import urllib.request
 import uuid
+import signal
+
+# Being stopped (Ctrl+C, a killed background task, a CI timeout) must still run each script's `finally:` cleanup,
+# or a throwaway test account stays in production and shows up as a match for real people.
+for _sig in (signal.SIGTERM, signal.SIGHUP):
+    signal.signal(_sig, lambda *_: sys.exit(1))
 
 API = os.environ.get("E2E_API", "https://ml-production-04c0.up.railway.app")
 SUPA = os.environ["SUPABASE_URL"].rstrip("/")
