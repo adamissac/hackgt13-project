@@ -35,4 +35,7 @@ out += [f"{k}={v}" for k, v in wanted.items() if k not in seen]
 
 with open(path, "w") as f:
     f.write("\n".join(out) + "\n")
-print(f"Updated {path}: EXPO_PUBLIC_API_BASE_URL={url}, EXPO_PUBLIC_USE_MOCKS=0")
+if path.endswith(os.path.join("mobile", ".env")):
+    print("Updated mobile/.env. Restart Expo: cd mobile && npx expo start --go --lan --clear")
+else:
+    print(f"Updated {path}: EXPO_PUBLIC_API_BASE_URL={url}, EXPO_PUBLIC_USE_MOCKS=0")

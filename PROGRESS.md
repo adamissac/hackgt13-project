@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:45 | adam | Cursor cloud agent
+**Task:** Infra: Railway deploy for ml + auto-update mobile/.env
+**Status:** done
+**What I did:**
+- Added `ml/Dockerfile` (Python 3.12-slim, CPU torch, pre-bakes `BAAI/bge-small-en-v1.5`, uvicorn on `$PORT`), `ml/.dockerignore`, and `ml/railway.json` (Dockerfile builder, `/health` check, 300s timeout).
+- Wrote `docs/deploy.md` (plain Railway click-by-click for Adam) and extended AGENTS.md ml run/deploy commands.
+- `scripts/start-ml.sh` + `scripts/set-mobile-api-url.py` now set `EXPO_PUBLIC_API_BASE_URL` / `EXPO_PUBLIC_USE_MOCKS=0` in `mobile/.env` when cloudflared prints a URL (macOS-safe Python rewrite).
+**How to run/test it:** `python3 scripts/set-mobile-api-url.py https://example.trycloudflare.com /tmp/test.env` (temp file). Local ML: `./scripts/start-ml.sh`. Railway: follow `docs/deploy.md`. Docker smoke (laptop): `docker build -t fc-ml ml && docker run --rm -p 8000:8000 -e DATABASE_URL=postgresql://invalid fc-ml` then `curl localhost:8000/health` (not run here: Docker socket permission denied in cloud VM).
+**Next step for whoever continues:** Adam completes Railway deploy per `docs/deploy.md`, posts the permanent URL in chat, and sets GitHub OAuth callback + `ML_API_URL`. Teammates set `EXPO_PUBLIC_API_BASE_URL` in `mobile/.env`.
+**Known issues / blockers:** Cloud agent could not `docker build` (permission denied on `/var/run/docker.sock`). Trained pickles under `ml/data/` are not in the image; encounter classifier retrains at runtime, ranker uses V1 unless `MATCH_MODEL=lr` and a pickle is added later.
+**Contract changes:** none
+
 ## 2026-09-26 05:30 | adam | Cursor cloud agent
 **Task:** Team process: no team lead
 **Status:** done

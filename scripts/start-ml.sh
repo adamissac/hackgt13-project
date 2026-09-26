@@ -21,8 +21,12 @@ trap 'kill $API $TUN 2>/dev/null' EXIT INT TERM
 
 "$CF" tunnel --no-autoupdate --url http://localhost:8000 2>&1 | tee /tmp/fc-tunnel.log | grep --line-buffered -o 'https://[a-z0-9-]*\.trycloudflare\.com' | while read -r url; do
   echo; echo "==> ML_API_URL for phones: $url"
-  python3 "$ROOT/scripts/set-mobile-api-url.py" "$url" "$ROOT/mobile/.env" || echo "    Could not update mobile/.env; set EXPO_PUBLIC_API_BASE_URL=$url and EXPO_PUBLIC_USE_MOCKS=0 by hand"
-  echo "==> Now restart Expo in another terminal:  cd mobile && npx expo start --go --lan --clear"; echo
+  if python3 "$ROOT/scripts/set-mobile-api-url.py" "$url" "$ROOT/mobile/.env"; then
+    echo "Updated mobile/.env. Restart Expo: cd mobile && npx expo start --go --lan --clear"
+  else
+    echo "Could not update mobile/.env; set EXPO_PUBLIC_API_BASE_URL=$url and EXPO_PUBLIC_USE_MOCKS=0 by hand"
+  fi
+  echo
 done &
 TUN=$!
 wait $API
