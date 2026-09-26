@@ -5,6 +5,7 @@ session start. When you finish one, change `- [ ]` to `- [x]` and mention it in 
 Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item actionable in one line or two.
 
 ## adam
+- [x] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
 - [x] (from alan) Review and merge the ML service PR (branch `claude/quirky-euler-dnbsgt`): AL1-AL7, `/dashboard/{event_id}`, `DELETE /me`. It also adds `REQUESTS.md` and this hook feature.
 - [ ] (from alan) Mobile endpoints now live (docs/api.md 15-28, mocks in docs/mocks/): AD6 uses `GET /events/{id}/matches`, `GET /matches/{id}/quick-profile` (overlap radar = `facet_overlap`), `GET /matches/{id}/starters`, `GET /suggestions` + `POST /suggestions/{id}/respond`; AD8 uses `GET /conversations/pending`, `POST /conversations/{id}/feedback`, `GET /connections`, `POST /connections/{id}/followup-draft`. The old `/qr/token`, `/handshake`, `/feedback` names still work as aliases.
 - [x] (from alan) Home toggle: call `PATCH /me/open-to-meet {open}` instead of writing `profiles.open_to_meet` directly, so turning it OFF also ends live meetup location sharing (MASTER_SPEC 3.3).
@@ -32,5 +33,5 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 ## alan
 - [ ] (from adam) AD10 push sender: tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.
 - [ ] Put server secrets in a local `.env` (never committed): DATABASE_URL, SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co, SUPABASE_JWT_SECRET (only if legacy HS256), QR_SIGNING_KEY (any long random string), ANTHROPIC_API_KEY, SUPABASE_SERVICE_KEY (for DELETE /me).
-- [ ] Run `cd ml && uvicorn app.main:app --host 0.0.0.0 --port 8000` + `cloudflared tunnel --url http://localhost:8000` on a laptop and share the URL as ML_API_URL (finishes AL1).
+- [ ] Run `./scripts/start-ml.sh` (Adam's script: service + cloudflared tunnel) on a laptop and share the printed URL as ML_API_URL (finishes AL1).
 - [ ] Get the team's OK, then run the four real profiles through `/profile/ingest` and tune from the `canon merge` log lines (finishes AL2).
