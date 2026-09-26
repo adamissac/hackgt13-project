@@ -139,6 +139,63 @@ def open_requests(root: str, owner: str) -> list[str]:
     return items
 
 
+def team_plugins(root: str) -> list[str]:
+    """Plugins the team enabled in the committed .claude/settings.json (single source of truth)."""
+    try:
+        data = json.loads(read(os.path.join(root, ".claude", "settings.json")) or "{}")
+        return [k for k, v in (data.get("enabledPlugins") or {}).items() if v]
+    except Exception:
+        return []
+
+
+def installed_plugins(root: str) -> set[str] | None:
+    """Plugin ids installed for this repo on this machine (user scope, or local/project scope for this path).
+    None if the registry can't be read (then we don't nag)."""
+    path = os.path.join(os.path.expanduser("~"), ".claude", "plugins", "installed_plugins.json")
+    try:
+        with open(path, encoding="utf-8") as fh:
+            registry = json.load(fh).get("plugins", {})
+    except Exception:
+        return None
+    here = os.path.realpath(root)
+    have = set()
+    for pid, installs in registry.items():
+        for inst in installs if isinstance(installs, list) else [installs]:
+            scope = (inst or {}).get("scope")
+            proj = (inst or {}).get("projectPath")
+            if scope == "user" or (proj and os.path.realpath(proj) == here):
+                have.add(pid)
+    return have
+
+
+def project_skills(root: str) -> list[str]:
+    base = os.path.join(root, ".claude", "skills")
+    try:
+        return sorted(d for d in os.listdir(base) if os.path.isfile(os.path.join(base, d, "SKILL.md")))
+    except Exception:
+        return []
+
+
+def plugin_lines(root: str) -> list[str]:
+    lines = []
+    wanted = team_plugins(root)
+    have = installed_plugins(root)
+    if wanted and have is not None:
+        missing = [p for p in wanted if p not in have]
+        if missing:
+            lines.append(
+                "Team plugins missing on this machine (declared in .claude/settings.json): "
+                + ", ".join(m.split("@")[0] for m in missing)
+                + ". Install them now: ./scripts/claude-setup.sh <owner> (or /plugin install <name>@claude-plugins-official), "
+                "then restart Claude Code. The team pre-approved installing and using every declared plugin and skill."
+            )
+    skills = project_skills(root)
+    if skills:
+        lines.append("Project skills (use whenever a task matches; team-approved): " + ", ".join("/" + s for s in skills)
+                     + ". Plugin skills (superpowers, expo, supabase, frontend-design, ...) are approved too.")
+    return lines
+
+
 def build(root: str, source: str, brief_only: bool) -> str:
     out: list[str] = []
     owner = get_owner(root)
@@ -205,6 +262,7 @@ def build(root: str, source: str, brief_only: bool) -> str:
             "Before coding: if you haven't read MASTER_SPEC.md in this session, read it fully (Section 0 is mandatory), "
             "then PROGRESS.md, docs/schema.sql, docs/api.md, and your brief. Then /next-task."
         )
+    out.extend(plugin_lines(root))
     out.append("Protocol: commit and push every working increment and at least every 30 minutes via /handoff. Never force push.")
     return "\n".join(out)
 

@@ -91,6 +91,7 @@ merge("allow", [
     "Starting a cloudflared quick tunnel to the local FastAPI dev server on localhost:8000 so teammates' phones can reach it is allowed.",
     "Running Expo development builds (`eas build --profile development`, `npx expo run:ios`, `npx expo run:android`) for our app is allowed.",
     "Deploying dashboard/ to our Vercel project, and the FastAPI service in ml/ to our Railway or Render project, is allowed.",
+    "Installing, enabling, or updating the Claude Code plugins and marketplaces declared in the repo's .claude/settings.json (enabledPlugins / extraKnownMarketplaces), and using any skill (the repo's .claude/skills/ and plugin skills), is allowed: the whole team agreed to this.",
 ])
 merge("soft_deny", [
     "Never run DROP TABLE, TRUNCATE, DELETE without a WHERE clause, or `supabase db reset --linked` against the remote Supabase project.",
@@ -105,21 +106,19 @@ print(f"==> ~/.claude/settings.json: defaultMode auto (was {old_mode or 'unset'}
 PY
 fi
 
-# 5. Plugins from Anthropic's official marketplace, installed for this repo only (local scope)
-if [ "$HAVE_CLAUDE" = 1 ]; then
-  claude plugin marketplace add anthropics/claude-plugins-official >/dev/null 2>&1 || true
-  COMMON="typescript-lsp pyright-lsp"
-  case "$OWNER" in
-    adam)   EXTRA="expo supabase frontend-design feature-dev security-guidance" ;;
-    alan)   EXTRA="feature-dev security-guidance" ;;
-    arjun)  EXTRA="frontend-design vercel feature-dev" ;;
-    akshar) EXTRA="expo frontend-design security-guidance" ;;
-  esac
-  for p in $COMMON $EXTRA; do
-    if claude plugin install "$p@claude-plugins-official" --scope local >/dev/null 2>&1; then
+# 5. Team plugins: the single source of truth is the committed .claude/settings.json
+#    (extraKnownMarketplaces + enabledPlugins). Every owner gets every plugin, so any agent can use any skill.
+#    Claude Code also offers them when you trust the folder; this installs them up front (local scope, gitignored).
+if [ "$HAVE_CLAUDE" = 1 ] && command -v python3 >/dev/null 2>&1; then
+  for repo in $(python3 -c "import json; d=json.load(open('.claude/settings.json')); print(' '.join(v['source']['repo'] for v in d.get('extraKnownMarketplaces', {}).values() if v.get('source', {}).get('source') == 'github'))"); do
+    claude plugin marketplace add "$repo" >/dev/null 2>&1 || true
+  done
+  claude plugin marketplace update >/dev/null 2>&1 || true
+  for p in $(python3 -c "import json; d=json.load(open('.claude/settings.json')); print(' '.join(k for k, v in d.get('enabledPlugins', {}).items() if v))"); do
+    if claude plugin install "$p" --scope local >/dev/null 2>&1; then
       say "plugin: $p"
     else
-      warn "plugin $p didn't install. Inside Claude Code run: /plugin install $p@claude-plugins-official"
+      warn "plugin $p didn't install. Inside Claude Code run: /plugin install $p"
     fi
   done
 fi

@@ -27,7 +27,7 @@ What setup does: writes your owner name to `.claude/owner.local`, updates `.giti
 | Status line | `.claude/statusline.py` | Owner, branch, uncommitted files, minutes since your commit, context, 5-hour usage |
 | Git guard | `.githooks/pre-commit` | Blocks `.env` files, files over 10 MB, and secrets for humans and agents alike |
 
-Plugins by owner (official marketplace): everyone gets typescript-lsp and pyright-lsp. Adam: expo, supabase, frontend-design, feature-dev, security-guidance. Alan: feature-dev, security-guidance. Arjun: frontend-design, vercel, feature-dev. Akshar: expo, frontend-design, security-guidance.
+Plugins (official marketplace), the same for everyone and declared once in the committed `.claude/settings.json` (`enabledPlugins`): typescript-lsp, pyright-lsp, expo, supabase, frontend-design, feature-dev, security-guidance, vercel, superpowers. Claude Code offers them when you trust the folder; `./scripts/claude-setup.sh` installs them up front; the session brief flags any that are missing after a `git pull`. The team pre-approved every declared plugin and skill for every agent (see AGENTS.md "Skills and plugins").
 
 ## Models and credits
 - Sonnet 5 (the default) for most building. `/model opus` for schema and RLS design, ML design, native Bluetooth work, and nasty bugs, then switch back.
