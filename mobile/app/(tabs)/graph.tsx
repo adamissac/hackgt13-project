@@ -1,12 +1,12 @@
-import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { buildView } from '@/features/graph/model';
 import { PersonSheet } from '@/features/graph/PersonSheet';
-import { alphaFor, Atom, groupByTopic } from '@/features/graph/Atom';
+import { Atom, groupByTopic } from '@/features/graph/Atom';
 import { useColorScheme } from '@/components/useColorScheme';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
@@ -15,17 +15,17 @@ import { useAsync } from '@/lib/useAsync';
 // Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun. One job: show the handful of people you
 // should talk to next and why. Everyone on the diagram is labeled; topics change who's shown.
 
-const FEATURED = 12;
+const FEATURED = 6;
 const LIST_PREVIEW = 5;
 
 const COPY: Record<GraphMode, { title: string; explain: string }> = {
   matches: {
-    title: 'Your people at HackGT',
-    explain: 'You’re the center of the atom. Your 12 best matches orbit you, colored by the interest you share. Tap anyone to see why.',
+    title: 'A little common ground.',
+    explain: 'You’re at the center. Tap a person to find your connection.',
   },
   network: {
-    title: 'Who you’re closest to',
-    explain: 'Your connections orbit you, colored by what you share. The solid ones you’re closest to. Tap anyone.',
+    title: 'Your circle of people.',
+    explain: 'The people you know, connected through shared interests.',
   },
 };
 
@@ -43,7 +43,8 @@ function merge(a: GraphResponse, b: GraphResponse): GraphResponse {
 export default function GraphScreen() {
   const c = useColors();
   const { width } = useWindowDimensions();
-  const size = Math.min(width - 32, 400);
+  const size = Math.min(width - 34, 440);
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<GraphMode>('matches');
   const { state, reload } = useAsync(() => api.graph(mode, HACKGT_EVENT_ID), [mode]);
   const [extra, setExtra] = useState<{ mode: GraphMode; data: GraphResponse } | null>(null);
@@ -58,7 +59,7 @@ export default function GraphScreen() {
   const pool = useMemo(() => (view ? view.people.filter((p) => !topic || p.shared.includes(topic)) : []), [view, topic]);
   const featured = useMemo(() => pool.slice(0, FEATURED), [pool]);
   const dark = useColorScheme() === 'dark';
-  const { groups, colorOf, groupOf } = useMemo(
+  const { groups, colorOf } = useMemo(
     () => groupByTopic(featured, view?.topics.map((t) => t.label) ?? [], dark),
     [featured, view, dark],
   );
@@ -160,7 +161,14 @@ export default function GraphScreen() {
           )}
 
           <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-            <Atom size={size} people={featured} colorOf={colorOf} groupOf={groupOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} />
+            <View style={styles.chartHeading}>
+              <Text style={[styles.small, { color: c.muted }]}>{mode === 'matches' ? 'Your closest matches' : 'Your connections'}</Text>
+              <Text style={[styles.small, { color: c.muted }]}>{featured.length} people</Text>
+            </View>
+            <Atom size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} />
+            <Text style={[styles.howToText, { color: c.muted }]}>Tap a node to explore</Text>
+          </View>
+          <Disclosure title="Reading your graph" subtitle="Colors show shared interests">
             <View style={styles.legend}>
               {groups.map((g) => (
                 <View key={g.label} style={[styles.legendItem, { backgroundColor: c.surfaceAlt }]}>
@@ -171,21 +179,10 @@ export default function GraphScreen() {
                 </View>
               ))}
             </View>
-            <View style={styles.scale} accessibilityLabel="Solid means a strong connection, see-through means weaker">
-              <Text style={[styles.scaleLabel, { color: c.muted }]}>Strong</Text>
-              <View style={styles.scaleBar}>
-                {[1, 0.8, 0.6, 0.4, 0.2, 0].map((t) => (
-                  <View key={t} style={[styles.scaleStep, { backgroundColor: c.text, opacity: alphaFor(t) }]} />
-                ))}
-              </View>
-              <Text style={[styles.scaleLabel, { color: c.muted }]}>Weaker</Text>
-            </View>
-            <Text style={[styles.howToText, { color: c.muted }]}>Color = shared interest · Solid & closer = stronger · Drag to turn</Text>
-          </View>
+            <Text style={[styles.body, { color: c.muted }]}>Thicker lines mean more in common. Positions are for readability, not physical distance. Each line connects someone to you, never to another person.</Text>
+          </Disclosure>
 
-          {selected ? (
-            <PersonSheet key={selected.id} p={selected} mode={mode} onClose={() => setSelectedId(null)} />
-          ) : topicObj && mode === 'matches' ? (
+          {topicObj && mode === 'matches' ? (
             <Card>
               <Text style={[styles.body, { color: c.text }]}>
                 {topicObj.count} {topicObj.count === 1 ? 'person' : 'people'} here share {topicObj.label} with you.
@@ -228,6 +225,16 @@ export default function GraphScreen() {
             </>
           )}
           {view.synthetic && <Text style={[styles.small, { color: c.muted, textAlign: 'center' }]}>Showing sample people for the demo.</Text>}
+          <Modal visible={Boolean(selected)} transparent animationType="slide" onRequestClose={() => setSelectedId(null)}>
+            <View style={styles.modalBackdrop}>
+              <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close profile" onPress={() => setSelectedId(null)} />
+              <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: c.background, paddingBottom: Math.max(insets.bottom, 16), maxHeight: '85%' }]}>
+                <ScrollView contentContainerStyle={{ padding: 16 }}>
+                  {selected && <PersonSheet key={selected.id} p={selected} mode={mode} onClose={() => setSelectedId(null)} />}
+                </ScrollView>
+              </View>
+            </View>
+          </Modal>
         </>
       )}
     </ScrollView>
@@ -236,13 +243,16 @@ export default function GraphScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1, padding: 16, gap: 12 },
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
+  container: { padding: 16, gap: 16, paddingBottom: 40, width: '100%', maxWidth: 560, alignSelf: 'center' },
+  chartHeading: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 18, paddingTop: 18 },
+  modalBackdrop: { flex: 1, backgroundColor: '#0007', justifyContent: 'flex-end', alignItems: 'center' },
+  sheet: { width: '100%', maxWidth: 560, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
   seg: { flexDirection: 'row', borderRadius: 12, padding: 4 },
   segItem: { flex: 1, minHeight: 40, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: 15, fontWeight: '700' },
-  h1: { fontSize: 22, fontWeight: '800', marginBottom: 4 },
+  h1: { fontSize: 28, fontWeight: '500', letterSpacing: -0.8, marginBottom: 8 },
   chips: { gap: 8, paddingRight: 16 },
-  topic: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
+  topic: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, minHeight: 44, justifyContent: 'center' },
   topicText: { fontSize: 14, fontWeight: '600' },
   chartCard: { borderRadius: 20, borderWidth: 1, alignItems: 'center', overflow: 'hidden', paddingBottom: 14, gap: 8 },
   legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 12 },

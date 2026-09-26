@@ -74,7 +74,7 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
             {d?.headline ? ` · ${d.headline}` : ''}
           </Text>
         </View>
-        <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={12}>
+        <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel="Close profile" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
           <Text style={[styles.close, { color: c.muted }]}>✕</Text>
         </Pressable>
       </View>
@@ -135,7 +135,7 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
       <Button
         label={mode === 'matches' ? 'Full profile + icebreakers' : 'Full profile'}
         variant={mode === 'matches' ? 'primary' : 'secondary'}
-        onPress={() => router.push(`/match/${p.userId}`)}
+        onPress={() => { onClose(); router.push(`/match/${p.userId}`); }}
       />
     </Card>
   );
@@ -160,5 +160,5 @@ const styles = StyleSheet.create({
   close: { fontSize: 20, fontWeight: '600', padding: 4 },
   box: { borderRadius: 14, padding: 12, gap: 4 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  interest: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  interest: { gap: 8, alignItems: 'flex-start' },
 });

@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 | adam | Codex
+**Task:** AD9 / AR5 Graph phone readability (user-requested cross-owner graph presentation update)
+**Status:** done
+**What I did:**
+- Replaced the moving twelve-electron renderer with six stable, labeled, 48px nodes around a central nucleus, faint orbital curves, and curved self-to-person edges. Removed the continuous animation loop and dragging so tapping and vertical scrolling are predictable.
+- Preserved topic grouping/filtering and the remaining-people list. Moved the legend into a disclosure; line thickness represents match strength, while position is explicitly decorative.
+- Node and list taps open a safe-area-aware, scrollable modal profile sheet; full-profile navigation closes the modal first. Stacked interest evidence for narrow screens.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit`; `npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts features/graph/PersonSheet.tsx`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform web --platform ios`. Layout tests cover graph widths 286–440px and zero/sparse/excess populations.
+**Next step for whoever continues:** Open Graph from the mock preview (`EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web --port 8084`) and test node selection, topic filters, and the profile sheet on a physical phone.
+**Known issues / blockers:** Physical-phone verification still required. No new native dependency or backend changes.
+**Contract changes:** none
+
 ## 2026-09-26 13:00 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** Graph = "atom" data viz (Arjun's direction)
 **Status:** done in code (mock data); motion to confirm on a phone
