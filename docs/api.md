@@ -273,3 +273,12 @@ Nodes and edges to merge into the current graph (by id).
 - Topic (`t_<id>`): other allowed people holding that topic, ranked by score (max 10), with their `has_topic` edge.
 - Person (`u_<uuid>`): the topics I share with them, each topic node with an `"evidence"` line (theirs). Never their connections.
   Someone I'm not allowed to see returns `{"nodes": [], "edges": []}`.
+
+## 28. DELETE /me
+Deletes everything about the caller: rows in every table (profile cascade; invites they used and orgs they own are
+kept with the reference cleared), other people's raw Bluetooth sightings of their tokens, resume files under
+`resumes/<user_id>/`, and the Supabase auth user.
+```json
+{ "deleted": true, "storage_objects_deleted": 1, "auth_user_deleted": true, "errors": [] }
+```
+`storage_objects_deleted` / `auth_user_deleted` are `null` if the server has no service key. The app should sign out after this.

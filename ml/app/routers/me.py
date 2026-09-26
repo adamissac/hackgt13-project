@@ -25,3 +25,10 @@ def open_to_meet(body: OpenToMeet, user: User = Depends(current_user)):
             c.execute("delete from location_shares where suggestion_id in "
                       "(select id from suggestions where user_a = %s or user_b = %s)", (user.id, user.id))
     return {"open_to_meet": body.open}
+
+
+@router.delete("")
+def delete_me(user: User = Depends(current_user)):
+    """Deletes all of the caller's data: rows in every table, resume files, and the auth user."""
+    from ..account import delete_account
+    return delete_account(user.id)
