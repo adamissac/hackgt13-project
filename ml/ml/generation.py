@@ -142,3 +142,61 @@ def template_followup(other_first: str, topics: list[str]) -> str:
         t = " and ".join(topics[:2])
         return f"Hi {other_first}, great talking with you about {t}. I'd like to keep the conversation going."
     return f"Hi {other_first}, great meeting you today. I'd like to keep in touch."
+
+
+# ------------------------------------------------------------------ feed AI (MASTER_SPEC 6.11)
+class OneLine(BaseModel):
+    text: str
+
+
+def _one_line(system: str, prompt: str, what: str, max_tokens: int = 400) -> str:
+    last = None
+    for attempt in (1, 2):
+        try:
+            resp = client().messages.parse(
+                model=LLM_FAST, max_tokens=max_tokens,
+                system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+                messages=[{"role": "user", "content": prompt}], output_format=OneLine)
+            log.info("%s model=%s in=%s out=%s", what, LLM_FAST, resp.usage.input_tokens, resp.usage.output_tokens)
+            if resp.stop_reason in ("refusal", "max_tokens") or resp.parsed_output is None:
+                raise GenerationError(f"no usable output (stop={resp.stop_reason})")
+            text = resp.parsed_output.text.strip()
+            if not text:
+                raise GenerationError("empty output")
+            return text
+        except (GenerationError, pydantic.ValidationError, ValueError) as e:
+            last = e
+            log.warning("%s attempt %d failed: %s", what, attempt, e)
+    raise GenerationError(f"{what} failed after retry: {last}")
+
+
+SUMMARY_SYSTEM = """Summarize a burst of one person's recent activity into ONE sentence under 25 words for their
+connections' feed, e.g. "Priya launched a new app and is hiring a frontend intern." Use only the items given.
+Refer to the person by first name. No emojis, no hype."""
+
+REPLY_SYSTEM = """Draft a short, specific reply (1-2 sentences) the viewer could send about a connection's feed item.
+Ground it in the item and, if given, the topics the two discussed when they met. No emojis, no flattery,
+no invented facts."""
+
+
+def feed_summary(first_name: str, items: list[dict]) -> str:
+    lines = "\n".join(f"- [{i['kind']}] {i.get('title') or ''} {i.get('body') or ''}".strip()[:300] for i in items[:10])
+    return _one_line(SUMMARY_SYSTEM, f"Person: {first_name}\nItems:\n{lines}", "feed_summary")
+
+
+def reply_suggestion(viewer_first: str, author_first: str, item: dict, talked: list[str]) -> str:
+    prompt = (f"Viewer: {viewer_first}\nAuthor: {author_first}\n"
+              f"Item [{item['kind']}]: {(item.get('title') or '')} {(item.get('body') or '')}"[:1200]
+              + f"\nTopics they discussed when they met: {', '.join(talked) or 'none recorded'}")
+    return _one_line(REPLY_SYSTEM, prompt, "reply_suggestion")
+
+
+def template_summary(first_name: str, items: list[dict]) -> str:
+    kinds = sorted({i["kind"] for i in items})
+    return f"{first_name} shared {len(items)} updates ({', '.join(kinds)})."
+
+
+def template_reply(author_first: str, item: dict, talked: list[str]) -> str:
+    if talked:
+        return f"Nice one, {author_first}. Does this connect to the {talked[0]} work we talked about?"
+    return f"Nice one, {author_first}. How did it go?"
