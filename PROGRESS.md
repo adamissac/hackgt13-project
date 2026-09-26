@@ -24,6 +24,18 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Documentation only; no persistent updater installed. Agents must remain active or configure a supported monitor to keep checking after startup.
 **Contract changes:** none
 
+## 2026-09-26 02:28 | adam | Cursor (Grok 4.7)
+**Task:** AD8 Post-conversation checklist, connect prompt, connections list
+**Status:** in progress (mock path verified in Expo web; live yes/no still needs two signed-in phones)
+**What I did:**
+- Home shows pending conversations from `GET /conversations/pending`. `mobile/app/checklist/[id].tsx` and `mobile/features/checklist/ChecklistForm.tsx` are the shared checklist: topics, optional extra, silent yes/no. A no says nothing was sent. A mutual yes opens chat and can load `POST /connections/{id}/followup-draft` into the composer.
+- `mobile/app/connections.tsx` lists only your connections: how you met, topics, minutes. No one else’s count. Profile links here. Verify uses the same checklist form.
+- Fixed the chat screen `set-state-in-effect` lint. Mock feedback `chat_id` is 7 so the demo opens the existing Maya thread.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/checklist/met.test.mjs features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Explore the demo, Finish checklist, Yes connect, Draft a follow-up, Chat with Maya. Profile → Your connections.
+**Next step for whoever continues:** On two signed-in phones, scan QR (`mobile/app/verify.tsx`), both finish the checklist, and confirm one “no” leaves no trace on the other phone. Then send the follow-up from `mobile/app/chat/[id].tsx`.
+**Known issues / blockers:** Live Supabase chat Realtime (AD7) and this checklist are still untested on phones.
+**Contract changes:** none (mock `connections.json` now includes `how_met` and `headline`, already in api.md 11)
+
 ## 2026-09-26 02:11 | adam | Cursor (Grok 4.7)
 **Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
 **Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)

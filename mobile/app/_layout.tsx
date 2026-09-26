@@ -61,6 +61,8 @@ function RootLayoutNav() {
           <Stack.Screen name="match/[id]" options={{ title: 'Match', headerBackTitle: 'Back' }} />
           <Stack.Screen name="chats" options={{ title: 'Chats', headerBackTitle: 'Back' }} />
           <Stack.Screen name="chat/[id]" options={{ title: 'Chat', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="checklist/[id]" options={{ title: 'Checklist', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="connections" options={{ title: 'Your connections', headerBackTitle: 'Back' }} />
           <Stack.Screen name="network" options={{ title: 'Your network', headerBackTitle: 'Back' }} />
           <Stack.Screen name="insights" options={{ title: 'Feed insights', headerBackTitle: 'Back' }} />
           <Stack.Screen name="accounts" options={{ title: 'Your sources', headerBackTitle: 'Back' }} />

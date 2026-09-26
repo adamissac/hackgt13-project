@@ -19,43 +19,43 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 
 export default function ChatThreadScreen() {
-  const params = useLocalSearchParams<{ id: string; name?: string; other?: string }>();
+  const params = useLocalSearchParams<{ id: string; name?: string; other?: string; draft?: string }>();
   const chatId = Number(params.id);
+  const invalid = !Number.isFinite(chatId);
   const c = useColors();
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const me = session?.user.id ?? '';
   const [thread, setThread] = useState<ChatThread | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadedFor, setLoadedFor] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
+  const [draft, setDraft] = useState(typeof params.draft === 'string' ? params.draft : '');
   const [sending, setSending] = useState(false);
   const [opener, setOpener] = useState<string | null>(null);
   const [openerHidden, setOpenerHidden] = useState(false);
 
   useEffect(() => {
-    if (!Number.isFinite(chatId)) {
-      setStatus('error');
-      setError('This chat is not available');
-      return;
-    }
+    if (invalid) return;
     let cancelled = false;
-    setStatus('loading');
     loadThread(chatId, me)
       .then((next) => {
         if (cancelled) return;
         setThread(next);
-        setStatus('ready');
+        setError(null);
+        setLoadedFor(chatId);
       })
       .catch((e: unknown) => {
         if (cancelled) return;
-        setStatus('error');
+        setThread(null);
         setError(e instanceof Error ? e.message : String(e));
+        setLoadedFor(chatId);
       });
     return () => {
       cancelled = true;
     };
-  }, [chatId, me]);
+  }, [chatId, me, invalid]);
+
+  const status = invalid ? 'error' : loadedFor !== chatId ? 'loading' : thread ? 'ready' : 'error';
 
   useEffect(() => {
     if (!Number.isFinite(chatId)) return;

@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Stack } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, Vibration } from 'react-native';
+import { Pressable, StyleSheet, Vibration } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ErrorState, Loading } from '@/components/States';
@@ -10,8 +10,9 @@ import { startEngine, stopEngine, subscribe } from '@/features/ble/engine';
 import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from '@/features/ble/native';
 import { TapDetector } from '@/features/ble/tap';
 import { decodeVerifyCode, encodeVerifyCode, handshakeErrorMessage } from '@/features/qr/code';
-import { Avatar, Button, Card, useColors } from '@/components/ui';
-import { api, type ConversationFeedbackResponse, type QrToken, type QrVerifyResponse } from '@/lib/api';
+import { Button, useColors } from '@/components/ui';
+import { ChecklistForm } from '@/features/checklist/ChecklistForm';
+import { api, type QrToken, type QrVerifyResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { env } from '@/lib/env';
 
@@ -241,107 +242,14 @@ function ScanCode({ onVerified }: { onVerified: (r: QrVerifyResponse) => void })
   );
 }
 
-// Post-conversation flow (3.6): what did you talk about, then a silent "connect?".
-// AD8 (Adam) may replace this with a shared checklist screen; the API calls stay the same.
 function Verified({ result, onAgain }: { result: QrVerifyResponse; onAgain: () => void }) {
-  const c = useColors();
-  const [picked, setPicked] = useState<Set<number>>(new Set());
-  const [other, setOther] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [outcome, setOutcome] = useState<ConversationFeedbackResponse | null>(null);
-
-  const toggle = (id: number) =>
-    setPicked((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-
-  const send = async (wantsConnect: boolean) => {
-    setBusy(true);
-    setError(null);
-    try {
-      setOutcome(
-        await api.conversationFeedback(result.conversation_id, {
-          talked_about: [...picked],
-          other_topic: other.trim(),
-          wants_connect: wantsConnect,
-        }),
-      );
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const name = result.other.name;
-  if (outcome) {
-    return (
-      <View style={styles.center}>
-        <Avatar name={name} size={72} />
-        {outcome.status === 'connected' ? (
-          <Text style={styles.title}>You&apos;re connected with {outcome.connection.name}</Text>
-        ) : outcome.status === 'waiting' ? (
-          // Same screen whether they said no, haven't answered, or never will (MASTER_SPEC 1.3).
-          <>
-            <Text style={styles.title}>Thanks! We&apos;ll let you know</Text>
-            <Text style={styles.muted}>If {name} also wants to connect, you&apos;ll both be notified.</Text>
-          </>
-        ) : (
-          <Text style={styles.title}>Got it. Nothing was sent to {name}.</Text>
-        )}
-        <Button label="Verify someone else" variant="secondary" onPress={onAgain} />
-      </View>
-    );
-  }
-
   return (
-    <ScrollView contentContainerStyle={styles.verified}>
-      <View style={styles.header}>
-        <Avatar name={name} size={56} />
-        <View style={styles.flex}>
-          <Text style={styles.title}>You talked with {name}</Text>
-          <Text style={styles.muted}>Verified in person</Text>
-        </View>
-      </View>
-
-      <Card>
-        <Text style={styles.body}>What did you talk about?</Text>
-        {result.checklist.map((t) => {
-          const on = picked.has(t.interest_id);
-          return (
-            <Pressable
-              key={t.interest_id}
-              onPress={() => toggle(t.interest_id)}
-              style={[styles.check, { borderColor: on ? c.tint : c.border, backgroundColor: on ? c.tintSoft : 'transparent' }]}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: on }}>
-              <Text style={[styles.checkText, on && { color: c.tint, fontWeight: '700' }]}>
-                {on ? '✓ ' : ''}
-                {t.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-        <TextInput
-          value={other}
-          onChangeText={setOther}
-          placeholder="Something else? (optional)"
-          placeholderTextColor={c.muted}
-          maxLength={120}
-          style={[styles.input, { color: c.text, borderColor: c.border }]}
-        />
-      </Card>
-
-      <Text style={styles.question}>Do you want to connect with {name}?</Text>
-      <Text style={styles.muted}>They only find out if you both say yes.</Text>
-      {error ? <Text style={[styles.body, styles.error]}>{error}</Text> : null}
-      <Button label="Yes, connect" onPress={() => send(true)} loading={busy} />
-      <Button label="No thanks" variant="ghost" onPress={() => send(false)} disabled={busy} />
-    </ScrollView>
+    <ChecklistForm
+      conversationId={result.conversation_id}
+      name={result.other.name}
+      checklist={result.checklist}
+      onAgain={onAgain}
+    />
   );
 }
 
@@ -363,10 +271,4 @@ const styles = StyleSheet.create({
   scanFooter: { padding: 20, minHeight: 80, justifyContent: 'center' },
   primary: { minHeight: 52, paddingHorizontal: 28, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   primaryText: { color: '#fff', fontSize: 17, fontWeight: '600' },
-  verified: { padding: 20, gap: 14 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  question: { fontSize: 19, fontWeight: '700', textAlign: 'center', marginTop: 8 },
-  check: { minHeight: 48, borderWidth: 2, borderRadius: 12, paddingHorizontal: 14, justifyContent: 'center', marginTop: 8 },
-  checkText: { fontSize: 16 },
-  input: { minHeight: 48, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, fontSize: 16, marginTop: 8 },
 });

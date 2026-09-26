@@ -160,6 +160,7 @@ export default function ProfileScreen() {
       <View style={[styles.menu, { backgroundColor: c.surface, borderColor: c.border }]}>
         {([
           { title: 'Your chats', detail: 'Continue a conversation', route: '/chats' },
+          { title: 'Your connections', detail: 'How you met and what you talked about', route: '/connections' },
           { title: 'Profile sources', detail: 'Resume, GitHub & a little about you', route: '/accounts' },
           { title: 'Invite someone', detail: 'Reconnect with someone you know', route: '/invites' },
           { title: 'Your network', detail: 'The connections you’ve made', route: '/network' },

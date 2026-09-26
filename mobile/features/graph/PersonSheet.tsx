@@ -46,7 +46,7 @@ async function load(p: Person, mode: GraphMode): Promise<Detail> {
       : p.shared.map((name) => ({ name, evidence: '' })),
     connection: conn
       ? {
-          metAt: conn.met_at,
+          metAt: conn.met_at ?? '',
           when: conn.created_at,
           howMet: p.howMet === 'invite' ? 'a private invite' : 'in person',
           minutes: conn.minutes_talked ?? null,

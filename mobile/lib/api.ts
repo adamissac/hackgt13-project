@@ -60,7 +60,9 @@ export interface Connection {
   user_id: string;
   name: string;
   photo_url: string | null;
-  met_at: string;
+  headline?: string;
+  how_met?: 'in_person' | 'invite';
+  met_at: string | null;
   created_at: string;
   talked_about: string[];
   minutes_talked: number;
@@ -105,6 +107,15 @@ export type ConversationFeedbackResponse =
   | { status: 'waiting' }
   | { status: 'connected'; connection: { user_id: string; name: string }; chat_id: number }
   | { status: 'no_connection' };
+export interface PendingConversation {
+  conversation_id: number;
+  method: 'qr' | 'ble';
+  event_id: number | null;
+  minutes: number | null;
+  created_at: string;
+  other: Person;
+  checklist: { interest_id: number; name: string }[];
+}
 
 // Tap to verify (section 38): both phones claim each other's Bluetooth token at touching range.
 export type TapClaimResponse = { status: 'waiting' } | ({ status: 'verified' } & QrVerifyResponse);
@@ -231,6 +242,8 @@ const mocks = {
   openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
   qrVerify: () => require('../../docs/mocks/qr_verify.json') as QrVerifyResponse,
   conversationFeedback: () => require('../../docs/mocks/conversation_feedback.json') as ConversationFeedbackResponse,
+  pendingConversations: () => require('../../docs/mocks/conversations_pending.json') as { conversations: PendingConversation[] },
+  followupDraft: () => require('../../docs/mocks/followup_draft.json') as { draft: string },
   tapClaim: () => require('../../docs/mocks/tap_claim.json') as TapClaimResponse,
   locationShare: () => require('../../docs/mocks/location_share.json') as LocationShareState,
   meetups: () => require('../../docs/mocks/location_meetups.json') as { meetups: Meetup[] },
@@ -323,9 +336,15 @@ export const api = {
   qrVerify: (body: { payload: string; signature: string; event_id?: number }) =>
     call(mocks.qrVerify, () => request<QrVerifyResponse>('POST', '/qr/verify', body)),
   conversationFeedback: (conversationId: number, body: ConversationFeedbackRequest) =>
-    call(mocks.conversationFeedback, () =>
-      request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
+    call(
+      // A "no" stays on this phone. The mock mutual-yes payload is only for someone who said yes.
+      () => (body.wants_connect ? mocks.conversationFeedback() : ({ status: 'no_connection' } as ConversationFeedbackResponse)),
+      () => request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
     ),
+  pendingConversations: () =>
+    call(mocks.pendingConversations, () => request<{ conversations: PendingConversation[] }>('GET', '/conversations/pending')),
+  followupDraft: (userId: string) =>
+    call(mocks.followupDraft, () => request<{ draft: string }>('POST', `/connections/${encodeURIComponent(userId)}/followup-draft`, {})),
   tapClaim: (body: { token: string; rssi: number; event_id?: number }) =>
     call(mocks.tapClaim, () => request<TapClaimResponse>('POST', '/tap/claim', body)),
   meetups: () => call(mocks.meetups, () => request<{ meetups: Meetup[] }>('GET', '/location-shares')),

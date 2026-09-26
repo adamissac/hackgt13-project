@@ -94,6 +94,7 @@ export default function HomeScreen() {
 
       {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
       <CheckInCard />
+      <PendingChecklists />
 
       {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
       <MeetupBanner />
@@ -132,6 +133,28 @@ export default function HomeScreen() {
         <Button label="Verify a conversation" variant="secondary" onPress={() => router.push('/verify')} />
       </View>
     </ScrollView>
+  );
+}
+
+function PendingChecklists() {
+  const c = useColors();
+  const pending = useAsync(() => api.pendingConversations(), []);
+  if (pending.state.status !== 'ready' || pending.state.data.conversations.length === 0) return null;
+  return (
+    <>
+      {pending.state.data.conversations.map((item) => (
+        <Card key={item.conversation_id} highlight>
+          <Text style={[styles.cardTitle, { color: c.text }]}>You talked with {item.other.name}</Text>
+          <Text style={[styles.body, { color: c.muted }]}>
+            Mark what you covered. They only hear back if you both want to connect.
+          </Text>
+          <Button
+            label="Finish checklist"
+            onPress={() => router.push({ pathname: '/checklist/[id]', params: { id: String(item.conversation_id) } })}
+          />
+        </Card>
+      ))}
+    </>
   );
 }
 
