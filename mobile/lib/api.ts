@@ -414,11 +414,8 @@ export const api = {
   matches: (eventId: number, limit = 20) =>
     call(demo.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
   checkin: (eventId: number) => call(demo.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
-  starters: (otherUserId: string, variant = 0) =>
-    call(
-      () => demo.starters(otherUserId, variant),
-      () => request<StartersResponse>('GET', `/matches/${otherUserId}/starters${variant ? `?variant=${variant}` : ''}`),
-    ),
+  starters: (otherUserId: string) =>
+    call(() => demo.starters(otherUserId), () => request<StartersResponse>('GET', `/matches/${otherUserId}/starters`)),
   qrToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/token')),
   handshake: (body: { payload: string; signature: string; event_id: number }) =>
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),

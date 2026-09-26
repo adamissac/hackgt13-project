@@ -8,6 +8,7 @@
     "expo": "~57.0.25",
     "expo-auth-session": "~57.0.13",
     "expo-camera": "~57.0.5",
+    "expo-clipboard": "~57.0.2",
     "expo-constants": "~57.0.19",
     "expo-crypto": "~57.0.3",
     "expo-dev-client": "~57.0.19",
