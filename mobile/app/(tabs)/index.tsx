@@ -63,6 +63,8 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
+      <FinishProfileBanner />
+
       <OpenToMeetCard presence={presence} />
 
       <UpNext state={next.state} onRetry={next.reload} />
@@ -96,6 +98,34 @@ export default function HomeScreen() {
         <Text style={[styles.body, { color: c.text }]}>“Who should I meet?” · “What should I ask Maya?”</Text>
       </Pressable>
     </ScrollView>
+  );
+}
+
+/** Re-prompt until the profile builder has run once (onboarding_status !== 'complete'). Dismiss hides it for this session. */
+let bannerDismissed = false;
+function FinishProfileBanner() {
+  const c = useColors();
+  const status = useAsync(() => api.onboardingStatus(), [], ['profile']);
+  const [hidden, setHidden] = useState(bannerDismissed);
+  if (hidden || status.state.status !== 'ready' || status.state.data === 'complete') return null;
+  return (
+    <View style={[styles.banner, { backgroundColor: c.aiSoft }]}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.cardTitle, { color: c.text, fontSize: 16 }]}>Finish your profile</Text>
+        <Text style={[styles.small, { color: c.muted }]}>Add GitHub or a resume so we can find better matches.</Text>
+      </View>
+      <Button label="Add" onPress={() => router.push('/accounts')} style={{ minHeight: 44, paddingHorizontal: 16 }} />
+      <Pressable
+        onPress={() => {
+          bannerDismissed = true;
+          setHidden(true);
+        }}
+        accessibilityRole="button"
+        accessibilityLabel="Dismiss"
+        hitSlop={10}>
+        <Text style={{ color: c.muted, fontSize: 18 }}>✕</Text>
+      </Pressable>
+    </View>
   );
 }
 
@@ -309,5 +339,6 @@ const styles = StyleSheet.create({
   score: { fontSize: 18, fontWeight: '800' },
   more: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 14, alignItems: 'center' },
   ask: { borderRadius: 18, padding: 16, gap: 4 },
+  banner: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 16, padding: 14 },
   askTitle: { fontSize: 16, fontWeight: '800' },
 });

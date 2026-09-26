@@ -384,7 +384,31 @@ async function liveRelationship(userId: string): Promise<Relationship> {
 
 // ---------- endpoints ----------
 export const api = {
-  accounts: () => call(mocks.accounts, () => request<AccountsResponse>('GET', '/me/accounts')),
+  accounts: () =>
+    call(
+      () => {
+        const base = mocks.accounts();
+        const { sources } = demo.onboarding();
+        return {
+          ...base,
+          sign_in: { provider: 'demo', email: null },
+          profile: {
+            ...base.profile,
+            name: 'You',
+            headline: 'CS @ Georgia Tech · building RAG tools',
+            seeking: demo.interests().seeking,
+            offering: demo.interests().offering,
+            interests_text: 'I build retrieval systems and tutor intro CS.',
+          },
+          sources: {
+            ...base.sources,
+            github: { ...base.sources.github, connected: sources.github, added: sources.github, login: sources.github ? 'you' : null },
+            resume: { ...base.sources.resume, added: sources.resume },
+          },
+        };
+      },
+      () => request<AccountsResponse>('GET', '/me/accounts'),
+    ),
   patchManual: (body: Partial<ManualProfile>) =>
     call(mocks.manual, () => request<ManualResponse>('PATCH', '/profile/manual', body)),
   removeSource: (source: ProfileSource) =>

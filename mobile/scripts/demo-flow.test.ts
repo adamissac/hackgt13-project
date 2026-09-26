@@ -21,6 +21,16 @@ const step = (name: string, fn: () => void) => {
 
 demo.resetDemo();
 
+step('New account starts in onboarding; first source completes it', () => {
+  assert.equal(demo.onboarding().status, 'pending');
+  demo.setOnboarding('partial');
+  assert.equal(demo.onboarding().status, 'partial');
+  demo.addSource('github');
+  assert.equal(demo.onboarding().status, 'complete');
+  demo.setOnboarding('partial'); // never downgrades
+  assert.equal(demo.onboarding().status, 'complete');
+});
+
 step('Open to Meet OFF: no suggestions', () => {
   assert.equal(demo.suggestions().suggestions.length, 0);
 });
