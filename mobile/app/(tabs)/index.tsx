@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/auth';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
+import { MeetupBanner } from '@/features/location/MeetupBanner';
 
 // Open to Meet (MASTER_SPEC 3.3). Goes through PATCH /me/open-to-meet so turning it off
 // also ends any live meetup location sharing on the server.
@@ -83,6 +84,9 @@ export default function HomeScreen() {
           style={{ transform: [{ scale: 1.2 }] }}
         />
       </Card>
+
+      {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
+      <MeetupBanner />
 
       {suggestions.state.status === 'ready' && suggestions.state.data.suggestions.length > 0 && (
         <>
@@ -184,6 +188,10 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
       ) : state === 'matched' ? (
         <View style={[styles.notice, { backgroundColor: c.successSoft }]}>
           <Text style={[styles.body, { color: c.success, fontWeight: '700' }]}>It’s a match! Say hi in your chats.</Text>
+          <Button
+            label={`Find ${other.name.split(' ')[0]}`}
+            onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(suggestion.suggestion_id) } })}
+          />
         </View>
       ) : (
         <View style={styles.buttons}>

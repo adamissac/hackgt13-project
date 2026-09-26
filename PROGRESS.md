@@ -2,6 +2,25 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 11:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK7 Meetup location sharing
+
+**Status:** in progress (server live + tested on Postgres; app screens done; needs two phones to try for real)
+
+**What I did:**
+- `ml/app/routers/location.py` (mounted in ROUTERS), api.md **37**: `POST/GET/DELETE /location-shares/{suggestion_id}`, `GET /location-shares`. Allowed only for a `matched` suggestion, the two participants, both Open to Meet, no verified conversation since the match, within 2 h of the match. One shared 30-minute window per meetup that updates never extend. Any refusal is the same `410 sharing ended` and deletes both rows. Stop ends it for both. Alan's existing cleanup (QR/BLE verify, Open to Meet off, retention) is exercised in `ml/tests/test_location.py` (10 tests).
+- App: `app/meetup/[id].tsx` "Find them". Explicit "Share my location" consent, `expo-location` foreground watch every 10 s → POST, the other's point via Supabase Realtime on `location_shares` + a 10 s poll, a compass arrow (`watchHeadingAsync`) and a **rough band only** ("About a minute away", "Very close. Look around!"), never meters or a map. Countdown, Stop sharing, and "Found them? Verify with QR". Ends cleanly on 410.
+- `features/location/geo.ts` (haversine, bearing, arrow angle, bands; `geo.test.mjs` 4 tests). `features/location/MeetupBanner.tsx` on Home lists live meetups ("Find Maya"); a "Find <name>" button was added to Adam's matched suggestion card. `expo-location` plugin: when-in-use only, no background.
+
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test .venv/bin/python -m pytest tests/test_location.py -q` (10 passed). `cd mobile && node --experimental-strip-types --test features/location/geo.test.mjs && npx tsc --noEmit && npx expo lint`. Mock mode: Home shows "You're meeting Maya R." → Find Maya → Share my location.
+
+**Next step for whoever continues:** Rebuild the dev build (new native module `expo-location`). On two phones signed in as two users who both said yes to a suggestion: Home → Find → Share on both → walk apart/together and check the arrow and band change, then QR-verify and confirm both screens show "Location sharing ended".
+
+**Known issues / blockers:** Untested on devices. Realtime depends on `location_shares` being in the `supabase_realtime` publication (migration 8 adds it) and on the app's Supabase session; the 10 s poll covers it otherwise. Indoor GPS is ±10-20 m, which is why the bands are coarse. Cross-folder: Adam's `app/(tabs)/index.tsx` (MeetupBanner + Find button), `lib/api.ts` (4 calls).
+
+**Contract changes:** `docs/api.md` section 37 (new endpoints), mocks `location_share.json`, `location_meetups.json`. No schema change.
+
 ## 2026-09-26 10:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK2 / AK3 / AK4 / AK6 live on Alan's service + team merge
