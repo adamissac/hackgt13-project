@@ -31,6 +31,16 @@ def _source_status(user_id: str, source: str) -> dict:
     return {"added": True, "updated_at": row["fetched_at"].isoformat(), "interests": n}
 
 
+def _github_repo_count(user_id: str) -> int | None:
+    doc = profile_store.latest_document(user_id, "github")
+    if not doc:
+        return None
+    try:
+        return int((doc.get("meta") or {}).get("repo_count", 0))
+    except (TypeError, ValueError):
+        return None
+
+
 @router.get("/me/accounts")
 def accounts(user: User = Depends(current_user)):
     ensure_profile(user.id)
@@ -41,7 +51,9 @@ def accounts(user: User = Depends(current_user)):
     github = {**_source_status(user.id, "github"), "connected": gh is not None,
               "login": gh["provider_uid"] if gh else None,
               "last_synced_at": gh["fetched_at"].isoformat() if gh and gh["fetched_at"] else None,
-              "available": bool(os.getenv("GITHUB_CLIENT_ID"))}
+              "available": bool(os.getenv("GITHUB_CLIENT_ID")),
+              # How many public repos the last import read (0 = connected but nothing public to learn from).
+              "repo_count": _github_repo_count(user.id)}
     manual = _source_status(user.id, "manual")
     mdoc = profile_store.latest_document(user.id, "manual")
     return {

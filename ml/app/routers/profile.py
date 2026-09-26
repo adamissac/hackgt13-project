@@ -13,6 +13,9 @@ from ..auth import User, current_user
 from ..errors import ApiError
 from ..users import ensure_profile
 
+import logging
+
+log = logging.getLogger("profile")
 router = APIRouter(prefix="/profile")
 
 MAX_PDF_BYTES = 10 * 1024 * 1024
@@ -81,7 +84,17 @@ async def ingest(request: Request, background: BackgroundTasks, user: User = Dep
         if len(data) > MAX_PDF_BYTES:
             raise ApiError(413, "file is larger than 10 MB")
         if data.startswith(b"%PDF"):
-            mime, text = "application/pdf", pdf_to_text(data)
+            mime = "application/pdf"
+            try:
+                text = pdf_to_text(data)
+            except ApiError:
+                text = ""
+            if len(text) < 200:  # image-only / scanned PDF: let Claude read the pages
+                try:
+                    text = resume_structure.pdf_text_via_llm(data)
+                except Exception:
+                    log.exception("scanned PDF transcription failed")
+                    raise ApiError(400, "couldn't read that PDF. Try exporting it again as a text PDF, or upload a .docx")
         elif resume_structure.is_docx(data, filename):
             mime = resume_structure.DOCX_MIME
             try:

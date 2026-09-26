@@ -44,16 +44,26 @@ export async function uploadResume(): Promise<string | null> {
     type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
     copyToCacheDirectory: true,
   });
-  if (picked.canceled) return null;
+  if (picked.canceled) {
+    console.log('[resume] picker cancelled');
+    return null;
+  }
   const file = picked.assets[0];
+  console.log('[resume] picked', file.name, file.mimeType, file.size, 'bytes');
   if (file.size != null && file.size > 10 * 1024 * 1024) throw new Error('That file is over 10 MB.');
   if (env.useMocks) {
     await new Promise((r) => setTimeout(r, 1500));
     demo.addSource('resume');
     return 'demo-job';
   }
-  const { job_id } = await api.ingestResume({ uri: file.uri, name: file.name, type: file.mimeType ?? 'application/pdf' });
-  return job_id;
+  try {
+    const { job_id } = await api.ingestResume({ uri: file.uri, name: file.name, type: file.mimeType ?? 'application/pdf' });
+    console.log('[resume] uploaded, job', job_id);
+    return job_id;
+  } catch (e) {
+    console.warn('[resume] upload failed:', e instanceof Error ? e.message : e);
+    throw e;
+  }
 }
 
 /** Poll GET /profile/status until the job finishes. Extraction usually takes 5-20 s. */

@@ -18,6 +18,7 @@ export default function OnboardingScreen() {
   const [github, setGithub] = useState<Step>('idle');
   const [resume, setResume] = useState<Step>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
   const [building, setBuilding] = useState(false);
   const [ready, setReady] = useState(false);
   const [leaving, setLeaving] = useState(false);
@@ -43,6 +44,24 @@ export default function OnboardingScreen() {
     if (alive.current) setBuilding(false);
   };
 
+  // GitHub only shares public repos. If there are none, say so instead of waiting on nothing.
+  const checkGithubRepos = async () => {
+    for (let i = 0; i < 12 && alive.current; i++) {
+      await new Promise((r) => setTimeout(r, 2500));
+      const acct = await api.accounts().catch(() => null);
+      const n = acct?.sources.github.repo_count;
+      if (n === 0) {
+        console.log('[github] connected, no public repos');
+        setNote(`GitHub connected${acct?.sources.github.login ? ` as ${acct.sources.github.login}` : ''}, but it has no public repos to learn from. Add your resume below.`);
+        return;
+      }
+      if (typeof n === 'number') {
+        console.log('[github] imported', n, 'public repos');
+        return;
+      }
+    }
+  };
+
   const onGithub = async () => {
     setGithub('working');
     setError(null);
@@ -51,8 +70,10 @@ export default function OnboardingScreen() {
       if (r === 'cancelled') return setGithub('idle');
       if (typeof r === 'object') throw new Error(r.error);
       setGithub('done');
+      void checkGithubRepos();
       void waitForProfile();
     } catch (e) {
+      console.warn('[github] connect failed:', e instanceof Error ? e.message : e);
       setGithub('error');
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -69,6 +90,7 @@ export default function OnboardingScreen() {
       await waitForJob(job);
       void waitForProfile();
     } catch (e) {
+      console.warn('[resume] failed:', e instanceof Error ? e.message : e);
       setResume('error');
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -118,6 +140,7 @@ export default function OnboardingScreen() {
         onPress={onResume}
       />
 
+      {note && <Text style={[styles.body, { color: c.text }]}>{note}</Text>}
       {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
 
       {(building || ready) && (

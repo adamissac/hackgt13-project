@@ -63,6 +63,24 @@ def docx_to_text(data: bytes) -> str:
     return "\n".join(parts).strip()
 
 
+def pdf_text_via_llm(pdf_bytes: bytes) -> str:
+    """Scanned / image-only PDFs have no text layer. Claude reads the pages and transcribes them."""
+    import base64
+    from .config import LLM_FAST
+    from .llm import client
+    resp = client().messages.create(
+        model=LLM_FAST,
+        max_tokens=4000,
+        messages=[{"role": "user", "content": [
+            {"type": "document", "source": {"type": "base64", "media_type": "application/pdf",
+                                             "data": base64.standard_b64encode(pdf_bytes).decode()}},
+            {"type": "text", "text": "Transcribe all the text of this resume as plain text, in reading order. "
+                                     "Output only the transcription."},
+        ]}],
+    )
+    return "".join(b.text for b in resp.content if getattr(b, "type", "") == "text").strip()
+
+
 def is_docx(data: bytes, filename: str = "") -> bool:
     return data[:2] == b"PK" and (filename.lower().endswith(".docx") or b"word/" in data[:4000])
 

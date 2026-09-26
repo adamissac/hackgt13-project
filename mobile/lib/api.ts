@@ -250,6 +250,8 @@ export interface AssistantMessage { role: 'user' | 'assistant'; content: string 
 export type SignInProvider = 'linkedin' | 'email' | string | null;
 export interface SourceStatus { added: boolean; updated_at: string | null; interests: number }
 export interface GithubStatus extends SourceStatus {
+  /** Public repos the last import read; 0 = connected but nothing public (null = never imported). */
+  repo_count?: number | null;
   available: boolean;
   connected: boolean;
   login: string | null;

@@ -82,3 +82,19 @@ def encounters_tick() -> None:
 def push_tick() -> None:
     from . import push
     push.tick()
+
+
+@every(300, "skill_profile_backfill")
+def skill_profile_backfill() -> None:
+    """Anyone with extracted sources but no active skill profile (e.g. imported while an older build was
+    deployed) gets one. Cheap when there's nothing to do; the builder itself is idempotent."""
+    from . import skill_profile
+    rows = db.fetchall(
+        "select distinct d.user_id::text as id from raw_documents d "
+        "where d.meta ? 'extraction' and d.source = any(%s) and not exists "
+        "(select 1 from user_skill_profiles p where p.user_id = d.user_id and p.is_active) limit 50",
+        (list(skill_profile.PROFILE_SOURCES),))
+    for r in rows:
+        skill_profile.build_safely(r["id"], "rebuild")
+    if rows:
+        log.info("skill profiles backfilled for %d people", len(rows))
