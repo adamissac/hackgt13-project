@@ -11,7 +11,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, errors, tasks, workers  # noqa: F401  (tasks registers background jobs)
+from . import db, errors, github_activity, tasks, workers  # noqa: F401  (tasks, github_activity register jobs)
 from .settings import get_settings
 
 log = logging.getLogger("app")
