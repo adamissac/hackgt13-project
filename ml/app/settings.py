@@ -6,14 +6,24 @@ so /health and the test suite run without them.
 import os
 from dataclasses import dataclass, field
 
+def _drop_comment_values(path: str) -> None:
+    """python-dotenv reads `KEY=   # note` as the value "# note". A comment is never a real setting (it would
+    turn SUPABASE_JWT_SECRET into a bogus secret and reject every login), so treat those keys as unset."""
+    from dotenv import dotenv_values
+    for key, value in dotenv_values(path).items():
+        if value and value.lstrip().startswith("#") and os.environ.get(key) == value:
+            del os.environ[key]
+
+
 try:  # optional: load ml/.env or the repo-root .env for local runs (never in tests: FC_NO_DOTENV=1)
     if os.getenv("FC_NO_DOTENV") == "1":
         raise ImportError("dotenv disabled")
     from dotenv import load_dotenv
 
     _here = os.path.dirname(os.path.abspath(__file__))
-    load_dotenv(os.path.join(_here, "..", ".env"))
-    load_dotenv(os.path.join(_here, "..", "..", ".env"))
+    for _path in (os.path.join(_here, "..", ".env"), os.path.join(_here, "..", "..", ".env")):
+        load_dotenv(_path)
+        _drop_comment_values(_path)
 except Exception:
     pass
 

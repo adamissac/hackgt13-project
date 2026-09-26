@@ -395,14 +395,35 @@ export interface AppNotification {
   created_at: string;
 }
 
+// Server payloads carry ids, not names (see ml/app: suggestions, conversations, invites). Titles are generic
+// on purpose; the route opens the exact screen.
 const NOTIFICATION_TEXT: Record<string, (p: Record<string, unknown>) => { title: string; body: string; route: string | null }> = {
-  suggestion: (p) => ({ title: `Someone to meet: ${p.name ?? 'a strong match'}`, body: 'You share a lot. Want to meet?', route: '/' }),
-  connect_prompt: () => ({ title: 'How did your conversation go?', body: 'Your conversation was verified. Tell us if you want to connect.', route: '/' }),
-  connected: (p) => ({ title: `You’re connected${p.name ? ` with ${p.name}` : ''}`, body: 'You both said yes after talking.', route: '/connections' }),
-  mutual_meet: (p) => ({ title: `You both want to meet${p.name ? ` ${p.name}` : ''}`, body: 'Your chat is open.', route: '/chats' }),
+  suggestion: (p) =>
+    p.status === 'matched'
+      ? {
+          title: 'You both want to meet 🎉',
+          body: 'Your chat is open. Say hi and find each other.',
+          route: p.chat_id != null ? `/chat/${p.chat_id}` : '/chats',
+        }
+      : { title: 'Someone here is worth meeting', body: 'A strong match is nearby. Want to meet?', route: '/' },
+  connect_prompt: (p) => ({
+    title: 'How did your conversation go?',
+    body: 'Your conversation was verified. Tell us if you want to connect.',
+    route: p.conversation_id != null ? `/checklist/${p.conversation_id}` : '/',
+  }),
+  connected: (p) => ({
+    title: 'You have a new connection',
+    body: p.how_met === 'invite' ? 'You both accepted a private invite.' : 'You both said yes after talking.',
+    route: '/connections',
+  }),
+  mutual_meet: (p) => ({
+    title: 'You both want to meet 🎉',
+    body: 'Your chat is open.',
+    route: p.chat_id != null ? `/chat/${p.chat_id}` : '/chats',
+  }),
   invite: () => ({ title: 'New private invite', body: 'Someone you know wants to connect.', route: '/invites' }),
   event_update: () => ({ title: 'Event update', body: 'Something changed at your event.', route: null }),
-  connection_attending: (p) => ({ title: 'A connection is here', body: `${p.name ?? 'One of your connections'} is at this event.`, route: null }),
+  connection_attending: () => ({ title: 'A connection is here', body: 'One of your connections is at this event.', route: null }),
 };
 
 async function liveRelationship(userId: string): Promise<Relationship> {
@@ -682,7 +703,8 @@ export const api = {
       if (error) throw new Error(error.message);
       return ((data ?? []) as { id: number; kind: string; payload: Record<string, unknown> | null; read: boolean; created_at: string }[]).map((n) => {
         const text = (NOTIFICATION_TEXT[n.kind] ?? (() => ({ title: 'Update', body: '', route: null })))(n.payload ?? {});
-        return { id: n.id, kind: n.kind, read: n.read, created_at: n.created_at, user_id: (n.payload?.user_id as string) ?? null, ...text };
+        const who = (n.payload?.other_user_id ?? n.payload?.user_id) as string | undefined;
+        return { id: n.id, kind: n.kind, read: n.read, created_at: n.created_at, user_id: who ?? null, ...text };
       });
     }),
   markNotificationsRead: () =>

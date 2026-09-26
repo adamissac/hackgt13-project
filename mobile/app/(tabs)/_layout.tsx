@@ -8,6 +8,7 @@ import { Brand } from '@/components/Brand';
 import Colors from '@/constants/Colors';
 import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { useAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
 
 function icon(name: SymbolViewProps['name']) {
@@ -19,16 +20,18 @@ function icon(name: SymbolViewProps['name']) {
 }
 // Signed-in users are at HackGT 13: check in once when the app opens (idempotent on the server), so
 // matches, graph, nearby and the assistant work without hunting for a button.
-let checkedInThisSession = false;
+const checkedIn = new Set<string>(); // per signed-in user, so switching accounts checks the new one in
 function useAutoCheckin() {
+  const { session } = useAuth();
+  const userId = session?.user.id ?? null;
   useEffect(() => {
-    if (checkedInThisSession || env.useMocks) return;
-    checkedInThisSession = true;
+    if (!userId || env.useMocks || checkedIn.has(userId)) return;
+    checkedIn.add(userId);
     api.checkin(HACKGT_EVENT_ID).catch((e) => {
-      checkedInThisSession = false;
-      console.warn('[api] auto check-in failed:', e instanceof Error ? e.message : e);
+      checkedIn.delete(userId);
+      console.warn("[api] auto check-in failed:", e instanceof Error ? e.message : e);
     });
-  }, []);
+  }, [userId]);
 }
 
 export default function TabLayout() {

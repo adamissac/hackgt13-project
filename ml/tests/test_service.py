@@ -71,3 +71,15 @@ def test_transaction_pooler_disables_prepared_statements():
     from app.db import _uses_transaction_pooler
     assert _uses_transaction_pooler("postgresql://u:p@aws-0.pooler.supabase.com:6543/postgres")
     assert not _uses_transaction_pooler("postgresql://u:p@db.x.supabase.co:5432/postgres")
+
+
+def test_dotenv_comment_values_are_treated_as_unset(tmp_path, monkeypatch):
+    """`KEY=   # note` in a .env must not become the value "# note" (it broke JWT checks locally)."""
+    from app.settings import _drop_comment_values
+    env = tmp_path / ".env"
+    env.write_text("FC_T_COMMENT=   # just a note\nFC_T_REAL=value   # trailing note\n")
+    monkeypatch.setenv("FC_T_COMMENT", "# just a note")
+    monkeypatch.setenv("FC_T_REAL", "value")
+    _drop_comment_values(str(env))
+    import os
+    assert "FC_T_COMMENT" not in os.environ and os.environ["FC_T_REAL"] == "value"
