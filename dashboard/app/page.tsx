@@ -8,6 +8,8 @@ export default function Home() {
       <ul style={{ lineHeight: 2, paddingLeft: 18 }}>
         <li><Link href="/graph">Connection Graph</Link></li>
         <li><Link href="/map">Organizer community map</Link></li>
+        <li><Link href="/me">Your network (personal dashboard)</Link></li>
+        <li><Link href="/insights">Feed insights</Link></li>
       </ul>
     </main>
   );
