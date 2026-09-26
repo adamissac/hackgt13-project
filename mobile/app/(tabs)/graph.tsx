@@ -1,16 +1,7 @@
-import { StyleSheet } from 'react-native';
+import { DashboardWebView } from '@/components/DashboardWebView';
 
-import { Empty } from '@/components/States';
-import { View } from '@/components/Themed';
-
-// AD9: this tab becomes a react-native-webview loading Arjun's graph page (AR4),
-// posting {type: "auth", token} after load and on every token refresh.
+// AD9 (wired by Arjun): the Connection Graph is Arjun's web page (dashboard/app/graph), embedded here.
+// Auth goes over postMessage (see components/DashboardWebView.tsx).
 export default function GraphScreen() {
-  return (
-    <View style={styles.container}>
-      <Empty title="Your connection graph" body="Your network appears here once you make connections." />
-    </View>
-  );
+  return <DashboardWebView path="/graph" />;
 }
-
-const styles = StyleSheet.create({ container: { flex: 1 } });

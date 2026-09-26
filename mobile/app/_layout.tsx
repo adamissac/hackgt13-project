@@ -59,6 +59,7 @@ function RootLayoutNav() {
         <Stack.Protected guard={signedIn}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
           <Stack.Screen name="match/[id]" options={{ title: 'Match', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="web/[page]" options={{ title: '', headerBackTitle: 'Back' }} />
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false }} />

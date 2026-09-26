@@ -152,6 +152,12 @@ export default function ProfileScreen() {
         <Button label="Invite someone you know" variant="secondary" onPress={() => router.push('/invites')} />
       </Card>
 
+      <SectionTitle>Your network</SectionTitle>
+      <Card>
+        <Button label="Your network dashboard" variant="secondary" onPress={() => router.push('/web/network')} />
+        <Button label="Feed insights" variant="secondary" onPress={() => router.push('/web/insights')} />
+      </Card>
+
       <SectionTitle>Account</SectionTitle>
       <Card>
         {session && <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />}
