@@ -147,6 +147,12 @@ export default function ProfileScreen() {
         </Card>
       ))}
 
+      <SectionTitle>Chats</SectionTitle>
+      <Card>
+        <Text style={[styles.small, { color: c.muted }]}>Conversations open after you both say yes.</Text>
+        <Button label="Your chats" variant="secondary" onPress={() => router.push('/chats')} />
+      </Card>
+
       <SectionTitle>Your sources</SectionTitle>
       <Card>
         <Text style={[styles.small, { color: c.muted }]}>GitHub, your resume, and what you type about yourself build these interests.</Text>

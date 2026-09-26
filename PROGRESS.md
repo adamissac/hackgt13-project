@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 02:11 | adam | Cursor (Grok 4.7)
+**Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
+**Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)
+**What I did:**
+- `mobile/app/chat/[id].tsx` and `mobile/app/chats.tsx`: a chat opens after mutual yes. Messages go through Supabase (`messages` insert + Realtime `postgres_changes` filter `chat_id=eq.{id}`). The list only keeps chats the viewer is in (`visibleChats` in `mobile/features/chat/model.ts`).
+- Icebreaker: `GET /matches/{id}/starters` first opener can be sent, edited, or dismissed. Sending it unchanged sets `is_ai_draft`.
+- Home: “Chat with {name}” after a match, a “Your chats” link, and a Check in button that calls `POST /events/1/checkin` (Akshar’s open request). Profile links to chats. Mock “yes” now returns `docs/mocks/suggestion_respond.json` (`chat_id` 7) so the demo can open the thread.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Skip sign-in, Check in, Yes let’s meet, Chat with Maya, Send the opener. Live: sign in, mutual yes, the other phone should see the insert without a refresh.
+**Next step for whoever continues:** On two signed-in phones, both say yes, open `mobile/app/chat/[id].tsx`, send from one, and confirm the other updates via `subscribeToMessages`. If Realtime is silent, confirm `messages` is in the `supabase_realtime` publication (migration `20260926000008`).
+**Known issues / blockers:** AD2/AD3 still need a physical phone (magic link + dev build). Live chat was not exercised against Supabase from this session.
+**Contract changes:** none
+
 ## 2026-09-26 12:10 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
 **Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)

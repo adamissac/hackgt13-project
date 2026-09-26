@@ -64,6 +64,9 @@ export default function HomeScreen() {
       <View>
         <Text style={[styles.eyebrow, { color: c.muted }]}>HackGT 13 · Georgia Tech</Text>
         <Text style={[styles.hero, { color: c.text }]}>Who you should meet</Text>
+        <Pressable onPress={() => router.push('/chats')} accessibilityRole="button">
+          <Text style={[styles.small, { color: c.tint, fontWeight: '700', marginTop: 4 }]}>Your chats</Text>
+        </Pressable>
       </View>
 
       <Card highlight={openToMeet.on} style={styles.toggleCard}>
@@ -84,6 +87,9 @@ export default function HomeScreen() {
           style={{ transform: [{ scale: 1.2 }] }}
         />
       </Card>
+
+      {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
+      <CheckInCard />
 
       {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
       <MeetupBanner />
@@ -112,6 +118,37 @@ export default function HomeScreen() {
           matches.state.data.matches.map((m) => <MatchCard key={m.user_id} match={m} />)
         ))}
     </ScrollView>
+  );
+}
+
+function CheckInCard() {
+  const c = useColors();
+  const [state, setState] = useState<'idle' | 'sending' | 'in'>('idle');
+  const [error, setError] = useState<string | null>(null);
+
+  const checkIn = async () => {
+    setState('sending');
+    setError(null);
+    try {
+      await api.checkin(HACKGT_EVENT_ID);
+      setState('in');
+    } catch (e) {
+      setState('idle');
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+
+  return (
+    <Card>
+      <Text style={[styles.cardTitle, { color: c.text }]}>{state === 'in' ? 'You’re checked in' : 'Check in to HackGT 13'}</Text>
+      <Text style={[styles.body, { color: c.muted }]}>
+        {state === 'in'
+          ? 'Matches and suggestions for this event can reach you now.'
+          : 'Check in so we can match you with people who are here.'}
+      </Text>
+      {state !== 'in' && <Button label="Check in" onPress={checkIn} loading={state === 'sending'} />}
+      {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
+    </Card>
   );
 }
 
@@ -148,6 +185,7 @@ function MatchCard({ match }: { match: Match }) {
 function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   const c = useColors();
   const [state, setState] = useState<'idle' | 'sending' | 'waiting' | 'matched' | 'dismissed'>('idle');
+  const [chatId, setChatId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const respond = async (response: 'yes' | 'no') => {
@@ -156,7 +194,10 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
     try {
       const res = await api.respondToSuggestion(suggestion.suggestion_id, response);
       if (response === 'no') setState('dismissed');
-      else setState(res.status === 'matched' ? 'matched' : 'waiting');
+      else if (res.status === 'matched') {
+        setChatId(res.chat_id);
+        setState('matched');
+      } else setState('waiting');
     } catch (e) {
       setState('idle');
       setError(e instanceof Error ? e.message : String(e));
@@ -187,9 +228,21 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
         </View>
       ) : state === 'matched' ? (
         <View style={[styles.notice, { backgroundColor: c.successSoft }]}>
-          <Text style={[styles.body, { color: c.success, fontWeight: '700' }]}>It’s a match! Say hi in your chats.</Text>
+          <Text style={[styles.body, { color: c.success, fontWeight: '700' }]}>It’s a match. Say hi — only the two of you can see this chat.</Text>
+          {chatId !== null && (
+            <Button
+              label={`Chat with ${other.name.split(' ')[0]}`}
+              onPress={() =>
+                router.push({
+                  pathname: '/chat/[id]',
+                  params: { id: String(chatId), name: other.name, other: other.user_id },
+                })
+              }
+            />
+          )}
           <Button
             label={`Find ${other.name.split(' ')[0]}`}
+            variant="secondary"
             onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(suggestion.suggestion_id) } })}
           />
         </View>

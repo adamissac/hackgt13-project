@@ -380,7 +380,8 @@ export const api = {
   suggestions: () => call(mocks.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
   respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
     call(
-      () => ({ status: 'waiting' }) as SuggestionRespondResponse,
+      // A "no" stays on this phone only. "Yes" uses the mock mutual-yes payload (chat_id).
+      () => (response === 'yes' ? mocks.suggestionRespond() : ({ status: 'waiting' } as SuggestionRespondResponse)),
       () => request<SuggestionRespondResponse>('POST', `/suggestions/${suggestionId}/respond`, { response }),
     ),
   deleteMe: () =>
