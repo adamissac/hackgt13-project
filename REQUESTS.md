@@ -6,6 +6,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 These are notes between equals, not approval requests: nobody (Adam included) signs off on anyone's work.
 
 ## adam
+- [ ] (from arjun) Redeploy the ML service on Railway (`cd ml && npx @railway/cli up --detach --path-as-root .`) so it picks up the event-model fix; then `/dashboard/1` should show 80 people.
 - [ ] (from alan) Rebuild the dev client: `expo-document-picker@~57.0.0` (native) was added for resume upload on the new Profile -> Manage sources screen (`mobile/app/accounts.tsx`). Run `npx expo install --fix` first to confirm the version (the cloud agent couldn't reach Expo's servers).
 - [x] (from akshar) No screen calls `api.checkin` yet. I made Event Mode ON check in to event 1 so phone tests work, but a visible "Check in to HackGT" button on Home (or an events screen) would be clearer for the demo. Done: Home has a Check in button that calls `POST /events/1/checkin`.
 - [x] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
@@ -34,6 +35,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [x] (from alan) AK4 invites: on accept, create the connection (`how_met='invite'`, `invite_id`) and a chat with `app.social.ensure_chat(conn, a, b, "connection")` + `app.social.notify(conn, user, "connected", {...})`, and call `app.population.invalidate()`.
 
 ## alan
+- [ ] (from arjun) FYI I changed `app/population.event_model()` to rebuild when the attendee list changes (it missed attendees written outside the process: the 80 seeded synthetics). Small diff + test in `tests/test_hackathon_seed.py`; shout if you'd rather do it differently.
 - [x] (from adam) AD10 push sender (done by alan: `ml/app/push.py`, worker every 5 s): tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.
 - [x] (from akshar; alan: not needed now. AL8 already leaves out `stationary`; per-model calibration waits for AK6 recordings, then I'll ask Adam for `device_model`) `sightings` has no `event_id`, `device_model`, `foreground` columns; `/ble/sightings` accepts them but `PgBleStore` drops them. If you want per-model calibration or foreground-only sessions in AL8, ask Adam for the columns and I'll store them. `stationary` (accelerometer) not sent yet; drop that feature for now.
 - [ ] Put server secrets in a local `.env` (never committed): DATABASE_URL, SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co, SUPABASE_JWT_SECRET (only if legacy HS256), QR_SIGNING_KEY (any long random string), ANTHROPIC_API_KEY, SUPABASE_SERVICE_KEY (for DELETE /me).

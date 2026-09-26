@@ -2,18 +2,20 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
-## 2026-09-26 03:05 | adam | Adam
-**Task:** Commit history shows the four teammates, not the tools
-**Status:** done
+## 2026-09-26 15:10 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR3 follow-up: live server didn't see the 80 seeded attendees (edit in Alan's `ml/app/population.py`, flagged for Alan)
+**Status:** fixed in code; NEEDS A RAILWAY REDEPLOY to take effect
 **What I did:**
-- Past commits authored as Claude are now Alan (`m-alan08`). Past commits authored as Cursor are now Adam. Akshar's `.local` email is his gmail. Co-authored-by lines for those tools are removed, because GitHub counts them as contributors.
-- `.githooks/commit-msg` strips those lines on future commits.
-**How to run/test it:** `git log --format='%an <%ae>' | sort | uniq -c`. GitHub contributors should be Adam, Alan, Arjun, and Akshar after the history update.
-**Next step for whoever continues:** If your local `main` rejects a pull, run `git fetch origin && git reset --hard origin/main` on a clean checkout. Do not merge the old history back in.
-**Known issues / blockers:** Teammates with unpushed commits must rebase them onto the updated `main`. The old `claude/quirky-euler-dnbsgt` and `adami/ad1-verify-fe21` branches are already merged and should be deleted.
+- Found: `population.event_model()` cached the attendee list and only rebuilt on this process's `invalidate()`. Attendance written by anything else (seed script, Supabase, a 2nd replica) stayed invisible until restart; live `/dashboard/1` showed 10 people (a mid-seed snapshot) instead of 80.
+- Fix: `event_model` also compares the current attendee ids (one small query) and rebuilds when they changed; `EventModel.ids` added. Test `test_event_model_sees_attendees_added_outside_the_process`. Full ML suite 175 passed on local Postgres.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/dashboard/1 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['people'], len(d['clusters']))"` should say 80 after the redeploy.
+**Next step for whoever continues:** Redeploy Railway: `cd ml && npx @railway/cli up --detach --path-as-root .` (Adam's Railway login). Then re-check `/dashboard/1` and sign in on a phone to see real matches.
+**Known issues / blockers:** Railway redeploy needs someone logged into the `formal-connection` Railway project.
 **Contract changes:** none
 
 ## 2026-09-26 14:40 | arjun | Arjun
+
+## 2026-09-26 14:40 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 synthetic attendees: SEEDED INTO LIVE SUPABASE
 **Status:** done
 **What I did:**
@@ -22,43 +24,6 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **How to run/test it:** re-run (idempotent): `cd ml && SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co SUPABASE_SECRET_KEY=... .venv/bin/python scripts/seed_hackathon_attendees.py`; remove all: same with `--delete`.
 **Next step for whoever continues:** Start the ML server against this project (Alan/Adam: DATABASE_URL + keys in ml/.env, `./scripts/start-ml.sh` or Railway). Its workers compute profile_vectors/IDF/clusters for the 80 within 5 min; then `GET /events/1/matches` ranks them. SECURITY: the Supabase secret key was pasted in chat; rotate it (Project Settings -> API Keys) before real attendees.
 **Known issues / blockers:** profile_vectors not written by the seeder (the ML service's global_vectors worker does it on startup/every 5 min).
-**Contract changes:** none
-
-## 2026-09-26 02:55 | adam | Adam
-**Task:** Put the ML API on Railway so a laptop does not have to stay on
-**Status:** done
-**What I did:**
-- Filled the gitignored root `.env` and `mobile/.env` from the secrets already on this Mac. `SUPABASE_JWT_SECRET` stays empty (JWKS). `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are not on this Mac (Alan has them on his laptop).
-- Railway project `formal-connection`, service `ml`, domain `https://ml-production-04c0.up.railway.app`. `GET /health` returns `{"ok":true,"db":true}`. The public domain targets port 8080 because that is the `PORT` Railway gave the process.
-- `mobile/.env` now has `EXPO_PUBLIC_API_BASE_URL` set to that domain and `EXPO_PUBLIC_USE_MOCKS=0`.
-**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Redeploy after `ml/` changes: `cd ml && npx @railway/cli up --detach --path-as-root .`
-**Next step for whoever continues:** On Alan's laptop, add callback `https://ml-production-04c0.up.railway.app/connect/github/callback` to the existing GitHub OAuth app, then set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` on the Railway `ml` service from his root `.env` (`cd ml && npx @railway/cli variable set GITHUB_CLIENT_ID --stdin`). Do not paste them into chat or commit them.
-**Known issues / blockers:** GitHub connect on the Railway URL stays off until those two variables are set there. GitHub auto-deploy is not connected; root directory must be `ml` before connecting the repo, or the build will miss the Dockerfile.
-**Contract changes:** none
-
-## 2026-09-26 06:50 | alan | Alan
-**Task:** AL1 finish — GitHub OAuth wired on a second laptop; ML service running from Alan's Mac
-**Status:** in progress (OAuth verified; `/health` still `db:false` until DATABASE_URL lands)
-**What I did:**
-- Stood the ML service up on Alan's Mac from scratch: `uv` + a fetched Python 3.12 (`ml/.venv`), `cloudflared` and Node 22.23.3 into `~/.local/bin` (no Homebrew, no sudo). `mobile/` deps installed, `npx tsc --noEmit` clean.
-- GitHub OAuth app credentials into the root `.env`; tunnel run **standalone** so uvicorn can restart without changing the public URL. Verified callback URL / client_id / `read:user` scope / state signing / Fernet token round-trip all pass against the live config.
-- Fixed a landmine in `.env.example`: python-dotenv returns a trailing `# comment` as the VALUE when a key is left empty. `SUPABASE_JWT_SECRET=` (blank = "use JWKS") arrived as comment text, so the service would have tried HS256 with garbage and rejected every login; `CORS_ORIGINS` and `MATCH_MODEL` broke the same way. Comments now sit on their own line. Same 23 keys, none added or renamed.
-- LightGBM on macOS without Homebrew fails on `@rpath/libomp.dylib`; symlinked the copy scikit-learn already ships. `ml` suite now 68 passed, 105 skipped (skips are the DB tests).
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (note: `.venv` is uv's 3.12, not `python3 -m venv` — the Mac's system python is 3.14 and numba has no wheels for it). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`, tunnel separately: `cloudflared tunnel --url http://localhost:8000`. `curl -s localhost:8000/health`.
-**Next step for whoever continues:** Put `DATABASE_URL` (Supabase session pooler, 5432), `SUPABASE_SERVICE_KEY`, and `ANTHROPIC_API_KEY` in the root `.env`, restart uvicorn only, confirm `/health` shows `"db":true`, then test Profile -> Manage sources -> Connect GitHub on a phone. Without the DB the callback finishes consent and *then* fails writing `linked_accounts`, which looks like an OAuth error but is not.
-**Known issues / blockers:** The trycloudflare hostname dies with its process, and the GitHub Redirect URI is pinned to it — `docs/deploy.md` (Railway) is the stable option for demo day. An older server on `offset-suffered-prospect-issues.trycloudflare.com` is still live on an unidentified machine; its Redirect URI is still registered and should be deleted once that host is confirmed dead, since trycloudflare names get recycled. `mobile/.env` still needs the Expo Supabase keys before a phone can sign in.
-**Contract changes:** none (`.env.example` reformatted only — no variable added, removed, or renamed)
-
-## 2026-09-26 02:37 | adam | Adam
-**Task:** AD11 Feed screen and post composer, plus the assistant screen
-**Status:** done in mock mode
-**What I did:**
-- `mobile/app/(tabs)/feed.tsx`: ranked feed, update/post composer, AI summary cards, editable reply draft from `POST /feed/{item_id}/reply-suggestion`.
-- `mobile/app/assistant.tsx`: Profile → Ask. Sends the full thread to `POST /assistant/chat` with event id 1. The model stays on the ML server.
-- `mobile/lib/api.ts`: `feed`, `createPost`, `replySuggestion`, `assistantChat`. Demo mode uses `docs/mocks/feed.json`, `feed_reply_suggestion.json`, and `assistant_chat.json`.
-**How to run/test it:** `cd mobile && EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web` → Explore the demo → Feed (share an update, Suggest a reply) and Profile → Ask.
-**Next step for whoever continues:** Put `ANTHROPIC_API_KEY` in the gitignored root `.env` (never in `mobile/` or `dashboard/`) and run `./scripts/start-ml.sh`, then set `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_ML_API_URL` so `api.assistantChat` in `mobile/lib/api.ts` and `api.replySuggestion` hit the live endpoints.
-**Known issues / blockers:** Demo replies are the canned mocks. There is no comments endpoint, so a reply draft stays in the text field for the user to edit. Live Claude returns 503 until `ANTHROPIC_API_KEY` is set on the ML server.
 **Contract changes:** none
 
 ## 2026-09-26 14:00 | arjun | Arjun
@@ -73,126 +38,6 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **How to run/test it:** `cd ml && .venv/bin/python scripts/seed_hackathon_attendees.py --dry-run`; live: `DATABASE_URL=<session pooler> SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co SUPABASE_SERVICE_KEY=... .venv/bin/python scripts/seed_hackathon_attendees.py`.
 **Next step for whoever continues:** Get DATABASE_URL + SUPABASE_SERVICE_KEY from Adam/Alan (put in ml/.env, never commit) and run the live seed command above; then check `GET /events/1/matches` returns people.
 **Known issues / blockers:** Live DB credentials not on Arjun's Mac. Old `ml/scripts/seed_synthetic.py` (PostgREST version) is superseded by this one.
-**Contract changes:** none
-
-## 2026-09-26 | adam | Adam
-**Task:** AD9 / AR5 Graph phone readability (user-requested cross-owner graph presentation update)
-**Status:** done
-**What I did:**
-- Replaced the moving twelve-electron renderer with six stable, labeled, 48px nodes around a central nucleus, faint orbital curves, and curved self-to-person edges. Removed the continuous animation loop and dragging so tapping and vertical scrolling are predictable.
-- Preserved topic grouping/filtering and the remaining-people list. Moved the legend into a disclosure; line thickness represents match strength, while position is explicitly decorative.
-- Node and list taps open a safe-area-aware, scrollable modal profile sheet; full-profile navigation closes the modal first. Stacked interest evidence for narrow screens.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit`; `npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts features/graph/PersonSheet.tsx`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform web --platform ios`. Layout tests cover graph widths 286–440px and zero/sparse/excess populations.
-**Next step for whoever continues:** Open Graph from the mock preview (`EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web --port 8084`) and test node selection, topic filters, and the profile sheet on a physical phone.
-**Known issues / blockers:** Physical-phone verification still required. No new native dependency or backend changes.
-**Contract changes:** none
-
-## 2026-09-26 13:00 | arjun | Arjun
-**Task:** Graph = "atom" data viz (Arjun's direction)
-**Status:** done in code (mock data); motion to confirm on a phone
-**What I did:**
-- `mobile/features/graph/Atom.tsx`: you = nucleus, 12 best matches = electrons on tilted orbits (one plane per interest group), color = shared interest (3 color-blind-safe hues + gray "other"), opacity = strength (solid = strong, see-through = weaker), stronger = inner/faster orbit. All motion on the UI thread (Reanimated useFrameCallback + useAnimatedProps on SVG); drag writes shared values (no React re-render) -> smooth. Tap pauses spin + opens the profile sheet.
-- `mobile/features/graph/PersonSheet.tsx`: tap -> headline, shared interests with evidence, looking for / can offer; for connections: how/when met, minutes, last talked about (GET /connections/{id}, added `api.connection`).
-**How to run/test it:** `scripts/start-app.sh` -> Expo Go -> Explore the demo -> Graph.
-**Next step for whoever continues:** Real data once the ML server is live (EXPO_PUBLIC_USE_MOCKS=0).
-**Known issues / blockers:** Expo web preview doesn't animate in a hidden tab (expected); verify spin on a device.
-**Contract changes:** none
-
-## 2026-09-26 | adam | Adam
-**Task:** AD3 Expo app shell — shared local-preview synchronization instructions
-**Status:** done
-**What I did:**
-- Added mandatory 60-second GitHub freshness checks for agents actively supervising local previews, with clean-main fast-forward updates and dirty/diverged checkout safeguards.
-- Documented server/checkout identification, dependency updates, reload/restart/rebuild requirements, and URL/commit verification in AGENTS.md; linked the policy from CLAUDE.md and README.md.
-**How to run/test it:** `git diff --check`; read `AGENTS.md` → “Keep local previews current”. Teammates receive the policy with `git pull --rebase origin main` after safely committing their work.
-**Next step for whoever continues:** Follow the AGENTS.md local-preview policy in the checkout serving your app; record the URL and `git rev-parse --short HEAD` at handoff.
-**Known issues / blockers:** Documentation only; no persistent updater installed. Agents must remain active or configure a supported monitor to keep checking after startup.
-**Contract changes:** none
-
-## 2026-09-26 02:28 | adam | Adam
-**Task:** AD8 Post-conversation checklist, connect prompt, connections list
-**Status:** in progress (mock path verified in Expo web; live yes/no still needs two signed-in phones)
-**What I did:**
-- Home shows pending conversations from `GET /conversations/pending`. `mobile/app/checklist/[id].tsx` and `mobile/features/checklist/ChecklistForm.tsx` are the shared checklist: topics, optional extra, silent yes/no. A no says nothing was sent. A mutual yes opens chat and can load `POST /connections/{id}/followup-draft` into the composer.
-- `mobile/app/connections.tsx` lists only your connections: how you met, topics, minutes. No one else’s count. Profile links here. Verify uses the same checklist form.
-- Fixed the chat screen `set-state-in-effect` lint. Mock feedback `chat_id` is 7 so the demo opens the existing Maya thread.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/checklist/met.test.mjs features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Explore the demo, Finish checklist, Yes connect, Draft a follow-up, Chat with Maya. Profile → Your connections.
-**Next step for whoever continues:** On two signed-in phones, scan QR (`mobile/app/verify.tsx`), both finish the checklist, and confirm one “no” leaves no trace on the other phone. Then send the follow-up from `mobile/app/chat/[id].tsx`.
-**Known issues / blockers:** Live Supabase chat Realtime (AD7) and this checklist are still untested on phones.
-**Contract changes:** none (mock `connections.json` now includes `how_met` and `headline`, already in api.md 11)
-## 2026-09-26 02:11 | adam | Adam
-**Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
-**Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)
-**What I did:**
-- `mobile/app/chat/[id].tsx` and `mobile/app/chats.tsx`: a chat opens after mutual yes. Messages go through Supabase (`messages` insert + Realtime `postgres_changes` filter `chat_id=eq.{id}`). The list only keeps chats the viewer is in (`visibleChats` in `mobile/features/chat/model.ts`).
-- Icebreaker: `GET /matches/{id}/starters` first opener can be sent, edited, or dismissed. Sending it unchanged sets `is_ai_draft`.
-- Home: “Chat with {name}” after a match, a “Your chats” link, and a Check in button that calls `POST /events/1/checkin` (Akshar’s open request). Profile links to chats. Mock “yes” now returns `docs/mocks/suggestion_respond.json` (`chat_id` 7) so the demo can open the thread.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Skip sign-in, Check in, Yes let’s meet, Chat with Maya, Send the opener. Live: sign in, mutual yes, the other phone should see the insert without a refresh.
-**Next step for whoever continues:** On two signed-in phones, both say yes, open `mobile/app/chat/[id].tsx`, send from one, and confirm the other updates via `subscribeToMessages`. If Realtime is silent, confirm `messages` is in the `supabase_realtime` publication (migration `20260926000008`).
-**Known issues / blockers:** AD2/AD3 still need a physical phone (magic link + dev build). Live chat was not exercised against Supabase from this session.
-**Contract changes:** none
-
-## 2026-09-26 | adam | Adam
-**Task:** AD3 / AD5 / AD6 mobile UI and UX polish (user-requested)
-**Status:** done
-**What I did:**
-- Replaced the purple-heavy shared palette with warm neutrals and forest green, restrained avatars and badges, lighter typography, and consistent cards and controls in light/dark themes.
-- Home previews three matches with plain-language shared interests and an expandable full list; detailed match statistics are under “Why you matched.” Added a direct conversation verification entry point.
-- Profile defaults to an interest overview, with evidence and confirm/hide controls behind Review; grouped navigation and expandable account settings reduce scrolling. Nearby puts Event Mode and development tools in disclosures (cross-owner presentation change only; BLE logic unchanged).
-- Restyled sign-in with clearer hierarchy and a scrollable keyboard-friendly layout; kept proximity disclosure visible. Fixed existing tab icon, not-found copy, and web hydration lint issues. Rebased onto concurrent chat/check-in and globe changes, preserving chat navigation in Home and the Profile menu.
-**How to run/test it:** `cd mobile && npm ci --legacy-peer-deps && npx tsc --noEmit && npm run lint`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform web --platform ios`; preview: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web --port 8084`. Browser checked sign-in, Home, expand matches, Profile, and Review using mocks.
-**Next step for whoever continues:** Open the port 8084 preview and choose “Explore the demo”; check the revised screens on a physical phone with live credentials before the demo.
-**Known issues / blockers:** No physical-device or live backend verification performed. Feed remains its existing placeholder. Lint passed before rebase; the concurrent chat implementation adds one existing `react-hooks/set-state-in-effect` lint error at `mobile/app/chat/[id].tsx:38` (outside the redesign). Another local checkout at `/Users/adamissac/hackgt-project/mobile` runs port 8081; this redesign is in `/Users/adamissac/Documents/ChatGPT/HACKGT13/mobile`.
-**Contract changes:** none
-
-## 2026-09-26 12:10 | arjun | Arjun
-**Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
-**Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)
-**What I did:**
-- Nearby tab (`mobile/app/(tabs)/nearby.tsx`, `mobile/features/nearby/`): real map via react-native-maps (in Expo Go: Google Maps on Android, Apple Maps on iOS; Google on iOS needs a key + dev build). You = blue dot, 3 circles = Bluetooth distance bands (3/8/16 m, rough), match pins inside their band at a stable angle (direction is not real and the screen says so), band-grouped list, person card -> /match/[id]. Your coordinates never leave the phone. Web preview falls back to Akshar's Radar. Akshar's Event Mode card, QR link and dev links kept.
-- Graph tab: now one purpose, "Your next conversations": 6 fully labeled people around you (name, match %, #1 shared topic), line thickness = match strength, topic chips re-pick the 6, list of the rest. Old ring view removed.
-- docs/mocks/event_matches.json: +5 mock matches with proximity so Nearby isn't empty in mock mode.
-**How to run/test it:** `scripts/start-app.sh` -> scan with Expo Go -> "Skip sign-in (mock mode)" -> Nearby (turn scanning on) and Graph.
-**Next step for whoever continues:** Akshar: check the Nearby map with real BLE bands on a dev build. Replace mock data with the live ML server when it's up.
-**Known issues / blockers:** none new.
-**Contract changes:** none (mock additions only)
-
-## 2026-09-26 05:31 UTC | adam | Adam
-**Task:** AD1 Supabase project
-**Status:** done
-**What I did:** Live check via `npx supabase db query --linked` on Adam's Mac: 36/36 public tables have RLS; missing_rls NULL; HackGT 13 seed event present; all 9 migrations applied (…00001–…00009 including push_tokens). Local `./supabase/tests/run-local.sh` also ALL AD1 CHECKS PASSED. No Supabase MCP on the cloud VM; this CLI query is the live evidence.
-**How to run/test it:** `./scripts/check-ad1-live.sh` or the npx query in AGENTS.md.
-**Next step for whoever continues:** AD2/AD3 leftover on a phone: magic-link sign-in after auth redirects (already on live); Expo via `./scripts/start-app.sh`; Railway deploy per docs/deploy.md if not done.
-**Known issues / blockers:** Cloud VM still has no Supabase MCP. Goal asked for MCP; CLI --linked is the available live proof.
-**Contract changes:** none
-
-## 2026-09-26 05:30 UTC | adam | Adam
-**Task:** AD1 Supabase project
-**Status:** in progress
-**What I did:**
-- Added `./scripts/check-ad1-live.sh`: finds repo root, runs the linked one-line AD1 SQL (tables/RLS/seed/migrations), prints three-line expected output so Adam does not paste stale `db push` or `start-ml.sh` logs.
-- Documented the script on the AGENTS.md supabase run-and-test line.
-**How to run/test it:** From repo root on a linked Mac: `./scripts/check-ad1-live.sh`
-**Next step for whoever continues:** Adam runs `./scripts/check-ad1-live.sh` from ~/hackgt-project and pastes output.
-**Known issues / blockers:** Live query still requires Adam's machine (`npx supabase login` + link); this VM has no linked Supabase credentials.
-**Contract changes:** none
-
-## 2026-09-26 05:30 UTC | adam | Adam
-**Task:** AD1 Supabase project
-**Status:** in progress
-**What I did:**
-- Local replay on this VM (`sudo service postgresql start && ./supabase/tests/run-local.sh`) ends with `ALL AD1 CHECKS PASSED` — all nine migrations replay cleanly into throwaway Postgres with pgvector and `rls_checks.sql` passes.
-- Nine migration files on disk under `supabase/migrations/` (`20260926000001` through `20260926000009_push_tokens.sql`).
-- Adam ran `npx supabase db push --linked` on his Mac, applying `20260926000009_push_tokens.sql` to the live project `mwfzgkikbmnghueolfnw` (recorded in team PROGRESS; not re-run here — no `SUPABASE_*` on this VM).
-- AL1 FastAPI `GET /health` from this VM against Adam's cloudflared tunnel URL returned `{"ok":true,"db":true}`, so the live database is reachable from the ML service.
-- The live table-count / RLS / HackGT 13 seed verification query has **not** been pasted into PROGRESS or the agent transcript yet (no read-only Supabase MCP here).
-**How to run/test it:** On Adam's Mac from repo root, run and paste the full output back into chat / PROGRESS:
-
-`npx supabase db query --linked "select (select count(*) from pg_tables where schemaname='public') as tables, (select count(*) from pg_tables where schemaname='public' and rowsecurity) as tables_with_rls, (select string_agg(tablename, ', ') from pg_tables where schemaname='public' and not rowsecurity) as missing_rls, (select name from events where name='HackGT 13') as seed_event, (select string_agg(version, ', ' order by version) from supabase_migrations.schema_migrations) as migrations"`
-
-Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run-local.sh` → last line `ALL AD1 CHECKS PASSED`.
-**Next step for whoever continues:** Adam runs the `npx supabase db query --linked "select …"` one-liner above and pastes the row. Expected: `tables` = `tables_with_rls` = **36**, `missing_rls` empty/null, `seed_event` = `HackGT 13`, `migrations` lists all **9** versions ending with `20260926000009`. Then add a PROGRESS entry with that output and set AD1 **done**.
-**Known issues / blockers:** This cloud VM has no Supabase MCP and no `SUPABASE_*` env — cannot run linked queries or invent live results.
 **Contract changes:** none
 
 ## 2026-09-26 13:30 | akshar | Akshar
@@ -214,6 +59,17 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 
 **Contract changes:** `docs/api.md` section 38 (new endpoint), mock `tap_claim.json`. No schema change.
 
+## 2026-09-26 13:00 | arjun | Arjun
+**Task:** Graph = "atom" data viz (Arjun's direction)
+**Status:** done in code (mock data); motion to confirm on a phone
+**What I did:**
+- `mobile/features/graph/Atom.tsx`: you = nucleus, 12 best matches = electrons on tilted orbits (one plane per interest group), color = shared interest (3 color-blind-safe hues + gray "other"), opacity = strength (solid = strong, see-through = weaker), stronger = inner/faster orbit. All motion on the UI thread (Reanimated useFrameCallback + useAnimatedProps on SVG); drag writes shared values (no React re-render) -> smooth. Tap pauses spin + opens the profile sheet.
+- `mobile/features/graph/PersonSheet.tsx`: tap -> headline, shared interests with evidence, looking for / can offer; for connections: how/when met, minutes, last talked about (GET /connections/{id}, added `api.connection`).
+**How to run/test it:** `scripts/start-app.sh` -> Expo Go -> Explore the demo -> Graph.
+**Next step for whoever continues:** Real data once the ML server is live (EXPO_PUBLIC_USE_MOCKS=0).
+**Known issues / blockers:** Expo web preview doesn't animate in a hidden tab (expected); verify spin on a device.
+**Contract changes:** none
+
 ## 2026-09-26 12:30 | akshar | Akshar
 
 **Task:** AK8 Event Mode
@@ -234,6 +90,18 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 **Known issues / blockers:** Kotlin never compiled locally. iOS can't scan in the background (platform limit, spec 7.2), so the pitch line is "at least one phone foregrounded". Cross-folder: Adam's `app/(tabs)/nearby.tsx` (card added).
 
 **Contract changes:** none
+
+## 2026-09-26 12:10 | arjun | Arjun
+**Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
+**Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)
+**What I did:**
+- Nearby tab (`mobile/app/(tabs)/nearby.tsx`, `mobile/features/nearby/`): real map via react-native-maps (in Expo Go: Google Maps on Android, Apple Maps on iOS; Google on iOS needs a key + dev build). You = blue dot, 3 circles = Bluetooth distance bands (3/8/16 m, rough), match pins inside their band at a stable angle (direction is not real and the screen says so), band-grouped list, person card -> /match/[id]. Your coordinates never leave the phone. Web preview falls back to Akshar's Radar. Akshar's Event Mode card, QR link and dev links kept.
+- Graph tab: now one purpose, "Your next conversations": 6 fully labeled people around you (name, match %, #1 shared topic), line thickness = match strength, topic chips re-pick the 6, list of the rest. Old ring view removed.
+- docs/mocks/event_matches.json: +5 mock matches with proximity so Nearby isn't empty in mock mode.
+**How to run/test it:** `scripts/start-app.sh` -> scan with Expo Go -> "Skip sign-in (mock mode)" -> Nearby (turn scanning on) and Graph.
+**Next step for whoever continues:** Akshar: check the Nearby map with real BLE bands on a dev build. Replace mock data with the live ML server when it's up.
+**Known issues / blockers:** none new.
+**Contract changes:** none (mock additions only)
 
 ## 2026-09-26 11:30 | arjun | Arjun
 **Task:** AR4/AR5/AR7 moved native into the app (Arjun's call: no WebView), clarity pass
@@ -312,6 +180,19 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 
 **Contract changes:** `docs/api.md` section 12 rewritten additively: token format (8 lowercase base32), idempotent batch, optional `device_model`/`foreground` on sightings, sightings response `{accepted, dropped}`, drop rules. New mocks `ble_tokens.json`, `ble_sightings.json`.
 
+## 2026-09-26 06:50 | alan | Alan
+**Task:** AL1 finish — GitHub OAuth wired on a second laptop; ML service running from Alan's Mac
+**Status:** in progress (OAuth verified; `/health` still `db:false` until DATABASE_URL lands)
+**What I did:**
+- Stood the ML service up on Alan's Mac from scratch: `uv` + a fetched Python 3.12 (`ml/.venv`), `cloudflared` and Node 22.23.3 into `~/.local/bin` (no Homebrew, no sudo). `mobile/` deps installed, `npx tsc --noEmit` clean.
+- GitHub OAuth app credentials into the root `.env`; tunnel run **standalone** so uvicorn can restart without changing the public URL. Verified callback URL / client_id / `read:user` scope / state signing / Fernet token round-trip all pass against the live config.
+- Fixed a landmine in `.env.example`: python-dotenv returns a trailing `# comment` as the VALUE when a key is left empty. `SUPABASE_JWT_SECRET=` (blank = "use JWKS") arrived as comment text, so the service would have tried HS256 with garbage and rejected every login; `CORS_ORIGINS` and `MATCH_MODEL` broke the same way. Comments now sit on their own line. Same 23 keys, none added or renamed.
+- LightGBM on macOS without Homebrew fails on `@rpath/libomp.dylib`; symlinked the copy scikit-learn already ships. `ml` suite now 68 passed, 105 skipped (skips are the DB tests).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (note: `.venv` is uv's 3.12, not `python3 -m venv` — the Mac's system python is 3.14 and numba has no wheels for it). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`, tunnel separately: `cloudflared tunnel --url http://localhost:8000`. `curl -s localhost:8000/health`.
+**Next step for whoever continues:** Put `DATABASE_URL` (Supabase session pooler, 5432), `SUPABASE_SERVICE_KEY`, and `ANTHROPIC_API_KEY` in the root `.env`, restart uvicorn only, confirm `/health` shows `"db":true`, then test Profile -> Manage sources -> Connect GitHub on a phone. Without the DB the callback finishes consent and *then* fails writing `linked_accounts`, which looks like an OAuth error but is not.
+**Known issues / blockers:** The trycloudflare hostname dies with its process, and the GitHub Redirect URI is pinned to it — `docs/deploy.md` (Railway) is the stable option for demo day. An older server on `offset-suffered-prospect-issues.trycloudflare.com` is still live on an unidentified machine; its Redirect URI is still registered and should be deleted once that host is confirmed dead, since trycloudflare names get recycled. `mobile/.env` still needs the Expo Supabase keys before a phone can sign in.
+**Contract changes:** none (`.env.example` reformatted only — no variable added, removed, or renamed)
+
 ## 2026-09-26 06:10 | arjun | Arjun
 **Task:** AR4 deploy + AD9 embed (Arjun)
 **Status:** done (dashboard live; app wired)
@@ -365,6 +246,26 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 
 **Contract changes:** none
 
+## 2026-09-26 05:31 UTC | adam | Adam
+**Task:** AD1 Supabase project
+**Status:** done
+**What I did:** Live check via `npx supabase db query --linked` on Adam's Mac: 36/36 public tables have RLS; missing_rls NULL; HackGT 13 seed event present; all 9 migrations applied (…00001–…00009 including push_tokens). Local `./supabase/tests/run-local.sh` also ALL AD1 CHECKS PASSED. No Supabase MCP on the cloud VM; this CLI query is the live evidence.
+**How to run/test it:** `./scripts/check-ad1-live.sh` or the npx query in AGENTS.md.
+**Next step for whoever continues:** AD2/AD3 leftover on a phone: magic-link sign-in after auth redirects (already on live); Expo via `./scripts/start-app.sh`; Railway deploy per docs/deploy.md if not done.
+**Known issues / blockers:** Cloud VM still has no Supabase MCP. Goal asked for MCP; CLI --linked is the available live proof.
+**Contract changes:** none
+
+## 2026-09-26 05:30 UTC | adam | Adam
+**Task:** AD1 Supabase project
+**Status:** in progress
+**What I did:**
+- Added `./scripts/check-ad1-live.sh`: finds repo root, runs the linked one-line AD1 SQL (tables/RLS/seed/migrations), prints three-line expected output so Adam does not paste stale `db push` or `start-ml.sh` logs.
+- Documented the script on the AGENTS.md supabase run-and-test line.
+**How to run/test it:** From repo root on a linked Mac: `./scripts/check-ad1-live.sh`
+**Next step for whoever continues:** Adam runs `./scripts/check-ad1-live.sh` from ~/hackgt-project and pastes output.
+**Known issues / blockers:** Live query still requires Adam's machine (`npx supabase login` + link); this VM has no linked Supabase credentials.
+**Contract changes:** none
+
 ## 2026-09-26 05:30 | adam | Adam
 **Task:** Team process: no team lead
 **Status:** done
@@ -375,17 +276,6 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 **How to run/test it:** `rg -n -i "architect|referee|ask adam" --glob '!MASTER_SPEC.md' --glob '!PROGRESS.md'` shows only the team-kit handoff lines.
 **Next step for whoever continues:** Nothing for this task. If the team wants the spec aligned too, change "Adam (lead full-stack, architect)" to "Adam (full-stack)" in MASTER_SPEC.md Section 13.
 **Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 05:30 | adam | Adam
-**Task:** AD4-AD6 UI redesign + Alan's requests
-**Status:** in progress
-**What I did:**
-- Merged PR #1 (Alan AL1-AL8). Root `.env` written on Adam's Mac (gitignored); only ANTHROPIC_API_KEY is empty. Project uses JWKS (ES256), so SUPABASE_JWT_SECRET stays empty. `scripts/start-ml.sh` runs uvicorn + cloudflared (installed at ~/.local/bin).
-- Mobile: design system (constants/Colors.ts tokens, components/ui.tsx), redesigned Home (Open to Meet via PATCH /me/open-to-meet, AI suggestions with silent yes/no, match cards), new `app/match/[id].tsx` (quick-profile + AI starters + facet overlap), redesigned Profile (AI interests by facet, confirm/hide, delete account). tsc clean.
-**How to run/test it:** `./scripts/start-ml.sh` (separate terminal), then put the printed URL in mobile/.env as EXPO_PUBLIC_API_BASE_URL with EXPO_PUBLIC_USE_MOCKS=0; `cd mobile && npx expo start --go --lan`.
-**Next step for whoever continues:** Add ANTHROPIC_API_KEY to root .env, run `./scripts/start-ml.sh`, switch mobile/.env to the tunnel URL, sign in by email on the phone (needs `npx supabase config push` first). Then redesign Nearby/Feed/Graph/sign-in with components/ui.tsx, and add `profiles.expo_push_token` via /contract-change (REQUESTS.md).
-**Known issues / blockers:** Supabase auth redirect URLs not pushed yet. Arjun and Akshar have no commits yet. Adam's DB password was shared in chat: rotate it after the hackathon.
 **Contract changes:** none
 
 ## 2026-09-26 05:05 UTC | adam | Adam
@@ -654,6 +544,29 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 **Known issues / blockers:** Supabase project ref still unset in `.mcp.json` (Adam).
 **Contract changes:** none
 
+## 2026-09-26 03:05 | adam | Adam
+**Task:** Commit history shows the four teammates, not the tools
+**Status:** done
+**What I did:**
+- Past commits authored as Claude are now Alan (`m-alan08`). Past commits authored as Cursor are now Adam. Akshar's `.local` email is his gmail. Co-authored-by lines for those tools are removed, because GitHub counts them as contributors.
+- `.githooks/commit-msg` strips those lines on future commits.
+**How to run/test it:** `git log --format='%an <%ae>' | sort | uniq -c`. GitHub contributors should be Adam, Alan, Arjun, and Akshar after the history update.
+**Next step for whoever continues:** If your local `main` rejects a pull, run `git fetch origin && git reset --hard origin/main` on a clean checkout. Do not merge the old history back in.
+**Known issues / blockers:** Teammates with unpushed commits must rebase them onto the updated `main`. The old `claude/quirky-euler-dnbsgt` and `adami/ad1-verify-fe21` branches are already merged and should be deleted.
+**Contract changes:** none
+
+## 2026-09-26 02:55 | adam | Adam
+**Task:** Put the ML API on Railway so a laptop does not have to stay on
+**Status:** done
+**What I did:**
+- Filled the gitignored root `.env` and `mobile/.env` from the secrets already on this Mac. `SUPABASE_JWT_SECRET` stays empty (JWKS). `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are not on this Mac (Alan has them on his laptop).
+- Railway project `formal-connection`, service `ml`, domain `https://ml-production-04c0.up.railway.app`. `GET /health` returns `{"ok":true,"db":true}`. The public domain targets port 8080 because that is the `PORT` Railway gave the process.
+- `mobile/.env` now has `EXPO_PUBLIC_API_BASE_URL` set to that domain and `EXPO_PUBLIC_USE_MOCKS=0`.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Redeploy after `ml/` changes: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Next step for whoever continues:** On Alan's laptop, add callback `https://ml-production-04c0.up.railway.app/connect/github/callback` to the existing GitHub OAuth app, then set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` on the Railway `ml` service from his root `.env` (`cd ml && npx @railway/cli variable set GITHUB_CLIENT_ID --stdin`). Do not paste them into chat or commit them.
+**Known issues / blockers:** GitHub connect on the Railway URL stays off until those two variables are set there. GitHub auto-deploy is not connected; root directory must be `ml` before connecting the repo, or the build will miss the Dockerfile.
+**Contract changes:** none
+
 ## 2026-09-26 02:45 | adam | Adam
 **Task:** AD2 Auth
 **Status:** in progress (code done; needs Supabase redirect config pushed, LinkedIn app, and a phone test)
@@ -665,6 +578,42 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 **How to run/test it:** `npx supabase config push` (answer y for auth, n for storage), then on a dev build: enter email, tap the link on the phone.
 **Next step for whoever continues:** Push the auth redirect URLs to the live project: `npx supabase config push` (y for auth, n for storage). Then build the dev client (`npx eas-cli login`, then `cd mobile && npx eas-cli build --profile development --platform ios`) and test the magic link on a phone. Then LinkedIn app setup (prompts/adam.md AD2).
 **Known issues / blockers:** Redirect URLs not yet on the live project (agent was not permitted to push shared auth config). LinkedIn developer app not created. No Xcode/EAS login on Adam's Mac.
+**Contract changes:** none
+
+## 2026-09-26 02:37 | adam | Adam
+**Task:** AD11 Feed screen and post composer, plus the assistant screen
+**Status:** done in mock mode
+**What I did:**
+- `mobile/app/(tabs)/feed.tsx`: ranked feed, update/post composer, AI summary cards, editable reply draft from `POST /feed/{item_id}/reply-suggestion`.
+- `mobile/app/assistant.tsx`: Profile → Ask. Sends the full thread to `POST /assistant/chat` with event id 1. The model stays on the ML server.
+- `mobile/lib/api.ts`: `feed`, `createPost`, `replySuggestion`, `assistantChat`. Demo mode uses `docs/mocks/feed.json`, `feed_reply_suggestion.json`, and `assistant_chat.json`.
+**How to run/test it:** `cd mobile && EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web` → Explore the demo → Feed (share an update, Suggest a reply) and Profile → Ask.
+**Next step for whoever continues:** Put `ANTHROPIC_API_KEY` in the gitignored root `.env` (never in `mobile/` or `dashboard/`) and run `./scripts/start-ml.sh`, then set `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_ML_API_URL` so `api.assistantChat` in `mobile/lib/api.ts` and `api.replySuggestion` hit the live endpoints.
+**Known issues / blockers:** Demo replies are the canned mocks. There is no comments endpoint, so a reply draft stays in the text field for the user to edit. Live Claude returns 503 until `ANTHROPIC_API_KEY` is set on the ML server.
+**Contract changes:** none
+
+## 2026-09-26 02:28 | adam | Adam
+**Task:** AD8 Post-conversation checklist, connect prompt, connections list
+**Status:** in progress (mock path verified in Expo web; live yes/no still needs two signed-in phones)
+**What I did:**
+- Home shows pending conversations from `GET /conversations/pending`. `mobile/app/checklist/[id].tsx` and `mobile/features/checklist/ChecklistForm.tsx` are the shared checklist: topics, optional extra, silent yes/no. A no says nothing was sent. A mutual yes opens chat and can load `POST /connections/{id}/followup-draft` into the composer.
+- `mobile/app/connections.tsx` lists only your connections: how you met, topics, minutes. No one else’s count. Profile links here. Verify uses the same checklist form.
+- Fixed the chat screen `set-state-in-effect` lint. Mock feedback `chat_id` is 7 so the demo opens the existing Maya thread.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/checklist/met.test.mjs features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Explore the demo, Finish checklist, Yes connect, Draft a follow-up, Chat with Maya. Profile → Your connections.
+**Next step for whoever continues:** On two signed-in phones, scan QR (`mobile/app/verify.tsx`), both finish the checklist, and confirm one “no” leaves no trace on the other phone. Then send the follow-up from `mobile/app/chat/[id].tsx`.
+**Known issues / blockers:** Live Supabase chat Realtime (AD7) and this checklist are still untested on phones.
+**Contract changes:** none (mock `connections.json` now includes `how_met` and `headline`, already in api.md 11)
+
+## 2026-09-26 02:11 | adam | Adam
+**Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
+**Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)
+**What I did:**
+- `mobile/app/chat/[id].tsx` and `mobile/app/chats.tsx`: a chat opens after mutual yes. Messages go through Supabase (`messages` insert + Realtime `postgres_changes` filter `chat_id=eq.{id}`). The list only keeps chats the viewer is in (`visibleChats` in `mobile/features/chat/model.ts`).
+- Icebreaker: `GET /matches/{id}/starters` first opener can be sent, edited, or dismissed. Sending it unchanged sets `is_ai_draft`.
+- Home: “Chat with {name}” after a match, a “Your chats” link, and a Check in button that calls `POST /events/1/checkin` (Akshar’s open request). Profile links to chats. Mock “yes” now returns `docs/mocks/suggestion_respond.json` (`chat_id` 7) so the demo can open the thread.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/chat/model.test.mjs && npx tsc --noEmit`. Web: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, Skip sign-in, Check in, Yes let’s meet, Chat with Maya, Send the opener. Live: sign in, mutual yes, the other phone should see the insert without a refresh.
+**Next step for whoever continues:** On two signed-in phones, both say yes, open `mobile/app/chat/[id].tsx`, send from one, and confirm the other updates via `subscribeToMessages`. If Realtime is silent, confirm `messages` is in the `supabase_realtime` publication (migration `20260926000008`).
+**Known issues / blockers:** AD2/AD3 still need a physical phone (magic link + dev build). Live chat was not exercised against Supabase from this session.
 **Contract changes:** none
 
 ## 2026-09-26 02:10 | adam | Adam
@@ -771,6 +720,18 @@ Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run
 **Next step for whoever continues:** When Alan's FastAPI app exists, add routes `GET /connect/github/start` (JWT -> `{"url": github_oauth.authorize_url(user_id)}`) and `GET /connect/github/callback` (verify_state -> exchange_code -> GET /user for login -> upsert `linked_account_row` -> 302 `app_redirect("ok")`), and make `POST /profile/ingest {"source":"github"}` call `fetch_repos(token=decrypt_token(...))` -> `github_to_text` -> `raw_documents` -> `llm.extract_interests`. Record the two /connect routes in docs/api.md with Adam (AD4). Needs GITHUB_CLIENT_ID/SECRET from Arjun's GitHub OAuth app.
 **Known issues / blockers:** MASTER_SPEC.md still missing from repo. No FastAPI app yet (Alan). No GitHub OAuth app yet (Arjun). Supabase storage download URL (`/storage/v1/object/resumes/<path>`) not yet tested against the real project. Not pushed yet: Arjun's `gh auth login` pending.
 **Contract changes:** none (new env var `APP_GITHUB_REDIRECT` added to .env.example)
+
+## 2026-09-26 | adam | Adam
+**Task:** AD9 / AR5 Graph phone readability (user-requested cross-owner graph presentation update)
+**Status:** done
+**What I did:**
+- Replaced the moving twelve-electron renderer with six stable, labeled, 48px nodes around a central nucleus, faint orbital curves, and curved self-to-person edges. Removed the continuous animation loop and dragging so tapping and vertical scrolling are predictable.
+- Preserved topic grouping/filtering and the remaining-people list. Moved the legend into a disclosure; line thickness represents match strength, while position is explicitly decorative.
+- Node and list taps open a safe-area-aware, scrollable modal profile sheet; full-profile navigation closes the modal first. Stacked interest evidence for narrow screens.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit`; `npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts features/graph/PersonSheet.tsx`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform web --platform ios`. Layout tests cover graph widths 286–440px and zero/sparse/excess populations.
+**Next step for whoever continues:** Open Graph from the mock preview (`EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web --port 8084`) and test node selection, topic filters, and the profile sheet on a physical phone.
+**Known issues / blockers:** Physical-phone verification still required. No new native dependency or backend changes.
+**Contract changes:** none
 
 ## 2026-09-25 23:45 | adam | Adam
 

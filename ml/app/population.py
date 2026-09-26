@@ -107,6 +107,7 @@ class EventModel:
     people: dict                       # id -> person
     index: Index
     cluster: dict = field(default_factory=dict)   # id -> HDBSCAN label (from the worker)
+    ids: tuple = ()                               # attendee ids the model was built from
 
 
 _events: dict[int, EventModel] = {}
@@ -123,13 +124,16 @@ def attendee_ids(event_id: int) -> list[str]:
 def event_model(event_id: int) -> EventModel:
     """Attendees of one event with per-event IDF and vectors. Rebuilt when anything changed."""
     cached = _events.get(event_id)
-    if cached and cached.version == _version:
+    # attendance can change outside this process (seed scripts, another replica, Supabase directly), so a
+    # changed attendee list also triggers a rebuild, not only this process's invalidate()
+    ids = tuple(attendee_ids(event_id))
+    if cached and cached.version == _version and cached.ids == ids:
         cached.cluster = _clusters.get(event_id, {})
         return cached
     v = _version
     t0 = time.time()
-    people, index = build(attendee_ids(event_id))
-    m = EventModel(event_id, v, time.time(), {p["id"]: p for p in people}, index, _clusters.get(event_id, {}))
+    people, index = build(list(ids))
+    m = EventModel(event_id, v, time.time(), {p["id"]: p for p in people}, index, _clusters.get(event_id, {}), ids)
     _events[event_id] = m
     log.info("event %s model: %d people, %d interests in %.2fs", event_id, len(people), len(index.names),
              time.time() - t0)

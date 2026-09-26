@@ -52,3 +52,16 @@ def test_a_real_user_gets_ranked_matches(db, dbclient):
     delete = seeder.delete_all
     delete(db, log=lambda *_: None)
     assert db.fetchone("select count(*) as n from profiles where is_synthetic")["n"] == 0
+
+
+def test_event_model_sees_attendees_added_outside_the_process(db):
+    """Seeding straight into the DB (no population.invalidate() in this process) must still show up."""
+    from app import population
+    from conftest import add_event, add_user
+    event_id = add_event(db, "Outside Writes")
+    a = add_user(db, "Early Bird")
+    db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (event_id, a))
+    assert set(population.event_model(event_id).people) <= {a}
+    b = add_user(db, "Late Arrival")
+    db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (event_id, b))  # no invalidate()
+    assert population.event_model(event_id).ids == tuple(sorted([a, b], key=[a, b].index))
