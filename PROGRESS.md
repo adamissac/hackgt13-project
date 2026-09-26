@@ -14,6 +14,19 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** AD2/AD3 still need a physical phone (magic link + dev build). Live chat was not exercised against Supabase from this session.
 **Contract changes:** none
 
+## 2026-09-26 | adam | Codex
+**Task:** AD3 / AD5 / AD6 mobile UI and UX polish (user-requested)
+**Status:** done
+**What I did:**
+- Replaced the purple-heavy shared palette with warm neutrals and forest green, restrained avatars and badges, lighter typography, and consistent cards and controls in light/dark themes.
+- Home previews three matches with plain-language shared interests and an expandable full list; detailed match statistics are under “Why you matched.” Added a direct conversation verification entry point.
+- Profile defaults to an interest overview, with evidence and confirm/hide controls behind Review; grouped navigation and expandable account settings reduce scrolling. Nearby puts Event Mode and development tools in disclosures (cross-owner presentation change only; BLE logic unchanged).
+- Restyled sign-in with clearer hierarchy and a scrollable keyboard-friendly layout; kept proximity disclosure visible. Fixed existing tab icon, not-found copy, and web hydration lint issues.
+**How to run/test it:** `cd mobile && npm ci --legacy-peer-deps && npx tsc --noEmit && npm run lint`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform web --platform ios`; preview: `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web --port 8084`. Browser checked sign-in, Home, expand matches, Profile, and Review using mocks.
+**Next step for whoever continues:** Open the port 8084 preview and choose “Explore the demo”; check the revised screens on a physical phone with live credentials before the demo.
+**Known issues / blockers:** No physical-device or live backend verification performed. Feed remains its existing placeholder. Another local checkout at `/Users/adamissac/hackgt-project/mobile` runs port 8081; this redesign is in `/Users/adamissac/Documents/ChatGPT/HACKGT13/mobile`.
+**Contract changes:** none
+
 ## 2026-09-26 12:10 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
 **Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)

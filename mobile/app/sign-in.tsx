@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { sendMagicLink, signInWithLinkedIn, useAuth } from '@/lib/auth';
@@ -9,6 +9,7 @@ export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
   const tint = useThemeColor({}, 'tint');
   const text = useThemeColor({}, 'text');
+  const muted = useThemeColor({}, 'muted');
   const [email, setEmail] = useState('');
   const [busy, setBusy] = useState<'linkedin' | 'email' | null>(null);
   const [message, setMessage] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
@@ -30,19 +31,21 @@ export default function SignInScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
       <View style={styles.container}>
-        <Text style={styles.title}>Formal Connection</Text>
-        <Text style={styles.subtitle}>Meet the right people at HackGT 13.</Text>
+        <Text style={[styles.brand, { color: tint }]}>formal connection</Text>
+        <Text style={styles.title}>Less networking.{ '\n' }More connection.</Text>
+        <Text style={[styles.subtitle, { color: muted }]}>Find your people at HackGT 13. Start with something you share.</Text>
 
         <Pressable
-          style={[styles.button, { backgroundColor: '#0A66C2' }]}
+          style={[styles.button, { backgroundColor: tint }]}
           onPress={() => run('linkedin', signInWithLinkedIn)}
           disabled={busy !== null}
           accessibilityRole="button">
           {busy === 'linkedin' ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonTextLight}>Continue with LinkedIn</Text>}
         </Pressable>
 
-        <Text style={styles.or}>or get a sign-in link by email</Text>
+        <Text style={[styles.or, { color: muted }]}>or continue with email</Text>
         <TextInput
           style={[styles.input, { color: text, borderColor: '#8886' }]}
           placeholder="you@gatech.edu"
@@ -50,6 +53,7 @@ export default function SignInScreen() {
           autoCapitalize="none"
           autoComplete="email"
           keyboardType="email-address"
+          accessibilityLabel="Email address"
           value={email}
           onChangeText={setEmail}
         />
@@ -65,7 +69,7 @@ export default function SignInScreen() {
 
         {env.useMocks && (
           <Pressable onPress={continueAsGuest} style={styles.guest} accessibilityRole="button">
-            <Text style={styles.guestText}>Skip sign-in (mock mode)</Text>
+            <Text style={styles.guestText}>Explore the demo</Text>
           </Pressable>
         )}
 
@@ -75,23 +79,26 @@ export default function SignInScreen() {
           24 hours and nobody else sees them.
         </Text>
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 24, gap: 14 },
-  title: { fontSize: 32, fontWeight: '800', textAlign: 'center' },
-  subtitle: { fontSize: 17, opacity: 0.7, textAlign: 'center', marginBottom: 16 },
+  scroll: { flexGrow: 1, justifyContent: 'center' },
+  container: { justifyContent: 'center', padding: 28, paddingVertical: 56, gap: 16, width: '100%', maxWidth: 480, alignSelf: 'center' },
+  brand: { fontSize: 18, fontWeight: '600', letterSpacing: -0.5, marginBottom: 32 },
+  title: { fontSize: 38, lineHeight: 44, fontWeight: '500', letterSpacing: -1.5 },
+  subtitle: { fontSize: 16, lineHeight: 24, marginBottom: 20 },
   button: { minHeight: 56, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  outline: { borderWidth: 2 },
+  outline: { borderWidth: 1 },
   buttonText: { fontSize: 18, fontWeight: '600' },
   buttonTextLight: { fontSize: 18, fontWeight: '600', color: '#fff' },
-  or: { textAlign: 'center', opacity: 0.6, marginTop: 8 },
+  or: { textAlign: 'center', marginTop: 8, fontSize: 13 },
   input: { minHeight: 56, borderWidth: 1, borderRadius: 14, paddingHorizontal: 16, fontSize: 18 },
   message: { textAlign: 'center', fontSize: 15 },
   error: { color: '#d33' },
   guest: { minHeight: 48, justifyContent: 'center', alignItems: 'center' },
   guestText: { fontSize: 15, opacity: 0.6, textDecorationLine: 'underline' },
-  disclosure: { fontSize: 12, opacity: 0.55, textAlign: 'center', marginTop: 12 },
+  disclosure: { fontSize: 12, lineHeight: 18, opacity: 0.75, marginTop: 12 },
 });

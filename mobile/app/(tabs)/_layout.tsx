@@ -9,11 +9,12 @@ import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 type IconName = SymbolViewProps['name'];
 
 function icon(name: IconName) {
-  return ({ color }: { color: ColorValue }) => <SymbolView name={name} tintColor={color} size={26} />;
+  return function TabIcon({ color }: { color: ColorValue }) { return <SymbolView name={name} tintColor={color} size={24} />; };
 }
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+  const headerShown = useClientOnlyValue(false, true);
 
   return (
     <Tabs
@@ -21,10 +22,13 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme].tint,
         tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
-        headerTitleStyle: { fontWeight: '700' },
+        tabBarStyle: { backgroundColor: Colors[colorScheme].surface, borderTopColor: Colors[colorScheme].border, elevation: 0 },
+        headerStyle: { backgroundColor: Colors[colorScheme].background },
+        headerShadowVisible: false,
+        headerTitleStyle: { fontWeight: '600' },
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
+        headerShown,
       }}>
       <Tabs.Screen
         name="index"

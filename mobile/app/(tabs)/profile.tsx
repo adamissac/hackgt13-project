@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Button, Card, SectionTitle, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { api, type Facet, type Interest, type InterestsResponse } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { env, missingEnv } from '@/lib/env';
@@ -24,6 +24,7 @@ export default function ProfileScreen() {
   const { state, reload } = useAsync(() => api.getInterests(), []);
   const [override, setOverride] = useState<InterestsResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
 
   const data = override ?? (state.status === 'ready' ? state.data : null);
   const name =
@@ -71,7 +72,7 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      {missingEnv.length > 0 && (
+      {!env.useMocks && missingEnv.length > 0 && (
         <View style={[styles.warning, { backgroundColor: c.aiSoft }]}>
           <Text style={{ color: c.text }}>Missing config: {missingEnv.join(', ')}. See mobile/.env.example.</Text>
         </View>
@@ -105,10 +106,12 @@ export default function ProfileScreen() {
         </Card>
       )}
 
-      <SectionTitle right={<AiBadge label="Extracted by AI" />}>Your interests</SectionTitle>
-      <Text style={[styles.small, { color: c.muted }]}>
-        We read what you shared and pulled out these topics. Confirm the ones that fit and hide any that don’t.
-      </Text>
+      <SectionTitle right={data && visible.length > 0 ? (
+        <Pressable onPress={() => setReviewing(!reviewing)} accessibilityRole="button" accessibilityState={{ expanded: reviewing }} style={{ minHeight: 44, justifyContent: 'center', paddingLeft: 12 }}>
+          <Text style={{ color: c.tint, fontWeight: '600' }}>{reviewing ? 'Done' : 'Review'}</Text>
+        </Pressable>
+      ) : undefined}>Your interests</SectionTitle>
+      {reviewing && <Text style={[styles.small, { color: c.muted }]}>Suggested from your sources by AI. Confirm what fits; hide what doesn’t.</Text>}
 
       {state.status === 'loading' && !override && <Loading label="Loading your interests…" />}
       {state.status === 'error' && !override && <ErrorState message={state.message} onRetry={reload} />}
@@ -119,7 +122,13 @@ export default function ProfileScreen() {
           <Button label="Add a source" onPress={() => router.push('/accounts')} />
         </Card>
       )}
-      {byFacet.map((g) => (
+      {!reviewing && visible.length > 0 && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {visible.slice(0, 8).map((i) => <Chip key={i.interest_id} label={i.name} />)}
+          {visible.length > 8 && <Chip label={`+${visible.length - 8} more`} />}
+        </View>
+      )}
+      {reviewing && byFacet.map((g) => (
         <Card key={g.facet}>
           <Text style={[styles.facet, { color: c.muted }]}>{FACET_LABEL[g.facet]}</Text>
           {g.items.map((i) => (
@@ -147,42 +156,38 @@ export default function ProfileScreen() {
         </Card>
       ))}
 
-      <SectionTitle>Chats</SectionTitle>
-      <Card>
-        <Text style={[styles.small, { color: c.muted }]}>Conversations open after you both say yes.</Text>
-        <Button label="Your chats" variant="secondary" onPress={() => router.push('/chats')} />
-      </Card>
+      <SectionTitle>Make it yours</SectionTitle>
+      <View style={[styles.menu, { backgroundColor: c.surface, borderColor: c.border }]}>
+        {([
+          { title: 'Your chats', detail: 'Continue a conversation', route: '/chats' },
+          { title: 'Profile sources', detail: 'Resume, GitHub & a little about you', route: '/accounts' },
+          { title: 'Invite someone', detail: 'Reconnect with someone you know', route: '/invites' },
+          { title: 'Your network', detail: 'The connections you’ve made', route: '/network' },
+          { title: 'Network activity', detail: 'What your connections are exploring', route: '/insights' },
+        ] as const).map((item, index) => (
+          <Pressable key={item.route} accessibilityRole="button" onPress={() => router.push(item.route)} style={[styles.menuRow, { borderTopWidth: index ? 1 : 0, borderTopColor: c.border }]}>
+            <View style={{ flex: 1, gap: 4 }}>
+              <Text style={{ color: c.text, fontSize: 16, fontWeight: '500' }}>{item.title}</Text>
+              <Text style={[styles.small, { color: c.muted }]}>{item.detail}</Text>
+            </View>
+            <Text style={{ color: c.muted, fontSize: 23 }}>›</Text>
+          </Pressable>
+        ))}
+      </View>
 
-      <SectionTitle>Your sources</SectionTitle>
-      <Card>
-        <Text style={[styles.small, { color: c.muted }]}>GitHub, your resume, and what you type about yourself build these interests.</Text>
-        <Button label="Manage sources" variant="secondary" onPress={() => router.push('/accounts')} />
-      </Card>
-
-      {/* AK4 (Akshar): private invite link and QR for people you already know. */}
-      <SectionTitle>People you already know</SectionTitle>
-      <Card>
-        <Button label="Invite someone you know" variant="secondary" onPress={() => router.push('/invites')} />
-      </Card>
-
-      <SectionTitle>Your network</SectionTitle>
-      <Card>
-        <Button label="Your network" variant="secondary" onPress={() => router.push('/network')} />
-        <Button label="Feed insights" variant="secondary" onPress={() => router.push('/insights')} />
-      </Card>
-
-      <SectionTitle>Account</SectionTitle>
-      <Card>
+      <Disclosure title="Account settings" subtitle="Sign-in and privacy controls">
         {session && <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />}
         {session && <Button label="Delete my account" variant="danger" onPress={confirmDelete} loading={deleting} />}
         {!session && <Text style={[styles.body, { color: c.muted }]}>Sign in to manage your account.</Text>}
-      </Card>
+      </Disclosure>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
+  container: { padding: 24, gap: 20, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  menu: { borderWidth: 1, borderRadius: 20, paddingHorizontal: 20 },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 18, minHeight: 72 },
   warning: { borderRadius: 12, padding: 12 },
   header: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 4 },
   name: { fontSize: 24, fontWeight: '800' },

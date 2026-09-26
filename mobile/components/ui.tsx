@@ -1,5 +1,5 @@
 // Shared UI building blocks. Large touch targets: the demo happens on a phone in a loud room.
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text as RNText, View as RNView, type ViewStyle } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
@@ -15,7 +15,7 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
     <RNView
       style={[
         styles.card,
-        { backgroundColor: c.surface, borderColor: highlight ? c.tint : c.border, borderWidth: highlight ? 2 : 1 },
+        { backgroundColor: highlight ? c.tintSoft : c.surface, borderColor: highlight ? c.tintSoft : c.border, borderWidth: 1 },
         style,
       ]}>
       {children}
@@ -23,7 +23,7 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
   );
 }
 
-const AVATAR_HUES = ['#4F46E5', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#8B5CF6', '#14B8A6'];
+const AVATAR_HUES = ['#536E5B', '#667A80', '#89745B', '#796C77', '#667247', '#8B6253'];
 
 export function Avatar({ name, size = 48 }: { name: string; size?: number }) {
   const initials = name
@@ -75,6 +75,8 @@ export function Button({
       onPress={onPress}
       disabled={disabled || loading}
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled: Boolean(disabled || loading), busy: Boolean(loading) }}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: bg, opacity: disabled ? 0.45 : pressed ? 0.8 : 1 },
@@ -83,6 +85,28 @@ export function Button({
       ]}>
       {loading ? <ActivityIndicator color={fg} /> : <RNText style={[styles.buttonText, { color: fg }]}>{label}</RNText>}
     </Pressable>
+  );
+}
+
+/** Secondary information stays available without competing with the screen's main action. */
+export function Disclosure({ title, subtitle, children }: { title: string; subtitle?: string; children: ReactNode }) {
+  const c = useColors();
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <Card>
+      <Pressable
+        onPress={() => setExpanded(!expanded)}
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        style={styles.disclosureHeader}>
+        <RNView style={{ flex: 1, gap: 4 }}>
+          <RNText style={{ color: c.text, fontSize: 16, fontWeight: '600' }}>{title}</RNText>
+          {!!subtitle && <RNText style={{ color: c.muted, fontSize: 13, lineHeight: 19 }}>{subtitle}</RNText>}
+        </RNView>
+        <RNText style={{ color: c.muted, fontSize: 22 }} accessibilityElementsHidden>{expanded ? '−' : '+'}</RNText>
+      </Pressable>
+      {expanded && <RNView style={{ gap: 16, paddingTop: 8 }}>{children}</RNView>}
+    </Card>
   );
 }
 
@@ -101,7 +125,7 @@ export function AiBadge({ label = 'AI' }: { label?: string }) {
   const c = useColors();
   return (
     <RNView style={[styles.aiBadge, { backgroundColor: c.aiSoft }]}>
-      <RNText style={[styles.aiBadgeText, { color: c.ai }]}>✦ {label}</RNText>
+      <RNText style={[styles.aiBadgeText, { color: c.ai }]}>{label}</RNText>
     </RNView>
   );
 }
@@ -120,17 +144,18 @@ export function MatchMeter({ score }: { score: number }) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 18, padding: 16, gap: 10 },
+  card: { borderRadius: 20, padding: 20, gap: 14 },
+  disclosureHeader: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontWeight: '700' },
-  chip: { borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6 },
-  chipText: { fontSize: 14, fontWeight: '600' },
-  button: { minHeight: 52, borderRadius: 14, paddingHorizontal: 20, alignItems: 'center', justifyContent: 'center' },
-  buttonText: { fontSize: 17, fontWeight: '700' },
+  chip: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, flexShrink: 1 },
+  chipText: { fontSize: 13, fontWeight: '500' },
+  button: { minHeight: 50, borderRadius: 12, paddingHorizontal: 18, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  buttonText: { fontSize: 15, fontWeight: '600', textAlign: 'center' },
   sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  section: { fontSize: 13, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase' },
+  section: { fontSize: 18, fontWeight: '600', letterSpacing: -0.3, flexShrink: 1 },
   aiBadge: { borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
-  aiBadgeText: { fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+  aiBadgeText: { fontSize: 11, fontWeight: '500' },
   meterWrap: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   meterTrack: { flex: 1, height: 8, borderRadius: 4, overflow: 'hidden' },
   meterFill: { height: 8, borderRadius: 4 },

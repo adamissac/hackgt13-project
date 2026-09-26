@@ -2,7 +2,7 @@ import { Stack, useLocalSearchParams } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
+import { AiBadge, Avatar, Card, Chip, Disclosure, MatchMeter, SectionTitle, useColors } from '@/components/ui';
 import { api, type Facet } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 
@@ -35,13 +35,10 @@ export default function MatchScreen() {
         <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>
           {p.headline || (p.role === 'recruiter' ? 'Recruiter' : 'Student')}
         </Text>
-        <View style={{ alignSelf: 'stretch' }}>
-          <MatchMeter score={p.score} />
-        </View>
       </View>
 
       <Card>
-        <AiBadge label="Why you should talk" />
+        <AiBadge label="AI conversation starters" />
         {starters.state.status === 'loading' && <Text style={[styles.body, { color: c.muted }]}>Thinking…</Text>}
         {starters.state.status === 'error' && (
           <Text style={[styles.body, { color: c.muted }]}>Couldn’t load suggestions right now.</Text>
@@ -72,8 +69,8 @@ export default function MatchScreen() {
         )}
       </Card>
 
-      <SectionTitle>Overlap by area</SectionTitle>
-      <Card>
+      <Disclosure title="Why you matched" subtitle="Match strength and shared interests by area">
+        <MatchMeter score={p.score} />
         {FACETS.map((f) => {
           const v = Math.max(0, Math.min(1, p.facet_overlap[f.key] ?? 0));
           return (
@@ -86,7 +83,7 @@ export default function MatchScreen() {
             </View>
           );
         })}
-      </Card>
+      </Disclosure>
 
       {(!!p.seeking || !!p.offering) && (
         <>
@@ -112,9 +109,9 @@ export default function MatchScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
-  header: { alignItems: 'center', gap: 6, paddingVertical: 8 },
-  name: { fontSize: 26, fontWeight: '800' },
+  container: { padding: 24, gap: 20, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  header: { alignItems: 'center', gap: 12, paddingVertical: 16 },
+  name: { fontSize: 30, fontWeight: '500', letterSpacing: -0.8 },
   why: { fontSize: 17, lineHeight: 24, fontWeight: '600' },
   opener: { borderRadius: 12, padding: 12 },
   body: { fontSize: 15, lineHeight: 21 },

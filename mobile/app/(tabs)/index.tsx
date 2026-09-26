@@ -4,7 +4,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { api, type Match, type Suggestion } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
@@ -50,6 +50,7 @@ export default function HomeScreen() {
   const openToMeet = useOpenToMeet();
   const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), []);
   const suggestions = useAsync(() => api.suggestions(), []);
+  const [showAll, setShowAll] = useState(false);
 
   const refresh = () => {
     matches.reload();
@@ -61,21 +62,25 @@ export default function HomeScreen() {
       style={{ backgroundColor: c.background }}
       contentContainerStyle={[styles.container, { paddingTop: insets.top + 12 }]}
       refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}>
-      <View>
-        <Text style={[styles.eyebrow, { color: c.muted }]}>HackGT 13 · Georgia Tech</Text>
-        <Text style={[styles.hero, { color: c.text }]}>Who you should meet</Text>
-        <Pressable onPress={() => router.push('/chats')} accessibilityRole="button">
-          <Text style={[styles.small, { color: c.tint, fontWeight: '700', marginTop: 4 }]}>Your chats</Text>
+      <View style={styles.masthead}>
+        <Text style={[styles.wordmark, { color: c.text }]}>formal connection</Text>
+        <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
+      </View>
+      <View style={styles.intro}>
+        <Text style={[styles.hero, { color: c.text }]}>Good conversations{ '\n' }start here.</Text>
+        <Text style={[styles.body, { color: c.muted }]}>A few people with something in common.</Text>
+        <Pressable onPress={() => router.push('/chats')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+          <Text style={[styles.small, { color: c.tint, fontWeight: '600' }]}>Your chats →</Text>
         </Pressable>
       </View>
 
       <Card highlight={openToMeet.on} style={styles.toggleCard}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[styles.toggleTitle, { color: c.text }]}>{openToMeet.on ? 'You’re open to meet' : 'Open to Meet'}</Text>
+          <Text style={[styles.toggleTitle, { color: c.text }]}>Open to meet</Text>
           <Text style={[styles.body, { color: c.muted }]}>
             {openToMeet.on
-              ? 'We’ll suggest people nearby who fit what you’re looking for.'
-              : 'Turn on to get suggestions for people to meet right now.'}
+              ? 'You’re available for nearby introductions.'
+              : 'Turn on when you’re ready to say hello.'}
           </Text>
           {openToMeet.error && <Text style={[styles.small, { color: c.danger }]}>{openToMeet.error}</Text>}
         </View>
@@ -84,7 +89,6 @@ export default function HomeScreen() {
           onValueChange={openToMeet.toggle}
           trackColor={{ true: c.tint, false: c.surfaceAlt }}
           accessibilityLabel="Open to Meet"
-          style={{ transform: [{ scale: 1.2 }] }}
         />
       </Card>
 
@@ -96,14 +100,15 @@ export default function HomeScreen() {
 
       {suggestions.state.status === 'ready' && suggestions.state.data.suggestions.length > 0 && (
         <>
-          <SectionTitle right={<AiBadge label="Suggested" />}>Meet now</SectionTitle>
+          <SectionTitle>Ready to say hello?</SectionTitle>
           {suggestions.state.data.suggestions.map((s) => (
             <SuggestionCard key={s.suggestion_id} suggestion={s} />
           ))}
         </>
       )}
 
-      <SectionTitle right={<AiBadge label="Ranked for you" />}>Your best matches</SectionTitle>
+      {suggestions.state.status === 'error' && <ErrorState message="Introductions couldn’t load." onRetry={suggestions.reload} />}
+      <SectionTitle right={<Text style={[styles.small, { color: c.muted }]}>AI suggested</Text>}>People to meet</SectionTitle>
       {matches.state.status === 'loading' && <Loading label="Finding your matches…" />}
       {matches.state.status === 'error' && <ErrorState message={matches.state.message} onRetry={matches.reload} />}
       {matches.state.status === 'ready' &&
@@ -115,8 +120,17 @@ export default function HomeScreen() {
             </Text>
           </Card>
         ) : (
-          matches.state.data.matches.map((m) => <MatchCard key={m.user_id} match={m} />)
+          <>
+            {matches.state.data.matches.slice(0, showAll ? undefined : 3).map((m) => <MatchCard key={m.user_id} match={m} />)}
+            {matches.state.data.matches.length > 3 && (
+              <Button label={showAll ? 'Show fewer people' : `See ${matches.state.data.matches.length - 3} more people`} variant="ghost" onPress={() => setShowAll(!showAll)} />
+            )}
+          </>
         ))}
+      <View style={[styles.footer, { borderTopColor: c.border }]}>
+        <Text style={[styles.body, { color: c.muted }]}>Already had a good conversation?</Text>
+        <Button label="Verify a conversation" variant="secondary" onPress={() => router.push('/verify')} />
+      </View>
     </ScrollView>
   );
 }
@@ -155,9 +169,9 @@ function CheckInCard() {
 function MatchCard({ match }: { match: Match }) {
   const c = useColors();
   return (
-    <Pressable onPress={() => router.push({ pathname: '/match/[id]', params: { id: match.user_id } })} accessibilityRole="button">
+    <Pressable onPress={() => router.push({ pathname: '/match/[id]', params: { id: match.user_id } })} accessibilityRole="button" accessibilityLabel={`View ${match.name}'s profile`}>
       {({ pressed }) => (
-        <Card highlight={match.highlight} style={{ opacity: pressed ? 0.85 : 1 }}>
+        <Card style={{ opacity: pressed ? 0.85 : 1 }}>
           <View style={styles.personRow}>
             <Avatar name={match.name} />
             <View style={{ flex: 1 }}>
@@ -167,14 +181,12 @@ function MatchCard({ match }: { match: Match }) {
                 {match.proximity ? ` · ${proximityLabel(match.proximity)}` : ''}
               </Text>
             </View>
-            {match.highlight && <Chip label="Top pick" tone="tint" />}
+            <Text style={{ color: c.muted, fontSize: 24 }}>›</Text>
           </View>
-          <MatchMeter score={match.score} />
-          <View style={styles.chips}>
-            {match.why.map((w) => (
-              <Chip key={w} label={w} tone="ai" />
-            ))}
-          </View>
+          <Text style={[styles.body, { color: c.muted }]} numberOfLines={2}>
+            {match.why.length ? `You share an interest in ${match.why.slice(0, 2).join(' and ')}.` : 'Explore what you have in common.'}
+          </Text>
+          {match.highlight && <Text style={[styles.small, { color: c.tint, fontWeight: '600' }]}>A strong match for you</Text>}
         </Card>
       )}
     </Pressable>
@@ -262,11 +274,15 @@ function proximityLabel(p: NonNullable<Match['proximity']>) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 14, paddingBottom: 40 },
-  eyebrow: { fontSize: 13, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
-  hero: { fontSize: 30, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
+  container: { padding: 24, gap: 18, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  masthead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
+  wordmark: { fontSize: 16, fontWeight: '600', letterSpacing: -0.6 },
+  eyebrow: { fontSize: 12, fontWeight: '600' },
+  intro: { gap: 10, paddingTop: 16, paddingBottom: 10 },
+  hero: { fontSize: 36, lineHeight: 41, fontWeight: '500', letterSpacing: -1.5 },
+  footer: { borderTopWidth: 1, marginTop: 8, paddingTop: 24, gap: 12 },
   toggleCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  toggleTitle: { fontSize: 20, fontWeight: '800' },
+  toggleTitle: { fontSize: 17, fontWeight: '600' },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },
   small: { fontSize: 14 },

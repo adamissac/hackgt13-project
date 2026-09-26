@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { EventModeCard } from '@/features/ble/EventModeCard';
 import { BAND_HINT, BANDS } from '@/features/nearby/geo';
@@ -38,8 +38,7 @@ export default function NearbyScreen() {
         <>
           <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} />
           <Text style={[styles.small, { color: c.muted }]}>
-            You’re the blue dot. Circles show roughly how far each match is. Bluetooth can’t tell direction, so where a pin sits on its
-            circle doesn’t mean anything.
+            Distance is approximate. Pins don’t show actual direction.
           </Text>
 
           {scanning && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
@@ -102,31 +101,33 @@ export default function NearbyScreen() {
             })}
         </>
       ) : (
-        <Card>
-          <Text style={[styles.body, { color: c.muted }]}>
-            When scanning is on, you’ll see a map with you in the middle and your matches around you, grouped by how close they are.
-          </Text>
-        </Card>
+        <View style={styles.emptyNearby}>
+          <Text style={[styles.h1, { color: c.text }]}>A hello could be close by.</Text>
+          <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>Start scanning to find your matches in the room.</Text>
+        </View>
       )}
 
       {/* AK8 (Akshar): Event Mode keeps scanning going at the event. */}
-      <EventModeCard />
+      <Disclosure title="Event mode" subtitle="Keep scanning while you’re at the event">
+        <EventModeCard />
+      </Disclosure>
       {/* AK3 (Akshar): QR verification fallback, always available. */}
       <Link href="/verify" style={[styles.link, { color: c.tint }]}>
         Just talked with someone? Verify with QR
       </Link>
       {__DEV__ ? (
-        <View style={styles.devLinks}>
+        <Disclosure title="Developer tools">
           <Link href="/ble-debug" style={[styles.devLink, { color: c.muted }]}>BLE hello world</Link>
           <Link href="/record" style={[styles.devLink, { color: c.muted }]}>Record session (AK6)</Link>
-        </View>
+        </Disclosure>
       ) : null}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, paddingBottom: 40 },
+  container: { padding: 24, gap: 20, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  emptyNearby: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   h1: { fontSize: 18, fontWeight: '800' },
   h2: { fontSize: 18, fontWeight: '800' },
