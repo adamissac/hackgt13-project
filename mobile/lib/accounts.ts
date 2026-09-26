@@ -1,0 +1,62 @@
+// Account connections: GitHub connect in an in-app browser, resume upload, and waiting on extraction jobs.
+// Same auth-session pattern as LinkedIn sign-in in lib/auth.tsx. Tokens never touch the app: the ML service
+// keeps GitHub's token server-side and sends us back to formalconnect://connect/github?status=ok|error.
+import * as DocumentPicker from 'expo-document-picker';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
+
+import { api, type JobStatus } from './api';
+import { env } from './env';
+
+export const githubReturnUrl = Linking.createURL('connect/github');
+
+export type ConnectResult = 'connected' | 'cancelled' | { error: string };
+
+const GITHUB_ERRORS: Record<string, string> = {
+  denied: 'GitHub access was cancelled.',
+  oauth: 'GitHub didn’t finish connecting. Try again.',
+};
+
+/** Parse the deep link the ML service redirects to after GitHub's callback. */
+export function parseGithubReturn(url: string): ConnectResult {
+  const { queryParams } = Linking.parse(url);
+  if (queryParams?.status === 'ok') return 'connected';
+  const reason = String(queryParams?.reason ?? 'oauth');
+  return { error: GITHUB_ERRORS[reason] ?? GITHUB_ERRORS.oauth };
+}
+
+export async function connectGithub(): Promise<ConnectResult> {
+  if (env.useMocks) return 'connected';
+  const { url } = await api.githubStart();
+  const result = await WebBrowser.openAuthSessionAsync(url, githubReturnUrl);
+  if (result.type !== 'success') return 'cancelled';
+  return parseGithubReturn(result.url);
+}
+
+/** Pick a PDF and upload it; returns the extraction job id, or null if the user cancelled. */
+export async function uploadResume(): Promise<string | null> {
+  const picked = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
+  if (picked.canceled) return null;
+  const file = picked.assets[0];
+  if (file.size != null && file.size > 10 * 1024 * 1024) throw new Error('That PDF is over 10 MB.');
+  const { job_id } = await api.ingestResume({ uri: file.uri, name: file.name, type: file.mimeType ?? 'application/pdf' });
+  return job_id;
+}
+
+/** Poll GET /profile/status until the job finishes. Extraction usually takes 5-20 s. */
+export async function waitForJob(jobId: string, timeoutMs = 90_000): Promise<Exclude<JobStatus, 'queued' | 'running'>> {
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    const s = await api.profileStatus(jobId);
+    if (s.status === 'done') return 'done';
+    if (s.status === 'error') throw new Error(s.error ?? 'Extraction failed.');
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  throw new Error('Still working on it. Check back in a minute.');
+}
+
+export function signInLabel(provider: string | null): string {
+  if (provider === 'linkedin') return 'LinkedIn';
+  if (provider === 'email') return 'email link';
+  return provider ?? 'unknown';
+}

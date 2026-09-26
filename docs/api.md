@@ -434,7 +434,7 @@ Re-runs manual extraction over everything typed so far (poll 2 `GET /profile/sta
 The caller's sign-in method and profile sources for the "Your sources" screen. Never returns tokens.
 ```json
 { "sign_in": { "provider": "linkedin", "email": "maya@gatech.edu" },
-  "profile": { "name": "Maya Rao", "photo_url": null, "headline": "", "experience": "", "seeking": "", "offering": "", "web_search_opt_in": false },
+  "profile": { "name": "Maya Rao", "photo_url": null, "headline": "", "experience": "", "seeking": "", "offering": "", "interests_text": "", "web_search_opt_in": false },
   "sources": {
     "github":   { "available": true, "connected": true, "login": "maya-codes", "last_synced_at": "2026-09-26T15:04:05+00:00",
                   "added": true, "updated_at": "2026-09-26T15:04:05+00:00", "interests": 9 },

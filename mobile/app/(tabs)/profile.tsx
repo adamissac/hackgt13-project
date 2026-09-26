@@ -116,6 +116,7 @@ export default function ProfileScreen() {
         <Card>
           <Text style={[styles.cardTitle, { color: c.text }]}>No interests yet</Text>
           <Text style={[styles.body, { color: c.muted }]}>Upload a resume or connect GitHub to build your profile.</Text>
+          <Button label="Add a source" onPress={() => router.push('/accounts')} />
         </Card>
       )}
       {byFacet.map((g) => (
@@ -145,6 +146,12 @@ export default function ProfileScreen() {
           ))}
         </Card>
       ))}
+
+      <SectionTitle>Your sources</SectionTitle>
+      <Card>
+        <Text style={[styles.small, { color: c.muted }]}>GitHub, your resume, and what you type about yourself build these interests.</Text>
+        <Button label="Manage sources" variant="secondary" onPress={() => router.push('/accounts')} />
+      </Card>
 
       {/* AK4 (Akshar): private invite link and QR for people you already know. */}
       <SectionTitle>People you already know</SectionTitle>

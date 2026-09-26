@@ -179,6 +179,38 @@ export interface FeedInsights {
   by_kind: { github: number; post: number; update: number };
 }
 
+// ---------- account connections (api.md 33, 39-41) ----------
+export type SignInProvider = 'linkedin' | 'email' | string | null;
+export interface SourceStatus { added: boolean; updated_at: string | null; interests: number }
+export interface GithubStatus extends SourceStatus {
+  available: boolean;
+  connected: boolean;
+  login: string | null;
+  last_synced_at: string | null;
+}
+export interface AccountsResponse {
+  sign_in: { provider: SignInProvider; email: string | null };
+  profile: {
+    name: string | null;
+    photo_url: string | null;
+    headline: string;
+    experience: string;
+    seeking: string;
+    offering: string;
+    interests_text: string;
+    web_search_opt_in: boolean;
+  };
+  sources: {
+    github: GithubStatus;
+    resume: SourceStatus;
+    manual: SourceStatus;
+    facebook: { available: boolean; connected: boolean };
+  };
+}
+export interface ManualProfile { headline: string; experience: string; interests_text: string; seeking: string; offering: string }
+export interface ManualResponse { profile: ManualProfile; job_id: string | null; status: 'queued' | 'nothing_to_extract' }
+export type ProfileSource = 'github' | 'resume' | 'manual';
+
 // ---------- mocks ----------
 /* eslint-disable @typescript-eslint/no-require-imports */
 const mocks = {
@@ -212,6 +244,8 @@ const mocks = {
   graphExpand: () => require('../../docs/mocks/graph_expand.json') as GraphResponse & { node_id: string },
   meDashboard: () => require('../../docs/mocks/me_dashboard.json') as MeDashboard,
   feedInsights: () => require('../../docs/mocks/feed_insights.json') as FeedInsights,
+  accounts: () => require('../../docs/mocks/me_accounts.json') as AccountsResponse,
+  manual: () => require('../../docs/mocks/profile_manual.json') as ManualResponse,
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -247,6 +281,19 @@ function call<T>(mock: () => T, real: () => Promise<T>): Promise<T> {
 
 // ---------- endpoints ----------
 export const api = {
+  accounts: () => call(mocks.accounts, () => request<AccountsResponse>('GET', '/me/accounts')),
+  patchManual: (body: Partial<ManualProfile>) =>
+    call(mocks.manual, () => request<ManualResponse>('PATCH', '/profile/manual', body)),
+  removeSource: (source: ProfileSource) =>
+    call(
+      () => ({ removed: source, ...mocks.interests() }),
+      () => request<InterestsResponse & { removed: ProfileSource }>('DELETE', `/profile/sources/${source}`),
+    ),
+  githubStart: () =>
+    call(
+      () => ({ url: 'https://github.com/login/oauth/authorize?mock=1' }),
+      () => request<{ url: string }>('GET', '/connect/github/start'),
+    ),
   ingestResume: (file: { uri: string; name: string; type?: string }) =>
     call(mocks.ingest, () => {
       const form = new FormData();

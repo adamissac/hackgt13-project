@@ -43,11 +43,13 @@ def accounts(user: User = Depends(current_user)):
               "last_synced_at": gh["fetched_at"].isoformat() if gh and gh["fetched_at"] else None,
               "available": bool(os.getenv("GITHUB_CLIENT_ID"))}
     manual = _source_status(user.id, "manual")
+    mdoc = profile_store.latest_document(user.id, "manual")
     return {
         "sign_in": {"provider": SIGN_IN.get(user.provider or "", user.provider), "email": user.email},
         "profile": {"name": prof.get("name"), "photo_url": prof.get("photo_url"),
                     "headline": prof.get("headline") or "", "experience": prof.get("experience") or "",
                     "seeking": prof.get("seeking") or "", "offering": prof.get("offering") or "",
+                    "interests_text": ((mdoc or {}).get("meta") or {}).get("interests_text", ""),
                     "web_search_opt_in": bool(prof.get("web_search_opt_in"))},
         "sources": {"github": github, "resume": _source_status(user.id, "resume"), "manual": manual,
                     "facebook": {"available": False, "connected": False}},

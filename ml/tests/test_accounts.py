@@ -56,7 +56,7 @@ def test_manual_entry_saves_fields_and_extracts(dbclient, db, llm):
     dbclient.patch("/profile/manual", headers=auth(uid), json={"headline": "MS student"})
     assert "I build robots" in llm[1] and "Headline: MS student" in llm[1]
     acc = dbclient.get("/me/accounts", headers=auth(uid)).json()
-    assert acc["profile"]["headline"] == "MS student"
+    assert acc["profile"]["headline"] == "MS student" and acc["profile"]["interests_text"] == "I build robots"
     assert acc["sources"]["manual"]["added"] and acc["sources"]["manual"]["interests"] == 1
 
 

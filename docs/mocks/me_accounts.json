@@ -10,7 +10,8 @@
     "experience": "",
     "seeking": "quant research internship",
     "offering": "RL tutoring",
-    "web_search_opt_in": false
+    "web_search_opt_in": false,
+    "interests_text": "I build RL agents and climb on weekends"
   },
   "sources": {
     "github": {
