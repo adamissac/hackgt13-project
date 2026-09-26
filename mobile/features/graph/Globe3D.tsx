@@ -25,15 +25,22 @@ export interface Group {
 }
 
 /** Group people by their main shared topic: the 3 biggest groups get colors, the rest are "other". */
-export function groupByTopic(people: Person[]): { groups: Group[]; colorOf: (p: Person) => string } {
+export function groupByTopic(
+  people: Person[],
+  topicOrder: string[] = [],
+): { groups: Group[]; colorOf: (p: Person) => string } {
+  // a person's "main" topic = the one they share with you that ranks highest for you (not just "python")
+  const rank = new Map(topicOrder.map((t, i) => [t, i]));
+  const mainOf = (p: Person) =>
+    [...p.shared].sort((a, b) => (rank.get(a) ?? 999) - (rank.get(b) ?? 999))[0] ?? '';
   const counts = new Map<string, number>();
-  people.forEach((p) => p.shared[0] && counts.set(p.shared[0], (counts.get(p.shared[0]) ?? 0) + 1));
+  people.forEach((p) => mainOf(p) && counts.set(mainOf(p), (counts.get(mainOf(p)) ?? 0) + 1));
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
   const color = new Map(top.map(([t], i) => [t, TOPIC_COLORS[i]]));
-  const other = people.filter((p) => !color.has(p.shared[0] ?? '')).length;
+  const other = people.filter((p) => !color.has(mainOf(p))).length;
   const groups: Group[] = top.map(([label, count], i) => ({ label, color: TOPIC_COLORS[i], count }));
   if (other) groups.push({ label: 'other interests', color: OTHER_COLOR, count: other });
-  return { groups, colorOf: (p) => color.get(p.shared[0] ?? '') ?? OTHER_COLOR };
+  return { groups, colorOf: (p) => color.get(mainOf(p)) ?? OTHER_COLOR };
 }
 
 interface Body {
@@ -52,16 +59,19 @@ function layout(people: Person[], colorOf: (p: Person) => string): Body[] {
   const max = Math.max(...people.map((p) => p.score), 0.01);
   const min = Math.min(...people.map((p) => p.score), max);
   const out: Body[] = [];
+  const GOLDEN = Math.PI * (3 - Math.sqrt(5));
   colors.forEach((col, gi) => {
     const members = byColor.get(col)!;
     const lonCenter = (gi / colors.length) * 2 * Math.PI;
-    const spread = (2 * Math.PI) / colors.length / 1.6;
-    members.forEach((p, i) => {
-      const t = members.length === 1 ? 0.5 : i / (members.length - 1);
-      const lon = lonCenter + (t - 0.5) * spread;
-      const lat = ((i % 3) - 1) * 0.55 + (gi % 2 ? 0.18 : -0.18);
+    const latCenter = colors.length > 2 ? (gi % 2 ? 0.35 : -0.35) : 0;
+    const cap = Math.min(1.1, Math.PI / colors.length + 0.2); // angular size of the group's patch
+    members.forEach((p, k) => {
+      const d = cap * Math.sqrt((k + 0.5) / members.length);
+      const phi = k * GOLDEN;
+      const lat = latCenter + d * Math.sin(phi) * 0.9;
+      const lon = lonCenter + (d * Math.cos(phi)) / Math.max(0.35, Math.cos(lat));
       const strength = max === min ? 1 : (p.score - min) / (max - min);
-      const r = 1 - 0.45 * strength; // strongest sit closest to you
+      const r = 1 - 0.4 * strength; // strongest sit closest to you
       out.push({
         p,
         color: col,
@@ -132,7 +142,7 @@ export function Globe3D({
   );
 
   const mid = size / 2;
-  const R = size * 0.36;
+  const R = size * 0.4;
   const project = (b: Body) => {
     // rotate around Y (yaw), then X (pitch)
     const x1 = b.x * Math.cos(yaw) - b.z * Math.sin(yaw);

@@ -55,7 +55,7 @@ export default function GraphScreen() {
   const view = useMemo(() => (graph ? buildView(graph) : null), [graph]);
   const pool = useMemo(() => (view ? view.people.filter((p) => !topic || p.shared.includes(topic)) : []), [view, topic]);
   const featured = useMemo(() => pool.slice(0, FEATURED), [pool]);
-  const { groups, colorOf } = useMemo(() => groupByTopic(featured), [featured]);
+  const { groups, colorOf } = useMemo(() => groupByTopic(featured, view?.topics.map((t) => t.label)), [featured, view]);
   const selected = view?.people.find((p) => p.id === selectedId) ?? null;
   const topicObj = view?.topics.find((t) => t.label === topic) ?? null;
 
@@ -156,7 +156,7 @@ export default function GraphScreen() {
           <View style={[styles.chartCard, { backgroundColor: SPACE.bg }]}>
             <Globe3D size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} />
             <View style={styles.howTo}>
-              <Text style={styles.howToText}>● Closer to you = stronger match   ● Color = what you share   ● Drag to spin</Text>
+              <Text style={styles.howToText}>Closer to you = stronger match  ·  Color = what you share  ·  Drag to spin</Text>
             </View>
             <View style={styles.legend}>
               {groups.map((g) => (
