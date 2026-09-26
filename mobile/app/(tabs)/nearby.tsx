@@ -1,12 +1,13 @@
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { EventModeCard } from '@/features/ble/EventModeCard';
-import { BAND_HINT, BANDS } from '@/features/nearby/geo';
+import { BAND_HINT, BANDS, mapPreview } from '@/features/nearby/geo';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
 
 // Nearby (MASTER_SPEC 3.4). Map layout by Arjun; scanning, bands, Event Mode and QR are Akshar's
@@ -15,10 +16,25 @@ export default function NearbyScreen() {
   const c = useColors();
   const [scan, setScan] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [band, setBand] = useState<string>('All');
+  const insets = useSafeAreaInsets();
   const { scanning, peers, error } = useProximity(scan);
   const selected = peers.find((p) => p.user_id === selectedId) ?? null;
+  const filtered = peers.filter(p => band === 'All' || p.band === band);
+  const preview = mapPreview(filtered, selectedId);
+  const filters = (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+      {['All', ...BANDS].map(value => <Pressable key={value} onPress={() => { setBand(value); setSelectedId(null); }} accessibilityRole="button" accessibilityState={{ selected: value === band }}
+        style={{ paddingHorizontal: 14, minHeight: 44, justifyContent: 'center', borderRadius: 22, backgroundColor: value === band ? c.tint : c.surfaceAlt }}>
+        <Text style={{ color: value === band ? c.onTint : c.text, fontWeight: '600' }}>{value}</Text>
+      </Pressable>)}
+    </ScrollView>
+  );
+  const mapNote = `${preview.length} of ${filtered.length} matches on the map. ${preview.length < filtered.length ? 'Select anyone from the list to show them. ' : ''}Approximate distance, not actual direction.`;
 
   return (
+    <>
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
       <Card>
@@ -29,7 +45,7 @@ export default function NearbyScreen() {
               {scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
             </Text>
           </View>
-          <Switch value={scan} onValueChange={setScan} accessibilityLabel="Scan for people nearby" />
+          <Switch value={scan} onValueChange={setScan} trackColor={{ true: c.tint, false: c.surfaceAlt }} accessibilityLabel="Scan for people nearby" />
         </View>
       </Card>
 
@@ -37,9 +53,11 @@ export default function NearbyScreen() {
         <ErrorState message={error} onRetry={() => setScan(true)} />
       ) : scan ? (
         <>
-          <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} />
+          <SectionTitle right={<Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} />}>Around you</SectionTitle>
+          {filters}
+          {!expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} />}
           <Text style={[styles.small, { color: c.muted }]}>
-            Distance is approximate. Pins don’t show actual direction.
+            {mapNote}
           </Text>
 
           {scanning && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
@@ -72,7 +90,7 @@ export default function NearbyScreen() {
 
           {peers.length > 0 &&
             BANDS.map((band) => {
-              const inBand = peers.filter((p) => p.band === band);
+              const inBand = filtered.filter((p) => p.band === band);
               if (!inBand.length) return null;
               return (
                 <View key={band} style={{ gap: 8 }}>
@@ -88,7 +106,7 @@ export default function NearbyScreen() {
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.rowName, { color: c.text }]}>
                             {p.name}
-                            {p.highlight ? <Text style={{ color: c.success }}>  ● top</Text> : null}
+                            {p.highlight ? <Text style={{ color: c.muted }}>  · top match</Text> : null}
                           </Text>
                           {p.why?.length ? (
                             <Text style={[styles.small, { color: c.muted }]} numberOfLines={1}>{p.why.slice(0, 2).join(' · ')}</Text>
@@ -123,6 +141,34 @@ export default function NearbyScreen() {
         </Disclosure>
       ) : null}
     </ScrollView>
+    <Modal visible={expanded} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setExpanded(false)}>
+      <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        <View style={{ paddingHorizontal: 20, paddingVertical: 10, gap: 8 }}>
+          <View style={styles.toggleRow}>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.h1, { color: c.text }]}>Around you</Text>
+              <Text style={[styles.small, { color: c.muted }]}>Your matches, with room to explore.</Text>
+            </View>
+            <Button label="Done" variant="secondary" onPress={() => setExpanded(false)} />
+          </View>
+          {filters}
+        </View>
+        {expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} expanded />}
+        <View style={{ padding: 16, gap: 10 }}>
+          <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
+          {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+            {filtered.map(p => <Pressable key={p.user_id} onPress={() => setSelectedId(p.user_id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === p.user_id }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: selectedId === p.user_id ? c.tint : c.border, backgroundColor: c.surface }}>
+              <Avatar name={p.name} size={32} />
+              <Text style={{ color: c.text }}>{p.name}</Text>
+            </Pressable>)}
+          </ScrollView>
+          {selected && <Button label={`View ${selected.name.split(' ')[0]}’s profile →`} onPress={() => { setExpanded(false); router.push(`/match/${selected.user_id}`); }} />}
+        </View>
+      </View>
+    </Modal>
+    </>
   );
 }
 

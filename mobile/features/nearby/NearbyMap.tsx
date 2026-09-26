@@ -10,11 +10,11 @@ import MapView, { Circle, Marker, type Region } from 'react-native-maps';
 import { useColors } from '@/components/ui';
 import type { Peer } from '@/features/ble';
 
-import { BAND_METERS, BANDS, offsetMeters, peerAngle } from './geo';
+import { BAND_METERS, BANDS, offsetMeters, bandAngle } from './geo';
 
 const FALLBACK = { latitude: 33.7756, longitude: -84.3963 }; // Georgia Tech, if location is off
 
-export function NearbyMap({ peers, selectedId, onSelect }: { peers: Peer[]; selectedId: string | null; onSelect: (id: string | null) => void }) {
+export function NearbyMap({ peers, selectedId, onSelect, expanded = false }: { peers: Peer[]; selectedId: string | null; onSelect: (id: string | null) => void; expanded?: boolean }) {
   const c = useColors();
   const [me, setMe] = useState<{ latitude: number; longitude: number } | null>(null);
   const [denied, setDenied] = useState(false);
@@ -22,38 +22,42 @@ export function NearbyMap({ peers, selectedId, onSelect }: { peers: Peer[]; sele
 
   useEffect(() => {
     let sub: Location.LocationSubscription | null = null;
+    let cancelled = false;
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
+      if (cancelled) return;
       if (status !== 'granted') {
         setDenied(true);
         return;
       }
       const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (cancelled) return;
       setMe({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       sub = await Location.watchPositionAsync({ accuracy: Location.Accuracy.Balanced, distanceInterval: 5 }, (p) =>
-        setMe({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
+        !cancelled && setMe({ latitude: p.coords.latitude, longitude: p.coords.longitude }),
       );
-    })().catch(() => setDenied(true));
-    return () => sub?.remove();
+      if (cancelled) sub.remove();
+    })().catch(() => { if (!cancelled) setDenied(true); });
+    return () => { cancelled = true; sub?.remove(); };
   }, []);
 
   const center = me ?? FALLBACK;
-  const region: Region = { ...center, latitudeDelta: 0.00055, longitudeDelta: 0.00055 };
+  const region: Region = { ...center, latitudeDelta: 0.00036, longitudeDelta: 0.00044 };
 
   useEffect(() => {
-    if (me) map.current?.animateToRegion({ ...me, latitudeDelta: 0.00055, longitudeDelta: 0.00055 }, 400);
+    if (me) map.current?.animateToRegion({ ...me, latitudeDelta: 0.00036, longitudeDelta: 0.00044 }, 400);
   }, [me]);
 
   return (
-    <View style={[styles.wrap, { borderColor: c.border }]}>
+    <View style={[styles.wrap, { borderColor: c.border }, expanded && { flex: 1, height: undefined, borderRadius: 0 }]}>
       <MapView
         ref={map}
         style={StyleSheet.absoluteFill}
         initialRegion={region}
         showsUserLocation={Boolean(me)}
         showsMyLocationButton
-        showsPointsOfInterests
-        showsBuildings
+        showsPointsOfInterests={false}
+        showsBuildings={false}
         onPress={() => onSelect(null)}>
         {BANDS.map((b, i) => (
           <Circle
@@ -62,21 +66,21 @@ export function NearbyMap({ peers, selectedId, onSelect }: { peers: Peer[]; sele
             radius={BAND_METERS[i]}
             strokeColor={c.tint}
             strokeWidth={1.5}
-            fillColor={i === 0 ? 'rgba(79,70,229,0.12)' : 'rgba(79,70,229,0.05)'}
+            fillColor={i === 0 ? 'rgba(110,120,135,0.10)' : 'rgba(110,120,135,0.03)'}
           />
         ))}
         {peers.map((p) => {
-          const pos = offsetMeters(center, peerAngle(p.user_id), BAND_METERS[BANDS.indexOf(p.band)] * 0.78);
+          const pos = offsetMeters(center, bandAngle(p, peers), BAND_METERS[BANDS.indexOf(p.band)] * 0.92);
           const sel = p.user_id === selectedId;
           return (
-            <Marker key={p.user_id} coordinate={pos} onPress={(e) => { e.stopPropagation(); onSelect(p.user_id); }} tracksViewChanges={false}>
+            <Marker key={`${p.user_id}-${sel}`} coordinate={pos} onPress={(e) => { e.stopPropagation(); onSelect(p.user_id); }} tracksViewChanges={false} zIndex={sel ? 10 : 1}>
               <View style={styles.pinWrap}>
-                <View style={[styles.pin, { backgroundColor: p.highlight ? c.success : c.text, borderColor: sel ? c.tint : c.surface }]}>
+                <View style={[styles.pin, { backgroundColor: c.tint, borderColor: c.surface }]}>
                   <Text style={styles.pinText}>{initials(p.name)}</Text>
                 </View>
-                <View style={[styles.pinLabel, { backgroundColor: c.surface }]}>
+                {sel && <View style={[styles.pinLabel, { backgroundColor: c.surface }]}>
                   <Text style={[styles.pinName, { color: c.text }]} numberOfLines={1}>{(p.name || 'Someone').split(' ')[0]}</Text>
-                </View>
+                </View>}
               </View>
             </Marker>
           );

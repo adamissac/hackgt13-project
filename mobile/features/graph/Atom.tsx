@@ -1,4 +1,6 @@
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { AccessibilityInfo, Animated, AppState, Easing, Platform, Pressable, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { atomLayout } from './atomLayout';
 import type { Person } from './model';
@@ -12,17 +14,47 @@ export function groupByTopic(people: Person[], _topicOrder: string[], _dark: boo
  return {groups, colorOf: (p: Person) => p.facet ? FACET_COLORS[p.facet] : '#78859A'};
 }
 
-// Six anchored people, a nucleus, and connections only to you. Native buttons over
-// the SVG provide keyboard/screen-reader access; no moving targets or frame loop.
-export function Atom({ size, people, colorOf, selectedId, onSelect, colors }: {
+// A slow orbit with counter-rotating labels. Stop while selected, off-screen,
+// backgrounded, or when the system requests reduced motion.
+export function Atom({ size, people, colorOf, selectedId, onSelect, colors, paused = false }: {
   size: number; people: Person[]; colorOf: (p: Person) => string;
   selectedId: string | null; onSelect: (id: string | null) => void;
+  paused?: boolean;
   colors: { text: string; muted: string; border: string; surface: string; tint: string; tintSoft: string; onTint: string };
 }) {
   const { height, center, nodes } = atomLayout(size, people.length);
+  const [rotation] = useState(() => new Animated.Value(0));
+  const [reduced, setReduced] = useState(true);
+  const [active, setActive] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    let mounted = true;
+    AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) setReduced(value); }).catch(() => {});
+    const motion = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduced);
+    const app = AppState.addEventListener('change', value => setActive(value === 'active'));
+    return () => { mounted = false; motion.remove(); app.remove(); };
+  }, []);
+  useFocusEffect(useCallback(() => {
+    if (paused || selectedId || reduced || !active || !people.length) return;
+    let stopped = false;
+    let loop: Animated.CompositeAnimation | undefined;
+    rotation.stopAnimation(value => {
+      if (stopped) return;
+      const settings = { toValue: 1, easing: Easing.linear, useNativeDriver: Platform.OS !== 'web', isInteraction: false };
+      Animated.timing(rotation, { ...settings, duration: (1 - value) * 90000 }).start(({ finished }) => {
+        if (!finished || stopped) return;
+        rotation.setValue(0);
+        loop = Animated.loop(Animated.timing(rotation, { ...settings, duration: 90000 }));
+        loop.start();
+      });
+    });
+    return () => { stopped = true; loop?.stop(); rotation.stopAnimation(); };
+  }, [active, paused, people.length, reduced, rotation, selectedId]));
+  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const unspin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-360deg'] });
   return (
     <View style={{ width: size, height }}>
-      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none">
+      <Animated.View style={{ width: size, height, transform: [{ rotate: spin }] }}>
+      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none" accessible={false}>
         <Defs><RadialGradient id="nucleusHalo">
           <Stop offset="0" stopColor={colors.tint} stopOpacity={0.16} />
           <Stop offset="1" stopColor={colors.tint} stopOpacity={0} />
@@ -37,23 +69,26 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors }: {
             strokeOpacity={selectedId === p.id ? 1 : score >= 0.7 ? 0.85 : score >= 0.4 ? 0.5 : 0.22} />;
         })}
       </Svg>
-      <View pointerEvents="none" style={{ position: 'absolute', left: center.x - 31, top: center.y - 31, width: 62, height: 62, borderRadius: 31, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: colors.tintSoft }}>
-        <Text style={{ color: colors.onTint, fontSize: 16, fontWeight: '600' }}>You</Text>
-      </View>
       {nodes.map((n, i) => {
         const p = people[i];
         const selected = selectedId === p.id;
         return (
-          <Pressable key={p.id} onPress={() => onSelect(selected ? null : p.id)} accessibilityRole="button"
+          <Animated.View key={p.id} style={{ position: 'absolute', left: n.x - 36, top: n.y - 34, width: 72, height: 68, transform: [{ rotate: unspin }] }}>
+          <Pressable onPress={() => onSelect(selected ? null : p.id)} accessibilityRole="button"
             accessibilityLabel={`View ${p.name}, ${p.shared[0] ?? 'shared interests'}`} accessibilityState={{ selected }}
-            style={({ pressed }) => ({ position: 'absolute', left: n.x - 45, top: n.y - 24, width: 90, minHeight: 76, alignItems: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}>
+            style={({ pressed }) => ({ width: 72, minHeight: 68, alignItems: 'center', gap: 4, opacity: pressed ? 0.7 : 1 })}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, borderWidth: selected ? 3 : 2, borderColor: colorOf(p), alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: colorOf(p), fontSize: 16, fontWeight: '600' }}>{(p.name || '?').split(/\s+/).slice(0, 2).map((s) => s[0]).join('')}</Text>
             </View>
-            <Text numberOfLines={1} style={{ maxWidth: 90, color: colors.text, fontSize: 13, fontWeight: '600', backgroundColor: colors.surface, paddingHorizontal: 4 }}>{p.first}</Text>
+            <Text numberOfLines={1} style={{ maxWidth: 72, color: colors.text, fontSize: 12, fontWeight: '600', backgroundColor: colors.surface, paddingHorizontal: 3 }}>{p.first}</Text>
           </Pressable>
+          </Animated.View>
         );
       })}
+      </Animated.View>
+      <View pointerEvents="none" style={{ position: 'absolute', left: center.x - 31, top: center.y - 31, width: 62, height: 62, borderRadius: 31, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: colors.tintSoft }}>
+        <Text style={{ color: colors.onTint, fontSize: 16, fontWeight: '600' }}>You</Text>
+      </View>
     </View>
   );
 }

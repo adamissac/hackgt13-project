@@ -15,7 +15,7 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
     <RNView
       style={[
         styles.card,
-        { backgroundColor: highlight ? c.tintSoft : c.surface, borderColor: highlight ? c.tintSoft : c.border, borderWidth: 1 },
+        { backgroundColor: c.surface, borderColor: highlight ? c.tint : c.border, borderWidth: 1 },
         style,
       ]}>
       {children}
@@ -23,7 +23,7 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
   );
 }
 
-const AVATAR_HUES = ['#345681', '#5372A3', '#786493', '#427B86', '#6D769D', '#8B725A'];
+const AVATAR_HUES = ['#626D7C', '#777C84', '#81766D', '#726F7C'];
 
 /** First name for copy like "Find Maya"; accounts made with email sign-in can have no name yet. */
 export function firstName(name: string | null | undefined, fallback = 'them'): string {

@@ -51,6 +51,7 @@ export default function GraphScreen() {
   const [topic, setTopic] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [expanding, setExpanding] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
@@ -165,8 +166,9 @@ export default function GraphScreen() {
               <Text style={[styles.small, { color: c.muted }]}>{mode === 'matches' ? 'Your closest matches' : 'Your connections'}</Text>
               <Text style={[styles.small, { color: c.muted }]}>{featured.length} people</Text>
             </View>
-            <Atom size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} />
+            <Atom size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} paused={paused} />
             <Text style={[styles.howToText, { color: c.muted }]}>Tap a node to explore</Text>
+            <Button label={paused ? 'Resume rotation' : 'Pause rotation'} variant="ghost" onPress={() => setPaused(!paused)} />
           </View>
           <Disclosure title="Reading your graph" subtitle="Colors show shared interests">
             <View style={styles.legend}>
