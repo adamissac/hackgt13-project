@@ -6,3 +6,14 @@ umap-learn>=0.5
 sentence-transformers>=2.7
 anthropic>=0.40
 pdfplumber>=0.11
+# ---- FastAPI service (ml/app) ----
+fastapi>=0.115
+uvicorn[standard]>=0.30
+psycopg[binary,pool]>=3.2
+pgvector>=0.3
+PyJWT[crypto]>=2.9
+pydantic>=2.7
+python-multipart>=0.0.9
+python-dotenv>=1.0
+httpx>=0.27
+pytest>=8.0
