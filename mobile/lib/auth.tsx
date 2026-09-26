@@ -203,29 +203,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [guest, setGuest] = useState(false);
 
   useEffect(() => {
+    // A real sign-in always means live data: drop a remembered "Try the demo" choice, otherwise a
+    // LinkedIn user keeps seeing the demo cast instead of the event's attendees. Done in the session
+    // callbacks (not an effect on `session`) so it never causes an extra render pass.
+    const onSession = (s: Session | null) => {
+      setSession(s);
+      if (s) {
+        setGuest(false);
+        setDemo(false);
+        AsyncStorage.removeItem(DEMO_KEY).catch(() => undefined);
+      }
+    };
     Promise.all([
-      supabase.auth.getSession().then(({ data }) => setSession(data.session)),
-      AsyncStorage.getItem(DEMO_KEY)
-        .then((v) => {
-          if (v === '1') {
-            setDemo(true);
-            setGuest(true);
-          }
-        })
-        .catch(() => undefined),
-    ]).finally(() => setLoading(false));
-    const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
+      supabase.auth.getSession().then(({ data }) => data.session),
+      AsyncStorage.getItem(DEMO_KEY).catch(() => null),
+    ])
+      .then(([s, remembered]) => {
+        onSession(s);
+        if (!s && remembered === '1') {
+          setDemo(true);
+          setGuest(true);
+        }
+      })
+      .finally(() => setLoading(false));
+    const { data } = supabase.auth.onAuthStateChange((_event, s) => onSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
-
-  // A real sign-in always means live data: drop a remembered "Try the demo" choice, otherwise a
-  // LinkedIn user keeps seeing the demo cast instead of the event's attendees.
-  useEffect(() => {
-    if (!session) return;
-    setGuest(false);
-    setDemo(false);
-    AsyncStorage.removeItem(DEMO_KEY).catch(() => undefined);
-  }, [session]);
 
   // Demo mode: no account needed; everything runs against lib/demo. Remembered across reloads.
   const continueAsGuest = () => {
