@@ -89,6 +89,7 @@ Grounded only in what both people see on each other's quick profile. Cached per 
 ```
 
 ## 8. GET /qr/token
+Alias of 19 `GET /qr/verify-token` (same response). Expires after 60 s, single use.
 The app shows this as a QR code and refreshes it every 30 seconds.
 ```json
 { "payload": "base64url(user_id|nonce|expires_at)", "signature": "base64url", "expires_at": "2026-09-26T15:04:05Z" }
@@ -96,6 +97,7 @@ The app shows this as a QR code and refreshes it every 30 seconds.
 (V1: server signs with its secret. Later: device Ed25519 key.)
 
 ## 9. POST /handshake
+Alias of 20 `POST /qr/verify`; the response also carries `conversation_id`.
 Request (scanner sends what it read from the other phone's QR):
 ```json
 { "payload": "...", "signature": "...", "event_id": 1 }
@@ -109,6 +111,8 @@ Response
 Errors: `expired`, `invalid_signature`, `already_used`, `self_scan`.
 
 ## 10. POST /feedback
+Alias of 23 `POST /conversations/{id}/feedback`; send `conversation_id` (preferred) or `handshake_id`.
+A person who said yes gets `waiting` until both say yes, even if the other said no; `no_connection` only goes to someone who said no.
 ```json
 { "handshake_id": 123, "talked_about": [42, 7], "other_topic": "", "wants_connect": true }
 ```
@@ -120,6 +124,7 @@ Response
 ```
 
 ## 11. GET /connections
+Also returns `headline` and `how_met` (`in_person | invite`); `met_at` is the event name or null.
 Only the caller's own connections. Never return counts of other users' connections.
 ```json
 { "connections": [ { "user_id": "uuid", "name": "Maya R.", "photo_url": "...", "met_at": "HackGT 13",
@@ -192,3 +197,45 @@ Request `{ "response": "yes" }` (or `"no"`)
 { "status": "matched", "chat_id": 7 }         // both said yes: chats row created, both get a notification
 ```
 Errors: `404 suggestion not found` (not a participant).
+
+## 19. GET /qr/verify-token
+The verification QR the other person scans at the end of a conversation. Same shape as 8. Server-signed (HMAC-SHA256, `QR_SIGNING_KEY`), 60-second expiry, single-use nonce.
+
+## 20. POST /qr/verify
+Request `{ "payload": "...", "signature": "...", "event_id": 1 }` (`event_id` optional; defaults to an event both are checked in to)
+```json
+{ "conversation_id": 31, "handshake_id": 123,
+  "other": { "user_id": "uuid", "name": "Maya R.", "photo_url": "..." },
+  "checklist": [ { "interest_id": 42, "name": "reinforcement learning" }, { "interest_id": 7, "name": "rock climbing" } ] }
+```
+Creates a verified `conversations` row (method `qr`) and a `connect_prompt` notification for both. If they scan each other
+within 10 minutes, both scans return the same conversation. Errors: `400 invalid_signature`, `400 expired`, `400 self_scan`, `409 already_used`.
+`checklist` = shared interests ranked by min(w_a, w_b) * idf, top 5 (the app adds "something else").
+
+## 21. GET /conversations/pending
+Verified conversations (QR or Bluetooth) still waiting for MY checklist, newest first.
+```json
+{ "conversations": [ { "conversation_id": 31, "method": "qr", "event_id": 1, "minutes": null,
+    "created_at": "2026-09-26T15:04:05+00:00", "other": { "user_id": "uuid", "name": "Maya R.", "photo_url": null },
+    "checklist": [ { "interest_id": 42, "name": "reinforcement learning" } ] } ] }
+```
+
+## 22. GET /conversations/{conversation_id}/checklist
+`{ "conversation_id": 31, "other": {...}, "checklist": [...] }` (participants only, else `404 conversation not found`).
+
+## 23. POST /conversations/{conversation_id}/feedback
+Request `{ "talked_about": [42, 7], "other_topic": "", "wants_connect": true }`
+```json
+{ "status": "waiting" }
+{ "status": "connected", "connection": { "user_id": "uuid", "name": "Maya R." }, "chat_id": 9 }
+{ "status": "no_connection" }
+```
+Silent: a yes gets `waiting` until both say yes, even if the other said no. Only the person who said no gets `no_connection`.
+Mutual yes creates the `connections` row (`how_met = in_person`), a chat, and `connected` notifications for both.
+
+## 24. GET /connections/{user_id}
+My connection only (else `404 connection not found`): the 11 row plus `"shared_topics": ["reinforcement learning", ...]`.
+
+## 25. POST /connections/{user_id}/followup-draft
+`{ "draft": "Hi Maya, great talking with you about reward design ..." }` (2-3 sentences from what I checked, typed, and our
+shared interests; the user edits and sends it in chat). Connections only.

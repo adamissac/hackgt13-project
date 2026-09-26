@@ -17,7 +17,8 @@ from .settings import get_settings
 log = logging.getLogger("app")
 
 # One module per area in app/routers/. Order does not matter.
-ROUTERS = ["health", "profile", "events", "matches", "me", "suggestions"]
+ROUTERS = ["health", "profile", "events", "matches", "me", "suggestions", "verification",
+           "connections"]
 
 
 @asynccontextmanager

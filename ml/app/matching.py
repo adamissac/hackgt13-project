@@ -114,3 +114,12 @@ def relationship(viewer: str, other: str) -> dict | None:
         if s:
             return {"kind": "suggestion", "event_id": s["event_id"]}
     return None
+
+
+def is_valid_uuid(s: str) -> bool:
+    import uuid
+    try:
+        uuid.UUID(s)
+        return True
+    except (ValueError, TypeError):
+        return False
