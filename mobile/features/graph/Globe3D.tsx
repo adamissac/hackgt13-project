@@ -8,8 +8,7 @@ import Svg, { Circle, Defs, G, Line, RadialGradient, Stop, Text as SvgText } fro
 
 import type { Person } from './model';
 
-/** Similarity color: one hue; strength is carried by opacity (solid = strong, faint = weak). */
-export const SIMILAR = '#3B32B8';
+// Similarity color = the app's accent (colors.tint); strength is carried by opacity (solid = strong, faint = weak).
 const MIN_ALPHA = 0.18;
 
 const FONT = Platform.OS === 'web' ? 'system-ui, -apple-system, sans-serif' : undefined;
@@ -62,8 +61,9 @@ export function Globe3D({
   people: Person[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  colors: { surface: string; text: string; muted: string; border: string };
+  colors: { surface: string; text: string; muted: string; border: string; tint: string; onTint: string };
 }) {
+  const SIMILAR = colors.tint;
   const bodies = useMemo(() => layout(people), [people]);
   const [rot, setRot] = useState({ yaw: 0.5, pitch: -0.3 });
   const start = useRef(rot);
@@ -109,13 +109,28 @@ export function Globe3D({
     })
     .sort((a, c) => c.z - a.z); // far first
 
+  // name labels: front-facing people only, strongest first, skipping any that would overlap a placed one
+  const labeled = new Set<string>();
+  if (!selectedId) {
+    const boxes: { x: number; y: number }[] = [];
+    [...drawn]
+      .filter((d) => d.z < 0.15)
+      .sort((a, c) => c.b.t - a.b.t)
+      .forEach((d) => {
+        const ly = d.sy + 16 * d.s + 15;
+        if (boxes.some((bx) => Math.abs(bx.x - d.sx) < 70 && Math.abs(bx.y - ly) < 18)) return;
+        if (drawn.some((o) => o !== d && Math.hypot(o.sx - d.sx, o.sy - ly) < 16 * o.s)) return;
+        boxes.push({ x: d.sx, y: ly });
+        labeled.add(d.b.p.id);
+      });
+  } else labeled.add(selectedId);
+
   const ball = (d: (typeof drawn)[number]) => {
-    const { b, sx, sy, s, z } = d;
+    const { b, sx, sy, s } = d;
     const selected = b.p.id === selectedId;
     const faded = selectedId && !selected;
     const alpha = alphaFor(b.t);
-    const r = 20 * s;
-    const front = z < 0.15;
+    const r = 16 * s;
     return (
       <G key={b.p.id} opacity={faded ? 0.3 : 1} {...press(() => onSelect(selected ? null : b.p.id))}>
         <Circle cx={sx} cy={sy} r={r + 12} fill="transparent" />
@@ -138,11 +153,11 @@ export function Globe3D({
           y={sy + 4}
           fontSize={Math.min(13, r * 0.6)}
           fontWeight="800"
-          fill={alpha > 0.55 ? '#FFFFFF' : SIMILAR}
+          fill={alpha > 0.55 ? colors.onTint : SIMILAR}
           textAnchor="middle">
           {initials(b.p.name)}
         </SvgText>
-        {(selected || (!selectedId && front)) && (
+        {labeled.has(b.p.id) && (
           <SvgText fontFamily={FONT} x={sx} y={sy + r + 15} fontSize={12} fontWeight="700" fill={colors.text} textAnchor="middle">
             {`${b.p.first} ${Math.round(b.p.score * 100)}%`}
           </SvgText>
@@ -160,8 +175,8 @@ export function Globe3D({
             <Stop offset="0.45" stopColor="#FFFFFF" stopOpacity={0} />
           </RadialGradient>
           <RadialGradient id="you" cx="38%" cy="32%" r="70%">
-            <Stop offset="0" stopColor="#8B84FF" />
-            <Stop offset="1" stopColor="#2A2290" />
+            <Stop offset="0" stopColor={colors.text} stopOpacity={0.75} />
+            <Stop offset="1" stopColor={colors.text} />
           </RadialGradient>
         </Defs>
 
@@ -186,7 +201,7 @@ export function Globe3D({
 
         {drawn.filter((d) => d.z >= 0).map(ball)}
         <Circle cx={mid} cy={mid} r={26} fill="url(#you)" />
-        <SvgText fontFamily={FONT} x={mid} y={mid + 5} fontSize={14} fontWeight="800" fill="#FFFFFF" textAnchor="middle">
+        <SvgText fontFamily={FONT} x={mid} y={mid + 5} fontSize={14} fontWeight="800" fill={colors.surface} textAnchor="middle">
           You
         </SvgText>
         {drawn.filter((d) => d.z < 0).map(ball)}

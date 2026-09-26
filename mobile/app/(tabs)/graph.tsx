@@ -4,8 +4,9 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
-import { buildView, whySentence, type Person } from '@/features/graph/model';
-import { alphaFor, Globe3D, SIMILAR } from '@/features/graph/Globe3D';
+import { buildView } from '@/features/graph/model';
+import { PersonSheet } from '@/features/graph/PersonSheet';
+import { alphaFor, Globe3D } from '@/features/graph/Globe3D';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { useAsync } from '@/lib/useAsync';
@@ -158,7 +159,7 @@ export default function GraphScreen() {
               <Text style={[styles.scaleLabel, { color: c.muted }]}>Less similar</Text>
               <View style={styles.scaleBar}>
                 {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => (
-                  <View key={t} style={[styles.scaleStep, { backgroundColor: SIMILAR, opacity: alphaFor(t) }]} />
+                  <View key={t} style={[styles.scaleStep, { backgroundColor: c.tint, opacity: alphaFor(t) }]} />
                 ))}
               </View>
               <Text style={[styles.scaleLabel, { color: c.muted }]}>More similar</Text>
@@ -167,7 +168,7 @@ export default function GraphScreen() {
           </View>
 
           {selected ? (
-            <PersonCard p={selected} mode={mode} onClose={() => setSelectedId(null)} />
+            <PersonSheet key={selected.id} p={selected} mode={mode} onClose={() => setSelectedId(null)} />
           ) : topicObj && mode === 'matches' ? (
             <Card>
               <Text style={[styles.body, { color: c.text }]}>
@@ -217,37 +218,6 @@ export default function GraphScreen() {
   );
 }
 
-function PersonCard({ p, mode, onClose }: { p: Person; mode: GraphMode; onClose: () => void }) {
-  const c = useColors();
-  return (
-    <Card highlight>
-      <View style={styles.personHead}>
-        <Avatar name={p.name} size={52} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.cardTitle, { color: c.text }]}>{p.name}</Text>
-          <Text style={[styles.small, { color: c.muted }]}>
-            {p.role === 'recruiter' ? 'Recruiter' : 'Student'}
-            {p.top && mode === 'matches' ? ' · top match' : ''}
-            {p.openToMeet ? ' · open to meet now' : ''}
-            {mode === 'network' && p.howMet ? ` · met ${p.howMet === 'invite' ? 'by invite' : 'in person'}` : ''}
-          </Text>
-        </View>
-        <Pressable onPress={onClose} accessibilityLabel="Close" hitSlop={12}>
-          <Text style={[styles.close, { color: c.muted }]}>✕</Text>
-        </Pressable>
-      </View>
-      {mode === 'matches' && <MatchMeter score={p.score} />}
-      <Text style={[styles.body, { color: c.text }]}>{whySentence(p)}</Text>
-      <View style={styles.chipsWrap}>
-        {p.shared.slice(0, 5).map((t) => (
-          <Chip key={t} label={t} tone="tint" />
-        ))}
-      </View>
-      {mode === 'matches' && <Button label="See profile + icebreakers" onPress={() => router.push(`/match/${p.userId}`)} />}
-    </Card>
-  );
-}
-
 const styles = StyleSheet.create({
   fill: { flex: 1, padding: 16, gap: 12 },
   container: { padding: 16, gap: 14, paddingBottom: 40 },
@@ -259,7 +229,7 @@ const styles = StyleSheet.create({
   topic: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   topicText: { fontSize: 14, fontWeight: '600' },
   chartCard: { borderRadius: 20, borderWidth: 1, alignItems: 'center', overflow: 'hidden', paddingBottom: 14, gap: 8 },
-  scale: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16 },
+  scale: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, alignSelf: 'stretch' },
   scaleLabel: { fontSize: 12, fontWeight: '700' },
   scaleBar: { flexDirection: 'row', flex: 1, height: 12, borderRadius: 6, overflow: 'hidden', gap: 2 },
   scaleStep: { flex: 1 },

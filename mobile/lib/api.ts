@@ -66,6 +66,7 @@ export interface Connection {
   minutes_talked: number;
 }
 export interface ConnectionsResponse { connections: Connection[] }
+export type ConnectionDetail = Connection & { shared_topics: string[] };
 
 export interface SharedTopic { interest_id: number; name: string; facet: Facet; strength: number; evidence: string }
 export interface QuickProfile {
@@ -374,6 +375,11 @@ export const api = {
           'GET',
           `/graph/expand?node_id=${encodeURIComponent(nodeId)}&mode=${mode}${eventId ? `&event_id=${eventId}` : ''}`,
         ),
+    ),
+  connection: (userId: string) =>
+    call(
+      () => ({ ...mocks.connections().connections[0], shared_topics: [] as string[] }),
+      () => request<ConnectionDetail>('GET', `/connections/${encodeURIComponent(userId)}`),
     ),
   meDashboard: (days = 30) => call(mocks.meDashboard, () => request<MeDashboard>('GET', `/me/dashboard?days=${days}`)),
   feedInsights: (days = 7) => call(mocks.feedInsights, () => request<FeedInsights>('GET', `/feed/insights?days=${days}`)),
