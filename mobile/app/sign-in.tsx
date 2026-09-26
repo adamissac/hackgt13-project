@@ -67,11 +67,9 @@ export default function SignInScreen() {
 
         {message && <Text style={[styles.message, message.kind === 'error' && styles.error]}>{message.text}</Text>}
 
-        {env.useMocks && (
-          <Pressable onPress={continueAsGuest} style={styles.guest} accessibilityRole="button">
-            <Text style={styles.guestText}>Explore the demo</Text>
-          </Pressable>
-        )}
+        <Pressable onPress={continueAsGuest} style={styles.guest} accessibilityRole="button">
+          <Text style={styles.guestText}>Try the demo (no account needed)</Text>
+        </Pressable>
 
         <Text style={styles.disclosure}>
           We build your interest profile from what you share (resume, GitHub, what you type). To verify in-person

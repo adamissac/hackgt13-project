@@ -3,7 +3,9 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
-import { env } from './env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import { setDemo } from './mode';
 import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -44,8 +46,21 @@ export async function sendMagicLink(email: string): Promise<void> {
   if (error) throw error;
 }
 
-type AuthState = { session: Session | null; loading: boolean; guest: boolean; continueAsGuest: () => void };
-const AuthContext = createContext<AuthState>({ session: null, loading: true, guest: false, continueAsGuest: () => {} });
+type AuthState = {
+  session: Session | null;
+  loading: boolean;
+  guest: boolean;
+  continueAsGuest: () => void;
+  leaveDemo: () => void;
+};
+const AuthContext = createContext<AuthState>({
+  session: null,
+  loading: true,
+  guest: false,
+  continueAsGuest: () => {},
+  leaveDemo: () => {},
+});
+const DEMO_KEY = 'fc.demo-guest';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -53,18 +68,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [guest, setGuest] = useState(false);
 
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data }) => setSession(data.session))
-      .finally(() => setLoading(false));
+    Promise.all([
+      supabase.auth.getSession().then(({ data }) => setSession(data.session)),
+      AsyncStorage.getItem(DEMO_KEY)
+        .then((v) => {
+          if (v === '1') {
+            setDemo(true);
+            setGuest(true);
+          }
+        })
+        .catch(() => undefined),
+    ]).finally(() => setLoading(false));
     const { data } = supabase.auth.onAuthStateChange((_event, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // Guest mode only in mock mode, so teammates can build UI before auth is configured.
-  const continueAsGuest = () => env.useMocks && setGuest(true);
+  // Demo mode: no account needed; everything runs against lib/demo. Remembered across reloads.
+  const continueAsGuest = () => {
+    setDemo(true);
+    setGuest(true);
+    AsyncStorage.setItem(DEMO_KEY, '1').catch(() => undefined);
+  };
+  const leaveDemo = () => {
+    setGuest(false);
+    setDemo(false);
+    AsyncStorage.removeItem(DEMO_KEY).catch(() => undefined);
+  };
 
-  return <AuthContext.Provider value={{ session, loading, guest, continueAsGuest }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ session, loading, guest, continueAsGuest, leaveDemo }}>{children}</AuthContext.Provider>
+  );
 }
 
 export const useAuth = () => useContext(AuthContext);
