@@ -17,3 +17,6 @@ change to `docs/api.md`.
 | handshake.json | POST /handshake |
 | feedback.json | POST /feedback |
 | connections.json | GET /connections |
+| me_open_to_meet.json | PATCH /me/open-to-meet |
+| suggestions.json | GET /suggestions |
+| suggestion_respond.json | POST /suggestions/{id}/respond (mutual-yes case; otherwise {"status": "waiting"}) |

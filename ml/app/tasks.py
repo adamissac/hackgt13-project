@@ -63,3 +63,10 @@ def run_retention() -> dict:
 @every(3600, "retention")
 def retention() -> None:
     log.info("retention deleted %s", run_retention())
+
+
+@every(30, "suggestions")
+def suggestions_tick() -> None:
+    from . import suggestions
+    suggestions.expire()
+    suggestions.generate()
