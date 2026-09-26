@@ -441,6 +441,16 @@ export const api = {
       () => ({ url: 'https://github.com/login/oauth/authorize?mock=1' }),
       () => request<{ url: string }>('GET', '/connect/github/start'),
     ),
+  /** Reuse the consent given at "Continue with GitHub" so the user isn't asked to authorize twice.
+   *  Supabase hands us provider_token once, in the session right after sign-in. */
+  githubFromSession: (providerToken: string, scopes?: string) =>
+    call(
+      () => ({ connected: true, login: 'octocat' }),
+      () => request<{ connected: boolean; login: string }>('POST', '/connect/github/session', {
+        provider_token: providerToken,
+        ...(scopes ? { scopes } : {}),
+      }),
+    ),
   ingestResume: (file: { uri: string; name: string; type?: string }) =>
     call(mocks.ingest, () => {
       const form = new FormData();

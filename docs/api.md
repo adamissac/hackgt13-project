@@ -333,6 +333,21 @@ code server-side, stores the Fernet-encrypted token in `linked_accounts`, runs G
 `APP_GITHUB_REDIRECT?status=ok` (or `status=error&reason=denied|oauth`). Default deep link
 `formalconnect://connect/github`. Tokens never reach the client. Scope is `read:user` only (public repos).
 
+`POST /connect/github/session` (Bearer JWT) — for users who signed in with GitHub, so they are not asked to
+authorize GitHub a second time. Supabase returns a `provider_token` once, in the session right after an OAuth
+sign-in (it is not persisted), and the app posts it here immediately:
+```json
+{ "provider_token": "gho_...", "scopes": "read:user" }
+```
+The server validates the token against GitHub before trusting it, stores it Fernet-encrypted in `linked_accounts`
+(same as the callback above), and runs the same background ingestion. `scopes` is optional and defaults to
+`read:user`. Response:
+```json
+{ "connected": true, "login": "octocat" }
+```
+Errors: `400 {"error": "github rejected that token"}` if GitHub will not accept it. The token is never returned
+to the client.
+
 ## 34. GET /me/dashboard?days=30   owner: Arjun (AR7)
 Private personal dashboard. Only the caller's own connections; nobody else's count or list is ever computed.
 ```json

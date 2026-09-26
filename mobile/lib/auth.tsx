@@ -5,31 +5,36 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { api } from './api';
 import { env } from './env';
 import { setDemo } from './mode';
 import { supabase } from './supabase';
 
 WebBrowser.maybeCompleteAuthSession();
 
+/** Matches the server's own connect flow: public repos only, never `repo`. */
+const GITHUB_SCOPES = 'read:user';
+
 // formalconnect://auth/callback in dev builds; must be in Supabase Auth redirect URLs.
 export const redirectTo = Linking.createURL('auth/callback');
 
 // One exchange per code. The same code can arrive twice at once (the in-app browser result AND the
 // deep link Expo Router receives); a second exchange would fail and look like a failed sign-in.
-const exchanges = new Map<string, Promise<void>>();
+const exchanges = new Map<string, Promise<Session | null>>();
 
-function exchangeOnce(code: string): Promise<void> {
+function exchangeOnce(code: string): Promise<Session | null> {
   let p = exchanges.get(code);
   if (!p) {
     p = (async () => {
-      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      const { data, error } = await supabase.auth.exchangeCodeForSession(code);
       if (error) {
         // Already exchanged by the other path? Then we're signed in and this isn't a failure.
-        const { data } = await supabase.auth.getSession();
-        if (data.session) return;
+        const { data: existing } = await supabase.auth.getSession();
+        if (existing.session) return existing.session;
         console.warn('[auth] code exchange failed:', error.message);
         throw error;
       }
+      return data.session;
     })();
     exchanges.set(code, p);
   }
@@ -37,7 +42,7 @@ function exchangeOnce(code: string): Promise<void> {
 }
 
 /** Pull `code` (PKCE) or an error out of a redirect URL and turn it into a session. */
-export async function completeAuthFromUrl(url: string): Promise<void> {
+export async function completeAuthFromUrl(url: string): Promise<Session | null> {
   const { queryParams } = Linking.parse(url);
   const hashParams = new URLSearchParams(url.split('#')[1] ?? '');
   const error = (queryParams?.error_description as string) ?? hashParams.get('error_description');
@@ -48,18 +53,21 @@ export async function completeAuthFromUrl(url: string): Promise<void> {
   const code = queryParams?.code as string | undefined;
   if (!code) {
     const { data } = await supabase.auth.getSession();
-    if (data.session) return; // nothing to do: already signed in
+    if (data.session) return data.session; // nothing to do: already signed in
     throw new Error('Sign-in link is missing its code. Try again.');
   }
-  await exchangeOnce(code);
+  return exchangeOnce(code);
 }
 
 /** Shared OAuth handshake: open the provider in an in-app auth session, then trade the code. */
-async function signInWithProvider(provider: 'linkedin_oidc' | 'github'): Promise<void> {
+async function signInWithProvider(
+  provider: 'linkedin_oidc' | 'github',
+  options?: { scopes?: string },
+): Promise<Session | null> {
   console.log(`[auth] ${provider} sign-in, return URL`, redirectTo);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
-    options: { redirectTo, skipBrowserRedirect: true },
+    options: { redirectTo, skipBrowserRedirect: true, ...options },
   });
   if (error) throw error;
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
@@ -69,20 +77,35 @@ async function signInWithProvider(provider: 'linkedin_oidc' | 'github'): Promise
   // /auth/callback instead. Give it a moment before treating this as a cancel.
   for (let i = 0; i < 10; i++) {
     const { data: s } = await supabase.auth.getSession();
-    if (s.session) return;
+    // Note: a session recovered here came from storage, so it carries no provider_token.
+    // GitHub's token reuse is best effort and simply doesn't happen down this path.
+    if (s.session) return s.session;
     await new Promise((r) => setTimeout(r, 500));
   }
+  return null; // genuinely cancelled
 }
 
 /** LinkedIn OIDC through Supabase, in an in-app auth session. */
 export async function signInWithLinkedIn(): Promise<void> {
-  return signInWithProvider('linkedin_oidc');
+  await signInWithProvider('linkedin_oidc');
 }
 
-/** GitHub through Supabase Auth. Note this is identity only: it does NOT populate
- *  linked_accounts, so the user is still asked to Connect GitHub for repo ingestion. */
+/** GitHub through Supabase Auth.
+ *
+ *  Supabase returns the GitHub access token as `session.provider_token` exactly once, right after
+ *  sign-in — it is not persisted. We hand it straight to the server, which validates it and stores
+ *  it encrypted in `linked_accounts`, so the user is never asked to authorize GitHub a second time
+ *  for repo ingestion. Best effort: if that call fails the user is still signed in and can use the
+ *  normal Connect GitHub button, so we never fail sign-in over it. */
 export async function signInWithGitHub(): Promise<void> {
-  return signInWithProvider('github');
+  const session = await signInWithProvider('github', { scopes: GITHUB_SCOPES });
+  const providerToken = session?.provider_token;
+  if (!providerToken) return;
+  try {
+    await api.githubFromSession(providerToken, GITHUB_SCOPES);
+  } catch (e) {
+    console.warn('[auth] could not reuse the GitHub sign-in token; Connect GitHub still works', e);
+  }
 }
 
 /** Which OAuth providers Supabase Auth has switched on (so the sign-in screen never shows a dead button). */

@@ -84,6 +84,46 @@ def test_callback_user_cancel(client, env):
     assert "reason=denied" in r.headers["location"]
 
 
+def test_session_token_requires_auth(client, env):
+    r = client.post("/connect/github/session", json={"provider_token": "gho_x"})
+    assert r.status_code == 401 and "error" in r.json()
+
+
+def test_session_token_stores_encrypted_and_ingests(client, env, monkeypatch):
+    """Signing in with GitHub should not make the user authorize GitHub a second time."""
+    gh, fake = env
+    monkeypatch.setattr(github_ingest, "get_user", lambda token: {"login": "octo"})
+    ran = []
+    monkeypatch.setattr(gh, "ingest_github", lambda uid: ran.append(uid))
+    r = client.post("/connect/github/session", json={"provider_token": "gho_from_supabase"},
+                    headers=auth(USER))
+    assert r.status_code == 200 and r.json() == {"connected": True, "login": "octo"}
+    row = fake.accounts[USER]
+    assert row["provider_uid"] == "octo"
+    assert "gho_from_supabase" not in str(row)          # stored encrypted, never in the clear
+    assert github_oauth.decrypt_token(row["access_token_enc"]) == "gho_from_supabase"
+    assert ran == [USER]
+
+
+def test_session_token_validated_against_github(client, env, monkeypatch):
+    """A token the client made up must not reach linked_accounts."""
+    gh, fake = env
+
+    def reject(token):
+        raise github_ingest.GitHubError("401 Unauthorized")
+
+    monkeypatch.setattr(github_ingest, "get_user", reject)
+    r = client.post("/connect/github/session", json={"provider_token": "not-a-real-token"},
+                    headers=auth(USER))
+    assert r.status_code == 400 and r.json()["error"] == "github rejected that token"
+    assert fake.accounts == {}
+
+
+def test_session_token_rejects_empty(client, env):
+    r = client.post("/connect/github/session", json={"provider_token": ""}, headers=auth(USER))
+    assert r.status_code == 422
+
+
 def test_ingest_uses_shared_pipeline(env, monkeypatch):
     gh, fake = env
     fake.accounts[USER] = {"access_token_enc": github_oauth.encrypt_token("gho_x")}

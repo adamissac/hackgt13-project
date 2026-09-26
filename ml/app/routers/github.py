@@ -10,6 +10,7 @@ import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel, Field
 
 from ml import github_ingest, github_oauth
 
@@ -40,14 +41,48 @@ def github_callback(background: BackgroundTasks, code: str = "", state: str = ""
     except (github_oauth.OAuthError, github_ingest.GitHubError, KeyError) as e:
         log.warning("github callback failed: %s", e)
         return RedirectResponse(github_oauth.app_redirect("error", reason="oauth"), status_code=302)
+    _store_token(user_id, token, login)
+    background.add_task(ingest_github, user_id)
+    return RedirectResponse(github_oauth.app_redirect("ok"), status_code=302)
+
+
+def _store_token(user_id: str, token: dict, login: str) -> None:
+    """Encrypt and upsert the GitHub token. Shared by the OAuth callback and the sign-in path."""
     row = github_oauth.linked_account_row(user_id, token, login)
     db.execute(
         "insert into linked_accounts (user_id, provider, provider_uid, access_token_enc, scopes) "
         "values (%s, 'github', %s, %s, %s) on conflict (user_id, provider) do update set "
         "provider_uid = excluded.provider_uid, access_token_enc = excluded.access_token_enc, scopes = excluded.scopes",
         (user_id, row["provider_uid"], row["access_token_enc"], row["scopes"]))
-    background.add_task(ingest_github, user_id)
-    return RedirectResponse(github_oauth.app_redirect("ok"), status_code=302)
+
+
+class SessionTokenBody(BaseModel):
+    provider_token: str = Field(min_length=1)
+    scopes: str | None = None
+
+
+@router.post("/connect/github/session")
+def github_from_session(body: SessionTokenBody, background: BackgroundTasks,
+                        user: User = Depends(current_user)):
+    """Reuse the consent the user already gave when signing in with GitHub.
+
+    Supabase hands the app a `provider_token` once, in the session right after an OAuth sign-in
+    (it is not persisted, so the app posts it here immediately). Storing it means a user who signed
+    in with GitHub is never asked to authorize GitHub a second time for repo ingestion.
+
+    The token is never trusted on the client's word: it is validated against GitHub first, and the
+    login that comes back is what gets stored. At rest it is Fernet-encrypted exactly like the
+    OAuth callback path, and it never goes back to the client.
+    """
+    token = body.provider_token.strip()
+    try:
+        login = github_ingest.get_user(token)["login"]
+    except (github_ingest.GitHubError, KeyError) as e:
+        log.warning("github session-token connect rejected for %s: %s", user.id, e)
+        raise ApiError(400, "github rejected that token")
+    _store_token(user.id, {"access_token": token, "scope": body.scopes or github_oauth.SCOPE}, login)
+    background.add_task(ingest_github, user.id)
+    return {"connected": True, "login": login}
 
 
 def ingest_github(user_id: str) -> dict | None:

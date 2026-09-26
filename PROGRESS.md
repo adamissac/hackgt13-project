@@ -21,6 +21,21 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Contract changes:** none
 
+## 2026-09-26 10:50 | alan | Claude Code (Opus 5)
+**Task:** Signing in with GitHub should not make the user authorize GitHub a second time
+**Status:** done (92 passed, 117 skipped; mobile `tsc --noEmit` + `eslint` clean). Still needs the Supabase GitHub provider enabled before it can run.
+**What I did:**
+- The gap: "Continue with GitHub" created a Supabase identity but left `linked_accounts` empty, so Manage sources still showed GitHub as unconnected and the user authorized GitHub twice — which reads as broken.
+- Verified against Supabase's reference docs first: `session.provider_token` **is** returned after `signInWithOAuth`, is **not** persisted across refreshes, and extra scopes go through `options.scopes`. So the token has to be captured at sign-in or it is gone.
+- Server (`ml/app/routers/github.py`): new `POST /connect/github/session` (JWT). Takes `{provider_token, scopes?}`, **validates it against GitHub before trusting it** (`github_ingest.get_user`), stores it Fernet-encrypted via a `_store_token()` helper now shared with the OAuth callback, and runs the same background ingestion. The token never goes back to the client.
+- Client (`mobile/lib/auth.tsx`, `mobile/lib/api.ts`): `completeAuthFromUrl` now returns the session; `signInWithGitHub()` requests `read:user`, grabs `provider_token`, and posts it. Deliberately best-effort — on failure it warns and the normal Connect GitHub button still works, so sign-in is never blocked by it.
+- 4 tests in `ml/tests/test_github_connect.py`: 401 unauthenticated, 200 stores-encrypted-and-ingests (asserts the raw token appears nowhere in the row), 400 when GitHub rejects the token (asserts nothing is written), 422 on an empty token.
+- `contract-keeper` confirmed docs, mock, client types, tests and route all agree; no schema change needed (`linked_accounts` already has every column) and no new env var.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_github_connect.py` (10 passed). Mobile: `npx tsc --noEmit && npx eslint .`.
+**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on the `Ov23liFFJ8BwrDTDqrUW` OAuth app. Then sign in with GitHub on a phone and confirm Manage sources already shows GitHub connected, with no second authorization.
+**Known issues / blockers:** `mobile/` is Adam's folder — this touches `lib/auth.tsx`, `lib/api.ts`, `app/sign-in.tsx`. Also a **spec deviation worth a decision**: MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as *the* sign-in identity; GitHub sign-in is not in the spec. Alan asked for it knowing that. Supabase's GitHub provider may issue a token with broader scopes than `read:user` depending on how the provider is configured — the server stores whatever scopes are reported, so keep the provider's scope list tight.
+**Contract changes:** `docs/api.md` section 33 gains `POST /connect/github/session` (request `{provider_token, scopes?}`, response `{connected, login}`, error `400 github rejected that token`); new `docs/mocks/connect_github_session.json`. Additive only — no schema change, no env var, nothing renamed. Affects Adam (mobile sign-in) and Arjun (AR1 GitHub ingestion now has a second entry point).
+
 ## 2026-09-26 09:10 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Verify the HTTP 500 fix on the live server after Adam's Railway redeploy
