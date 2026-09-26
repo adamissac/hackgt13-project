@@ -42,6 +42,7 @@ insert into messages (chat_id, sender_id, body) values (900, '00000000-0000-0000
 insert into suggestions (id, user_a, user_b, status) values (901, '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c', 'matched');
 insert into location_shares (suggestion_id, user_id, lat, lng, expires_at) values (901, '00000000-0000-0000-0000-00000000000b', 33.77, -84.39, now() + interval '30 minutes');
 insert into storage.objects (bucket_id, name) values ('resumes', '00000000-0000-0000-0000-00000000000b/resume.pdf');
+insert into push_tokens (user_id, token, platform) values ('00000000-0000-0000-0000-00000000000b', 'ExponentPushToken[b]', 'ios');
 
 -- As user A: none of B's private rows are visible, and A can't write into B's chat.
 set role authenticated;
@@ -50,7 +51,8 @@ do $$
 declare t text; n int;
 begin
   foreach t in array array['notifications','invites','feed_prefs','web_mentions','connections','chats','messages',
-                           'suggestions','location_shares','conversations','sightings','encounters','impressions'] loop
+                           'suggestions','location_shares','conversations','sightings','encounters','impressions',
+                           'push_tokens'] loop
     execute format('select count(*) from %I', t) into n;
     if n <> 0 then raise exception 'user A can see % row(s) in %', n, t; end if;
   end loop;
@@ -60,6 +62,14 @@ begin
     raise exception 'user A inserted into a chat they are not in';
   exception when insufficient_privilege then null;
   end;
+  begin
+    insert into push_tokens (user_id, token) values ('00000000-0000-0000-0000-00000000000b', 'ExponentPushToken[a]');
+    raise exception 'user A inserted a push token for B';
+  exception when insufficient_privilege then null;
+  end;
+  update push_tokens set token = 'hijacked' where user_id = '00000000-0000-0000-0000-00000000000b';
+  delete from push_tokens where user_id = '00000000-0000-0000-0000-00000000000b';
+  insert into push_tokens (user_id, token, platform) values ('00000000-0000-0000-0000-00000000000a', 'ExponentPushToken[a]', 'android');
 end $$;
 
 -- As user C (B's chat partner and match): sees the shared chat and B's meetup location, not B's notifications.
@@ -75,7 +85,18 @@ select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000b
 do $$ begin
   if (select count(*) from notifications) <> 1 then raise exception 'B cannot read own notifications'; end if;
   if (select count(*) from storage.objects) <> 1 then raise exception 'B cannot read own resume'; end if;
+  if (select token from push_tokens) is distinct from 'ExponentPushToken[b]' then
+    raise exception 'B''s push token missing or altered by A';
+  end if;
 end $$;
 reset role;
+
+-- Deleting a profile (what DELETE /me does) removes that user's push tokens.
+delete from profiles where id = '00000000-0000-0000-0000-00000000000a';
+do $$ begin
+  if exists (select 1 from push_tokens where user_id = '00000000-0000-0000-0000-00000000000a') then
+    raise exception 'push_tokens did not cascade from profiles';
+  end if;
+end $$;
 
 select 'ALL AD1 CHECKS PASSED';

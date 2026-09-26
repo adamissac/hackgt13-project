@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 05:05 UTC | adam | Cursor cloud agent
+**Task:** AD10 Push notifications (schema part: `push_tokens`)
+**Status:** in progress
+**What I did:**
+- New migration `supabase/migrations/20260926000009_push_tokens.sql`: `push_tokens(user_id → profiles on delete cascade, token, platform ios|android, updated_at)`, PK (user_id, token), RLS on with owner-only select/insert/update/delete. A table, not a profiles column, because any signed-in user can read profile rows.
+- Same table appended to `docs/schema.sql`.
+- `supabase/tests/rls_checks.sql`: A can't see, insert for, update, or delete B's token; A can insert its own; B reads its own unchanged; deleting a profile cascades its tokens. A leaky select policy makes the run fail (checked, then reverted).
+- Alan's DELETE /me (`ml/app/account.py` `delete_rows`) deletes the profile and relies on cascades, so it already covers `push_tokens`. REQUESTS.md: Alan's push-column ask marked done; new ask for Alan to build the Expo sender on this table.
+**How to run/test it:** `./supabase/tests/run-local.sh` (local Postgres + pgvector, no secrets) ends with `ALL AD1 CHECKS PASSED`.
+**Next step for whoever continues:** On Adam's Mac from repo root: `npx supabase db push --linked` to apply migration 9 to the live project, then `npx supabase gen types typescript --linked > mobile/lib/database.types.ts`. Then in `mobile/`, after sign-in, get the Expo push token and upsert `{user_id, token, platform}` into `push_tokens`.
+**Known issues / blockers:** Not applied to live yet (this VM has no Supabase keys or MCP). Expo push sender in `ml/` is Alan's (REQUESTS.md).
+**Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926000009_push_tokens.sql`: new owner-only table `push_tokens`. Additive. Affects Alan (reads it to send pushes) and Adam's mobile (writes it).
+
 ## 2026-09-26 04:55 UTC | adam | Cursor cloud agent
 **Task:** AD1 Supabase project (verification)
 **Status:** done
