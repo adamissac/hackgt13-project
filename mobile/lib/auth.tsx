@@ -207,6 +207,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
+  // A real sign-in always means live data: drop a remembered "Try the demo" choice, otherwise a
+  // LinkedIn user keeps seeing the demo cast instead of the event's attendees.
+  useEffect(() => {
+    if (!session) return;
+    setGuest(false);
+    setDemo(false);
+    AsyncStorage.removeItem(DEMO_KEY).catch(() => undefined);
+  }, [session]);
+
   // Demo mode: no account needed; everything runs against lib/demo. Remembered across reloads.
   const continueAsGuest = () => {
     setDemo(true);

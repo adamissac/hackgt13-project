@@ -11,6 +11,17 @@
 **Known issues / blockers:** No physical iPhone test performed. Existing sample-event and installed-app release limitations remain unchanged.
 **Contract changes:** none
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 support: live attendees after LinkedIn sign-in
+**Status:** done
+**What I did:**
+- Bug: a remembered "Try the demo" choice (AsyncStorage `fc.demo-guest`) kept demo mode on after a real LinkedIn sign-in. The user then saw the 5 demo people (Maya, Priya...) instead of the 80 seeded attendees, and Profile hid "Exit demo" once a session existed.
+- Fix in `mobile/lib/auth.tsx` (Adam's folder, noted here): whenever a Supabase session exists, clear the guest flag, `setDemo(false)`, and remove the stored demo key.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. On a phone: tap "Try the demo", sign out, then sign in with LinkedIn. Who to meet and Graph should show live attendees.
+**Next step for whoever continues:** If a signed-in user still sees 0% scores, their profile has no interests. Add some in onboarding or Profile, then reload.
+**Known issues / blockers:** none new.
+**Contract changes:** none
+
 ## 2026-09-26 06:14 | arjun | Codex
 **Task:** AR6 / AD11 — user-requested Constellation mobile redesign
 **Status:** done
