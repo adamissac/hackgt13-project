@@ -849,7 +849,7 @@ Sunday morning: no new features. Polish, record a backup demo video, rehearse.
 Contact import, X, web search, chatbot, public-space geofencing, full events tier, feed summaries, personal dashboard, learned ranker (keep V1), meetup location sharing, Bluetooth verification (keep QR), Bluetooth radar (keep matches list).
 
 13. Team split and build order
-Owners: Adam (lead full-stack, architect), Alan (ML and algorithms), Arjun (research, data, visualization), Akshar (Bluetooth, automation, integrations, pitch). Task IDs are used in commit messages and PROGRESS.md. Do tasks in order unless blocked; if blocked, note it and take the next unblocked task.
+Owners: Adam (full-stack; no team lead, nobody needs anyone's approval), Alan (ML and algorithms), Arjun (research, data, visualization), Akshar (Bluetooth, automation, integrations, pitch). Task IDs are used in commit messages and PROGRESS.md. Do tasks in order unless blocked; if blocked, note it and take the next unblocked task.
 Phase 0: Friday night (foundation)
 ID
 Owner
