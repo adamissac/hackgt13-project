@@ -4,6 +4,8 @@ HackGT 13 · Team: Adam, Alan, Arjun, Akshar · Tracks: AI/ML + Data Visualizati
 
 `MASTER_SPEC.md` is the single source of truth. If anything here disagrees with it, the spec wins. Shared contracts: `docs/schema.sql` and `docs/api.md`, plus example payloads in `docs/mocks/`.
 
+`REQUESTS.md` holds asks between owners: do the open (`- [ ]`) items in your owner's section (the session hook lists them) and add your asks for others there.
+
 ## Start of every session
 1. `git pull --rebase`
 2. If you have not read `MASTER_SPEC.md` in this session, read all of it before writing code. Then read `PROGRESS.md` (newest entry first), `docs/schema.sql`, and `docs/api.md`.
