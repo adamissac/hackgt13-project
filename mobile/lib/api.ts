@@ -67,6 +67,32 @@ export interface Connection {
 }
 export interface ConnectionsResponse { connections: Connection[] }
 
+// Private invites (section 15). The token appears only inside `url`, returned once.
+export type InviteChannel = 'link' | 'qr' | 'contact';
+export type InviteStatus = 'active' | 'accepted' | 'revoked' | 'expired';
+export interface CreateInviteRequest { channel?: InviteChannel; recipient_hint?: string; note?: string }
+export interface CreateInviteResponse { invite_id: number; url: string; qr_payload: string; expires_at: string }
+export interface MyInvite {
+  invite_id: number;
+  channel: InviteChannel;
+  recipient_hint: string | null;
+  note: string | null;
+  status: InviteStatus;
+  expires_at: string;
+  created_at: string;
+}
+export interface InviteResolveResponse {
+  sender: { user_id: string; name: string | null; photo_url: string | null; headline: string };
+  note: string | null;
+  expires_at: string;
+  is_own: boolean;
+  already_connected: boolean;
+}
+// Decline returns 'ok' and stores nothing, so the sender can't tell it from silence.
+export type InviteRespondResponse =
+  | { status: 'connected'; connection: { user_id: string; name: string | null } }
+  | { status: 'ok' };
+
 // ---------- mocks ----------
 /* eslint-disable @typescript-eslint/no-require-imports */
 const mocks = {
@@ -80,6 +106,10 @@ const mocks = {
   handshake: () => require('../../docs/mocks/handshake.json') as HandshakeResponse,
   feedback: () => require('../../docs/mocks/feedback.json') as FeedbackResponse,
   connections: () => require('../../docs/mocks/connections.json') as ConnectionsResponse,
+  inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
+  inviteList: () => require('../../docs/mocks/invites_list.json') as { invites: MyInvite[] },
+  inviteResolve: () => require('../../docs/mocks/invites_resolve.json') as InviteResolveResponse,
+  inviteRespond: () => require('../../docs/mocks/invites_respond.json') as InviteRespondResponse,
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -139,4 +169,16 @@ export const api = {
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),
   feedback: (body: FeedbackRequest) => call(mocks.feedback, () => request<FeedbackResponse>('POST', '/feedback', body)),
   connections: () => call(mocks.connections, () => request<ConnectionsResponse>('GET', '/connections')),
+  createInvite: (body: CreateInviteRequest = {}) =>
+    call(mocks.inviteCreate, () => request<CreateInviteResponse>('POST', '/invites', body)),
+  myInvites: () => call(mocks.inviteList, () => request<{ invites: MyInvite[] }>('GET', '/invites')),
+  revokeInvite: (inviteId: number) =>
+    call(() => ({ ok: true as const }), () => request<{ ok: true }>('DELETE', `/invites/${inviteId}`)),
+  resolveInvite: (token: string) =>
+    call(mocks.inviteResolve, () => request<InviteResolveResponse>('GET', `/invites/resolve/${encodeURIComponent(token)}`)),
+  respondInvite: (token: string, response: 'accept' | 'decline') =>
+    call(
+      () => (response === 'accept' ? mocks.inviteRespond() : ({ status: 'ok' } as const)),
+      () => request<InviteRespondResponse>('POST', `/invites/${encodeURIComponent(token)}/respond`, { response }),
+    ),
 };

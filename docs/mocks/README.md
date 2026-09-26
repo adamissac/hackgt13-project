@@ -16,3 +16,7 @@ change to `docs/api.md`.
 | handshake.json | POST /handshake |
 | feedback.json | POST /feedback |
 | connections.json | GET /connections |
+| invites_create.json | POST /invites |
+| invites_list.json | GET /invites |
+| invites_resolve.json | GET /invites/resolve/{token} |
+| invites_respond.json | POST /invites/{token}/respond |

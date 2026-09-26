@@ -132,7 +132,7 @@ Only the caller's own connections. Never return counts of other users' connectio
 ## 13. Presence / open to chat (nice to have)
 - `POST /presence` <- `{ "building_id": "student_center", "open_to_chat": true }`
 - `DELETE /presence`
-- `POST /invites/{invite_id}/respond` <- `{ "response": "accept" }`
+- Invites: see section 15.
 
 ## 14. GET /dashboard/{event_id}   (organizer dashboard, no auth for demo)
 ```json
@@ -144,3 +144,36 @@ Only the caller's own connections. Never return counts of other users' connectio
 }
 ```
 No names in dashboard data.
+
+## 15. Private invites (AK4, Akshar; code in `ml/app/routers/invites.py`)
+Token: 128-bit random, returned once at creation, stored only as a SHA-256 hash. 7-day expiry, single use,
+revocable, 10 new invites per sender per rolling 24 hours. Decline writes nothing: the sender can't tell it from silence.
+
+`POST /invites` <- `{ "channel": "link | qr | contact", "recipient_hint": "Sam from lab", "note": "Great chatting at the ML meetup" }` (all optional; `recipient_hint` is only ever shown back to the sender)
+Response `201`
+```json
+{ "invite_id": 5, "url": "https://<dashboard>/invite/Xc2...", "qr_payload": "https://<dashboard>/invite/Xc2...", "expires_at": "2026-10-03T12:00:00Z" }
+```
+`url` base is `INVITE_BASE_URL` (the dashboard's https page, which redirects to `formalconnect://invite/<token>`). Errors: `rate_limited` (429).
+
+`GET /invites` (the caller's own invites; never the token)
+```json
+{ "invites": [ { "invite_id": 5, "channel": "link", "recipient_hint": "Sam from lab", "note": "...",
+                 "status": "active | accepted | revoked | expired", "expires_at": "...", "created_at": "..." } ] }
+```
+
+`DELETE /invites/{invite_id}` -> `{ "ok": true }` (revoke). Errors: `not_found` (404, also for someone else's invite).
+
+`GET /invites/resolve/{token}`
+```json
+{ "sender": { "user_id": "uuid", "name": "Alice A.", "photo_url": "https://...", "headline": "ML @ GT" },
+  "note": "Great chatting at the ML meetup", "expires_at": "...", "is_own": false, "already_connected": false }
+```
+Errors: `not_found` (404, also when either side blocked the other), `expired` (410, also revoked or already used).
+
+`POST /invites/{token}/respond` <- `{ "response": "accept | decline" }`
+```json
+{ "status": "connected", "connection": { "user_id": "uuid", "name": "Alice A." } }   // accept; connections.how_met = 'invite'
+{ "status": "ok" }                                                                   // decline: nothing is stored
+```
+Errors: same as resolve, plus `self_invite` (400).
