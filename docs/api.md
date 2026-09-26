@@ -314,3 +314,15 @@ Aggregate activity across my connections (not my own items):
   "activity": [ { "date": "2026-09-20", "count": 0 } ],
   "by_kind": { "github": 0, "post": 2, "update": 1 } }
 ```
+
+## 33. GitHub connect (MASTER_SPEC 5.2, 5.3)   owner: Arjun (AR1)
+`GET /connect/github/start` (Bearer JWT) -> the app opens `url` in a browser (it can't send headers there,
+so the user id rides in a signed, 10-minute `state`):
+```json
+{ "url": "https://github.com/login/oauth/authorize?client_id=...&redirect_uri=<ML_API_URL>/connect/github/callback&scope=read%3Auser&state=<signed>&allow_signup=false" }
+```
+`GET /connect/github/callback?code=...&state=...` (called by GitHub, no JWT): verifies `state`, exchanges the
+code server-side, stores the Fernet-encrypted token in `linked_accounts`, runs GitHub ingestion in the background
+(repo digest -> `raw_documents` -> extraction -> `user_interests` with evidence), then `302` to the app deep link
+`APP_GITHUB_REDIRECT?status=ok` (or `status=error&reason=denied|oauth`). Default deep link
+`formalconnect://connect/github`. Tokens never reach the client. Scope is `read:user` only (public repos).
