@@ -29,7 +29,12 @@ def synthetic_rows(n: int = 200, clusters: bool = True, seed: int = 7):
     people = synth.make_population(n, seed=seed)
     by_id = {p["id"]: p for p in people}
     index = profiles.build_population(people)
-    cluster = viz.communities(people) if clusters else None
+    if clusters:
+        from .population import HEAVY_LOCK
+        with HEAVY_LOCK:  # UMAP/numba must not run in two threads at once
+            cluster = viz.communities(people)
+    else:
+        cluster = None
     rows = synth.simulate_meetings(people, lambda p: scoring.rank_candidates(p, people, index, cluster, explore_eps=0.0))
     return rows, by_id, index, cluster
 

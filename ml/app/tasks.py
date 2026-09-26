@@ -25,7 +25,8 @@ def refresh_clusters() -> None:
 def write_global_vectors() -> int:
     """Global IDF (over everyone with interests) and profile vectors for pgvector retrieval."""
     ids = [r["id"] for r in db.fetchall("select distinct user_id::text as id from user_interests")]
-    people, index = population.build(ids)
+    with population.HEAVY_LOCK:  # one heavy CPU job at a time (embeds everyone)
+        people, index = population.build(ids)
     with db.conn() as c:
         with c.cursor() as cur:
             cur.executemany("update interests set idf = %s where id = %s",
@@ -37,9 +38,12 @@ def write_global_vectors() -> int:
                     v = vecs[facet]
                     if v.any():
                         rows.append((p["id"], facet, v))
+            # A person deleted between the read above and this write (DELETE /me) is skipped, not an FK crash.
             cur.executemany(
-                "insert into profile_vectors (user_id, facet, vector, updated_at) values (%s, %s, %s, now()) "
-                "on conflict (user_id, facet) do update set vector = excluded.vector, updated_at = now()", rows)
+                "insert into profile_vectors (user_id, facet, vector, updated_at) "
+                "select %s, %s, %s, now() where exists (select 1 from profiles where id = %s) "
+                "on conflict (user_id, facet) do update set vector = excluded.vector, updated_at = now()",
+                [(u, f, v, u) for u, f, v in rows])
     return len(people)
 
 

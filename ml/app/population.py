@@ -174,6 +174,17 @@ def event_model(event_id: int) -> EventModel:
         return cached
     with _lock:
         build_lock = _build_locks.setdefault(event_id, threading.Lock())
+    # Stale-while-rebuilding: if a model exists and another thread is already rebuilding, answer with the cached
+    # model (seconds out of date) instead of queueing behind the rebuild. A slow rebuild must never stall matches,
+    # graph, quick profiles or the dashboard for everyone. Only the very first build (nothing cached) waits.
+    if cached is not None and not build_lock.acquire(blocking=False):
+        cached.cluster = _clusters.get(event_id, {})
+        return cached
+    if cached is not None:
+        try:
+            return _build_event(event_id, ids)
+        finally:
+            build_lock.release()
     with build_lock:
         # Another request may have finished the same build while this one waited (phones poll every 15 s).
         cached = _events.get(event_id)
@@ -194,8 +205,24 @@ def _build_event(event_id: int, ids: tuple) -> EventModel:
     return m
 
 
-def recompute_clusters(event_id: int) -> dict:
-    """UMAP(10) + HDBSCAN(min 5) on combined vectors (MASTER_SPEC 6.13). Needs enough people."""
+# UMAP compiles with numba, whose default threading layer is not safe to use from several threads at once
+# (it can deadlock). The clusters worker, the ranker job and the dashboard's first request all run UMAP, so they
+# take turns. HDBSCAN is heavy too, so it shares the lock.
+HEAVY_LOCK = threading.Lock()
+
+
+def recompute_clusters(event_id: int, wait: bool = True) -> dict | None:
+    """UMAP(10) + HDBSCAN(min 5) on combined vectors (MASTER_SPEC 6.13). Needs enough people.
+    wait=False: if another heavy job is running, return None instead of queueing (request threads)."""
+    if not HEAVY_LOCK.acquire(blocking=wait):
+        return None
+    try:
+        return _recompute_clusters(event_id)
+    finally:
+        HEAVY_LOCK.release()
+
+
+def _recompute_clusters(event_id: int) -> dict:
     from ml.viz import communities
     m = event_model(event_id)
     people = [p for p in m.people.values() if p["combined"].any()]

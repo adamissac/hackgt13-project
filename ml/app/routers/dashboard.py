@@ -57,7 +57,7 @@ def build(event_id: int) -> dict:
     if not people:
         return {"nodes": [], "clusters": [], "edges": [], "gaps": []}
     if event_id not in population._clusters:
-        population.recompute_clusters(event_id)       # first request only; the worker refreshes every 5 min
+        population.recompute_clusters(event_id, wait=False)  # first request only (skipped if the worker is mid-run)
     cluster = population._clusters.get(event_id, {})
     cluster = {p["id"]: cluster.get(p["id"], -1) for p in people}
     sizes = Counter(cluster.values())
