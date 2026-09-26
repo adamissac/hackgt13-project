@@ -2,6 +2,9 @@
 // keep them in sync (contract-keeper checks this). With EXPO_PUBLIC_USE_MOCKS=1 every call
 // resolves with the matching file in docs/mocks/ instead of hitting the network.
 
+import type { Relationship } from '../features/relationship/stage';
+import { emitChange } from './changes';
+import { demo, demoAssistantReply, demoReady } from './demo';
 import { env } from './env';
 import { supabase } from './supabase';
 
@@ -256,47 +259,29 @@ export interface ManualResponse { profile: ManualProfile; job_id: string | null;
 export type ProfileSource = 'github' | 'resume' | 'manual';
 
 // ---------- mocks ----------
-/* eslint-disable @typescript-eslint/no-require-imports */
 const mocks = {
   ingest: () => require('../../docs/mocks/profile_ingest.json') as IngestResponse,
   status: () => require('../../docs/mocks/profile_status.json') as StatusResponse,
   interests: () => require('../../docs/mocks/profile_interests.json') as InterestsResponse,
-  matches: () => require('../../docs/mocks/event_matches.json') as MatchesResponse,
-  checkin: () => require('../../docs/mocks/event_checkin.json') as { ok: true },
-  starters: () => require('../../docs/mocks/match_starters.json') as StartersResponse,
   qr: () => require('../../docs/mocks/qr_token.json') as QrToken,
   handshake: () => require('../../docs/mocks/handshake.json') as HandshakeResponse,
   feedback: () => require('../../docs/mocks/feedback.json') as FeedbackResponse,
-  connections: () => require('../../docs/mocks/connections.json') as ConnectionsResponse,
-  quickProfile: () => require('../../docs/mocks/match_quick_profile.json') as QuickProfile,
-  suggestions: () => require('../../docs/mocks/suggestions.json') as SuggestionsResponse,
-  suggestionRespond: () => require('../../docs/mocks/suggestion_respond.json') as SuggestionRespondResponse,
-  openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
   qrVerify: () => require('../../docs/mocks/qr_verify.json') as QrVerifyResponse,
-  conversationFeedback: () => require('../../docs/mocks/conversation_feedback.json') as ConversationFeedbackResponse,
-  pendingConversations: () => require('../../docs/mocks/conversations_pending.json') as { conversations: PendingConversation[] },
-  followupDraft: () => require('../../docs/mocks/followup_draft.json') as { draft: string },
   tapClaim: () => require('../../docs/mocks/tap_claim.json') as TapClaimResponse,
-  locationShare: () => require('../../docs/mocks/location_share.json') as LocationShareState,
-  meetups: () => require('../../docs/mocks/location_meetups.json') as { meetups: Meetup[] },
   bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
   bleSightings: () => require('../../docs/mocks/ble_sightings.json') as { accepted: number; dropped: number },
   inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
   inviteList: () => require('../../docs/mocks/invites_list.json') as { invites: MyInvite[] },
   inviteResolve: () => require('../../docs/mocks/invites_resolve.json') as InviteResolveResponse,
   inviteRespond: () => require('../../docs/mocks/invites_respond.json') as InviteRespondResponse,
-  graphMatches: () => require('../../docs/mocks/graph_matches.json') as GraphResponse,
-  graphNetwork: () => require('../../docs/mocks/graph_network.json') as GraphResponse,
   graphExpand: () => require('../../docs/mocks/graph_expand.json') as GraphResponse & { node_id: string },
   meDashboard: () => require('../../docs/mocks/me_dashboard.json') as MeDashboard,
   feedInsights: () => require('../../docs/mocks/feed_insights.json') as FeedInsights,
   feed: () => require('../../docs/mocks/feed.json') as FeedResponse,
   feedReply: () => require('../../docs/mocks/feed_reply_suggestion.json') as { reply: string },
-  assistantChat: () => require('../../docs/mocks/assistant_chat.json') as { reply: string },
   accounts: () => require('../../docs/mocks/me_accounts.json') as AccountsResponse,
   manual: () => require('../../docs/mocks/profile_manual.json') as ManualResponse,
 };
-/* eslint-enable @typescript-eslint/no-require-imports */
 
 // ---------- transport ----------
 export class ApiError extends Error {
@@ -335,10 +320,66 @@ async function request<T>(method: string, path: string, body?: unknown | FormDat
   return json as T;
 }
 
-function call<T>(mock: () => T, real: () => Promise<T>): Promise<T> {
+// Demo mode routes every call to lib/demo (a stateful stand-in for the server). Errors thrown there
+// surface exactly like server errors, so screens exercise the same loading/error paths.
+function call<T>(mock: () => T | Promise<T>, real: () => Promise<T>): Promise<T> {
   if (!env.useMocks) return real();
-  // Small delay so loading states are visible in mock mode.
-  return new Promise((resolve) => setTimeout(() => resolve(structuredClone(mock())), 250));
+  return demoReady().then(
+    () =>
+      new Promise<T>((resolve, reject) =>
+        // Small delay so loading states are visible in demo mode.
+        setTimeout(() => {
+          try {
+            Promise.resolve(mock()).then((value) => resolve(structuredClone(value)), reject);
+          } catch (e) {
+            reject(e);
+          }
+        }, 250),
+      ),
+  );
+}
+
+// Suggestions this phone said yes to. The server never tells us the other side's answer, so this is
+// how "I said yes, waiting" survives a reload in live mode (silent consent).
+const saidYes = new Set<number>();
+
+export interface AppNotification {
+  id: number;
+  kind: string;
+  title: string;
+  body: string;
+  user_id: string | null;
+  route: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+const NOTIFICATION_TEXT: Record<string, (p: Record<string, unknown>) => { title: string; body: string; route: string | null }> = {
+  suggestion: (p) => ({ title: `Someone to meet: ${p.name ?? 'a strong match'}`, body: 'You share a lot. Want to meet?', route: '/' }),
+  connect_prompt: () => ({ title: 'How did your conversation go?', body: 'Your conversation was verified. Tell us if you want to connect.', route: '/' }),
+  connected: (p) => ({ title: `You’re connected${p.name ? ` with ${p.name}` : ''}`, body: 'You both said yes after talking.', route: '/connections' }),
+  mutual_meet: (p) => ({ title: `You both want to meet${p.name ? ` ${p.name}` : ''}`, body: 'Your chat is open.', route: '/chats' }),
+  invite: () => ({ title: 'New private invite', body: 'Someone you know wants to connect.', route: '/invites' }),
+  event_update: () => ({ title: 'Event update', body: 'Something changed at your event.', route: null }),
+  connection_attending: (p) => ({ title: 'A connection is here', body: `${p.name ?? 'One of your connections'} is at this event.`, route: null }),
+};
+
+async function liveRelationship(userId: string): Promise<Relationship> {
+  const [conns, pending, sugg, chats] = await Promise.all([
+    request<ConnectionsResponse>('GET', '/connections').catch(() => ({ connections: [] as Connection[] })),
+    request<{ conversations: PendingConversation[] }>('GET', '/conversations/pending').catch(() => ({ conversations: [] as PendingConversation[] })),
+    request<SuggestionsResponse>('GET', '/suggestions').catch(() => ({ suggestions: [] as Suggestion[] })),
+    supabase.from('chats').select('id, user_a, user_b').or(`user_a.eq.${userId},user_b.eq.${userId}`),
+  ]);
+  const chat = (chats.data ?? [])[0] as { id: number } | undefined;
+  const conv = pending.conversations.find((x) => x.other.user_id === userId);
+  const sug = sugg.suggestions.find((x) => x.other.user_id === userId);
+  const base = { user_id: userId, chat_id: chat?.id ?? null, conversation_id: conv?.conversation_id ?? null, suggestion_id: sug?.suggestion_id ?? null };
+  if (conns.connections.some((x) => x.user_id === userId)) return { ...base, stage: 'CONNECTED' };
+  if (conv) return { ...base, stage: 'POST_CONVERSATION_PENDING' };
+  if (chat) return { ...base, stage: 'MUTUAL_MEET' };
+  if (sug && saidYes.has(sug.suggestion_id)) return { ...base, stage: 'MEET_INTEREST_PENDING' };
+  return { ...base, stage: 'DISCOVERED' };
 }
 
 // ---------- endpoints ----------
@@ -367,44 +408,51 @@ export const api = {
     call(mocks.ingest, () => request<IngestResponse>('POST', '/profile/ingest', body)),
   profileStatus: (jobId: string) =>
     call(mocks.status, () => request<StatusResponse>('GET', `/profile/status?job_id=${encodeURIComponent(jobId)}`)),
-  getInterests: () => call(mocks.interests, () => request<InterestsResponse>('GET', '/profile/interests')),
+  getInterests: () => call(demo.interests, () => request<InterestsResponse>('GET', '/profile/interests')),
   patchInterests: (body: InterestsPatch) =>
-    call(mocks.interests, () => request<InterestsResponse>('PATCH', '/profile/interests', body)),
+    call(() => demo.patchInterests(body), () => request<InterestsResponse>('PATCH', '/profile/interests', body)),
   matches: (eventId: number, limit = 20) =>
-    call(mocks.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
-  checkin: (eventId: number) => call(mocks.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
-  starters: (otherUserId: string) =>
-    call(mocks.starters, () => request<StartersResponse>('GET', `/matches/${otherUserId}/starters`)),
+    call(demo.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
+  checkin: (eventId: number) => call(demo.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
+  starters: (otherUserId: string, variant = 0) =>
+    call(
+      () => demo.starters(otherUserId, variant),
+      () => request<StartersResponse>('GET', `/matches/${otherUserId}/starters${variant ? `?variant=${variant}` : ''}`),
+    ),
   qrToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/token')),
   handshake: (body: { payload: string; signature: string; event_id: number }) =>
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),
   feedback: (body: FeedbackRequest) => call(mocks.feedback, () => request<FeedbackResponse>('POST', '/feedback', body)),
-  connections: () => call(mocks.connections, () => request<ConnectionsResponse>('GET', '/connections')),
+  connections: () => call(demo.connections, () => request<ConnectionsResponse>('GET', '/connections')),
   verifyToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/verify-token')),
   qrVerify: (body: { payload: string; signature: string; event_id?: number }) =>
     call(mocks.qrVerify, () => request<QrVerifyResponse>('POST', '/qr/verify', body)),
   conversationFeedback: (conversationId: number, body: ConversationFeedbackRequest) =>
     call(
       // A "no" stays on this phone. The mock mutual-yes payload is only for someone who said yes.
-      () => (body.wants_connect ? mocks.conversationFeedback() : ({ status: 'no_connection' } as ConversationFeedbackResponse)),
-      () => request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
+      () => demo.conversationFeedback(conversationId, body),
+      () =>
+        request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body).then((r) => {
+          emitChange('relationships', 'connections', 'chats');
+          return r;
+        }),
     ),
   pendingConversations: () =>
-    call(mocks.pendingConversations, () => request<{ conversations: PendingConversation[] }>('GET', '/conversations/pending')),
+    call(demo.pendingConversations, () => request<{ conversations: PendingConversation[] }>('GET', '/conversations/pending')),
   followupDraft: (userId: string) =>
-    call(mocks.followupDraft, () => request<{ draft: string }>('POST', `/connections/${encodeURIComponent(userId)}/followup-draft`, {})),
+    call(() => demo.followupDraft(userId), () => request<{ draft: string }>('POST', `/connections/${encodeURIComponent(userId)}/followup-draft`, {})),
   tapClaim: (body: { token: string; rssi: number; event_id?: number }) =>
     call(mocks.tapClaim, () => request<TapClaimResponse>('POST', '/tap/claim', body)),
-  meetups: () => call(mocks.meetups, () => request<{ meetups: Meetup[] }>('GET', '/location-shares')),
+  meetups: () => call(demo.meetups, () => request<{ meetups: Meetup[] }>('GET', '/location-shares')),
   shareLocation: (suggestionId: number, point: { lat: number; lng: number }) =>
     call(
-      () => ({ sharing: true, expires_at: new Date(Date.now() + 30 * 60_000).toISOString() }),
+      () => demo.shareLocation(suggestionId, point),
       () => request<{ sharing: boolean; expires_at: string }>('POST', `/location-shares/${suggestionId}`, point),
     ),
   locationShare: (suggestionId: number) =>
-    call(mocks.locationShare, () => request<LocationShareState>('GET', `/location-shares/${suggestionId}`)),
+    call(() => demo.locationShare(suggestionId), () => request<LocationShareState>('GET', `/location-shares/${suggestionId}`)),
   stopLocationShare: (suggestionId: number) =>
-    call(() => ({ sharing: false }), () => request<{ sharing: boolean }>('DELETE', `/location-shares/${suggestionId}`)),
+    call(() => demo.stopLocationShare(suggestionId), () => request<{ sharing: boolean }>('DELETE', `/location-shares/${suggestionId}`)),
   bleTokens: () => call(mocks.bleTokens, () => request<{ tokens: BleToken[] }>('POST', '/ble/tokens', {})),
   bleSightings: (body: BleSightingsRequest) =>
     call(mocks.bleSightings, () => request<{ accepted: number; dropped: number }>('POST', '/ble/sightings', body)),
@@ -421,14 +469,18 @@ export const api = {
       () => request<InviteRespondResponse>('POST', `/invites/${encodeURIComponent(token)}/respond`, { response }),
     ),
   quickProfile: (otherUserId: string) =>
-    call(mocks.quickProfile, () => request<QuickProfile>('GET', `/matches/${otherUserId}/quick-profile`)),
+    call(() => demo.quickProfile(otherUserId), () => request<QuickProfile>('GET', `/matches/${otherUserId}/quick-profile`)),
   setOpenToMeet: (open: boolean) =>
     call(
-      () => ({ open_to_meet: open }),
-      () => request<{ open_to_meet: boolean }>('PATCH', '/me/open-to-meet', { open }),
+      () => demo.setOpenToMeet(open),
+      () =>
+        request<{ open_to_meet: boolean }>('PATCH', '/me/open-to-meet', { open }).then((r) => {
+          emitChange('relationships', 'meetups', 'profile');
+          return r;
+        }),
     ),
   graph: (mode: GraphMode, eventId?: number) =>
-    call(mode === 'network' ? mocks.graphNetwork : mocks.graphMatches, () =>
+    call(() => demo.graph(mode), () =>
       request<GraphResponse>('GET', `/graph?mode=${mode}${eventId ? `&event_id=${eventId}` : ''}&max_people=30`),
     ),
   graphExpand: (nodeId: string, mode: GraphMode, eventId?: number) =>
@@ -445,7 +497,7 @@ export const api = {
     ),
   connection: (userId: string) =>
     call(
-      () => ({ ...mocks.connections().connections[0], shared_topics: [] as string[] }),
+      () => demo.connection(userId),
       () => request<ConnectionDetail>('GET', `/connections/${encodeURIComponent(userId)}`),
     ),
   meDashboard: (days = 30) => call(mocks.meDashboard, () => request<MeDashboard>('GET', `/me/dashboard?days=${days}`)),
@@ -468,15 +520,61 @@ export const api = {
   replySuggestion: (itemId: number) =>
     call(mocks.feedReply, () => request<{ reply: string }>('POST', `/feed/${itemId}/reply-suggestion`, {})),
   assistantChat: (messages: AssistantMessage[], eventId?: number) =>
-    call(mocks.assistantChat, () =>
+    call(() => ({ reply: demoAssistantReply(messages) }), () =>
       request<{ reply: string }>('POST', '/assistant/chat', { messages, event_id: eventId ?? null }),
     ),
-  suggestions: () => call(mocks.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
+  suggestions: () => call(demo.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
   respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
     call(
-      // A "no" stays on this phone only. "Yes" uses the mock mutual-yes payload (chat_id).
-      () => (response === 'yes' ? mocks.suggestionRespond() : ({ status: 'waiting' } as SuggestionRespondResponse)),
-      () => request<SuggestionRespondResponse>('POST', `/suggestions/${suggestionId}/respond`, { response }),
+      // A "no" stays on this phone only. The response is "waiting" unless both said yes.
+      () => demo.respond(suggestionId, response),
+      () =>
+        request<SuggestionRespondResponse>('POST', `/suggestions/${suggestionId}/respond`, { response }).then((r) => {
+          if (response === 'yes') saidYes.add(suggestionId);
+          emitChange('relationships', 'chats');
+          return r;
+        }),
+    ),
+  /** Where I stand with this person (features/relationship/stage.ts). */
+  relationship: (userId: string) => call(() => demo.relationship(userId), () => liveRelationship(userId)),
+  /** Open to Meet as stored on my profile. */
+  getOpenToMeet: () =>
+    call(
+      () => ({ open_to_meet: demo.getOpenToMeet() }),
+      async () => {
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth.user) return { open_to_meet: false };
+        const { data, error } = await supabase.from('profiles').select('open_to_meet').eq('id', auth.user.id).maybeSingle();
+        if (error) throw new Error(error.message);
+        return { open_to_meet: Boolean((data as { open_to_meet?: boolean } | null)?.open_to_meet) };
+      },
+    ),
+  /** In-app notification center. Live: the owner-only `notifications` table (RLS), newest first. */
+  notifications: () =>
+    call<AppNotification[]>(demo.notifications, async () => {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id, kind, payload, read, created_at')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      return ((data ?? []) as { id: number; kind: string; payload: Record<string, unknown> | null; read: boolean; created_at: string }[]).map((n) => {
+        const text = (NOTIFICATION_TEXT[n.kind] ?? (() => ({ title: 'Update', body: '', route: null })))(n.payload ?? {});
+        return { id: n.id, kind: n.kind, read: n.read, created_at: n.created_at, user_id: (n.payload?.user_id as string) ?? null, ...text };
+      });
+    }),
+  markNotificationsRead: () =>
+    call(
+      () => {
+        demo.markNotificationsRead();
+        return { ok: true };
+      },
+      async () => {
+        const { error } = await supabase.from('notifications').update({ read: true }).eq('read', false);
+        if (error) throw new Error(error.message);
+        emitChange('notifications');
+        return { ok: true };
+      },
     ),
   deleteMe: () =>
     call(

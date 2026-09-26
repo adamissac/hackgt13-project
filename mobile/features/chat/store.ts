@@ -2,7 +2,6 @@ import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 
 import {
-  appendMessage,
   latestByChat,
   toSummary,
   visibleChats,
@@ -11,22 +10,12 @@ import {
   type ChatSummary,
 } from './model';
 
-/** Viewer id used only while EXPO_PUBLIC_USE_MOCKS=1, so the thread has a "me". */
-export const MOCK_VIEWER_ID = '00000000-0000-0000-0000-0000000000aa';
-const MOCK_MAYA = '00000000-0000-0000-0000-000000000101';
+import { onChange } from '@/lib/changes';
+import { demo, demoReady } from '@/lib/demo';
+import { DEMO_ME } from '@/lib/demo/people';
 
-const mockRows: ChatRow[] = [
-  {
-    id: 7,
-    user_a: MOCK_VIEWER_ID,
-    user_b: MOCK_MAYA,
-    origin: 'suggestion',
-    created_at: '2026-09-26T15:00:00Z',
-  },
-];
-const mockNames = new Map<string, string>([[MOCK_MAYA, 'Maya R.']]);
-let mockMessages: ChatMessage[] = [];
-let mockNextId = 1;
+/** Viewer id in demo mode, so the thread has a "me". */
+export const MOCK_VIEWER_ID = DEMO_ME;
 
 export interface ChatThread {
   id: number;
@@ -44,7 +33,10 @@ function summaries(rows: ChatRow[], me: string, names: ReadonlyMap<string, strin
 }
 
 export async function listChats(me: string): Promise<ChatSummary[]> {
-  if (env.useMocks) return summaries(mockRows, MOCK_VIEWER_ID, mockNames, mockMessages);
+  if (env.useMocks) {
+    await demoReady();
+    return demo.listChats();
+  }
 
   const { data, error } = await supabase.from('chats').select('id, user_a, user_b, origin, created_at').order('created_at', { ascending: false });
   if (error) throw new Error(error.message);
@@ -71,16 +63,8 @@ export async function listChats(me: string): Promise<ChatSummary[]> {
 
 export async function loadThread(chatId: number, me: string): Promise<ChatThread> {
   if (env.useMocks) {
-    const row = visibleChats(mockRows, MOCK_VIEWER_ID).find((chat) => chat.id === chatId);
-    if (!row) throw new Error('This chat is not available');
-    const summary = toSummary(row, MOCK_VIEWER_ID, mockNames, null);
-    if (!summary) throw new Error('This chat is not available');
-    return {
-      id: chatId,
-      other_user_id: summary.other_user_id,
-      other_name: summary.other_name,
-      messages: mockMessages.filter((message) => message.chat_id === chatId),
-    };
+    await demoReady();
+    return demo.loadThread(chatId);
   }
 
   const chat = await supabase.from('chats').select('id, user_a, user_b, origin, created_at').eq('id', chatId).maybeSingle();
@@ -112,16 +96,8 @@ export async function sendMessage(chatId: number, me: string, body: string, isAi
   if (!text) throw new Error('Write a message first');
 
   if (env.useMocks) {
-    const message: ChatMessage = {
-      id: mockNextId++,
-      chat_id: chatId,
-      sender_id: MOCK_VIEWER_ID,
-      body: text,
-      is_ai_draft: isAiDraft,
-      created_at: new Date().toISOString(),
-    };
-    mockMessages = appendMessage(mockMessages, message);
-    return message;
+    await demoReady();
+    return demo.sendMessage(chatId, text, isAiDraft);
   }
 
   const inserted = await supabase
@@ -135,7 +111,18 @@ export async function sendMessage(chatId: number, me: string, body: string, isAi
 
 /** Live inserts for this chat. RLS still hides every other chat. Returns an unsubscribe. */
 export function subscribeToMessages(chatId: number, onInsert: (message: ChatMessage) => void): () => void {
-  if (env.useMocks) return () => undefined;
+  if (env.useMocks) {
+    // Demo replies arrive through the change bus; hand over only messages we haven't seen.
+    const seen = new Set<number>();
+    return onChange((topic) => {
+      if (topic !== 'chats') return;
+      for (const m of demo.loadThread(chatId).messages) {
+        if (seen.has(m.id)) continue;
+        seen.add(m.id);
+        onInsert(m);
+      }
+    });
+  }
   const channel = supabase
     .channel(`chat:${chatId}`)
     .on(

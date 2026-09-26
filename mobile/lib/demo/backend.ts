@@ -1,0 +1,556 @@
+// Demo backend: a stateful stand-in for the FastAPI service + Supabase, used only in demo mode.
+// It implements the same shapes as docs/api.md and plays the other person (they say yes, reply,
+// walk over, say yes to connecting) so the whole product loop can be shown on one phone.
+// Pure TypeScript (no React Native) so scripts/demo-flow.test.ts can drive it from Node.
+import type {
+  Connection,
+  ConversationFeedbackRequest,
+  ConversationFeedbackResponse,
+  GraphEdge,
+  GraphNode,
+  GraphResponse,
+  InterestsPatch,
+  InterestsResponse,
+  LocationShareState,
+  Match,
+  Meetup,
+  PendingConversation,
+  QuickProfile,
+  StartersResponse,
+  Suggestion,
+  SuggestionRespondResponse,
+} from '../api';
+import type { ChatMessage, ChatSummary } from '../../features/chat/model';
+import type { Relationship, RelationshipStage } from '../../features/relationship/stage';
+import { emitChange } from '../changes';
+import { DEMO_EVENT, DEMO_ME, DEMO_MY_INTERESTS, DEMO_PEOPLE, findPerson, type DemoPerson } from './people';
+
+export interface DemoNotification {
+  id: number;
+  kind: 'suggestion' | 'mutual_meet' | 'new_message' | 'conversation_verified' | 'connect_prompt' | 'connected' | 'event';
+  title: string;
+  body: string;
+  user_id: string | null;
+  route: string | null;
+  read: boolean;
+  created_at: string;
+}
+
+interface Rel {
+  stage: RelationshipStage;
+  chat_id: number | null;
+  conversation_id: number | null;
+  met_minutes: number | null;
+  talked_about: string[];
+  sharing_since: number | null;
+}
+
+interface State {
+  openToMeet: boolean;
+  checkedIn: boolean;
+  rel: Record<string, Rel>;
+  hiddenInterests: string[];
+  confirmedInterests: string[];
+  messages: ChatMessage[];
+  replyIndex: Record<string, number>;
+  notifications: DemoNotification[];
+  connectedAt: Record<string, string>;
+  myPoint: { lat: number; lng: number } | null;
+  nextId: number;
+}
+
+const fresh = (): State => ({
+  openToMeet: false,
+  checkedIn: false,
+  rel: {},
+  hiddenInterests: [],
+  confirmedInterests: [],
+  messages: [],
+  replyIndex: {},
+  notifications: [
+    {
+      id: 1,
+      kind: 'event',
+      title: 'Welcome to HackGT 13',
+      body: 'Turn on Open to Meet and we’ll find people here worth talking to.',
+      user_id: null,
+      route: null,
+      read: false,
+      created_at: new Date().toISOString(),
+    },
+  ],
+  connectedAt: {},
+  myPoint: null,
+  nextId: 100,
+});
+
+let state: State = fresh();
+let saver: ((json: string) => void) | null = null;
+
+/** How long the simulated person takes to respond. Tests set this to 0. */
+export const timing = { reactionMs: 2500, replyMs: 2200, verifyAfterCloseMs: 6000 };
+
+export function hydrate(json: string | null) {
+  if (!json) return;
+  try {
+    state = { ...fresh(), ...(JSON.parse(json) as State) };
+  } catch {
+    state = fresh();
+  }
+}
+export function onSave(fn: (json: string) => void) {
+  saver = fn;
+}
+function save() {
+  saver?.(JSON.stringify(state));
+}
+export function resetDemo() {
+  state = fresh();
+  save();
+  emitChange('relationships', 'chats', 'notifications', 'connections', 'profile', 'meetups');
+}
+
+const now = () => new Date().toISOString();
+const id = () => ++state.nextId;
+const first = (p: DemoPerson) => p.name.split(' ')[0];
+const suggestionId = (p: DemoPerson) => 5000 + DEMO_PEOPLE.indexOf(p);
+const personForSuggestion = (sid: number) => DEMO_PEOPLE[sid - 5000];
+
+function rel(userId: string): Rel {
+  state.rel[userId] ??= { stage: 'DISCOVERED', chat_id: null, conversation_id: null, met_minutes: null, talked_about: [], sharing_since: null };
+  return state.rel[userId];
+}
+
+function notify(n: Omit<DemoNotification, 'id' | 'read' | 'created_at'>) {
+  state.notifications.unshift({ ...n, id: id(), read: false, created_at: now() });
+}
+
+function need(userId: string): DemoPerson {
+  const p = findPerson(userId);
+  if (!p) throw new Error('this profile isn’t available');
+  return p;
+}
+
+function later(ms: number, fn: () => void) {
+  if (ms <= 0) fn();
+  else setTimeout(fn, ms);
+}
+
+// ---------- me ----------
+export function getOpenToMeet() {
+  return state.openToMeet;
+}
+export function setOpenToMeet(open: boolean) {
+  state.openToMeet = open;
+  if (open) state.checkedIn = true;
+  // Turning off ends any live location sharing (MASTER_SPEC 3.3).
+  if (!open) for (const r of Object.values(state.rel)) r.sharing_since = null;
+  save();
+  emitChange('relationships', 'meetups', 'profile');
+  return { open_to_meet: open };
+}
+export function checkin() {
+  state.checkedIn = true;
+  save();
+  return { ok: true as const };
+}
+
+export function interests(): InterestsResponse {
+  return {
+    user_id: DEMO_ME,
+    seeking: 'An AI/ML internship and people who have shipped RAG systems',
+    offering: 'RAG pipelines, Python tooling, React Native',
+    interests: DEMO_MY_INTERESTS.map((i, n) => ({
+      interest_id: n + 1,
+      ...i,
+      confirmed: state.confirmedInterests.includes(i.name),
+      hidden: state.hiddenInterests.includes(i.name),
+    })),
+  };
+}
+export function patchInterests(body: InterestsPatch): InterestsResponse {
+  const byId = (ids: number[] | undefined) => (ids ?? []).map((n) => DEMO_MY_INTERESTS[n - 1]?.name).filter(Boolean) as string[];
+  state.confirmedInterests = [...new Set([...state.confirmedInterests, ...byId(body.confirm)])];
+  state.hiddenInterests = [...new Set([...state.hiddenInterests, ...byId(body.hide)])];
+  save();
+  emitChange('profile');
+  return interests();
+}
+
+// ---------- matching ----------
+export function matches(): { event_id: number; model: string; matches: Match[] } {
+  return {
+    event_id: DEMO_EVENT.id,
+    model: 'demo',
+    matches: DEMO_PEOPLE.map((p, i) => ({
+      user_id: p.user_id,
+      name: p.name,
+      photo_url: null,
+      role: p.role,
+      score: p.score,
+      rank: i + 1,
+      highlight: p.score >= 0.8,
+      why: p.shared.map((s) => s.name).slice(0, 3),
+      // Proximity bands only exist while this phone is discoverable.
+      proximity: state.openToMeet ? p.band : null,
+    })),
+  };
+}
+
+export function quickProfile(userId: string): QuickProfile {
+  const p = need(userId);
+  return {
+    user_id: p.user_id,
+    name: p.name,
+    photo_url: null,
+    role: p.role,
+    headline: `${p.headline} · ${p.school}`,
+    seeking: p.seeking,
+    offering: p.offering,
+    connected: rel(userId).stage === 'CONNECTED',
+    score: p.score,
+    shared_topics: p.shared,
+    facet_overlap: p.facet_overlap,
+    complementarity: p.complementarity,
+  };
+}
+
+export function starters(userId: string, variant = 0): StartersResponse {
+  const p = need(userId);
+  const n = p.openers.length;
+  const start = ((variant % n) + n) % n;
+  return { why: p.why, openers: [...p.openers.slice(start), ...p.openers.slice(0, start)] };
+}
+
+export function suggestions(): { suggestions: Suggestion[] } {
+  if (!state.openToMeet) return { suggestions: [] };
+  return {
+    suggestions: DEMO_PEOPLE.filter((p) => p.score >= 0.7 && rel(p.user_id).stage === 'DISCOVERED').map((p) => ({
+      suggestion_id: suggestionId(p),
+      context: 'event' as const,
+      event_id: DEMO_EVENT.id,
+      building_id: null,
+      expires_at: new Date(Date.now() + 30 * 60_000).toISOString(),
+      other: { user_id: p.user_id, name: p.name, photo_url: null, role: p.role, headline: p.headline },
+      score: p.score,
+      shared_topics: p.shared.map((s) => s.name).slice(0, 3),
+    })),
+  };
+}
+
+export function relationship(userId: string): Relationship {
+  const p = need(userId);
+  const r = rel(userId);
+  return {
+    user_id: userId,
+    stage: r.stage,
+    suggestion_id: suggestionId(p),
+    chat_id: r.chat_id,
+    conversation_id: r.conversation_id,
+  };
+}
+
+function ensureChat(p: DemoPerson): number {
+  const r = rel(p.user_id);
+  r.chat_id ??= 7000 + DEMO_PEOPLE.indexOf(p);
+  return r.chat_id;
+}
+
+/** Silent consent: always "waiting" unless both have said yes; a no is never shown to anyone. */
+export function respond(sid: number, response: 'yes' | 'no'): SuggestionRespondResponse {
+  const p = personForSuggestion(sid);
+  if (!p) throw new Error('suggestion not found');
+  const r = rel(p.user_id);
+  if (response === 'no') {
+    if (r.stage === 'DISCOVERED') r.stage = 'DECLINED';
+    save();
+    emitChange('relationships');
+    return { status: 'waiting' };
+  }
+  if (r.stage === 'MUTUAL_MEET' || r.stage === 'MEETUP_IN_PROGRESS') return { status: 'matched', chat_id: ensureChat(p) };
+  if (r.stage !== 'DISCOVERED' && r.stage !== 'DECLINED') return { status: 'waiting' };
+  r.stage = 'MEET_INTEREST_PENDING';
+  save();
+  emitChange('relationships');
+  if (p.saysYes) {
+    later(timing.reactionMs, () => {
+      if (rel(p.user_id).stage !== 'MEET_INTEREST_PENDING') return;
+      rel(p.user_id).stage = 'MUTUAL_MEET';
+      const chatId = ensureChat(p);
+      notify({
+        kind: 'mutual_meet',
+        title: `You and ${first(p)} both want to meet 🎉`,
+        body: 'Your chat is open, and you can find each other.',
+        user_id: p.user_id,
+        route: `/chat/${chatId}`,
+      });
+      save();
+      emitChange('relationships', 'chats', 'notifications');
+    });
+  }
+  return { status: 'waiting' };
+}
+
+// ---------- chat ----------
+export function listChats(): ChatSummary[] {
+  return DEMO_PEOPLE.filter((p) => rel(p.user_id).chat_id !== null)
+    .map((p) => {
+      const chatId = rel(p.user_id).chat_id!;
+      const last = state.messages.filter((m) => m.chat_id === chatId).at(-1) ?? null;
+      return {
+        id: chatId,
+        other_user_id: p.user_id,
+        other_name: p.name,
+        origin: rel(p.user_id).stage === 'CONNECTED' ? ('connection' as const) : ('suggestion' as const),
+        last_body: last?.body ?? null,
+        last_at: last?.created_at ?? null,
+      };
+    })
+    .sort((a, b) => (b.last_at ?? '').localeCompare(a.last_at ?? ''));
+}
+
+function personForChat(chatId: number): DemoPerson {
+  const p = DEMO_PEOPLE.find((x) => rel(x.user_id).chat_id === chatId);
+  if (!p) throw new Error('This chat is not available');
+  return p;
+}
+
+export function loadThread(chatId: number) {
+  const p = personForChat(chatId);
+  return {
+    id: chatId,
+    other_user_id: p.user_id,
+    other_name: p.name,
+    messages: state.messages.filter((m) => m.chat_id === chatId),
+  };
+}
+
+export function sendMessage(chatId: number, body: string, isAiDraft: boolean): ChatMessage {
+  const p = personForChat(chatId);
+  const text = body.trim();
+  if (!text) throw new Error('Write a message first');
+  const message: ChatMessage = { id: id(), chat_id: chatId, sender_id: DEMO_ME, body: text, is_ai_draft: isAiDraft, created_at: now() };
+  state.messages.push(message);
+  save();
+  const n = state.replyIndex[p.user_id] ?? 0;
+  if (n < p.replies.length) {
+    state.replyIndex[p.user_id] = n + 1;
+    later(timing.replyMs, () => {
+      state.messages.push({ id: id(), chat_id: chatId, sender_id: p.user_id, body: p.replies[n], is_ai_draft: false, created_at: now() });
+      notify({ kind: 'new_message', title: `${first(p)} replied`, body: p.replies[n], user_id: p.user_id, route: `/chat/${chatId}` });
+      save();
+      emitChange('chats', 'notifications');
+    });
+  }
+  return message;
+}
+
+// ---------- find each other ----------
+export function meetups(): { meetups: Meetup[] } {
+  return {
+    meetups: DEMO_PEOPLE.filter((p) => ['MUTUAL_MEET', 'MEETUP_IN_PROGRESS'].includes(rel(p.user_id).stage)).map((p) => ({
+      suggestion_id: suggestionId(p),
+      other: { user_id: p.user_id, name: p.name, photo_url: null },
+    })),
+  };
+}
+
+function mutualFor(sid: number): DemoPerson {
+  const p = personForSuggestion(sid);
+  if (!p || !['MUTUAL_MEET', 'MEETUP_IN_PROGRESS'].includes(rel(p.user_id).stage)) throw new Error('sharing ended');
+  return p;
+}
+
+export function shareLocation(sid: number, point: { lat: number; lng: number }) {
+  const p = mutualFor(sid);
+  const r = rel(p.user_id);
+  state.myPoint = point;
+  if (r.sharing_since === null) r.sharing_since = Date.now();
+  r.stage = 'MEETUP_IN_PROGRESS';
+  save();
+  emitChange('relationships', 'meetups');
+  return { sharing: true, expires_at: new Date(r.sharing_since + 30 * 60_000).toISOString() };
+}
+
+/** They walk toward you: ~40 m away, closing ~1.5 m/s, never exact. Close for a while = a conversation. */
+export function locationShare(sid: number): LocationShareState {
+  const p = mutualFor(sid);
+  const r = rel(p.user_id);
+  const base = { suggestion_id: sid, other: { user_id: p.user_id, name: p.name } };
+  if (r.sharing_since === null || !state.myPoint) return { ...base, sharing: false, expires_at: null, their_location: null };
+  const elapsed = (Date.now() - r.sharing_since) / 1000;
+  const meters = Math.max(3, 40 - elapsed * 1.5);
+  const bearing = (60 * Math.PI) / 180;
+  const dLat = (meters * Math.cos(bearing)) / 111_320;
+  const dLng = (meters * Math.sin(bearing)) / (111_320 * Math.cos((state.myPoint.lat * Math.PI) / 180));
+  if (meters <= 4 && elapsed * 1000 > (40 - 4) / 1.5 * 1000 + timing.verifyAfterCloseMs) verifyConversation(p.user_id, 'ble');
+  return {
+    ...base,
+    sharing: true,
+    expires_at: new Date(r.sharing_since + 30 * 60_000).toISOString(),
+    their_location: { lat: state.myPoint.lat + dLat, lng: state.myPoint.lng + dLng, updated_at: now() },
+  };
+}
+
+export function stopLocationShare(sid: number) {
+  const p = personForSuggestion(sid);
+  if (p) {
+    const r = rel(p.user_id);
+    r.sharing_since = null;
+    if (r.stage === 'MEETUP_IN_PROGRESS') r.stage = 'MUTUAL_MEET';
+    save();
+    emitChange('relationships', 'meetups');
+  }
+  return { sharing: false };
+}
+
+// ---------- verification + post-conversation ----------
+/** A verified in-person conversation (what Bluetooth or the QR scan confirms in live mode). */
+export function verifyConversation(userId: string, method: 'ble' | 'qr' = 'ble'): PendingConversation {
+  const p = need(userId);
+  const r = rel(userId);
+  if (r.conversation_id === null || !['CONVERSATION_VERIFIED', 'POST_CONVERSATION_PENDING', 'CONNECTED'].includes(r.stage)) {
+    r.conversation_id = 9000 + DEMO_PEOPLE.indexOf(p);
+    r.met_minutes = 8;
+    r.sharing_since = null;
+    r.stage = 'POST_CONVERSATION_PENDING';
+    notify({
+      kind: 'conversation_verified',
+      title: `Conversation with ${first(p)} verified`,
+      body: 'You talked for about 8 minutes. Tell us how it went.',
+      user_id: userId,
+      route: `/checklist/${r.conversation_id}`,
+    });
+    save();
+    emitChange('relationships', 'notifications', 'meetups');
+  }
+  return pendingFor(p, method);
+}
+
+function pendingFor(p: DemoPerson, method: 'ble' | 'qr'): PendingConversation {
+  const r = rel(p.user_id);
+  return {
+    conversation_id: r.conversation_id!,
+    method,
+    event_id: DEMO_EVENT.id,
+    minutes: r.met_minutes,
+    created_at: now(),
+    other: { user_id: p.user_id, name: p.name, photo_url: null },
+    checklist: p.shared.map((s) => ({ interest_id: s.interest_id, name: s.name })),
+  };
+}
+
+export function pendingConversations(): { conversations: PendingConversation[] } {
+  return {
+    conversations: DEMO_PEOPLE.filter((p) => rel(p.user_id).stage === 'POST_CONVERSATION_PENDING').map((p) => pendingFor(p, 'ble')),
+  };
+}
+
+export function conversationFeedback(conversationId: number, body: ConversationFeedbackRequest): ConversationFeedbackResponse {
+  const p = DEMO_PEOPLE.find((x) => rel(x.user_id).conversation_id === conversationId);
+  if (!p) throw new Error('conversation not found');
+  const r = rel(p.user_id);
+  const names = p.shared.filter((s) => body.talked_about.includes(s.interest_id)).map((s) => s.name);
+  r.talked_about = [...names, ...(body.other_topic ? [body.other_topic] : [])];
+  if (!body.wants_connect) {
+    r.stage = 'DECLINED';
+    save();
+    emitChange('relationships');
+    return { status: 'no_connection' };
+  }
+  if (!p.saysYes) {
+    save();
+    return { status: 'waiting' };
+  }
+  r.stage = 'CONNECTED';
+  state.connectedAt[p.user_id] = now();
+  const chatId = ensureChat(p);
+  notify({ kind: 'connected', title: `You’re connected with ${first(p)}`, body: 'You both said yes after talking.', user_id: p.user_id, route: `/connections` });
+  save();
+  emitChange('relationships', 'connections', 'notifications', 'chats');
+  return { status: 'connected', connection: { user_id: p.user_id, name: p.name }, chat_id: chatId };
+}
+
+export function followupDraft(userId: string) {
+  const p = need(userId);
+  const topic = rel(userId).talked_about[0] ?? p.shared[0]?.name ?? 'your project';
+  return { draft: `Great meeting you at HackGT, ${first(p)}! Loved talking about ${topic}. Want to grab coffee next week and keep going?` };
+}
+
+// ---------- connections ----------
+export function connections(): { connections: Connection[] } {
+  return {
+    connections: DEMO_PEOPLE.filter((p) => rel(p.user_id).stage === 'CONNECTED').map((p) => ({
+      user_id: p.user_id,
+      name: p.name,
+      photo_url: null,
+      headline: p.headline,
+      how_met: 'in_person' as const,
+      met_at: DEMO_EVENT.name,
+      created_at: state.connectedAt[p.user_id] ?? now(),
+      talked_about: rel(p.user_id).talked_about,
+      minutes_talked: rel(p.user_id).met_minutes ?? 0,
+    })),
+  };
+}
+export function connection(userId: string) {
+  const c = connections().connections.find((x) => x.user_id === userId);
+  if (!c) throw new Error('not connected');
+  return { ...c, shared_topics: need(userId).shared.map((s) => s.name) };
+}
+
+// ---------- notifications ----------
+export function notifications(): DemoNotification[] {
+  return state.notifications;
+}
+export function markNotificationsRead() {
+  state.notifications = state.notifications.map((n) => ({ ...n, read: true }));
+  save();
+  emitChange('notifications');
+}
+
+// ---------- graph (Graph tab, api.md 26) ----------
+export function graph(mode: 'matches' | 'network'): GraphResponse {
+  const people = mode === 'network' ? DEMO_PEOPLE.filter((p) => rel(p.user_id).stage === 'CONNECTED') : DEMO_PEOPLE;
+  const topics = new Map<string, { id: string; facet: string }>();
+  const nodes: GraphNode[] = [{ id: 'me', type: 'self', label: 'You' }];
+  const edges: GraphEdge[] = [];
+  const topicNode = (name: string, facet: string) => {
+    if (!topics.has(name)) {
+      const tid = `t_${topics.size + 1}`;
+      topics.set(name, { id: tid, facet });
+      nodes.push({ id: tid, type: 'topic', label: name, facet: facet as never });
+    }
+    return topics.get(name)!.id;
+  };
+  for (const i of DEMO_MY_INTERESTS.slice(0, 6)) edges.push({ source: 'me', target: topicNode(i.name, i.facet), kind: 'has_topic', weight: i.weight });
+  for (const p of people) {
+    const pid = `u_${p.user_id}`;
+    const connected = rel(p.user_id).stage === 'CONNECTED';
+    nodes.push({
+      id: pid,
+      type: 'person',
+      label: first(p),
+      name: p.name,
+      role: p.role,
+      score: p.score,
+      highlight: p.score >= 0.8,
+      open_to_meet: true,
+      cluster: null,
+      connected,
+      connected_at: state.connectedAt[p.user_id] ?? null,
+      top_topic: p.shared[0]?.name ?? '',
+      why: p.shared.map((s) => s.name),
+      shared_count: p.shared.length,
+      how_met: connected ? 'in_person' : undefined,
+    });
+    edges.push({ source: 'me', target: pid, kind: connected ? 'connection' : 'match', weight: p.score });
+    for (const s of p.shared) edges.push({ source: pid, target: topicNode(s.name, s.facet), kind: 'has_topic', weight: s.strength });
+  }
+  return { nodes, edges, synthetic: true };
+}
+
+/** Read-only view for the assistant. */
+export function snapshot() {
+  return { openToMeet: state.openToMeet, people: DEMO_PEOPLE.map((p) => ({ person: p, stage: rel(p.user_id).stage })) };
+}
