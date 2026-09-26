@@ -245,6 +245,18 @@
 **Next step for whoever continues:** Get MASTER_SPEC.md into the repo, then write migrations for Section 8.1 alters, 8.2 new tables (messages, location_shares, notifications -> add to supabase_realtime publication), 8.3 exact RLS policies, and event_zones seed. Then write the RLS isolation script (user A anon session cannot read user B rows).
 **Known issues / blockers:** MASTER_SPEC.md still missing. `profiles` has no email column so the trigger stores name and picture only. RLS isolation test not written yet.
 **Contract changes:** none (RLS/trigger/bucket only; no table or column changes)
+## 2026-09-26 00:20 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR1 GitHub connect and ingestion (offline core) + AR2 Resume text
+**Status:** in progress
+**What I did:**
+- `ml/ml/github_ingest.py`: `fetch_repos(token=|username=, cache=)` lists public non-fork repos, fetches languages + README (1,200 chars, badges stripped), ETag cache so re-ingest is 304s. `digest_meta()` for `raw_documents.meta`. Feeds `llm.github_to_text()`.
+- `ml/ml/github_oauth.py`: signed 10-min `state` bound to user_id (HMAC from TOKEN_ENCRYPTION_KEY), `authorize_url()` with scope `read:user` only, `exchange_code()`, Fernet `encrypt_token/decrypt_token`, `linked_account_row()`, `app_redirect()` deep link.
+- `ml/ml/resume_text.py`: `download_resume(path)` from private `resumes` bucket (service key), `pdf_to_text()` via pdfplumber with scanned detection, `extract_interests_from_pdf()` fallback that sends the PDF to Claude as a document block.
+- Repo-local setup done on Arjun's Mac (owner.local, .gitignore lines, core.hooksPath). Global `~/.claude/settings.json` step of `scripts/claude-setup.sh` NOT run (Arjun to run it himself).
+**How to run/test it:** `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest -q tests` ; live GitHub check: `.venv/bin/python -m ml.github_ingest octocat 3`
+**Next step for whoever continues:** When Alan's FastAPI app exists, add routes `GET /connect/github/start` (JWT -> `{"url": github_oauth.authorize_url(user_id)}`) and `GET /connect/github/callback` (verify_state -> exchange_code -> GET /user for login -> upsert `linked_account_row` -> 302 `app_redirect("ok")`), and make `POST /profile/ingest {"source":"github"}` call `fetch_repos(token=decrypt_token(...))` -> `github_to_text` -> `raw_documents` -> `llm.extract_interests`. Record the two /connect routes in docs/api.md with Adam (AD4). Needs GITHUB_CLIENT_ID/SECRET from Arjun's GitHub OAuth app.
+**Known issues / blockers:** MASTER_SPEC.md still missing from repo. No FastAPI app yet (Alan). No GitHub OAuth app yet (Arjun). Supabase storage download URL (`/storage/v1/object/resumes/<path>`) not yet tested against the real project. Not pushed yet: Arjun's `gh auth login` pending.
+**Contract changes:** none (new env var `APP_GITHUB_REDIRECT` added to .env.example)
 
 ## 2026-09-25 23:45 | adam | Claude Code
 **Task:** Kit install (pre-AD1)
