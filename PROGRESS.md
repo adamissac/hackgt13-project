@@ -193,6 +193,7 @@
 **Next step for whoever continues:** Start AL1: create `ml/app/main.py` (FastAPI + `/health`), `ml/app/auth.py` (Supabase JWT via PyJWT), `ml/app/db.py` (psycopg pool).
 **Known issues / blockers:** Supabase project ref still unset in `.mcp.json` (Adam).
 **Contract changes:** none
+
 ## 2026-09-26 02:45 | adam | Claude Code
 **Task:** AD2 Auth
 **Status:** in progress (code done; needs Supabase redirect config pushed, LinkedIn app, and a phone test)
@@ -246,6 +247,20 @@
 **Next step for whoever continues:** AD2 auth. Adam must create the LinkedIn developer app (with a LinkedIn Page, "Sign In with LinkedIn using OpenID Connect" product, redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`) and paste client ID/secret into Supabase Auth > LinkedIn (OIDC). Meanwhile start AD3 (Expo shell in mobile/).
 **Known issues / blockers:** Spec lists no event zones, so none seeded. organizations/org_members/org_subscriptions/event_posts have no client policies (FastAPI only) since 8.3 doesn't name them. event_registrations is owner-only.
 **Contract changes:** docs/schema.sql extended with Section 8.1/8.2 exactly as in the spec.
+
+## 2026-09-26 00:35 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR1-AR6 (MASTER_SPEC now in repo; aligned everything to it)
+**Status:** in progress (code done + tested locally; live runs need secrets below)
+**What I did:**
+- AR1: `ml/main.py` (minimal FastAPI shell: /health, CORS, `{"error"}` errors; Alan's AL1 can extend/replace, keep `include_router`), `ml/ml/github_routes.py` (`GET /connect/github/start`, `GET /connect/github/callback`, `ingest_github(user_id)`), `ml/ml/supa.py` (JWT check via Supabase `/auth/v1/user`, PostgREST helpers with service key), `ml/ml/store.py` (extraction -> interests/user_interests with evidence; never touches confirmed/hidden). AR2: `resume_text.ingest_resume(user_id, path)`.
+- AR3: `ml/scripts/seed_synthetic.py` (80 attendees via Supabase admin API, @example.com, is_synthetic, registered + checked in to HackGT 13, 35% Open to Meet, bge-small vectors via profiles.py, 6 RL "demo boosters"; `--dry-run`, `--delete`). Dry run verified with real bge-small.
+- AR4/AR5: `/graph` page aligned to MASTER_SPEC 9 (`nodes`+`edges`, ids me/u_*/t_*, kinds match/connection/has_topic): controls (Depth, Max, Min score, Facet, Color facet|cluster, Rebuild, Export PNG), left panel list + search, expand (topic -> more people, merged by id without layout reset), My Network timeline, privacy guards (no person-person edges, network never shows non-connections).
+- AR6: `/map` organizer community map from `GET /dashboard/{event_id}`: UMAP-placed community bubbles, c-TF-IDF labels, connections replayed/polled every 7s, "should be talking, aren't" gap table with bridge; anonymous ids, groups >= 5. Mock made with the real pipeline: `ml/scripts/make_dashboard_mock.py`.
+- docs/api.md sections 15-17 added (/connect/github/*, /graph, /graph/expand). Mocks: docs/mocks/graph_*.json, dashboard_event.json.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (18 pass); `cd dashboard && npm install && npm run typecheck && npm run lint && npm test && npm run build` (11 tests pass); dev: `cd dashboard && npm run dev` -> /graph and /map; ML: `cd ml && .venv/bin/uvicorn main:app --port 8000`.
+**Next step for whoever continues:** (1) Push these commits (`git push`; needs Arjun's `gh auth login`). (2) With `.env` filled (SUPABASE_URL, SUPABASE_SERVICE_KEY from `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`), run `cd ml && .venv/bin/python scripts/seed_synthetic.py --n 80`. (3) Create the GitHub OAuth app (callback `<ML_API_URL>/connect/github/callback`), set GITHUB_CLIENT_ID/SECRET + TOKEN_ENCRYPTION_KEY, test connect on a phone. (4) Deploy dashboard to Vercel (root `dashboard`), send URL to Adam (AD9). (5) AR8 GitHub activity poller into feed_items.
+**Known issues / blockers:** No Supabase/GitHub OAuth/Vercel credentials on this Mac yet. Alan owns /graph, /graph/expand, /dashboard/{id} server side (AL7/AL3) - shapes in api.md 14-17 and mocks. Organizer map labels are small on phones (it's designed for the big screen).
+**Contract changes:** docs/api.md: added 15 (/connect/github/*), 16 (/graph, spec 9 shape + optional display fields), 17 (/graph/expand). New env var APP_GITHUB_REDIRECT (default formalconnect://connect/github).
 
 ## 2026-09-26 00:30 | adam | Claude Code
 **Task:** AD1 Supabase project
