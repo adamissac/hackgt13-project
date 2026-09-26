@@ -35,7 +35,7 @@ export function SpokeGraph({
 }) {
   const c = useColors();
   const mid = size / 2;
-  const R = size * 0.34;
+  const R = size * 0.3; // leaves room for the labels outside each dot
   const dot = 24;
   const max = Math.max(...people.map((p) => p.score), 0.01);
   const min = Math.min(...people.map((p) => p.score), max);
@@ -78,7 +78,6 @@ export function SpokeGraph({
         return (
           <G key={p.id} opacity={dim ? 0.35 : 1} {...press(() => onSelect(selected ? null : p.id))}>
             <Circle cx={x} cy={y} r={dot + 14} fill="transparent" />
-            {p.top && <Circle cx={x} cy={y} r={dot + 5} stroke={c.success} strokeWidth={3} fill="none" />}
             <Circle cx={x} cy={y} r={dot} fill={p.role === 'recruiter' ? c.ai : c.text} stroke={selected ? c.tint : c.surface} strokeWidth={selected ? 4 : 2} />
             <SvgText fontFamily={FONT} x={x} y={y + 5} fontSize={14} fontWeight="800" fill={c.surface} textAnchor="middle">
               {initials(p.name)}
@@ -88,7 +87,7 @@ export function SpokeGraph({
               {showScore ? ` · ${Math.round(p.score * 100)}%` : ''}
             </SvgText>
             <SvgText fontFamily={FONT} x={x} y={ly + 15} fontSize={11} fill={c.muted} textAnchor="middle">
-              {clip(p.shared[0] ?? '', 18)}
+              {clip(p.shared[0] ?? '', 24)}
             </SvgText>
           </G>
         );

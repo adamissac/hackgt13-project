@@ -105,7 +105,8 @@ export default function GraphScreen() {
   if (state.status === 'error') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<ErrorState message={state.message} onRetry={reload} /></View>;
   if (!view) return null;
 
-  const listed = showAll ? pool : pool.slice(0, LIST_PREVIEW);
+  const rest = pool.slice(FEATURED);
+  const listed = showAll ? rest : rest.slice(0, LIST_PREVIEW);
   const chips = [{ id: '__all', label: 'Everyone', count: view.people.length }, ...view.topics];
 
   return (
@@ -169,7 +170,7 @@ export default function GraphScreen() {
 
           {pool.length > FEATURED && (
             <>
-              <SectionTitle>{mode === 'matches' ? `More people (${pool.length})` : `All your connections (${pool.length})`}</SectionTitle>
+              <SectionTitle>{mode === 'matches' ? `More people you could meet (${rest.length})` : `More connections (${rest.length})`}</SectionTitle>
               <Card style={{ paddingVertical: 4 }}>
                 {listed.map((p, i) => (
                   <Pressable
@@ -191,9 +192,9 @@ export default function GraphScreen() {
                     </Text>
                   </Pressable>
                 ))}
-                {pool.length > LIST_PREVIEW && (
+                {rest.length > LIST_PREVIEW && (
                   <Pressable onPress={() => setShowAll((s) => !s)} accessibilityRole="button" style={styles.more}>
-                    <Text style={[styles.moreText, { color: c.tint }]}>{showAll ? 'Show less' : `Show all ${pool.length}`}</Text>
+                    <Text style={[styles.moreText, { color: c.tint }]}>{showAll ? 'Show less' : `Show all ${rest.length}`}</Text>
                   </Pressable>
                 )}
               </Card>
