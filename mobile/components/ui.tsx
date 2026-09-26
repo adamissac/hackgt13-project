@@ -1,6 +1,6 @@
 // Shared UI building blocks. Large touch targets: the demo happens on a phone in a loud room.
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text as RNText, View as RNView, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Image, Pressable, StyleSheet, Text as RNText, View as RNView, type ViewStyle } from 'react-native';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
@@ -23,14 +23,15 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
   );
 }
 
-const AVATAR_HUES = ['#536E5B', '#667A80', '#89745B', '#796C77', '#667247', '#8B6253'];
+const AVATAR_HUES = ['#345681', '#5372A3', '#786493', '#427B86', '#6D769D', '#8B725A'];
 
 /** First name for copy like "Find Maya"; accounts made with email sign-in can have no name yet. */
 export function firstName(name: string | null | undefined, fallback = 'them'): string {
   return name?.trim().split(/\s+/)[0] || fallback;
 }
 
-export function Avatar({ name: rawName, size = 48 }: { name: string | null | undefined; size?: number }) {
+export function Avatar({ name: rawName, size = 48, photoUrl }: { name: string | null | undefined; size?: number; photoUrl?: string | null }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
   const name = rawName?.trim() || '?';
   const initials = name
     .split(/\s+/)
@@ -42,7 +43,7 @@ export function Avatar({ name: rawName, size = 48 }: { name: string | null | und
   const hue = AVATAR_HUES[[...name].reduce((a, ch) => a + ch.charCodeAt(0), 0) % AVATAR_HUES.length];
   return (
     <RNView style={[styles.avatar, { width: size, height: size, borderRadius: size / 2, backgroundColor: hue }]}>
-      <RNText style={[styles.avatarText, { fontSize: size * 0.38 }]}>{initials || '?'}</RNText>
+      {photoUrl && photoUrl !== failedUrl ? <Image source={{ uri: photoUrl }} style={{ width: size, height: size, borderRadius: size / 2 }} accessibilityLabel={name} onError={() => setFailedUrl(photoUrl)} /> : <RNText style={[styles.avatarText, { fontSize: size * 0.38 }]}>{initials || '?'}</RNText>}
     </RNView>
   );
 }
@@ -150,7 +151,7 @@ export function MatchMeter({ score }: { score: number }) {
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: 20, padding: 20, gap: 14 },
+  card: { borderRadius: 24, padding: 20, gap: 14, shadowColor: '#172D50', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.035, shadowRadius: 14 },
   disclosureHeader: { minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 12 },
   avatar: { alignItems: 'center', justifyContent: 'center' },
   avatarText: { color: '#fff', fontWeight: '700' },

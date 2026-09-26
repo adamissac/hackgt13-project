@@ -1,8 +1,9 @@
 // Top-right on every tab: notifications bell + your avatar (opens Profile).
+import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Avatar, useColors } from '@/components/ui';
+import { useColors } from '@/components/ui';
 import { useUnreadCount } from '@/features/notifications/useUnread';
 
 export function HeaderActions() {
@@ -16,16 +17,17 @@ export function HeaderActions() {
         accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'}
         hitSlop={8}
         style={[styles.bell, { backgroundColor: c.surface, borderColor: c.border }]}>
-        <Text style={{ fontSize: 17 }}>🔔</Text>
+        <SymbolView name={{ ios: "bell", android: "notifications", web: "notifications" }} tintColor={c.tint} size={21} />
         {unread > 0 && (
           <View style={[styles.badge, { backgroundColor: c.danger }]}>
             <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
           </View>
         )}
       </Pressable>
-      <Pressable onPress={() => router.push('/profile')} accessibilityRole="button" accessibilityLabel="Your profile" hitSlop={8}>
-        <Avatar name="You" size={40} />
+      <Pressable onPress={() => router.push('/chats')} accessibilityRole="button" accessibilityLabel="Messages" style={styles.bell}>
+        <SymbolView name={{ ios: 'bubble.left.and.bubble.right', android: 'forum', web: 'forum' }} tintColor={c.tint} size={22} />
       </Pressable>
+
     </View>
   );
 }

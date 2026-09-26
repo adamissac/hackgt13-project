@@ -36,7 +36,7 @@ export default function NetworkScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      <Text style={[styles.private, { color: c.muted }]}>🔒 Only you can see this page.</Text>
+      <Text style={[styles.private, { color: c.muted }]}>Only you can see this page.</Text>
 
       <Card>
         <Text style={[styles.big, { color: c.text }]}>{d.total}</Text>

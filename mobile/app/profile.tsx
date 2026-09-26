@@ -1,3 +1,4 @@
+import { AppIcon } from '@/components/AppIcon';
 import { router, type Href } from 'expo-router';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -19,9 +20,9 @@ const FACETS: { key: Facet; label: string }[] = [
 ];
 
 const NETWORK: { title: string; detail: string; icon: string; route: Href }[] = [
-  { title: 'Your connections', detail: 'Who you met and what you talked about', icon: '🤝', route: '/connections' },
-  { title: 'Your network', detail: 'How your network has grown', icon: '📈', route: '/network' },
-  { title: 'My connect QR & invites', detail: 'Connect with someone you already know', icon: '▦', route: '/invites' },
+  { title: 'Your connections', detail: 'Who you met and what you talked about', icon: 'people', route: '/connections' },
+  { title: 'Your network', detail: 'How your network has grown', icon: 'chart', route: '/network' },
+  { title: 'My connect QR & invites', detail: 'Connect with someone you already know', icon: 'qr', route: '/invites' },
 ];
 
 // Profile: who you are to the matcher. Header → about → AI skills by area → sources → network → account.
@@ -188,12 +189,12 @@ export default function ProfileScreen() {
       <SectionTitle>Sources</SectionTitle>
       <Card style={{ paddingVertical: 4 }}>
         <SourceRow
-          icon="⌥"
+          icon="code"
           title="GitHub"
           detail={sources?.github.added ? `Connected${sources.github.login ? ` as ${sources.github.login}` : ''}` : 'Not connected'}
           ok={!!sources?.github.added}
         />
-        <SourceRow icon="📄" title="Resume" detail={sources?.resume.added ? 'Uploaded' : 'Not uploaded'} ok={!!sources?.resume.added} divider />
+        <SourceRow icon="document" title="Resume" detail={sources?.resume.added ? 'Uploaded' : 'Not uploaded'} ok={!!sources?.resume.added} divider />
       </Card>
 
       <SectionTitle>Your network</SectionTitle>
@@ -205,7 +206,7 @@ export default function ProfileScreen() {
             accessibilityRole="button"
             style={({ pressed }) => [styles.menuRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }, pressed && { opacity: 0.6 }]}>
             <View style={[styles.menuIcon, { backgroundColor: c.surfaceAlt }]}>
-              <Text style={{ fontSize: 18 }}>{item.icon}</Text>
+              <AppIcon name={item.icon} color={c.tint} />
             </View>
             <View style={{ flex: 1, gap: 2 }}>
               <Text style={[styles.menuTitle, { color: c.text }]}>{item.title}</Text>
@@ -259,7 +260,7 @@ function SkillProfileCard({ p }: { p: SkillProfile }) {
             {p.project_highlights.slice(0, 3).map((h) => (
               <View key={h.name} style={[styles.project, { backgroundColor: c.surfaceAlt }]}>
                 <Text style={[styles.interestName, { color: c.text }]}>
-                  {h.pinned ? '📌 ' : ''}
+                  {h.pinned ? 'Pinned · ' : ''}
                   {h.name}
                 </Text>
                 {!!h.description && <Text style={[styles.small, { color: c.muted }]}>{h.description}</Text>}
@@ -295,7 +296,7 @@ function SourceRow({ icon, title, detail, ok, divider }: { icon: string; title: 
       accessibilityRole="button"
       style={({ pressed }) => [styles.menuRow, divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }, pressed && { opacity: 0.6 }]}>
       <View style={[styles.menuIcon, { backgroundColor: ok ? c.successSoft : c.surfaceAlt }]}>
-        <Text style={{ fontSize: 18, color: ok ? c.success : c.muted }}>{ok ? '✓' : icon}</Text>
+        <AppIcon name={ok ? 'check' : icon} color={ok ? c.success : c.muted} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Text style={[styles.menuTitle, { color: c.text }]}>{title}</Text>

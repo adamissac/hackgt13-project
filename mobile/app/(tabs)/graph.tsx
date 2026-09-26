@@ -24,7 +24,7 @@ const COPY: Record<GraphMode, { title: string; explain: string }> = {
     explain: 'You’re at the center. Tap a person to find your connection.',
   },
   network: {
-    title: 'Your circle of people.',
+    title: 'Your own constellation.',
     explain: 'The people you know, connected through shared interests.',
   },
 };
@@ -179,7 +179,7 @@ export default function GraphScreen() {
                 </View>
               ))}
             </View>
-            <Text style={[styles.body, { color: c.muted }]}>Thicker lines mean more in common. Positions are for readability, not physical distance. Each line connects someone to you, never to another person.</Text>
+            <Text style={[styles.body, { color: c.muted }]}>Stronger, brighter lines mean more shared interests; faint lines mean less overlap. Positions are for readability, not physical distance. Each line connects someone to you, never to another person.</Text>
           </Disclosure>
 
           {topicObj && mode === 'matches' ? (

@@ -1,24 +1,15 @@
 import { Pressable, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { atomLayout } from './atomLayout';
 import type { Person } from './model';
 
-const LIGHT = ['#467963', '#6579A0', '#AA7253'];
-const DARK = ['#A2CFB5', '#A9BCDF', '#DEAC88'];
-
-export function groupByTopic(people: Person[], topicOrder: string[], dark: boolean) {
-  const palette = dark ? DARK : LIGHT;
-  const rank = new Map(topicOrder.map((t, i) => [t, i]));
-  const mainOf = (p: Person) => [...p.shared].sort((a, b) => (rank.get(a) ?? 999) - (rank.get(b) ?? 999))[0] ?? '';
-  const counts = new Map<string, number>();
-  people.forEach((p) => mainOf(p) && counts.set(mainOf(p), (counts.get(mainOf(p)) ?? 0) + 1));
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
-  const colors = new Map(top.map(([t], i) => [t, palette[i]]));
-  const groups = top.map(([label, count], i) => ({ label, count, color: palette[i] }));
-  const rest = people.filter((p) => !colors.has(mainOf(p))).length;
-  const other = dark ? '#B6B5A8' : '#858575';
-  if (rest) groups.push({ label: 'Other interests', count: rest, color: other });
-  return { groups, colorOf: (p: Person) => colors.get(mainOf(p)) ?? other };
+import { FACET_COLORS } from '@/constants/Colors';
+const LABELS = { technical: 'Technology', career: 'Career & entrepreneurship', personal: 'Personal interests', academic: 'Academics' };
+export function groupByTopic(people: Person[], _topicOrder: string[], _dark: boolean) {
+ const groups = Object.entries(FACET_COLORS).map(([facet, color]) => ({ label: LABELS[facet as keyof typeof LABELS], color, count: people.filter(p => p.facet === facet).length })).filter(g => g.count > 0);
+ const other = people.filter(p => !p.facet).length;
+ if (other) groups.push({label:'Other interests', color:'#78859A', count:other});
+ return {groups, colorOf: (p: Person) => p.facet ? FACET_COLORS[p.facet] : '#78859A'};
 }
 
 // Six anchored people, a nucleus, and connections only to you. Native buttons over
@@ -31,27 +22,20 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors }: {
   const { height, center, nodes } = atomLayout(size, people.length);
   return (
     <View style={{ width: size, height }}>
-      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none" accessible={false}>
+      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none">
         <Defs><RadialGradient id="nucleusHalo">
           <Stop offset="0" stopColor={colors.tint} stopOpacity={0.16} />
           <Stop offset="1" stopColor={colors.tint} stopOpacity={0} />
         </RadialGradient></Defs>
         <Circle cx={center.x} cy={center.y} r={size * 0.32} fill="url(#nucleusHalo)" />
-        {[-35, 35].map((angle) => (
-          <Ellipse key={angle} cx={center.x} cy={center.y} rx={size * 0.37} ry={size * 0.2}
-            rotation={angle} origin={`${center.x}, ${center.y}`} fill="none" stroke={colors.tint} strokeOpacity={0.12} strokeWidth={1} />
-        ))}
+        {Array.from({length: 22}, (_, i) => <Circle key={`star-${i}`} cx={12 + ((i * 83) % (size - 24))} cy={14 + ((i * 67) % (height - 28))} r={i % 4 === 0 ? 1.7 : 0.8} fill={colors.tint} opacity={0.12} />)}
         {nodes.map((n, i) => {
           const p = people[i];
           const score = Math.max(0, Math.min(1, p.score));
-          const dx = n.x - center.x, dy = n.y - center.y;
-          const bend = i % 2 ? 0.17 : -0.17;
-          return <Path key={p.id} d={`M ${center.x} ${center.y} Q ${center.x + dx * 0.5 - dy * bend} ${center.y + dy * 0.5 + dx * bend} ${n.x} ${n.y}`}
-            fill="none" stroke={colorOf(p)} strokeWidth={1 + score * 2} strokeOpacity={selectedId === p.id ? 0.9 : 0.35} />;
+          return <Path key={p.id} d={`M ${center.x} ${center.y} L ${n.x} ${n.y}`}
+            fill="none" stroke={colorOf(p)} strokeWidth={score >= 0.7 ? 2.8 : score >= 0.4 ? 1.8 : 1}
+            strokeOpacity={selectedId === p.id ? 1 : score >= 0.7 ? 0.85 : score >= 0.4 ? 0.5 : 0.22} />;
         })}
-        {[[0, -9], [-10, 5], [10, 5]].map(([x, y], i) => (
-          <Circle key={i} cx={center.x + x} cy={center.y + y} r={25} fill={colors.tint} opacity={0.15} />
-        ))}
       </Svg>
       <View pointerEvents="none" style={{ position: 'absolute', left: center.x - 31, top: center.y - 31, width: 62, height: 62, borderRadius: 31, backgroundColor: colors.tint, alignItems: 'center', justifyContent: 'center', borderWidth: 4, borderColor: colors.tintSoft }}>
         <Text style={{ color: colors.onTint, fontSize: 16, fontWeight: '600' }}>You</Text>

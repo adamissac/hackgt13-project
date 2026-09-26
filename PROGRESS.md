@@ -1,3 +1,17 @@
+## 2026-09-26 06:14 | arjun | Codex
+**Task:** AR6 / AD11 — user-requested Constellation mobile redesign
+**Status:** done
+**What I did:**
+- Updated the existing mobile app (Adam/Akshar-owned mobile files at the user's explicit request): shared navy/white light-only theme, constellation vector branding, vector icons, photo avatars with initials fallback, and branded loading states. No new site or dependencies.
+- Made Feed the default route; preserved old Home as Discover. Five primary tabs: Feed, Discover, AI Chat, Events, Profile. Graph, Nearby, Messages, profile editing, verification and invites remain reachable; existing route aliases remain intact.
+- Graph colors now follow actual shared-interest facets consistently. Line opacity/weight represents existing score; straight star connections replace orbital ellipses. Person sheets retain server-backed interests, meeting context and recorded conversation topics, with clearly labeled profile-overlap strength.
+- Added sample event catalog adapter, category filters, event details, and per-account local RSVP/cancellation persistence. Sample status is explicit; RSVP never creates real attendance or contacts organizers. Backend contracts unchanged.
+- Verified main screens in the existing Expo web preview at phone width; fixed clipped tab labels and SVG web warnings. Verified event RSVP persists across reload; feed refresh deduplicates new posts.
+**How to run/test it:** `cd mobile && npm run typecheck && npm run lint && npm run test:demo`; `npx -y tsx --test features/graph/atomLayout.test.mjs`; `npx expo export --platform ios --output-dir /tmp/constellation-ios-final`. Typecheck/lint, 15 demo checks, 2 layout tests and iOS export pass. Existing preview: http://localhost:8081 (this clone); demo checked manually through Feed, Discover, graph/person sheet, AI Chat, Events/RSVP, Profile and Messages.
+**Next step for whoever continues:** Reload the existing Expo app to see this commit. Physical-device validation is still needed; rebuild the native client to apply app display-name/light-appearance configuration. To add live event registration later, replace `mobile/features/events/catalog.ts` only after a listings/RSVP API exists.
+**Known issues / blockers:** Events are explicitly sample/local, not live registrations. No EAS project/update pipeline is configured, so GitHub push does not distribute an installed-app release. iOS bundle validated; no physical-device test claimed. No teammate servers restarted.
+**Contract changes:** none
+
 # Progress log
 
 ## 2026-09-26 | alan | Codex

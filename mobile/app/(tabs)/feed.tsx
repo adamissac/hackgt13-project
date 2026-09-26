@@ -1,5 +1,7 @@
+import { router } from 'expo-router';
+import { ConstellationMark } from '@/components/Brand';
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, useColors } from '@/components/ui';
@@ -32,11 +34,17 @@ export default function FeedScreen() {
     }
   };
 
-  const items = [...mine, ...(feed.state.status === 'ready' ? feed.state.data.items : [])];
+  const remote = feed.state.status === 'ready' ? feed.state.data.items : [];
+  const remoteIds = new Set(remote.flatMap(item => item.type === 'item' ? [item.item_id] : item.item_ids));
+  const items = [...mine.filter(item => item.type !== 'item' || !remoteIds.has(item.item_id)), ...remote];
 
   return (
-    <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      <Text style={[styles.lead, { color: c.muted }]}>Updates from people you’ve connected with. Only you see this.</Text>
+    <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
+      <View style={{ gap: 6, paddingVertical: 8 }}>
+        <Text style={{ color: c.ai, fontSize: 11, fontWeight: '700', letterSpacing: 2 }}>YOUR PEOPLE, IN MOTION</Text>
+        <Text style={{ color: c.text, fontSize: 32, fontWeight: '700', letterSpacing: -1 }}>Good things travel.</Text>
+        <Text style={[styles.lead, { color: c.muted }]}>A private feed of ideas, milestones, and people you know.</Text>
+      </View>
       <Card>
         <View style={styles.kinds}>
           {(['update', 'post'] as const).map((option) => (
@@ -69,8 +77,8 @@ export default function FeedScreen() {
       {feed.state.status === 'error' && <ErrorState message={feed.state.message} onRetry={feed.reload} />}
       {feed.state.status === 'ready' && items.length === 0 && (
         <Card>
-          <Text style={[styles.title, { color: c.text }]}>Nothing here yet</Text>
-          <Text style={[styles.body, { color: c.muted }]}>Posts and GitHub updates from your connections show up here.</Text>
+          <ConstellationMark size={48} /><Text style={[styles.title, { color: c.text }]}>Your constellation starts with a conversation.</Text>
+          <Text style={[styles.body, { color: c.muted }]}>Posts and GitHub updates from your connections show up here.</Text><Button label="Discover your people" onPress={() => router.push('/discover')} />
         </Card>
       )}
       {items.map((item) => (
@@ -117,15 +125,16 @@ function FeedCard({ item }: { item: FeedEntry }) {
   return (
     <Card>
       <View style={styles.row}>
-        <Avatar name={item.author.name} />
+        <Avatar name={item.author.name} photoUrl={item.author.photo_url} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: c.text }]}>{item.author.name}</Text>
-          <Text style={[styles.meta, { color: c.muted }]}>{item.type === 'summary' ? 'Several updates' : item.kind}</Text>
+          <Text style={[styles.meta, { color: c.muted }]}>{item.type === 'summary' ? 'Weekly highlights' : item.kind === 'github' ? 'Building on GitHub' : 'Shared with connections'} · {new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</Text>
         </View>
         {item.type === 'summary' && <AiBadge label="Summary" />}
       </View>
       {item.type === 'item' && !!item.title && <Text style={[styles.title, { color: c.text }]}>{item.title}</Text>}
       <Text style={[styles.body, { color: c.text }]}>{item.type === 'summary' ? item.summary : item.body}</Text>
+      {item.type === 'item' && !!item.url && /^https?:\/\//i.test(item.url) && <Button label="Explore project" variant="secondary" onPress={() => { void Linking.openURL(item.url!).catch(() => setError('Could not open this link.')); }} />}
       {item.type === 'item' && item.talked_about.length > 0 && (
         <View style={styles.chips}>
           {item.talked_about.map((topic) => (
@@ -154,7 +163,7 @@ function FeedCard({ item }: { item: FeedEntry }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, paddingBottom: 110 },
+  container: { padding: 20, gap: 18, paddingBottom: 32, width: '100%', maxWidth: 640, alignSelf: 'center' },
   lead: { fontSize: 15, lineHeight: 21 },
   kinds: { flexDirection: 'row', gap: 8 },
   kind: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },

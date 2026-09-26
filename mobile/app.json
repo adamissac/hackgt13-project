@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Formal Connection",
+    "name": "Constellation",
     "slug": "formal-connection",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "formalconnect",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.formalconnection.app"

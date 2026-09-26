@@ -1,6 +1,7 @@
 // Floating ✦ button on every tab: the AI assistant is always one tap away (opens as a sheet).
 import { router } from 'expo-router';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { ChatMark } from './Brand';
+import { Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/components/ui';
@@ -20,7 +21,7 @@ export function AiFab() {
         styles.fab,
         { backgroundColor: c.ai, bottom: insets.bottom + TAB_BAR + 16, transform: [{ scale: pressed ? 0.94 : 1 }] },
       ]}>
-      <Text style={styles.icon}>✦</Text>
+      <ChatMark color="#fff" size={26} />
     </Pressable>
   );
 }

@@ -21,6 +21,8 @@ import {
   verifyEmailCode,
 } from "@/lib/auth";
 
+import { Brand } from '@/components/Brand';
+
 type SignInKind = "linkedin" | "github" | "google" | "x" | "email" | "code";
 
 export default function SignInScreen() {
@@ -74,7 +76,7 @@ export default function SignInScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
-          <Text style={[styles.brand, { color: tint }]}>formal connection</Text>
+          <Brand />
           <Text style={styles.title}>
             Less networking.{"\n"}More connection.
           </Text>

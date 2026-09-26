@@ -1,3 +1,4 @@
+import { AppIcon } from '@/components/AppIcon';
 import { router, type Href } from 'expo-router';
 import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -8,16 +9,16 @@ import { api, type AppNotification } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 
 const ICON: Record<string, string> = {
-  suggestion: '✦',
-  mutual_meet: '🎉',
-  new_message: '💬',
-  conversation_verified: '✓',
-  connect_prompt: '✓',
-  connected: '🤝',
-  invite: '✉️',
-  event: '📍',
-  event_update: '📍',
-  connection_attending: '📍',
+  suggestion: 'chat',
+  mutual_meet: 'people',
+  new_message: 'chat',
+  conversation_verified: 'check',
+  connect_prompt: 'check',
+  connected: 'people',
+  invite: 'mail',
+  event: 'event',
+  event_update: 'event',
+  connection_attending: 'event',
 };
 
 function ago(iso: string) {
@@ -69,7 +70,7 @@ export default function NotificationsScreen() {
                 pressed && { opacity: 0.7 },
               ]}>
               <View style={[styles.icon, { backgroundColor: n.read ? c.surfaceAlt : c.tintSoft }]}>
-                <Text style={{ fontSize: 18, color: c.tint }}>{ICON[n.kind] ?? '•'}</Text>
+                <AppIcon name={ICON[n.kind] ?? 'bell'} color={c.tint} />
               </View>
               <View style={{ flex: 1, gap: 2 }}>
                 <Text style={[styles.title, { color: c.text, fontWeight: n.read ? '600' : '800' }]}>{n.title}</Text>

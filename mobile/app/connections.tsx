@@ -75,7 +75,7 @@ export default function ConnectionsScreen() {
                 style={{ flex: 1 }}
               />
               <Button
-                label="✦ Ask AI"
+                label="Ask AI"
                 variant="secondary"
                 onPress={() =>
                   router.push({ pathname: '/assistant', params: { q: `How should I follow up with ${firstName(person.name)}?` } })

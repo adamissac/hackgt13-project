@@ -2,6 +2,7 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { ChatMark } from '@/components/Brand';
 import { RichText } from '@/components/RichText';
 import { Button, useColors } from '@/components/ui';
 import { api, type AssistantMessage } from '@/lib/api';
@@ -74,7 +75,7 @@ export default function AssistantScreen() {
         onContentSizeChange={() => scroll.current?.scrollToEnd({ animated: true })}
         keyboardShouldPersistTaps="handled">
         <View style={[styles.welcome, { backgroundColor: c.aiSoft }]}>
-          <Text style={[styles.welcomeTitle, { color: c.ai }]}>✦ Your networking assistant</Text>
+          <ChatMark size={36} color={c.ai} /><Text style={[styles.welcomeTitle, { color: c.text }]}>A little guidance. A real connection.</Text>
           <Text style={[styles.body, { color: c.text }]}>
             I can help you figure out who to meet here and what to talk about. I only know about people you can already see.
           </Text>
@@ -98,7 +99,7 @@ export default function AssistantScreen() {
           const mine = m.role === 'user';
           return (
             <View key={`${m.role}-${i}`} style={mine ? styles.mine : styles.theirs}>
-              {!mine && <Text style={[styles.who, { color: c.ai }]}>✦ Assistant</Text>}
+              {!mine && <Text style={[styles.who, { color: c.ai }]}>Constellation AI</Text>}
               <View style={[styles.bubble, mine ? { backgroundColor: c.tint } : { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1 }]}>
                 {mine ? (
                   <Text style={[styles.body, { color: c.onTint }]}>{m.content}</Text>
@@ -150,8 +151,8 @@ export default function AssistantScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { padding: 16, gap: 12, paddingBottom: 24, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  welcome: { borderRadius: 18, padding: 16, gap: 6 },
-  welcomeTitle: { fontSize: 16, fontWeight: '800' },
+  welcome: { borderRadius: 24, padding: 24, gap: 14 },
+  welcomeTitle: { fontSize: 26, lineHeight: 32, letterSpacing: -0.8, fontWeight: '700' },
   prompts: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   prompt: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 14, paddingVertical: 10, minHeight: 44, justifyContent: 'center' },
   promptText: { fontSize: 15, fontWeight: '600' },

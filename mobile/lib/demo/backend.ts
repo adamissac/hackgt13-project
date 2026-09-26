@@ -331,7 +331,7 @@ export function respond(sid: number, response: 'yes' | 'no'): SuggestionRespondR
       const chatId = ensureChat(p);
       notify({
         kind: 'mutual_meet',
-        title: `You and ${first(p)} both want to meet 🎉`,
+        title: `You and ${first(p)} both want to meet`,
         body: 'Your chat is open, and you can find each other.',
         user_id: p.user_id,
         route: `/chat/${chatId}`,

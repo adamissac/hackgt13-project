@@ -91,6 +91,10 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
         </View>
       ) : null}
 
+      <View style={[styles.box, { backgroundColor: c.surfaceAlt }]}>
+        <Text style={[styles.label, { color: c.muted }]}>SHARED-INTEREST STRENGTH</Text>
+        <Text style={[styles.body, { color: c.text }]}>{p.score >= 0.7 ? 'Strong' : p.score >= 0.4 ? 'Moderate' : 'Emerging'} · {Math.round(p.score * 100)}% profile overlap</Text>
+      </View>
       {state.status === 'loading' && <Text style={[styles.small, { color: c.muted }]}>Loading their profile…</Text>}
 
       {d && (

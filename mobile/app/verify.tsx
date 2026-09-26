@@ -1,3 +1,4 @@
+import { AppIcon } from '@/components/AppIcon';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Stack } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -131,7 +132,7 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
 
   return (
     <View style={styles.center}>
-      <Text style={styles.tapIcon}>📱📱</Text>
+      <AppIcon name="phone" size={56} color={c.tint} />
       <Text style={styles.title}>Hold your phones together</Text>
       <Text style={styles.muted}>Both of you open this screen, then touch the backs of your phones.</Text>
       <View style={[styles.meter, { backgroundColor: c.surfaceAlt }]}>

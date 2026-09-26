@@ -1,3 +1,4 @@
+import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -43,6 +44,7 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
+      <StatusBar style="dark" />
       <RootLayoutNav />
     </AuthProvider>
   );
@@ -93,7 +95,7 @@ function RootLayoutNav() {
           <Stack.Screen name="profile" options={{ title: 'Profile', headerBackTitle: 'Back' }} />
           <Stack.Screen
             name="assistant"
-            options={{ title: '✦ Assistant', presentation: 'modal', animation: 'slide_from_bottom', headerBackTitle: 'Close' }}
+            options={{ title: 'Constellation AI', presentation: 'modal', animation: 'slide_from_bottom', headerBackTitle: 'Close' }}
           />
           <Stack.Screen name="notifications" options={{ title: 'Notifications', headerBackTitle: 'Back' }} />
           <Stack.Screen name="meetup/[id]" options={{ title: 'Find each other', headerBackTitle: 'Back' }} />

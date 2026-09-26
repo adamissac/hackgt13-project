@@ -1,3 +1,4 @@
+import { ConstellationMark } from './Brand';
 import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
@@ -5,7 +6,8 @@ import { Text, View, useThemeColor } from '@/components/Themed';
 export function Loading({ label = 'Loading…' }: { label?: string }) {
   return (
     <View style={styles.center}>
-      <ActivityIndicator size="large" />
+      <ConstellationMark size={40} />
+      <ActivityIndicator color="#4867D6" size="small" />
       <Text style={styles.muted}>{label}</Text>
     </View>
   );
@@ -14,6 +16,7 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
 export function Empty({ title, body }: { title: string; body?: string }) {
   return (
     <View style={styles.center}>
+      <ConstellationMark size={48} />
       <Text style={styles.title}>{title}</Text>
       {body ? <Text style={styles.muted}>{body}</Text> : null}
     </View>

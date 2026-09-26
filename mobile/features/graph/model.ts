@@ -10,6 +10,7 @@ export interface Person {
   first: string;
   role: 'student' | 'recruiter';
   score: number;
+  facet?: Facet;
   top: boolean; // green ring: top match
   openToMeet: boolean;
   shared: string[]; // topics you both have, strongest first
@@ -55,6 +56,7 @@ export function buildView(g: GraphResponse): GraphView {
         first: name.split(/\s+/)[0] ?? name,
         role: p.role ?? 'student',
         score: p.score,
+        facet: g.edges.find((e) => e.source === me && e.target === p.id)?.facet ?? [...topicById.values()].find((t) => t.label === shared[0])?.facet,
         top: p.highlight,
         openToMeet: p.open_to_meet,
         shared: shared.length ? shared : p.why ?? (p.top_topic ? [p.top_topic] : []),

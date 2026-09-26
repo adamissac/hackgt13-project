@@ -1,3 +1,4 @@
+import { AppIcon } from '@/components/AppIcon';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -122,7 +123,7 @@ export default function OnboardingScreen() {
       </View>
 
       <SourceCard
-        icon="⌥"
+        icon="code"
         title="Connect your GitHub"
         detail="Read-only: public repos, languages, READMEs, and activity. We never post anything."
         step={github}
@@ -131,7 +132,7 @@ export default function OnboardingScreen() {
         onPress={onGithub}
       />
       <SourceCard
-        icon="📄"
+        icon="document"
         title="Upload your resume"
         detail="PDF or Word, up to 10 MB. Stored privately; only you and our matching service can read it."
         step={resume}
@@ -189,7 +190,7 @@ function SourceCard(props: {
     <Card highlight={done}>
       <View style={styles.row}>
         <View style={[styles.icon, { backgroundColor: done ? c.successSoft : c.tintSoft }]}>
-          <Text style={{ fontSize: 22, color: done ? c.success : c.tint }}>{done ? '✓' : props.icon}</Text>
+          <AppIcon name={done ? 'check' : props.icon} color={done ? c.success : c.tint} />
         </View>
         <View style={{ flex: 1, gap: 2 }}>
           <Text style={[styles.cardTitle, { color: c.text }]}>{done ? props.doneLabel : props.title}</Text>
