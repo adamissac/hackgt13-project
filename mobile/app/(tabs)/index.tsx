@@ -1,290 +1,256 @@
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
-import { api, type Match, type Suggestion } from '@/lib/api';
-import { useAuth } from '@/lib/auth';
+import { AiBadge, Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
+import { listChats } from '@/features/chat/store';
+import { useUnreadCount } from '@/features/notifications/useUnread';
+import { useOpenToMeet } from '@/features/presence/openToMeet';
+import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
-import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
-import { MeetupBanner } from '@/features/location/MeetupBanner';
 
-// Open to Meet (MASTER_SPEC 3.3). Goes through PATCH /me/open-to-meet so turning it off
-// also ends any live meetup location sharing on the server.
-function useOpenToMeet() {
-  const { session } = useAuth();
-  const [on, setOn] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+const BAND = { immediate: 'Very close', near: 'Nearby', far: 'Farther away' } as const;
 
-  useEffect(() => {
-    if (!session) return;
-    supabase
-      .from('profiles')
-      .select('open_to_meet')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => data && setOn(Boolean(data.open_to_meet)));
-  }, [session]);
-
-  const toggle = async (next: boolean) => {
-    setOn(next);
-    setError(null);
-    try {
-      const res = await api.setOpenToMeet(next);
-      setOn(res.open_to_meet);
-    } catch (e) {
-      setOn(!next);
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
-  return { on, toggle, error };
-}
-
+// Home: the core loop at a glance. 1) Open to Meet, 2) the one thing to do next, 3) best matches.
 export default function HomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const openToMeet = useOpenToMeet();
-  const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), []);
-  const suggestions = useAsync(() => api.suggestions(), []);
-  const [showAll, setShowAll] = useState(false);
+  const presence = useOpenToMeet();
+  const unread = useUnreadCount();
+  const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), [], ['relationships', 'profile']);
+  const next = useAsync(
+    async () => {
+      const [pending, meetups, suggestions] = await Promise.all([
+        api.pendingConversations().catch(() => ({ conversations: [] as PendingConversation[] })),
+        api.meetups().catch(() => ({ meetups: [] as Meetup[] })),
+        api.suggestions().catch(() => ({ suggestions: [] as Suggestion[] })),
+      ]);
+      return { pending: pending.conversations, meetups: meetups.meetups, suggestions: suggestions.suggestions };
+    },
+    [presence.on],
+    ['relationships', 'meetups', 'chats'],
+  );
 
   const refresh = () => {
     matches.reload();
-    suggestions.reload();
+    next.reload();
   };
 
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
-      contentContainerStyle={[styles.container, { paddingTop: insets.top + 12 }]}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top + 8 }]}
       refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}>
-      <View style={styles.masthead}>
-        <Text style={[styles.wordmark, { color: c.text }]}>formal connection</Text>
-        <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
-      </View>
-      <View style={styles.intro}>
-        <Text style={[styles.hero, { color: c.text }]}>Good conversations{ '\n' }start here.</Text>
-        <Text style={[styles.body, { color: c.muted }]}>A few people with something in common.</Text>
-        <Pressable onPress={() => router.push('/chats')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-          <Text style={[styles.small, { color: c.tint, fontWeight: '600' }]}>Your chats →</Text>
+      <View style={styles.header}>
+        <View>
+          <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
+          <Text style={[styles.title, { color: c.text }]}>Meet people worth meeting</Text>
+        </View>
+        <Pressable
+          onPress={() => router.push('/notifications')}
+          accessibilityRole="button"
+          accessibilityLabel={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+          style={[styles.bell, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <Text style={{ fontSize: 20 }}>🔔</Text>
+          {unread > 0 && (
+            <View style={[styles.badge, { backgroundColor: c.danger }]}>
+              <Text style={styles.badgeText}>{unread > 9 ? '9+' : unread}</Text>
+            </View>
+          )}
         </Pressable>
       </View>
 
-      <Card highlight={openToMeet.on} style={styles.toggleCard}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[styles.toggleTitle, { color: c.text }]}>Open to meet</Text>
-          <Text style={[styles.body, { color: c.muted }]}>
-            {openToMeet.on
-              ? 'You’re available for nearby introductions.'
-              : 'Turn on when you’re ready to say hello.'}
-          </Text>
-          {openToMeet.error && <Text style={[styles.small, { color: c.danger }]}>{openToMeet.error}</Text>}
-        </View>
-        <Switch
-          value={openToMeet.on}
-          onValueChange={openToMeet.toggle}
-          trackColor={{ true: c.tint, false: c.surfaceAlt }}
-          accessibilityLabel="Open to Meet"
-        />
-      </Card>
+      <OpenToMeetCard presence={presence} />
 
-      {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
-      <CheckInCard />
-      <PendingChecklists />
+      <UpNext state={next.state} onRetry={next.reload} />
 
-      {/* AK7 (Akshar): mutual-yes meetups can share live location to find each other. */}
-      <MeetupBanner />
-
-      {suggestions.state.status === 'ready' && suggestions.state.data.suggestions.length > 0 && (
-        <>
-          <SectionTitle>Ready to say hello?</SectionTitle>
-          {suggestions.state.data.suggestions.map((s) => (
-            <SuggestionCard key={s.suggestion_id} suggestion={s} />
-          ))}
-        </>
-      )}
-
-      {suggestions.state.status === 'error' && <ErrorState message="Introductions couldn’t load." onRetry={suggestions.reload} />}
-      <SectionTitle right={<Text style={[styles.small, { color: c.muted }]}>AI suggested</Text>}>People to meet</SectionTitle>
+      <SectionTitle right={<AiBadge label="AI ranked" />}>Your best matches</SectionTitle>
       {matches.state.status === 'loading' && <Loading label="Finding your matches…" />}
       {matches.state.status === 'error' && <ErrorState message={matches.state.message} onRetry={matches.reload} />}
       {matches.state.status === 'ready' &&
         (matches.state.data.matches.length === 0 ? (
           <Card>
             <Text style={[styles.cardTitle, { color: c.text }]}>No matches yet</Text>
-            <Text style={[styles.body, { color: c.muted }]}>
-              Check in to the event and add a resume or GitHub on your Profile so we can find your people.
-            </Text>
+            <Text style={[styles.body, { color: c.muted }]}>Add a resume or GitHub on your Profile so we can find your people.</Text>
+            <Button label="Build my profile" variant="secondary" onPress={() => router.push('/accounts')} />
           </Card>
         ) : (
-          <>
-            {matches.state.data.matches.slice(0, showAll ? undefined : 3).map((m) => <MatchCard key={m.user_id} match={m} />)}
-            {matches.state.data.matches.length > 3 && (
-              <Button label={showAll ? 'Show fewer people' : `See ${matches.state.data.matches.length - 3} more people`} variant="ghost" onPress={() => setShowAll(!showAll)} />
-            )}
-          </>
+          <Card style={{ paddingVertical: 4 }}>
+            {matches.state.data.matches.slice(0, 3).map((m, i) => (
+              <MatchRow key={m.user_id} match={m} divider={i > 0} />
+            ))}
+            <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.more, { borderTopColor: c.border }]}>
+              <Text style={{ color: c.tint, fontWeight: '700', fontSize: 15 }}>See everyone nearby →</Text>
+            </Pressable>
+          </Card>
         ))}
-      <View style={[styles.footer, { borderTopColor: c.border }]}>
-        <Text style={[styles.body, { color: c.muted }]}>Already had a good conversation?</Text>
-        <Button label="Verify a conversation" variant="secondary" onPress={() => router.push('/verify')} />
-      </View>
+
+      <Pressable
+        onPress={() => router.push({ pathname: '/assistant', params: { q: 'Who should I meet?' } })}
+        accessibilityRole="button"
+        style={[styles.ask, { backgroundColor: c.aiSoft }]}>
+        <Text style={[styles.askTitle, { color: c.ai }]}>✦ Ask the assistant</Text>
+        <Text style={[styles.body, { color: c.text }]}>“Who should I meet?” · “What should I ask Maya?”</Text>
+      </Pressable>
     </ScrollView>
   );
 }
 
-function PendingChecklists() {
+function OpenToMeetCard({ presence }: { presence: ReturnType<typeof useOpenToMeet> }) {
   const c = useColors();
-  const pending = useAsync(() => api.pendingConversations(), []);
-  if (pending.state.status !== 'ready' || pending.state.data.conversations.length === 0) return null;
+  const on = presence.on;
   return (
-    <>
-      {pending.state.data.conversations.map((item) => (
-        <Card key={item.conversation_id} highlight>
-          <Text style={[styles.cardTitle, { color: c.text }]}>You talked with {item.other.name}</Text>
-          <Text style={[styles.body, { color: c.muted }]}>
-            Mark what you covered. They only hear back if you both want to connect.
-          </Text>
-          <Button
-            label="Finish checklist"
-            onPress={() => router.push({ pathname: '/checklist/[id]', params: { id: String(item.conversation_id) } })}
-          />
-        </Card>
-      ))}
-    </>
+    <View style={[styles.hero, { backgroundColor: on ? c.tint : c.surface, borderColor: on ? c.tint : c.border }]}>
+      <View style={styles.heroRow}>
+        <View style={{ flex: 1, gap: 4 }}>
+          <Text style={[styles.heroLabel, { color: on ? c.onTint : c.muted }]}>{on ? '● ON' : '○ OFF'}</Text>
+          <Text style={[styles.heroTitle, { color: on ? c.onTint : c.text }]}>{on ? 'Open to meet' : 'Not open to meet'}</Text>
+        </View>
+        <Switch
+          value={on}
+          onValueChange={presence.toggle}
+          disabled={presence.status === 'loading' || presence.status === 'saving'}
+          trackColor={{ true: c.onTint, false: c.surfaceAlt }}
+          thumbColor={on ? c.tint : undefined}
+          accessibilityLabel="Open to Meet"
+          style={{ transform: [{ scale: 1.25 }] }}
+        />
+      </View>
+      <Text style={[styles.body, { color: on ? c.onTint : c.muted }]}>
+        {on
+          ? 'Discovery is on. Compatible people here can be suggested to you, and you to them. Nobody sees your exact location.'
+          : 'Discovery is paused. Nobody nearby can find you, and you won’t get new suggestions.'}
+      </Text>
+      {presence.error && <Text style={[styles.small, { color: on ? c.onTint : c.danger }]}>{presence.error}</Text>}
+      {on && (
+        <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.heroButton, { backgroundColor: c.onTint }]}>
+          <Text style={{ color: c.tint, fontWeight: '800', fontSize: 16 }}>Find people nearby</Text>
+        </Pressable>
+      )}
+    </View>
   );
 }
 
-function CheckInCard() {
+type NextData = { pending: PendingConversation[]; meetups: Meetup[]; suggestions: Suggestion[] };
+
+/** The single most important next step, in loop order: finish a conversation > meet a match > answer a suggestion. */
+function UpNext({ state, onRetry }: { state: ReturnType<typeof useAsync<NextData>>['state']; onRetry: () => void }) {
+  if (state.status === 'loading') return null;
+  if (state.status === 'error') return <ErrorState message="Couldn’t load your next step." onRetry={onRetry} />;
+  const { pending, meetups, suggestions } = state.data;
+  if (pending[0]) return <PendingCard item={pending[0]} />;
+  if (meetups[0]) return <MutualCard meetup={meetups[0]} />;
+  if (suggestions[0]) return <SuggestionCard suggestion={suggestions[0]} />;
+  return null;
+}
+
+function PendingCard({ item }: { item: PendingConversation }) {
   const c = useColors();
-  const [state, setState] = useState<'idle' | 'sending' | 'in'>('idle');
-  const [error, setError] = useState<string | null>(null);
-
-  const checkIn = async () => {
-    setState('sending');
-    setError(null);
-    try {
-      await api.checkin(HACKGT_EVENT_ID);
-      setState('in');
-    } catch (e) {
-      setState('idle');
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  };
-
+  const firstName = item.other.name.split(' ')[0];
   return (
-    <Card>
-      <Text style={[styles.cardTitle, { color: c.text }]}>{state === 'in' ? 'You’re checked in' : 'Check in to HackGT 13'}</Text>
-      <Text style={[styles.body, { color: c.muted }]}>
-        {state === 'in'
-          ? 'Matches and suggestions for this event can reach you now.'
-          : 'Check in so we can match you with people who are here.'}
-      </Text>
-      {state !== 'in' && <Button label="Check in" onPress={checkIn} loading={state === 'sending'} />}
-      {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
+    <Card highlight>
+      <Chip label="✓ Conversation verified" tone="success" />
+      <View style={styles.personRow}>
+        <Avatar name={item.other.name} size={52} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.cardTitle, { color: c.text }]}>How did it go with {firstName}?</Text>
+          <Text style={[styles.small, { color: c.muted }]}>
+            {item.minutes ? `You talked for about ${Math.round(item.minutes)} minutes. ` : ''}They only hear back if you both want to connect.
+          </Text>
+        </View>
+      </View>
+      <Button label="Answer two quick questions" onPress={() => router.push({ pathname: '/checklist/[id]', params: { id: String(item.conversation_id) } })} />
     </Card>
   );
 }
 
-function MatchCard({ match }: { match: Match }) {
+function MutualCard({ meetup }: { meetup: Meetup }) {
   const c = useColors();
+  const [opening, setOpening] = useState(false);
+  const firstName = meetup.other.name.split(' ')[0];
+  const openChat = async () => {
+    setOpening(true);
+    try {
+      const chat = (await listChats('')).find((x) => x.other_user_id === meetup.other.user_id);
+      if (chat) router.push({ pathname: '/chat/[id]', params: { id: String(chat.id), name: chat.other_name, other: chat.other_user_id } });
+      else router.push('/chats');
+    } finally {
+      setOpening(false);
+    }
+  };
   return (
-    <Pressable onPress={() => router.push({ pathname: '/match/[id]', params: { id: match.user_id } })} accessibilityRole="button" accessibilityLabel={`View ${match.name}'s profile`}>
-      {({ pressed }) => (
-        <Card style={{ opacity: pressed ? 0.85 : 1 }}>
-          <View style={styles.personRow}>
-            <Avatar name={match.name} />
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.cardTitle, { color: c.text }]}>{match.name}</Text>
-              <Text style={[styles.small, { color: c.muted }]}>
-                {match.role === 'recruiter' ? 'Recruiter' : 'Student'}
-                {match.proximity ? ` · ${proximityLabel(match.proximity)}` : ''}
-              </Text>
-            </View>
-            <Text style={{ color: c.muted, fontSize: 24 }}>›</Text>
-          </View>
-          <Text style={[styles.body, { color: c.muted }]} numberOfLines={2}>
-            {match.why.length ? `You share an interest in ${match.why.slice(0, 2).join(' and ')}.` : 'Explore what you have in common.'}
-          </Text>
-          {match.highlight && <Text style={[styles.small, { color: c.tint, fontWeight: '600' }]}>A strong match for you</Text>}
-        </Card>
-      )}
-    </Pressable>
+    <Card highlight>
+      <Chip label="🎉 You both want to meet" tone="success" />
+      <View style={styles.personRow}>
+        <Avatar name={meetup.other.name} size={52} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.cardTitle, { color: c.text }]}>{meetup.other.name}</Text>
+          <Text style={[styles.small, { color: c.muted }]}>Say hi, then find each other in the room.</Text>
+        </View>
+      </View>
+      <View style={styles.buttons}>
+        <Button label="Message" variant="secondary" onPress={openChat} loading={opening} style={{ flex: 1 }} />
+        <Button
+          label={`Find ${firstName}`}
+          onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(meetup.suggestion_id) } })}
+          style={{ flex: 1 }}
+        />
+      </View>
+    </Card>
   );
 }
 
-// After "Yes", the card shows the same waiting state whatever the other person does (MASTER_SPEC 11).
+// After "Want to meet" the card shows the same waiting state whatever the other person does (MASTER_SPEC 11).
 function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   const c = useColors();
-  const [state, setState] = useState<'idle' | 'sending' | 'waiting' | 'matched' | 'dismissed'>('idle');
-  const [chatId, setChatId] = useState<number | null>(null);
+  const [state, setState] = useState<'idle' | 'sending' | 'waiting' | 'hidden'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const other = suggestion.other;
 
   const respond = async (response: 'yes' | 'no') => {
+    if (state === 'sending') return;
     setState('sending');
     setError(null);
     try {
-      const res = await api.respondToSuggestion(suggestion.suggestion_id, response);
-      if (response === 'no') setState('dismissed');
-      else if (res.status === 'matched') {
-        setChatId(res.chat_id);
-        setState('matched');
-      } else setState('waiting');
+      await api.respondToSuggestion(suggestion.suggestion_id, response);
+      setState(response === 'no' ? 'hidden' : 'waiting');
     } catch (e) {
       setState('idle');
       setError(e instanceof Error ? e.message : String(e));
     }
   };
 
-  if (state === 'dismissed') return null;
-  const other = suggestion.other;
-
+  if (state === 'hidden') return null;
   return (
     <Card highlight>
-      <View style={styles.personRow}>
-        <Avatar name={other.name} size={56} />
+      <AiBadge label={`Suggested · ${Math.round(suggestion.score * 100)}% match`} />
+      <Pressable
+        onPress={() => router.push({ pathname: '/match/[id]', params: { id: other.user_id } })}
+        accessibilityRole="button"
+        style={styles.personRow}>
+        <Avatar name={other.name} size={52} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.small, { color: c.muted }]}>Do you want to meet</Text>
-          <Text style={[styles.cardTitle, { color: c.text }]}>{other.name}?</Text>
+          <Text style={[styles.cardTitle, { color: c.text }]}>Want to meet {other.name}?</Text>
           {!!other.headline && <Text style={[styles.small, { color: c.muted }]}>{other.headline}</Text>}
         </View>
-      </View>
+        <Text style={{ color: c.muted, fontSize: 24 }}>›</Text>
+      </Pressable>
       <View style={styles.chips}>
-        {suggestion.shared_topics.map((t) => (
+        {suggestion.shared_topics.slice(0, 3).map((t) => (
           <Chip key={t} label={t} tone="ai" />
         ))}
       </View>
       {state === 'waiting' ? (
         <View style={[styles.notice, { backgroundColor: c.tintSoft }]}>
-          <Text style={[styles.body, { color: c.tint }]}>Nice. We’ll let you know if it’s a match.</Text>
-        </View>
-      ) : state === 'matched' ? (
-        <View style={[styles.notice, { backgroundColor: c.successSoft }]}>
-          <Text style={[styles.body, { color: c.success, fontWeight: '700' }]}>It’s a match. Say hi — only the two of you can see this chat.</Text>
-          {chatId !== null && (
-            <Button
-              label={`Chat with ${other.name.split(' ')[0]}`}
-              onPress={() =>
-                router.push({
-                  pathname: '/chat/[id]',
-                  params: { id: String(chatId), name: other.name, other: other.user_id },
-                })
-              }
-            />
-          )}
-          <Button
-            label={`Find ${other.name.split(' ')[0]}`}
-            variant="secondary"
-            onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(suggestion.suggestion_id) } })}
-          />
+          <Text style={[styles.body, { color: c.tint }]}>Nice. If it’s mutual, your chat opens here.</Text>
         </View>
       ) : (
         <View style={styles.buttons}>
           <Button label="Not now" variant="secondary" onPress={() => respond('no')} disabled={state === 'sending'} style={{ flex: 1 }} />
-          <Button label="Yes, let’s meet" onPress={() => respond('yes')} loading={state === 'sending'} style={{ flex: 1.4 }} />
+          <Button label="Want to meet" onPress={() => respond('yes')} loading={state === 'sending'} style={{ flex: 1.3 }} />
         </View>
       )}
       {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
@@ -292,25 +258,56 @@ function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   );
 }
 
-function proximityLabel(p: NonNullable<Match['proximity']>) {
-  return { immediate: 'very close', near: 'nearby', far: 'farther away' }[p];
+function MatchRow({ match, divider }: { match: Match; divider: boolean }) {
+  const c = useColors();
+  return (
+    <Pressable
+      onPress={() => router.push({ pathname: '/match/[id]', params: { id: match.user_id } })}
+      accessibilityRole="button"
+      accessibilityLabel={`${match.name}, ${Math.round(match.score * 100)} percent match`}
+      style={({ pressed }) => [styles.matchRow, divider && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }, pressed && { opacity: 0.7 }]}>
+      <Avatar name={match.name} size={44} />
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.rowName, { color: c.text }]} numberOfLines={1}>
+          {match.name}
+        </Text>
+        <Text style={[styles.small, { color: c.muted }]} numberOfLines={1}>
+          {match.why.slice(0, 2).join(' · ') || 'Explore what you have in common'}
+        </Text>
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: 2 }}>
+        <Text style={[styles.score, { color: match.highlight ? c.tint : c.text }]}>{Math.round(match.score * 100)}%</Text>
+        {match.proximity && <Text style={[styles.tiny, { color: c.muted }]}>{BAND[match.proximity]}</Text>}
+      </View>
+    </Pressable>
+  );
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 24, gap: 18, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  masthead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, flexWrap: 'wrap' },
-  wordmark: { fontSize: 16, fontWeight: '600', letterSpacing: -0.6 },
-  eyebrow: { fontSize: 12, fontWeight: '600' },
-  intro: { gap: 10, paddingTop: 16, paddingBottom: 10 },
-  hero: { fontSize: 36, lineHeight: 41, fontWeight: '500', letterSpacing: -1.5 },
-  footer: { borderTopWidth: 1, marginTop: 8, paddingTop: 24, gap: 12 },
-  toggleCard: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  toggleTitle: { fontSize: 17, fontWeight: '600' },
+  container: { padding: 20, gap: 16, paddingBottom: 40, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
+  eyebrow: { fontSize: 13, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
+  title: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
+  bell: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  badge: { position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
+  hero: { borderRadius: 22, borderWidth: 2, padding: 20, gap: 12 },
+  heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  heroLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 1 },
+  heroTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  heroButton: { minHeight: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },
-  small: { fontSize: 14 },
+  small: { fontSize: 14, lineHeight: 19 },
+  tiny: { fontSize: 12, fontWeight: '600' },
   personRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   buttons: { flexDirection: 'row', gap: 10 },
   notice: { borderRadius: 12, padding: 12 },
+  matchRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, minHeight: 68 },
+  rowName: { fontSize: 17, fontWeight: '700' },
+  score: { fontSize: 18, fontWeight: '800' },
+  more: { borderTopWidth: StyleSheet.hairlineWidth, paddingVertical: 14, alignItems: 'center' },
+  ask: { borderRadius: 18, padding: 16, gap: 4 },
+  askTitle: { fontSize: 16, fontWeight: '800' },
 });

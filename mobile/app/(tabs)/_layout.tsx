@@ -42,12 +42,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="graph"
-        options={{ title: 'Graph', tabBarIcon: icon({ ios: 'point.3.connected.trianglepath.dotted', android: 'hub', web: 'hub' }) }}
+        name="chats"
+        options={{ title: 'Messages', tabBarIcon: icon({ ios: 'bubble.left.and.bubble.right.fill', android: 'forum', web: 'forum' }) }}
       />
       <Tabs.Screen
-        name="feed"
-        options={{ title: 'Feed', tabBarIcon: icon({ ios: 'newspaper.fill', android: 'feed', web: 'feed' }) }}
+        name="assistant"
+        options={{ title: 'Assistant', tabBarIcon: icon({ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }) }}
       />
       <Tabs.Screen
         name="profile"
