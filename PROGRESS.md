@@ -2,6 +2,15 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:31 UTC | adam | Cursor cloud agent
+**Task:** AD1 Supabase project
+**Status:** done
+**What I did:** Live check via `npx supabase db query --linked` on Adam's Mac: 36/36 public tables have RLS; missing_rls NULL; HackGT 13 seed event present; all 9 migrations applied (…00001–…00009 including push_tokens). Local `./supabase/tests/run-local.sh` also ALL AD1 CHECKS PASSED. No Supabase MCP on the cloud VM; this CLI query is the live evidence.
+**How to run/test it:** `./scripts/check-ad1-live.sh` or the npx query in AGENTS.md.
+**Next step for whoever continues:** AD2/AD3 leftover on a phone: magic-link sign-in after auth redirects (already on live); Expo via `./scripts/start-app.sh`; Railway deploy per docs/deploy.md if not done.
+**Known issues / blockers:** Cloud VM still has no Supabase MCP. Goal asked for MCP; CLI --linked is the available live proof.
+**Contract changes:** none
+
 ## 2026-09-26 05:30 UTC | adam | Cursor cloud agent
 **Task:** AD1 Supabase project
 **Status:** in progress
