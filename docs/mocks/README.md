@@ -12,6 +12,7 @@ change to `docs/api.md`.
 | event_matches.json | GET /events/{event_id}/matches |
 | event_checkin.json | POST /events/{event_id}/checkin |
 | match_starters.json | GET /matches/{other_user_id}/starters |
+| match_quick_profile.json | GET /matches/{other_user_id}/quick-profile |
 | qr_token.json | GET /qr/token |
 | handshake.json | POST /handshake |
 | feedback.json | POST /feedback |
