@@ -70,3 +70,9 @@ def suggestions_tick() -> None:
     from . import suggestions
     suggestions.expire()
     suggestions.generate()
+
+
+@every(30, "encounters")
+def encounters_tick() -> None:
+    from . import encounters
+    encounters.process()

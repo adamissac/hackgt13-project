@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 04:27 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL8 Bluetooth verification
+**Status:** in progress (server side done and tested on simulated sightings; needs Akshar's AK2 real sightings and AK6 labeled recordings)
+**What I did:**
+- `ml/app/encounters.py` + worker every 30 s: resolve tokens via ephemeral_ids (validity window), one stream per direction (each phone's own scans, like training data), sessions split at gaps > 60 s, verified when p >= 0.7 AND >= 180 s above -65 dBm (smoothed) -> `conversations.create_conversation(method='ble', minutes, p_conversation)` + connect prompts + an `encounters` row with features. Overlapping sessions extend instead of re-prompting. Unverified sessions store nothing (MASTER_SPEC 7.7).
+- Classifier: HistGradientBoosting on synthetic sessions + `ml/datasets/ble_labeled/*.csv` weighted 3x; only features the pipeline can observe (stationary/same_zone dropped until sightings has a stationary column / event zones exist). `ml/scripts/train_encounter.py` writes data/encounter_gbm.pkl + encounter_report.json.
+- Report (SIMULATED SESSIONS, 8 observable features): AUC 0.94; 'same table, not talking' false-positive rate 36% at threshold 0.7. That is the Bluetooth limitation to state in the pitch; QR stays the fallback.
+- 85 tests pass (`ml/tests/test_encounters.py`: verified once, no duplicate prompt on the next tick, walking past / across the room store nothing, unknown/expired tokens ignored, 3-minute rule, labeled CSV loader + report).
+**How to run/test it:** `cd ml && . .venv/bin/activate && python scripts/train_encounter.py` and `TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_encounters.py` (~45 s, trains the model).
+**Next step for whoever continues:** AL11 chatbot: `ml/app/routers/assistant.py` POST /assistant/chat {messages[], event_id?} -> {reply}, Sonnet with 4 tools (search_event_attendees, get_match_profile, get_connections_activity, get_my_profile) each enforcing scope in Python via matching.relationship / rank_for_viewer / feed.visible_items; test adversarial asks (someone's connection count, list everyone, who declined me).
+**Known issues / blockers:** Calibration risk: a very steady real signal (sd ~2 dB, no body-block dips) scores low because synthetic 'talking' sessions are noisier; AK6 recordings fix this (REQUESTS.md). When AK2 lands, check that sightings arrive per phone every ~1 s like the simulator; batching every 30 s is fine.
+**Contract changes:** none
+
 ## 2026-09-26 04:20 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL9 Learned ranker
 **Status:** done (speed-dating validation not done: optional, needs Arjun's prepared data)
