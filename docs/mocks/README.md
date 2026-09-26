@@ -20,3 +20,7 @@ change to `docs/api.md`.
 | me_open_to_meet.json | PATCH /me/open-to-meet |
 | suggestions.json | GET /suggestions |
 | suggestion_respond.json | POST /suggestions/{id}/respond (mutual-yes case; otherwise {"status": "waiting"}) |
+| qr_verify.json | POST /qr/verify (GET /qr/verify-token uses qr_token.json) |
+| conversations_pending.json | GET /conversations/pending |
+| conversation_feedback.json | POST /conversations/{id}/feedback (mutual-yes case) |
+| followup_draft.json | POST /connections/{user_id}/followup-draft |
