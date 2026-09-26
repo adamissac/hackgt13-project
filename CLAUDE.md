@@ -1,37 +1,35 @@
-# Project instructions for AI coding assistants
+@AGENTS.md
 
-Read this file and everything in `docs/` before writing code. If a request conflicts with `docs/`, stop and ask.
+# Claude Code specifics
 
-## What we are building
-A networking app for events (career fairs, hackathons). Users log in with LinkedIn, connect GitHub/Facebook,
-upload a resume. AI extracts their interests. The app ranks who they should meet at an event, verifies a real
-conversation with a QR handshake, and asks a short checklist afterward. An organizer dashboard shows a live
-map of interest communities. Full scope and priorities: `SCOPE.md`.
+## How you operate here
+- Permission mode is auto. Do routine work without asking: edit files in your owner's folders, install dependencies the repo declares, run builds and tests, commit and push.
+- Ask the human only for: secrets or accounts you can't access, physical actions on a phone, a contract change that affects another owner beyond the smallest change, or anything irreversible outside the repo.
+- Hooks in `.claude/hooks/` are guardrails, not suggestions. They brief you at session start, block force pushes, history rewrites, `--no-verify`, secrets in client code, and LinkedIn or Instagram scraping, and stop you from ending a turn with 30+ minutes of uncommitted work. If a hook blocks you, fix the cause. Never route around it.
+- The status line shows owner, branch, uncommitted files, minutes since your last commit, context use, and 5-hour usage. When usage climbs past 80 percent, run `/handoff` before starting anything big.
 
-## Stack (do not swap without team agreement)
-- `mobile/`    React Native with Expo dev build, TypeScript, Expo Router
-- `supabase/`  Postgres + pgvector, Supabase Auth (LinkedIn OIDC login), Storage (resume PDFs), Realtime
-- `ml/`        Python FastAPI service: extraction (Claude API), embeddings (bge-small, 384 dims), scoring, models
-- `dashboard/` Next.js + D3 organizer dashboard
-- Push: Expo Notifications. Bluetooth: react-native-ble-plx. Location: expo-location. QR: expo-camera.
+## Skills
+- `/next-task`: pick the owner's next task from Section 13 and PROGRESS.md, plan it, start.
+- `/handoff`: commit, push, and write the PROGRESS.md entry. Use after every working increment.
+- `/contract-change`: the only way to change `docs/schema.sql`, `docs/api.md`, `docs/mocks/`, migrations, or env vars.
+- `/privacy-check`: audit your diff against the product rules before pushing anything that touches people data.
+- `/gate-check`: status against the current checkpoint (Section 12.3) and the Section 14 checklist.
+- `/demo-day`: demo script, rehearsal checklist, backup video, judge Q&A.
+- Reference skills load when relevant: `ble-proximity`, `matching-math`, `graph-viz`.
+- Bundled skills: `/claude-api` before writing any Anthropic SDK code, `/verify` to confirm a change against the running app, `/run-skill-generator` once per area so every agent knows how to launch it, `/code-review` before gate pushes.
 
-## Contracts (source of truth)
-- Database: `docs/schema.sql`. Use these exact table and column names.
-- API between mobile and ML service: `docs/api.md`. Use these exact request/response shapes.
-- Changing either file requires telling the whole team first.
+## Subagents
+Delegate to keep your context clean. Run at most 3 at once to save credits.
+- `docs-researcher`: verify an external API, config key, CLI flag, or permission string before coding against it.
+- `test-runner`: tests, type checks, builds. Returns only failures.
+- `privacy-auditor`: reviews a diff against the product rules.
+- `contract-keeper`: checks code against `docs/api.md`, `docs/schema.sql`, `docs/mocks/`, `.env.example`.
+- `browser-tester`: drives dashboard pages in a real browser and reports what renders.
+- `ml-evaluator`: runs ML evaluations and writes honest reports.
 
-## Rules
-- TypeScript strict mode in `mobile/` and `dashboard/`. Type API responses from `docs/api.md`.
-- Never hardcode secrets. Read from environment variables listed in `.env.example`.
-- Never put `SUPABASE_SERVICE_KEY` or any OAuth client secret in `mobile/`.
-- Keep changes inside the folder you were asked to work on.
-- Prefer small, working increments. After each change, explain how to run and test it.
-- Privacy: only building-level location leaves the phone outside events; never store raw coordinates.
-- Current API docs change often (TikTok, Facebook Graph, ble-plx, Expo). If unsure of an API, say so
-  instead of guessing, and ask for the docs.
+## MCP servers
+- `context7`: current library docs. Prefer it over memory for Expo, BLE, Supabase, Next.js, FastAPI, LightGBM.
+- `supabase`: read-only and scoped to our project. Use it for schema, advisors, and logs. From Saturday on the database holds real attendees: never pull user rows into the conversation beyond what a bug needs.
 
-## Owners
-- Adam: `mobile/` app shell, `supabase/`, auth, push
-- Alan: `ml/` extraction, profiles, scoring, ranker, encounter model, FastAPI
-- Arjun: `ml/` ingestion (GitHub, resume PDF, Facebook), synthetic data, `dashboard/`
-- Akshar: `mobile/` Bluetooth, QR handshake, geofencing, pitch
+## Your brief
+The owner's full brief is `prompts/<owner>.md`. Read it at the start of your first session in this repo.
