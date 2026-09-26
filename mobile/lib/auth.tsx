@@ -101,17 +101,17 @@ export function xProviderSlug(providers: Record<string, boolean>): XSlug | null 
   return null;
 }
 
-/** X OAuth. Pass the slug from `xProviderSlug()`; defaults to the modern one. */
-export async function signInWithX(slug: XSlug = 'x'): Promise<void> {
-  await signInWithProvider(slug);
-}
+// There is deliberately no signInWithGoogle()/signInWithX(). Google and X are link-only: see
+// LinkableProvider below and components/LoginConnections.tsx. Adding a sign-in entry point for
+// them brings back duplicate accounts, which is the thing that design avoids.
 
-export async function signInWithGoogle(): Promise<void> {
-  await signInWithProvider('google');
-}
+/** Providers offered as *links* only. They are deliberately absent from the sign-in screen:
+ *  signing in with one would create a second account whenever the provider does not return a
+ *  verified email matching an existing one. Linking attaches them to the account you already have. */
+export type LinkableProvider = 'google' | XSlug;
 
 /** Add a login identity to the current user, without creating a second app account. */
-export async function connectLoginProvider(provider: 'google' | 'x'): Promise<boolean> {
+export async function connectLoginProvider(provider: LinkableProvider): Promise<boolean> {
   const { data: before, error: userError } = await supabase.auth.getUser();
   if (userError) throw userError;
   if (!before.user) throw new Error('Sign in before connecting an account.');

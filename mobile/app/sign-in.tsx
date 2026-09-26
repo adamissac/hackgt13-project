@@ -15,16 +15,13 @@ import {
   sendMagicLink,
   signInWithGitHub,
   signInWithLinkedIn,
-  signInWithX,
-  signInWithGoogle,
   useAuth,
   verifyEmailCode,
-  xProviderSlug,
 } from "@/lib/auth";
 
 import { Brand } from '@/components/Brand';
 
-type SignInKind = "linkedin" | "github" | "google" | "x" | "email" | "code";
+type SignInKind = "linkedin" | "github" | "email" | "code";
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
@@ -43,8 +40,6 @@ export default function SignInScreen() {
   useEffect(() => {
     enabledProviders().then(setProviders);
   }, []);
-  // `x` on current Supabase, legacy `twitter` on older projects; null when neither is on.
-  const xSlug = xProviderSlug(providers);
 
   const run = async (
     kind: SignInKind,
@@ -121,31 +116,11 @@ export default function SignInScreen() {
             </Pressable>
           )}
 
-          {providers.google && (
-            <Pressable
-              style={[styles.button, styles.outline, { borderColor: tint }]}
-              onPress={() => run("google", signInWithGoogle)}
-              disabled={busy !== null}
-              accessibilityRole="button"
-            >
-              {busy === "google" ? <ActivityIndicator /> : (
-                <Text style={[styles.buttonText, { color: tint }]}>Continue with Google</Text>
-              )}
-            </Pressable>
-          )}
-
-          {xSlug && (
-            <Pressable
-              style={[styles.button, styles.outline, { borderColor: tint }]}
-              onPress={() => run("x", () => signInWithX(xSlug))}
-              disabled={busy !== null}
-              accessibilityRole="button"
-            >
-              {busy === "x" ? <ActivityIndicator /> : (
-                <Text style={[styles.buttonText, { color: tint }]}>Continue with X</Text>
-              )}
-            </Pressable>
-          )}
+          {/* Google and X are deliberately NOT sign-in options. Signing in with them would create a
+              separate account whenever the provider does not hand back a verified email matching an
+              existing one — same person, two profiles, the second one with no interests. They are
+              offered instead under Profile -> Sign-in accounts, where `linkIdentity` attaches them to
+              the account you already have. See components/LoginConnections.tsx. */}
 
           <Text style={[styles.or, { color: muted }]}>
             or continue with email

@@ -2,11 +2,9 @@ import { useState } from 'react';
 import { Text } from 'react-native';
 
 import { Button, Card, SectionTitle, useColors } from './ui';
-import { connectLoginProvider, enabledProviders, useAuth } from '@/lib/auth';
+import { connectLoginProvider, enabledProviders, useAuth, xProviderSlug, type LinkableProvider } from '@/lib/auth';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
-
-const providers = [{ id: 'google', label: 'Google' }, { id: 'x', label: 'X' }] as const;
 
 export function LoginConnections() {
   const c = useColors();
@@ -14,15 +12,21 @@ export function LoginConnections() {
   const [busy, setBusy] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const { state, reload } = useAsync(async () => {
-    if (guest) return { enabled: {} as Record<string, boolean>, linked: [] as string[] };
+    if (guest) return { providers: [] as { id: LinkableProvider; label: string }[], linked: [] as string[] };
     const [enabled, { data, error }] = await Promise.all([
       enabledProviders(), supabase.auth.getUserIdentities(),
     ]);
     if (error) throw error;
-    return { enabled, linked: data.identities.map((identity) => identity.provider) };
+    // X is `x` on current Supabase and legacy `twitter` on older projects (ours). Resolve against
+    // what this project actually reports, or the button reads "not available yet" forever.
+    const xSlug = xProviderSlug(enabled);
+    const providers: { id: LinkableProvider; label: string }[] = [];
+    if (enabled.google) providers.push({ id: 'google', label: 'Google' });
+    if (xSlug) providers.push({ id: xSlug, label: 'X' });
+    return { providers, linked: data.identities.map((identity) => identity.provider) };
   }, [guest]);
 
-  const connect = async (provider: 'google' | 'x', label: string) => {
+  const connect = async (provider: LinkableProvider, label: string) => {
     setBusy(provider);
     setMessage('');
     try {
@@ -46,12 +50,15 @@ export function LoginConnections() {
         <Text style={{ color: c.danger }}>{state.message}</Text>
         <Button label="Retry" onPress={reload} />
       </>}
-      {state.status === 'ready' && providers.map(({ id, label }) => {
+      {state.status === 'ready' && state.data.providers.length === 0 && (
+        <Text style={{ color: c.muted }}>No other sign-in methods are switched on yet.</Text>
+      )}
+      {state.status === 'ready' && state.data.providers.map(({ id, label }) => {
         const linked = state.data.linked.includes(id);
         return <Button key={id}
-          label={linked ? `${label} connected` : state.data.enabled[id] ? `Connect ${label}` : `${label} not available yet`}
+          label={linked ? `${label} connected` : `Connect ${label}`}
           onPress={() => connect(id, label)} variant="secondary"
-          disabled={linked || !state.data.enabled[id] || busy !== null} loading={busy === id} />;
+          disabled={linked || busy !== null} loading={busy === id} />;
       })}
       {message ? <Text accessibilityLiveRegion="polite" style={{ color: c.text }}>{message}</Text> : null}
     </Card>

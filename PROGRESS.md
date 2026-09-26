@@ -1,3 +1,16 @@
+## 2026-09-26 11:45 | alan | Claude Code (Opus 5)
+**Task:** Google and X become link-only (Adam's `linkIdentity` path), so they can never create a duplicate account
+**Status:** done (`tsc --noEmit` clean; only pre-existing eslint error in `AuthProvider` remains). Providers still need enabling in Supabase.
+**What I did:**
+- Alan's call after weighing the trade-off: no duplicate accounts. Adam had already built the right mechanism — `connectLoginProvider()` + `components/LoginConnections.tsx` use `supabase.auth.linkIdentity()` to attach a provider to the **current** user. It was already mounted on the accounts screen; it just wasn't the only path in.
+- Removed the Google and X buttons from `mobile/app/sign-in.tsx`, and deleted `signInWithGoogle()` / `signInWithX()` from `mobile/lib/auth.tsx`. They were unused after the button removal, and leaving them exported is a trap: calling either reintroduces exactly the duplicate-account bug this change exists to prevent. Left a comment at the deletion site saying so. Sign-in is now LinkedIn, GitHub, or email; Google and X attach afterwards under Profile -> Sign-in accounts.
+- **Fixed the same X slug bug in `LoginConnections`** that I had just fixed on the sign-in screen: it gated on `enabled['x']`, which is permanently `undefined` here, so the button read "X not available yet" forever. It now resolves via `xProviderSlug()` (prefers `x`, falls back to legacy `twitter`) and builds its provider list from what the server actually reports, with an explicit empty state when nothing is on.
+- Added `LinkableProvider = 'google' | XSlug` so the link path and the component agree on one type.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. On a phone: sign in with LinkedIn or GitHub, then Profile -> Sign-in accounts -> Connect Google; signing out and back in with Google should land on the *same* profile, not a new one.
+**Next step for whoever continues:** Enable the providers, neither is on yet. **Google:** OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth. **X:** our instance only exposes legacy `twitter` (OAuth 1.0a), so the X developer app must have OAuth 1.0a enabled, same callback. Both surface automatically afterwards.
+**Known issues / blockers:** `mobile/` is Adam's folder (`app/sign-in.tsx`, `lib/auth.tsx`, `components/LoginConnections.tsx`) — Adam, I deleted two of your exported functions; say the word and I'll restore them behind a comment instead. **The cost of this design:** Google and X cannot create an account, only add a login to an existing one. Someone whose only identity is Google has to start with email magic link, then link Google. That is the price of no duplicates and it is the right trade here, but it is a real UX constraint worth saying out loud in the demo if a judge asks.
+**Contract changes:** none
+
 ## 2026-09-26 11:20 | alan | Claude Code (Opus 5)
 **Task:** Google + X sign-in — Adam had already written them; fixed a slug that made the X button unreachable
 **Status:** done in code (`tsc --noEmit` clean). **Neither provider is enabled in Supabase yet**, so neither button renders.
