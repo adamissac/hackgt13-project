@@ -1,4 +1,6 @@
-# PROGRESS
+# Progress log
+
+Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 ## 2026-09-26 02:45 | adam | Claude Code
 **Task:** AD2 Auth
@@ -54,12 +56,52 @@
 **Contract changes:** none (RLS/trigger/bucket only; no table or column changes)
 
 ## 2026-09-25 23:45 | adam | Claude Code
+
 **Task:** Kit install (pre-AD1)
+
 **Status:** blocked
+
 **What I did:**
 - Moved the Claude kit to repo root; added the hidden kit files that were missing from the first push (`.claude/`, `.mcp.json`, `.githooks/`).
 - Started this PROGRESS.md.
+
 **How to run/test it:** `./scripts/claude-setup.sh <your name>`, then `claude "$(cat prompts/<your name>.md)"`
+
 **Next step for whoever continues:** Add `MASTER_SPEC.md` to the repo root (it's referenced everywhere but isn't in the repo or on Adam's Mac). Put the Supabase project ref in `.mcp.json` in place of `YOUR_PROJECT_REF`. Then start AD1 (`supabase init` in `supabase/`).
+
 **Known issues / blockers:** MASTER_SPEC.md missing; Supabase project ref not set; claude-setup.sh not yet run on Adam's laptop.
+
 **Contract changes:** none
+
+## 2026-09-25 23:42 | Akshar | Claude (Sonnet 5)
+
+**Task:** AK1 Bluetooth hello world
+
+**Status:** in progress (blocked on physical device testing)
+
+**What I did:**
+- (Rebased onto Adam's AD3 shell: my duplicate `src/app` router, assets and LICENSE were dropped; BLE deps and config plugins merged into his `package.json` / `app.json`.)
+- Added `react-native-ble-plx` (central/scan role) and `munim-bluetooth` + `react-native-nitro-modules` (peripheral/advertise role, since ble-plx can't advertise — matches MASTER_SPEC 7.1's plan to try `munim-bluetooth` first).
+- Wrote `mobile/features/ble/`: `constants.ts` (shared service UUID), `deviceId.ts` (per-launch random local-name suffix — a placeholder for AK2's real rotating server token), `scanner.ts` (ble-plx scan + Android permission handling for API 30 and 31+), `advertiser.ts` (munim-bluetooth advertise).
+- Wrote `mobile/app/ble-debug.tsx` (route `/ble-debug`): a single "AK1: BLE Hello World" screen — Start/Stop button, live list of discovered peers with local name + RSSI, shows this device's own advertised local name.
+- Added `react-native-ble-plx` + `munim-bluetooth` config plugins to `app.json`.
+- Verified: `npx tsc --noEmit` clean, `npx expo-doctor` 21/21 checks pass, `npx expo export --platform ios` bundles with no errors. None of this proves the BLE hello-world actually works — it only proves the code compiles and bundles.
+- Note: MASTER_SPEC.md was missing from the repo at the time (see Adam's entry above) — I worked from the copy of it Akshar had downloaded locally (`prompt gt.pdf`). Worth confirming it matches whatever lands at the repo root.
+
+**How to run/test it:**
+- `cd mobile && npm install` (already run, `node_modules` is gitignored).
+- This needs a **dev build**, not Expo Go (`react-native-ble-plx` and `munim-bluetooth` are native modules). From a Mac with full Xcode installed: `npx expo run:ios --device`. For Android: `npx expo run:android` with USB debugging on, or build one via EAS (`npx eas-cli build --profile development --platform ios|android`) if you'd rather not install Xcode locally.
+- Once running on two physical phones: tap Start on both, and each should show the other's local name (`fc-XXXX`) and a live RSSI reading within a few seconds.
+
+**Next step for whoever continues:**
+1. **This machine has no full Xcode.app, only Command Line Tools** — I could not build or test on a real device from here. Akshar (or whoever has a Mac with Xcode, or an EAS account) needs to: install Xcode from the App Store, run `npx expo run:ios --device` (free Apple ID is enough for 7-day provisioning), and separately `npx expo run:android` on an Android phone with USB debugging.
+2. With two real phones running the dev build, tap Start on both and confirm they see each other. Log device models, foreground/background state, and what RSSI/local-name each saw into this file's test matrix (Section "Test matrix" in the Akshar brief / MASTER_SPEC Section 13 test matrix).
+3. Specifically check the iOS local-name truncation risk called out in the brief: does `fc-XXXX` (7 chars) survive fully next to our 128-bit service UUID? If truncated, we have headroom to shorten further.
+4. Once AK1 is confirmed working end to end on real hardware, move to AK3 (Verification QR screens, blocked on Alan's AL6) or AK4 (Invites backend + screens, not blocked) per the owner order in MASTER_SPEC Section 13.
+
+**Known issues / blockers:**
+- No physical phones or Xcode available in this environment — everything above is untested on real Bluetooth hardware.
+- `munim-bluetooth`'s peripheral advertising is unverified in practice; if it fails on either platform within the spec's 30-minute budget, MASTER_SPEC 7.1 says fall back to a hand-written local Expo module around `CBPeripheralManager` (iOS) / `BluetoothLeAdvertiser` (Android).
+- `npm install` in `mobile/` currently needs `--legacy-peer-deps` — an unrelated peer-dependency conflict between `expo-router`'s bundled `@expo/ui` (which pulls in `vaul`/`radix-ui` for web) and the React version this Expo SDK ships. Not caused by anything BLE-related.
+
+**Contract changes:** none (`docs/schema.sql` and `docs/api.md` untouched).
