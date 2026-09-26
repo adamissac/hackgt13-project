@@ -1,6 +1,18 @@
 # Progress log
 
 ## 2026-09-26 | alan | Codex
+**Task:** AD2 Google/X extension validation and hosted setup handoff
+**Status:** blocked
+**What I did:**
+- Pushed the implementation in a8fbf24. TypeScript, full mobile ESLint, and the iOS Expo export pass.
+- Ran the five static onboarding enforcement checks: all pass. Seven database-backed provider cases were deselected because this checkout has no disposable test database.
+- Inspected the live Supabase dashboard: Google and X OAuth 2.0 are disabled, and Allow manual linking is off. GitHub and LinkedIn are enabled. No hosted settings changed.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint . && npx expo export --platform ios`; `cd ml && python -m pytest --noconftest tests/test_onboarding_enforcement.py -q -k 'not every_provider'` (5 passed).
+**Next step for whoever continues:** Get the team's Google Cloud and X developer app identities from Alan; follow docs/google-x-auth.md to save provider credentials, enable manual linking, and perform real sign-in/linking on a phone using this commit.
+**Known issues / blockers:** Hosted OAuth apps/credentials are still needed. No successful Google/X OAuth claimed. Connect means a login identity, not Google/X data ingestion. Existing checkout environment values on teammates' laptops are unchanged.
+**Contract changes:** none
+
+## 2026-09-26 | alan | Codex
 **Task:** AD2 extension requested by Alan: Google and X sign-in / account linking
 **Status:** in progress
 **What I did:**
