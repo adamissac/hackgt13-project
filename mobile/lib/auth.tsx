@@ -13,28 +13,64 @@ WebBrowser.maybeCompleteAuthSession();
 // formalconnect://auth/callback in dev builds; must be in Supabase Auth redirect URLs.
 export const redirectTo = Linking.createURL('auth/callback');
 
+// One exchange per code. The same code can arrive twice at once (the in-app browser result AND the
+// deep link Expo Router receives); a second exchange would fail and look like a failed sign-in.
+const exchanges = new Map<string, Promise<void>>();
+
+function exchangeOnce(code: string): Promise<void> {
+  let p = exchanges.get(code);
+  if (!p) {
+    p = (async () => {
+      const { error } = await supabase.auth.exchangeCodeForSession(code);
+      if (error) {
+        // Already exchanged by the other path? Then we're signed in and this isn't a failure.
+        const { data } = await supabase.auth.getSession();
+        if (data.session) return;
+        console.warn('[auth] code exchange failed:', error.message);
+        throw error;
+      }
+    })();
+    exchanges.set(code, p);
+  }
+  return p;
+}
+
 /** Pull `code` (PKCE) or an error out of a redirect URL and turn it into a session. */
 export async function completeAuthFromUrl(url: string): Promise<void> {
   const { queryParams } = Linking.parse(url);
   const hashParams = new URLSearchParams(url.split('#')[1] ?? '');
   const error = (queryParams?.error_description as string) ?? hashParams.get('error_description');
-  if (error) throw new Error(error);
+  if (error) {
+    console.warn('[auth] provider returned an error:', error);
+    throw new Error(error);
+  }
   const code = queryParams?.code as string | undefined;
-  if (!code) throw new Error('Sign-in link is missing its code. Request a new one.');
-  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
-  if (exchangeError) throw exchangeError;
+  if (!code) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session) return; // nothing to do: already signed in
+    throw new Error('Sign-in link is missing its code. Try again.');
+  }
+  await exchangeOnce(code);
 }
 
 /** Shared OAuth handshake: open the provider in an in-app auth session, then trade the code. */
 async function signInWithProvider(provider: 'linkedin_oidc' | 'github'): Promise<void> {
+  console.log(`[auth] ${provider} sign-in, return URL`, redirectTo);
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error) throw error;
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
-  if (result.type !== 'success') return; // user cancelled
-  await completeAuthFromUrl(result.url);
+  console.log(`[auth] ${provider} browser result:`, result.type);
+  if (result.type === 'success') return completeAuthFromUrl(result.url);
+  // "dismiss"/"cancel": if the provider handed off to its own app (LinkedIn does), the code comes back as a deep link to
+  // /auth/callback instead. Give it a moment before treating this as a cancel.
+  for (let i = 0; i < 10; i++) {
+    const { data: s } = await supabase.auth.getSession();
+    if (s.session) return;
+    await new Promise((r) => setTimeout(r, 500));
+  }
 }
 
 /** LinkedIn OIDC through Supabase, in an in-app auth session. */
