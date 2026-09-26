@@ -1,0 +1,15 @@
+{
+  "event_id": 1,
+  "model": "v1",
+  "matches": [
+    { "user_id": "00000000-0000-0000-0000-000000000101", "name": "Maya R.", "photo_url": null, "role": "student",
+      "score": 0.74, "rank": 1, "highlight": true,
+      "why": ["reinforcement learning", "time series analysis", "rock climbing"], "proximity": "near" },
+    { "user_id": "00000000-0000-0000-0000-000000000102", "name": "Jordan K.", "photo_url": null, "role": "recruiter",
+      "score": 0.66, "rank": 2, "highlight": false,
+      "why": ["quantitative finance", "reinforcement learning"], "proximity": "far" },
+    { "user_id": "00000000-0000-0000-0000-000000000103", "name": "Priya S.", "photo_url": null, "role": "student",
+      "score": 0.58, "rank": 3, "highlight": false,
+      "why": ["time series analysis", "film photography"], "proximity": null }
+  ]
+}
