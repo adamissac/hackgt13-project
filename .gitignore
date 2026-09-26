@@ -1,0 +1,25 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# node / expo / next
+node_modules/
+.expo/
+.next/
+dist/
+build/
+*.log
+
+# python
+__pycache__/
+.venv/
+venv/
+*.pyc
+ml/data/*
+!ml/data/.gitkeep
+
+# os / editors
+.DS_Store
+.vscode/
+.idea/
