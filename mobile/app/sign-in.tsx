@@ -15,11 +15,13 @@ import {
   sendMagicLink,
   signInWithGitHub,
   signInWithLinkedIn,
+  signInWithX,
+  signInWithGoogle,
   useAuth,
   verifyEmailCode,
 } from "@/lib/auth";
 
-type SignInKind = "linkedin" | "github" | "email" | "code";
+type SignInKind = "linkedin" | "github" | "google" | "x" | "email" | "code";
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
@@ -110,6 +112,32 @@ export default function SignInScreen() {
                 <Text style={[styles.buttonText, { color: tint }]}>
                   Continue with GitHub
                 </Text>
+              )}
+            </Pressable>
+          )}
+
+          {providers.google && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("google", signInWithGoogle)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "google" ? <ActivityIndicator /> : (
+                <Text style={[styles.buttonText, { color: tint }]}>Continue with Google</Text>
+              )}
+            </Pressable>
+          )}
+
+          {providers.x && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("x", signInWithX)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "x" ? <ActivityIndicator /> : (
+                <Text style={[styles.buttonText, { color: tint }]}>Continue with X</Text>
               )}
             </Pressable>
           )}

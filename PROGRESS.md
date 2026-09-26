@@ -1,5 +1,17 @@
 # Progress log
 
+## 2026-09-26 | alan | Codex
+**Task:** AD2 extension requested by Alan: Google and X sign-in / account linking
+**Status:** in progress
+**What I did:**
+- Alan explicitly prioritized this over AL2 and confirmed Supabase instead of Firebase. Edited mobile auth/screens (Adam's area) for this requested extension.
+- Added Google and X OAuth 2.0 sign-in, gated by live enabled providers, and a Sign-in accounts card using manual identity linking with server-verified identities.
+- Existing Supabase account-creation trigger/onboarding stays in use; added `x` to onboarding enforcement coverage. Identity only, no new data ingestion.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .` both pass. See `docs/google-x-auth.md` for setup and physical-phone checks.
+**Next step for whoever continues:** Configure Google and X OAuth apps and credentials in Supabase; enable Allow manual linking; complete the phone checks in docs/google-x-auth.md. Run onboarding guard and bundle checks before final handoff.
+**Known issues / blockers:** Provider credentials/developer apps not yet supplied; no end-to-end Google/X sign-in claimed. Firebase was not added (Alan chose Supabase).
+**Contract changes:** none
+
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 ## 2026-09-26 10:00 | akshar | Claude Code (Opus 5.5)

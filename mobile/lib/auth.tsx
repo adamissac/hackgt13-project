@@ -61,7 +61,7 @@ export async function completeAuthFromUrl(url: string): Promise<Session | null> 
 
 /** Shared OAuth handshake: open the provider in an in-app auth session, then trade the code. */
 async function signInWithProvider(
-  provider: 'linkedin_oidc' | 'github',
+  provider: 'linkedin_oidc' | 'github' | 'google' | 'x',
   options?: { scopes?: string },
 ): Promise<Session | null> {
   console.log(`[auth] ${provider} sign-in, return URL`, redirectTo);
@@ -88,6 +88,38 @@ async function signInWithProvider(
 /** LinkedIn OIDC through Supabase, in an in-app auth session. */
 export async function signInWithLinkedIn(): Promise<void> {
   await signInWithProvider('linkedin_oidc');
+}
+
+/** X OAuth 2.0 (not the deprecated Twitter OAuth 1.0 provider). */
+export async function signInWithX(): Promise<void> {
+  await signInWithProvider('x');
+}
+
+export async function signInWithGoogle(): Promise<void> {
+  await signInWithProvider('google');
+}
+
+/** Add a login identity to the current user, without creating a second app account. */
+export async function connectLoginProvider(provider: 'google' | 'x'): Promise<boolean> {
+  const { data: before, error: userError } = await supabase.auth.getUser();
+  if (userError) throw userError;
+  if (!before.user) throw new Error('Sign in before connecting an account.');
+  const { data, error } = await supabase.auth.linkIdentity({
+    provider,
+    options: { redirectTo, skipBrowserRedirect: true },
+  });
+  if (error) throw error;
+  if (!data.url) throw new Error('Could not open the account connection. Try again.');
+  const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+  if (result.type === 'success') await completeAuthFromUrl(result.url);
+
+  // A pre-existing session is not proof of linking: read the verified identities from Auth.
+  const { data: after, error: refreshError } = await supabase.auth.getUser();
+  if (refreshError) throw refreshError;
+  if (after.user?.id !== before.user.id) throw new Error('Account changed. Please reopen your profile.');
+  const linked = after.user.identities?.some((identity) => identity.provider === provider) ?? false;
+  if (!linked && result.type === 'success') throw new Error('The account was not connected. Please try again.');
+  return linked;
 }
 
 /** GitHub through Supabase Auth.

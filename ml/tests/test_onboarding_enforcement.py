@@ -16,7 +16,7 @@ WARNING = "Every new-account creation path, regardless of auth provider, MUST"
 
 # Every provider the app can create accounts with (Supabase Auth `provider` values). All of them insert
 # into auth.users, so all of them hit the same trigger. Keep in sync with supabase/config.toml + mobile/lib/auth.tsx.
-AUTH_PROVIDERS = ["email", "linkedin_oidc", "magic_link", "github", "google", "sso"]
+AUTH_PROVIDERS = ["email", "linkedin_oidc", "magic_link", "github", "google", "x", "sso"]
 
 
 def _sql() -> str:

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
+import { LoginConnections } from '@/components/LoginConnections';
 import { AiBadge, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { connectGithub, signInLabel, uploadResume, waitForJob } from '@/lib/accounts';
 import { api, type AccountsResponse, type ManualProfile, type ProfileSource } from '@/lib/api';
@@ -115,6 +116,8 @@ export default function AccountsScreen() {
             </Text>
           )}
         </Card>
+
+        <LoginConnections />
 
         <SectionTitle right={<AiBadge label="Builds your interests" />}>Your sources</SectionTitle>
 
