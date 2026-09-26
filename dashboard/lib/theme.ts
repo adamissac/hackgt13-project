@@ -23,6 +23,8 @@ export interface Palette {
   link: string;
   linkStrong: string;
   facet: Record<Facet, string>;
+  cluster: [string, string, string];
+  clusterOther: string;
 }
 
 export const LIGHT: Palette = {
@@ -39,6 +41,8 @@ export const LIGHT: Palette = {
   link: "rgba(11,11,11,0.14)",
   linkStrong: "rgba(11,11,11,0.45)",
   facet: { technical: "#2a78d6", career: "#eda100", personal: "#e87ba4", academic: "#008300" },
+  cluster: ["#2a78d6", "#eb6834", "#1baf7a"],
+  clusterOther: "#c3c2b7",
 };
 
 export const DARK: Palette = {
@@ -55,7 +59,17 @@ export const DARK: Palette = {
   link: "rgba(255,255,255,0.14)",
   linkStrong: "rgba(255,255,255,0.5)",
   facet: { technical: "#3987e5", career: "#c98500", personal: "#d55181", academic: "#008300" },
+  cluster: ["#3987e5", "#d95926", "#199e70"],
+  clusterOther: "#52514e",
 };
+
+/**
+ * Cluster mode: only the 3 largest clusters get a hue (the reference palette's first 3 slots are the
+ * only set that validates all-pairs in both modes); the rest fold into "other" gray.
+ */
+export function clusterColor(p: Palette, slot: number | undefined): string {
+  return slot === undefined ? p.clusterOther : p.cluster[slot] ?? p.clusterOther;
+}
 
 export const FACET_SHAPE: Record<Facet, "circle" | "square" | "diamond" | "triangle"> = {
   technical: "circle",

@@ -1,10 +1,11 @@
-"""Write docs/mocks/graph_matches.json and docs/mocks/graph_network.json for the dashboard (AR4).
+"""Write docs/mocks/graph_matches.json, graph_network.json, graph_expand.json (AR4/AR5).
 
-PROVISIONAL shape: MASTER_SPEC Section 9's /graph example isn't in the repo yet. When it lands,
-align these files (and dashboard/lib/types.ts) to it. Scores here are a quick IDF-weighted overlap,
-not the real V1 scorer, so run it without sentence-transformers:
+Shape = MASTER_SPEC Section 9 `GET /graph` (nodes + edges; ids "me", "u_*", "t_*"; edge kinds
+match | connection | has_topic), plus additive display fields documented in docs/api.md.
+Scores are a quick IDF-weighted overlap, not the real V1 scorer, so this runs without
+sentence-transformers:
 
-    cd ml && .venv/bin/python scripts/make_graph_mocks.py
+    cd ml && .venv/bin/python scripts/make_graph_mocks.py && cd ../dashboard && npm run sync-mocks
 """
 import json
 import math
@@ -14,14 +15,16 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from ml.synth import make_population  # noqa: E402
+from ml.synth import ARCHETYPES, make_population  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "mocks")
 MAX_PEOPLE = 30
+EXPAND_TOPIC = "reinforcement learning"
 random.seed(4)
 
 people = make_population(n=120, seed=21)
-me = {"id": "self", "name": "You", "role": "student", "raw_interests": [
+CLUSTER = {k: i for i, k in enumerate(ARCHETYPES)}
+me = {"id": "me", "name": "You", "role": "student", "raw_interests": [
     {"name": n, "facet": f, "strength": s, "evidence": e} for n, f, s, e in [
         ("reinforcement learning", "technical", 0.95, "Built an RL trading agent (repo: rl-trader)"),
         ("time series analysis", "technical", 0.8, "Forecasting coursework and a Kaggle notebook"),
@@ -38,6 +41,7 @@ N = len(people) + 1
 df = Counter(i["name"] for p in people + [me] for i in {x["name"]: x for x in p["raw_interests"]}.values())
 idf = {k: math.log((N + 1) / (v + 1)) + 0.1 for k, v in df.items()}
 facet_of = {i["name"]: i["facet"] for p in people + [me] for i in p["raw_interests"]}
+topic_ids = {name: f"t_{i + 1}" for i, name in enumerate(sorted(facet_of))}
 
 
 def weights(p):
@@ -53,67 +57,106 @@ mine = weights(me)
 def score(p):
     theirs = weights(p)
     shared = set(mine) & set(theirs)
-    num = sum(min(mine[s], theirs[s]) * idf[s] for s in shared)
+    contrib = {s: min(mine[s], theirs[s]) * idf[s] for s in shared}
     den = sum(mine[s] * idf[s] for s in mine) or 1
     bonus = 0.12 if p["role"] == "recruiter" and "quantitative research" in theirs else 0
-    return min(0.97, num / den * 1.6 + bonus), sorted(shared, key=lambda s: -min(mine[s], theirs[s]) * idf[s])
+    return min(0.97, sum(contrib.values()) / den * 1.6 + bonus), sorted(shared, key=lambda s: -contrib[s]), contrib
 
 
-def first_last(name):
-    return name
+def dominant_facet(contrib):
+    by = Counter()
+    for s, c in contrib.items():
+        by[facet_of[s]] += c
+    return by.most_common(1)[0][0] if by else "technical"
 
 
-ranked = sorted(((score(p), p) for p in people), key=lambda t: -t[0][0])[:MAX_PEOPLE]
-cut = sorted(s for (s, _), _p in ranked)[int(0.8 * len(ranked))]
+scored = sorted(((score(p), p) for p in people), key=lambda t: -t[0][0])
+candidates = [t for t in scored if t[0][1]]
+# hold two mid-ranked people who share EXPAND_TOPIC back, so expanding that topic pulls them in (demo 12.1)
+held = [t for t in candidates[10:] if EXPAND_TOPIC in t[0][1]][:2]
+ranked = [t for t in candidates if t not in held][:MAX_PEOPLE]
+in_view = {p["id"] for _, p in ranked}
+cut = sorted(s for (s, _, _), _p in ranked)[int(0.8 * len(ranked))]
 
 
-def build(mode):
-    nodes = [{"id": "self", "type": "self", "label": "You", "role": "student"}]
-    links, topic_ids = [], {}
+def uid(p):
+    return "u_" + p["id"].lstrip("u")
 
-    def topic(name):
-        if name not in topic_ids:
-            topic_ids[name] = f"t:{name}"
-            nodes.append({"id": topic_ids[name], "type": "topic", "label": name, "facet": facet_of[name],
-                          "idf": round(idf[name], 2)})
+
+def topic_node(name):
+    return {"id": topic_ids[name], "type": "topic", "label": name, "facet": facet_of[name], "idf": round(idf[name], 2)}
+
+
+def person_node(p, s, shared, contrib, rank, mode):
+    theirs = weights(p)
+    first = p["name"].split()[0]
+    node = {"id": uid(p), "type": "person", "label": first, "name": p["name"], "role": p["role"],
+            "score": round(s, 3), "highlight": s >= cut, "open_to_meet": False, "cluster": CLUSTER[p["archetype"]],
+            "connected": mode == "network", "connected_at": None, "top_topic": shared[0],
+            "why": shared[:3], "topics": sorted(theirs, key=lambda k: -theirs[k])[:8],
+            "shared_count": len(shared), "rank": rank, "photo_url": None}
+    if mode == "matches":
+        node["open_to_meet"] = random.random() < 0.25
+    else:
+        node["highlight"] = False
+        hour = 10 + (rank * 37) % 14
+        day = 26 if rank % 3 else 27
+        node["connected_at"] = f"2026-09-{day}T{hour:02d}:{(rank * 13) % 60:02d}:00-04:00"
+        node["met_at"] = "HackGT 13"
+        node["how_met"] = "invite" if rank % 5 == 0 else "in_person"
+    return node
+
+
+def build(mode, chosen):
+    nodes = [{"id": "me", "type": "self", "label": "You"}]
+    edges, seen_topics = [], set()
+
+    def add_topic(name):
+        if name not in seen_topics:
+            seen_topics.add(name)
+            nodes.append(topic_node(name))
         return topic_ids[name]
 
     for name, w in sorted(mine.items(), key=lambda kv: -kv[1]):
-        links.append({"source": "self", "target": topic(name), "kind": "interest", "weight": w,
-                      "facet": facet_of[name]})
-
-    chosen = ranked if mode == "matches" else ranked[:14]
-    for rank, ((s, shared), p) in enumerate(chosen, 1):
-        if not shared:
-            continue
+        edges.append({"source": "me", "target": add_topic(name), "kind": "has_topic", "weight": w})
+    for rank, ((s, shared, contrib), p) in enumerate(chosen, 1):
         theirs = weights(p)
-        node = {"id": p["id"], "type": "person", "label": p["name"], "role": p["role"],
-                "score": round(s, 3), "why": shared[:3], "top_topic": shared[0],
-                "topics": sorted(theirs, key=lambda k: -theirs[k])[:8], "photo_url": None}
-        if mode == "matches":
-            node.update(rank=rank, highlight=s >= cut, open_to_meet=random.random() < 0.25)
-        else:
-            day = random.choice([0, 0, 0, 1, 1, 2])
-            node.update(connected_at=f"2026-09-{26 + day // 2:02d}T{10 + (rank * 37) % 12:02d}:{(rank * 13) % 60:02d}:00-04:00",
-                        met_at="HackGT 13", via=random.choice(["in_person", "in_person", "in_person", "invite"]))
-        nodes.append(node)
-        links.append({"source": "self", "target": p["id"], "kind": "suggested" if mode == "matches" else "connection",
-                      "weight": round(s, 3)})
+        nodes.append(person_node(p, s, shared, contrib, rank, mode))
+        edges.append({"source": "me", "target": uid(p), "kind": "match" if mode == "matches" else "connection",
+                      "weight": round(s, 3), "facet": dominant_facet(contrib)})
         for t in shared[:4]:
-            links.append({"source": p["id"], "target": topic(t), "kind": "interest", "weight": theirs[t],
-                          "facet": facet_of[t]})
-    # topics only the viewer has and nobody in view shares stay (they're the viewer's own profile)
-    return {"mode": mode, "event_id": 1, "self_id": "self", "generated_at": "2026-09-26T12:00:00-04:00",
-            "synthetic": True, "nodes": nodes, "links": links}
+            edges.append({"source": uid(p), "target": add_topic(t), "kind": "has_topic", "weight": theirs[t]})
+    return {"mode": mode, "event_id": 1, "self_id": "me", "generated_at": "2026-09-26T12:00:00-04:00",
+            "synthetic": True, "nodes": nodes, "edges": edges}
+
+
+def build_expand():
+    """GET /graph/expand?node_id=<topic>: two more allowed people who share the topic, ranked by score."""
+    extra = held
+    nodes, edges = [], []
+    for i, ((s, shared, contrib), p) in enumerate(extra, 1):
+        nodes.append(person_node(p, s, shared or [EXPAND_TOPIC], contrib, MAX_PEOPLE + i, "matches"))
+        edges.append({"source": "me", "target": uid(p), "kind": "match", "weight": round(s, 3),
+                      "facet": dominant_facet(contrib) if contrib else "technical"})
+        edges.append({"source": uid(p), "target": topic_ids[EXPAND_TOPIC], "kind": "has_topic",
+                      "weight": weights(p)[EXPAND_TOPIC]})
+    return {"node_id": topic_ids[EXPAND_TOPIC], "mode": "matches", "event_id": 1, "synthetic": True,
+            "nodes": nodes, "edges": edges}
+
+
+def check(g):
+    """Privacy invariant: no person-person edges; every person edge touches `me`."""
+    people_ids = {n["id"] for n in g["nodes"] if n["type"] == "person"}
+    for e in g["edges"]:
+        assert not (e["source"] in people_ids and e["target"] in people_ids), e
 
 
 os.makedirs(OUT, exist_ok=True)
-for mode, fname in [("matches", "graph_matches.json"), ("network", "graph_network.json")]:
-    g = build(mode)
-    # privacy invariant: no person-person edge except to self
-    people_ids = {n["id"] for n in g["nodes"] if n["type"] == "person"}
-    assert not any(l["source"] in people_ids and l["target"] in people_ids for l in g["links"])
+network_pool = [t for t in ranked if int(t[1]["id"].lstrip("u")) % 2 == 0][:14]
+for fname, g in [("graph_matches.json", build("matches", ranked)),
+                 ("graph_network.json", build("network", network_pool)),
+                 ("graph_expand.json", build_expand())]:
+    check(g)
     with open(os.path.join(OUT, fname), "w") as f:
         json.dump(g, f, indent=1)
-    kinds = Counter(n["type"] for n in g["nodes"])
-    print(f"{fname}: {dict(kinds)}, {len(g['links'])} links")
+    print(f"{fname}: {dict(Counter(n['type'] for n in g['nodes']))}, {len(g['edges'])} edges")
