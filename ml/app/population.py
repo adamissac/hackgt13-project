@@ -16,6 +16,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from ml.config import FACETS
+from ml.embed import embed
 from ml.profiles import build_vectors
 
 from . import db
@@ -82,6 +83,12 @@ def compute_idf(people: list[dict], interest_ids) -> dict:
 
 def build(user_ids: list[str]) -> tuple[list[dict], Index]:
     people, names, facets, vecs = load_people(user_ids)
+    # build_vectors embeds each summary / seeking / offering one sentence at a time. On a cold process
+    # (every Railway redeploy) that was ~6 model calls x ~80 people = ~96 s. One batched call fills the
+    # embed() cache first, so build_vectors only hits the cache. Same vectors, same results.
+    texts = [t for p in people for t in (*p["summary"].values(), p["seeking"], p["offering"]) if t]
+    if texts:
+        embed(texts)
     index = Index(names, facets, vecs, compute_idf(people, names.keys()))
     for p in people:
         build_vectors(p, index)
@@ -111,6 +118,7 @@ class EventModel:
 
 
 _events: dict[int, EventModel] = {}
+_build_locks: dict[int, threading.Lock] = {}   # one build per event at a time; concurrent callers reuse it
 _clusters: dict[int, dict] = {}         # event_id -> {user_id: label}, refreshed every 5 minutes
 _layouts: dict[int, dict] = {}          # event_id -> {user_id: (x, y)} 2-D UMAP, refreshed with the clusters
 
@@ -130,6 +138,18 @@ def event_model(event_id: int) -> EventModel:
     if cached and cached.version == _version and cached.ids == ids:
         cached.cluster = _clusters.get(event_id, {})
         return cached
+    with _lock:
+        build_lock = _build_locks.setdefault(event_id, threading.Lock())
+    with build_lock:
+        # Another request may have finished the same build while this one waited (phones poll every 15 s).
+        cached = _events.get(event_id)
+        if cached and cached.version == _version and cached.ids == ids:
+            cached.cluster = _clusters.get(event_id, {})
+            return cached
+        return _build_event(event_id, ids)
+
+
+def _build_event(event_id: int, ids: tuple) -> EventModel:
     v = _version
     t0 = time.time()
     people, index = build(list(ids))
