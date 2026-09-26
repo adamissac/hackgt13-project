@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HeaderActions } from '@/components/HeaderActions';
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
+import { AiBadge, Avatar, Button, Card, Chip, firstName, SectionTitle, useColors } from '@/components/ui';
 import { listChats } from '@/features/chat/store';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
@@ -160,14 +160,14 @@ function UpNext({ state, onRetry }: { state: ReturnType<typeof useAsync<NextData
 
 function PendingCard({ item }: { item: PendingConversation }) {
   const c = useColors();
-  const firstName = item.other.name.split(' ')[0];
+  const first = firstName(item.other.name);
   return (
     <Card highlight>
       <Chip label="✓ Conversation verified" tone="success" />
       <View style={styles.personRow}>
         <Avatar name={item.other.name} size={52} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.cardTitle, { color: c.text }]}>How did it go with {firstName}?</Text>
+          <Text style={[styles.cardTitle, { color: c.text }]}>How did it go with {first}?</Text>
           <Text style={[styles.small, { color: c.muted }]}>
             {item.minutes ? `You talked for about ${Math.round(item.minutes)} minutes. ` : ''}They only hear back if you both want to connect.
           </Text>
@@ -181,7 +181,7 @@ function PendingCard({ item }: { item: PendingConversation }) {
 function MutualCard({ meetup }: { meetup: Meetup }) {
   const c = useColors();
   const [opening, setOpening] = useState(false);
-  const firstName = meetup.other.name.split(' ')[0];
+  const first = firstName(meetup.other.name);
   const openChat = async () => {
     setOpening(true);
     try {
@@ -205,7 +205,7 @@ function MutualCard({ meetup }: { meetup: Meetup }) {
       <View style={styles.buttons}>
         <Button label="Message" variant="secondary" onPress={openChat} loading={opening} style={{ flex: 1 }} />
         <Button
-          label={`Find ${firstName}`}
+          label={`Find ${first}`}
           onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(meetup.suggestion_id) } })}
           style={{ flex: 1 }}
         />

@@ -47,7 +47,7 @@ export function buildView(g: GraphResponse): GraphView {
     .filter((n): n is GraphPerson => n.type === 'person')
     .map((p) => {
       const shared = (personTopics.get(p.id) ?? []).sort((a, b) => b.w - a.w).map((t) => t.label);
-      const name = p.name ?? p.label;
+      const name = p.name || p.label || '?';
       return {
         id: p.id,
         userId: p.id.replace(/^u_/, ''),

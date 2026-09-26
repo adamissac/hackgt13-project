@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, Chip, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Chip, firstName, useColors } from '@/components/ui';
 import { metLine } from '@/features/checklist/met';
 import { listChats } from '@/features/chat/store';
 import { api, type Connection } from '@/lib/api';
@@ -78,7 +78,7 @@ export default function ConnectionsScreen() {
                 label="✦ Ask AI"
                 variant="secondary"
                 onPress={() =>
-                  router.push({ pathname: '/assistant', params: { q: `How should I follow up with ${person.name.split(' ')[0]}?` } })
+                  router.push({ pathname: '/assistant', params: { q: `How should I follow up with ${firstName(person.name)}?` } })
                 }
                 style={{ flex: 1 }}
               />

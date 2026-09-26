@@ -25,7 +25,13 @@ export function Card({ children, style, highlight }: { children: ReactNode; styl
 
 const AVATAR_HUES = ['#536E5B', '#667A80', '#89745B', '#796C77', '#667247', '#8B6253'];
 
-export function Avatar({ name, size = 48 }: { name: string; size?: number }) {
+/** First name for copy like "Find Maya"; accounts made with email sign-in can have no name yet. */
+export function firstName(name: string | null | undefined, fallback = 'them'): string {
+  return name?.trim().split(/\s+/)[0] || fallback;
+}
+
+export function Avatar({ name: rawName, size = 48 }: { name: string | null | undefined; size?: number }) {
+  const name = rawName?.trim() || '?';
   const initials = name
     .split(/\s+/)
     .map((p) => p[0])

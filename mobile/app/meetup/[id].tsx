@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, useColors } from '@/components/ui';
+import { Avatar, Button, Card, firstName, useColors } from '@/components/ui';
 import { arrowDeg, bearingDeg, compassWord, distanceBand, distanceM, type LatLng } from '@/features/location/geo';
 import { api, type LocationShareState } from '@/lib/api';
 import { env } from '@/lib/env';
@@ -140,8 +140,8 @@ export default function MeetupScreen() {
   if (!info && !loadError && phase !== 'ended') return <Loading label="Opening meetup…" />;
   if (loadError && !info) return <ErrorState message={loadError} onRetry={refresh} />;
 
-  const name = info?.other.name ?? 'them';
-  const first = name.split(' ')[0];
+  const name = info?.other.name || 'them';
+  const first = firstName(name);
   const them = info?.their_location ?? null;
   const expiresIn = info?.expires_at ? Math.max(0, Date.parse(info.expires_at) - now) : null;
   const theirAge = them ? Math.round((now - Date.parse(them.updated_at)) / 1000) : null;
@@ -242,7 +242,7 @@ function Ended({ otherId, name }: { otherId: string | null; name: string }) {
       .then((r) => setPending(r.conversations.find((x) => x.other.user_id === otherId)?.conversation_id ?? null))
       .catch(() => undefined);
   }, [otherId]);
-  const first = name.split(' ')[0];
+  const first = firstName(name);
   return (
     <View style={[styles.center, { backgroundColor: c.background }]}>
       <Stack.Screen options={{ title: 'Find each other' }} />

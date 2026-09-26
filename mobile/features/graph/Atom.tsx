@@ -64,7 +64,7 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors }: {
             accessibilityLabel={`View ${p.name}, ${p.shared[0] ?? 'shared interests'}`} accessibilityState={{ selected }}
             style={({ pressed }) => ({ position: 'absolute', left: n.x - 45, top: n.y - 24, width: 90, minHeight: 76, alignItems: 'center', gap: 6, opacity: pressed ? 0.7 : 1 })}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: colors.surface, borderWidth: selected ? 3 : 2, borderColor: colorOf(p), alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: colorOf(p), fontSize: 16, fontWeight: '600' }}>{p.name.split(/\s+/).slice(0, 2).map((s) => s[0]).join('')}</Text>
+              <Text style={{ color: colorOf(p), fontSize: 16, fontWeight: '600' }}>{(p.name || '?').split(/\s+/).slice(0, 2).map((s) => s[0]).join('')}</Text>
             </View>
             <Text numberOfLines={1} style={{ maxWidth: 90, color: colors.text, fontSize: 13, fontWeight: '600', backgroundColor: colors.surface, paddingHorizontal: 4 }}>{p.first}</Text>
           </Pressable>

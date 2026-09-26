@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
+import { AiBadge, Avatar, Button, Card, Chip, firstName, SectionTitle, useColors } from '@/components/ui';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { StageTracker } from '@/features/relationship/StageTracker';
 import { stageLabel, type Relationship } from '@/features/relationship/stage';
@@ -40,7 +40,7 @@ export default function MatchScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      <Stack.Screen options={{ title: p.name.split(' ')[0] }} />
+      <Stack.Screen options={{ title: firstName(p.name, 'Profile') }} />
 
       <View style={styles.header}>
         <Avatar name={p.name} size={80} />
@@ -107,7 +107,7 @@ function Actions({ rel, name }: { rel: Relationship; name: string }) {
   const presence = useOpenToMeet();
   const [busy, setBusy] = useState<'yes' | 'no' | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const firstName = name.split(' ')[0];
+  const first = firstName(name);
 
   const respond = async (response: 'yes' | 'no') => {
     if (!rel.suggestion_id || busy) return;
@@ -148,7 +148,7 @@ function Actions({ rel, name }: { rel: Relationship; name: string }) {
         <View style={styles.buttons}>
           <Button label="Message" variant="secondary" onPress={openChat} style={{ flex: 1 }} />
           <Button
-            label={rel.stage === 'MEETUP_IN_PROGRESS' ? 'Keep finding' : `Find ${firstName}`}
+            label={rel.stage === 'MEETUP_IN_PROGRESS' ? 'Keep finding' : `Find ${first}`}
             onPress={() => rel.suggestion_id && router.push({ pathname: '/meetup/[id]', params: { id: String(rel.suggestion_id) } })}
             style={{ flex: 1 }}
           />
@@ -174,7 +174,7 @@ function Actions({ rel, name }: { rel: Relationship; name: string }) {
   return (
     <Card highlight={rel.stage !== 'DISCOVERED' && rel.stage !== 'DECLINED'}>
       <StageTracker stage={rel.stage} />
-      <Text style={[styles.status, { color: c.text }]}>{stageLabel(rel.stage, firstName)}</Text>
+      <Text style={[styles.status, { color: c.text }]}>{stageLabel(rel.stage, first)}</Text>
       {body}
       {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
     </Card>
@@ -186,7 +186,7 @@ function Icebreakers({ userId, name }: { userId: string; name: string }) {
   const [variant, setVariant] = useState(0);
   const [copied, setCopied] = useState(false);
   const starters = useAsync(() => api.starters(userId), [userId]);
-  const firstName = name.split(' ')[0];
+  const first = firstName(name);
   const openers = starters.state.status === 'ready' ? starters.state.data.openers : [];
   const opener = openers.length ? openers[variant % openers.length] : null;
 
@@ -225,7 +225,7 @@ function Icebreakers({ userId, name }: { userId: string; name: string }) {
             <Button
               label="Ask AI"
               variant="secondary"
-              onPress={() => router.push({ pathname: '/assistant', params: { q: `What should I ask ${firstName}?` } })}
+              onPress={() => router.push({ pathname: '/assistant', params: { q: `What should I ask ${first}?` } })}
               style={{ flex: 1 }}
             />
           </View>

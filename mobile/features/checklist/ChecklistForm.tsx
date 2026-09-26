@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Avatar, Button, Card, useColors } from '@/components/ui';
+import { Avatar, Button, Card, firstName, useColors } from '@/components/ui';
 import { api, type ConversationFeedbackResponse } from '@/lib/api';
 
 // Post-conversation checklist (AD8, MASTER_SPEC 3.6). A yes looks the same until both say yes.
@@ -86,7 +86,7 @@ export function ChecklistForm({
           <Card>
             <Text style={[styles.body, { color: c.text }]}>A private chat is open. A follow-up note is ready if you want to send one.</Text>
             <Button
-              label={`Chat with ${connected.connection.name.split(' ')[0]}`}
+              label={`Chat with ${firstName(connected.connection.name)}`}
               onPress={() =>
                 router.push({
                   pathname: '/chat/[id]',

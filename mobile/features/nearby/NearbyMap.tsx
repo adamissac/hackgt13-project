@@ -75,7 +75,7 @@ export function NearbyMap({ peers, selectedId, onSelect }: { peers: Peer[]; sele
                   <Text style={styles.pinText}>{initials(p.name)}</Text>
                 </View>
                 <View style={[styles.pinLabel, { backgroundColor: c.surface }]}>
-                  <Text style={[styles.pinName, { color: c.text }]} numberOfLines={1}>{p.name.split(' ')[0]}</Text>
+                  <Text style={[styles.pinName, { color: c.text }]} numberOfLines={1}>{(p.name || 'Someone').split(' ')[0]}</Text>
                 </View>
               </View>
             </Marker>
@@ -91,8 +91,8 @@ export function NearbyMap({ peers, selectedId, onSelect }: { peers: Peer[]; sele
   );
 }
 
-function initials(name: string) {
-  return name.split(/\s+/).map((w) => w[0] ?? '').join('').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
+function initials(name: string | null | undefined) {
+  return (name || '?').split(/\s+/).map((w) => w[0] ?? '').join('').replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
 }
 
 const styles = StyleSheet.create({

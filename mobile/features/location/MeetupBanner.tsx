@@ -2,7 +2,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Avatar, Button, Card, useColors } from '@/components/ui';
+import { Avatar, Button, Card, firstName, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 
@@ -17,12 +17,12 @@ export function MeetupBanner() {
           <View style={styles.row}>
             <Avatar name={m.other.name} size={48} />
             <View style={styles.flex}>
-              <Text style={[styles.title, { color: c.text }]}>You&apos;re meeting {m.other.name}</Text>
+              <Text style={[styles.title, { color: c.text }]}>You&apos;re meeting {m.other.name || 'your match'}</Text>
               <Text style={[styles.small, { color: c.muted }]}>Share locations for 30 minutes to find each other.</Text>
             </View>
           </View>
           <Button
-            label={`Find ${m.other.name.split(' ')[0]}`}
+            label={`Find ${firstName(m.other.name)}`}
             onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(m.suggestion_id) } })}
           />
         </Card>
