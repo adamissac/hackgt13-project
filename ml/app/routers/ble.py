@@ -57,9 +57,9 @@ def window_start(t: datetime) -> datetime:
 
 class BleStore(Protocol):
     def tokens_for_user(self, user_id: str, start: datetime, end: datetime) -> List[Dict]: ...
-    def token_exists(self, token: str) -> bool: ...
+    def existing_tokens(self, tokens: List[str]) -> set: ...
     def insert_tokens(self, rows: List[Dict]) -> None: ...
-    def resolve_token(self, token: str, ts: datetime) -> Optional[str]: ...
+    def token_rows(self, tokens: List[str]) -> Dict[str, Dict]: ...
     def insert_sightings(self, rows: List[Dict]) -> None: ...
     def delete_sightings_before(self, cutoff: datetime) -> int: ...
     def delete_tokens_before(self, cutoff: datetime) -> int: ...
@@ -77,16 +77,15 @@ class MemoryBleStore:
                 if r["user_id"] == user_id and r["valid_to"] > start and r["valid_from"] < end]
         return sorted(rows, key=lambda r: r["valid_from"])
 
-    def token_exists(self, token):
-        return token in self.tokens
+    def existing_tokens(self, tokens):
+        return {t for t in tokens if t in self.tokens}
 
     def insert_tokens(self, rows):
         for r in rows:
             self.tokens[r["token"]] = dict(r)
 
-    def resolve_token(self, token, ts):
-        r = self.tokens.get(token)
-        return r["user_id"] if r and r["valid_from"] <= ts < r["valid_to"] else None
+    def token_rows(self, tokens):
+        return {t: self.tokens[t] for t in set(tokens) if t in self.tokens}
 
     def insert_sightings(self, rows):
         self.sightings.extend(dict(r) for r in rows)
@@ -112,25 +111,27 @@ class PgBleStore:
                            "where user_id = %s and valid_to > %s and valid_from < %s order by valid_from",
                            (user_id, start, end))
 
-    def token_exists(self, token):
-        return db.fetchone("select 1 as ok from ephemeral_ids where token = %s", (token,)) is not None
+    # Every method is ONE round trip: Railway -> Supabase is ~150 ms per query, so per-row queries turned a
+    # 144-token batch into ~290 round trips (40+ s) and starved the connection pool.
+    def existing_tokens(self, tokens):
+        return {r["token"] for r in db.fetchall("select token from ephemeral_ids where token = any(%s)", (list(tokens),))}
 
     def insert_tokens(self, rows):
-        with db.conn() as c:
-            with c.cursor() as cur:
-                cur.executemany("insert into ephemeral_ids (token, user_id, valid_from, valid_to) "
-                                "values (%(token)s, %(user_id)s, %(valid_from)s, %(valid_to)s)", rows)
+        db.execute("insert into ephemeral_ids (token, user_id, valid_from, valid_to) "
+                   "select * from unnest(%s::text[], %s::uuid[], %s::timestamptz[], %s::timestamptz[])",
+                   ([r["token"] for r in rows], [r["user_id"] for r in rows],
+                    [r["valid_from"] for r in rows], [r["valid_to"] for r in rows]))
 
-    def resolve_token(self, token, ts):
-        row = db.fetchone("select user_id from ephemeral_ids where token = %s and valid_from <= %s and %s < valid_to",
-                          (token, ts, ts))
-        return str(row["user_id"]) if row else None
+    def token_rows(self, tokens):
+        return {r["token"]: r for r in db.fetchall(
+            "select token, user_id::text as user_id, valid_from, valid_to from ephemeral_ids where token = any(%s)",
+            (list(set(tokens)),))}
 
     def insert_sightings(self, rows):
-        with db.conn() as c:
-            with c.cursor() as cur:
-                cur.executemany("insert into sightings (observer_id, observed_token, rssi, ts, zone_id) "
-                                "values (%(observer_id)s, %(observed_token)s, %(rssi)s, %(ts)s, %(zone_id)s)", rows)
+        db.execute("insert into sightings (observer_id, observed_token, rssi, ts, zone_id) "
+                   "select * from unnest(%s::uuid[], %s::text[], %s::smallint[], %s::timestamptz[], %s::bigint[])",
+                   ([r["observer_id"] for r in rows], [r["observed_token"] for r in rows], [r["rssi"] for r in rows],
+                    [r["ts"] for r in rows], [r["zone_id"] for r in rows]))
 
     def delete_sightings_before(self, cutoff):
         with db.conn() as c:
@@ -154,17 +155,27 @@ def issue_tokens(store: BleStore, user_id: str, now: datetime) -> List[Dict]:
     start = window_start(now)
     end = start + BATCH_SPAN
     have = {r["valid_from"]: r for r in store.tokens_for_user(user_id, start, end)}
-    new_rows = []
+    missing = []
     t = start
     while t < end:
         if t not in have:
-            tok = new_token()
-            while store.token_exists(tok) or any(r["token"] == tok for r in new_rows):
-                tok = new_token()
-            row = {"token": tok, "user_id": user_id, "valid_from": t, "valid_to": t + WINDOW}
-            new_rows.append(row)
-            have[t] = row
+            missing.append(t)
         t += WINDOW
+    # Draw candidates for every missing window, then check them all in one query; redraw only clashes.
+    chosen: Dict[datetime, str] = {}
+    todo = list(missing)
+    while todo:
+        cand = {w: new_token() for w in todo}
+        taken = store.existing_tokens(list(cand.values())) | set(chosen.values())
+        seen = set()
+        for w, tok in cand.items():
+            if tok not in taken and tok not in seen:
+                chosen[w] = tok
+                seen.add(tok)
+        todo = [w for w in todo if w not in chosen]
+    new_rows = [{"token": chosen[w], "user_id": user_id, "valid_from": w, "valid_to": w + WINDOW} for w in missing]
+    for r in new_rows:
+        have[r["valid_from"]] = r
     if new_rows:
         store.insert_tokens(new_rows)
     return [have[k] for k in sorted(have)]
@@ -209,9 +220,11 @@ def post_sightings(body: SightingsBody, user_id: str = Depends(get_user_id),
                    store: BleStore = Depends(get_ble_store)):
     now = _now()
     rows, dropped = [], 0
+    known = store.token_rows([s.token for s in body.sightings]) if body.sightings else {}
     for s in body.sightings:
         ts = s.ts if s.ts.tzinfo else s.ts.replace(tzinfo=timezone.utc)
-        owner = store.resolve_token(s.token, ts)
+        k = known.get(s.token)
+        owner = k["user_id"] if k and k["valid_from"] <= ts < k["valid_to"] else None
         # Drop: stale or future timestamps, tokens that weren't live at that time, and our own tokens.
         if ts < now - RETENTION or ts > now + MAX_CLOCK_SKEW or owner is None or owner == user_id:
             dropped += 1
