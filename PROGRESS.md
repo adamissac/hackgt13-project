@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 21:40 | adam | Claude Code
+**Task:** Assistant quality + verify resume/GitHub profile building live
+**Status:** done (GitHub OAuth callback not exercised by a real login yet)
+**What I did:**
+- Assistant (ml/app/assistant.py): new tools get_my_top_matches and get_conversation_starters; search uses the /events/{id}/matches scope; profile snapshot preloaded; sharper prompt. Demo mode calls the real model via POST /assistant/demo (no JWT, documented exception api.md 43). App renders bold + bullets.
+- GitHub manifests one folder deep (monorepos); markup languages capped. Sign-in shows only providers enabled in Supabase (LinkedIn + email today).
+- Live e2e (`ml/scripts/e2e_profile_check.py` via `npx @railway/cli run`): DOCX + PDF resumes stored/parsed, public GitHub import, 20 interests with evidence, skill profile versions, onboarding complete, live assistant answers; throwaway account deleted.
+**How to run/test it:** `cd ml && npx @railway/cli run .venv/bin/python scripts/e2e_profile_check.py <github_user>`
+**Next step for whoever continues:** On a phone: onboarding -> Connect GitHub -> finish GitHub login; confirm a linked_accounts github row. If GitHub shows a redirect_uri error, set the OAuth app callback to https://ml-production-04c0.up.railway.app/connect/github/callback.
+**Known issues / blockers:** Assistant replies 3-15 s. GitHub sign-in needs its own GitHub OAuth app enabled in Supabase Auth. CI workflow file needs `gh auth refresh -s workflow`.
+**Contract changes:** api.md 43 POST /assistant/demo
+
 ## 2026-09-26 09:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Fix crash after tap verify on the iPhones ("Cannot read property 'split' of null")
