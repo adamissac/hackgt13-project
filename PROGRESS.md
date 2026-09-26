@@ -1,3 +1,16 @@
+## 2026-09-26 11:20 | alan | Claude Code (Opus 5)
+**Task:** Google + X sign-in — Adam had already written them; fixed a slug that made the X button unreachable
+**Status:** done in code (`tsc --noEmit` clean). **Neither provider is enabled in Supabase yet**, so neither button renders.
+**What I did:**
+- Asked to add Google and Twitter sign-in, pulled first, and found Adam had already landed `signInWithGoogle()`, `signInWithX()`, `connectLoginProvider()` and the gated buttons. Did not duplicate any of it.
+- **Found a bug.** `signInWithX()` passed `'x'`, and the button was gated on `providers.x`. Current Supabase docs do say `'x'` is right for X OAuth 2.0 — but this project's `/auth/v1/settings` has **no `x` key at all**: it lists `twitter` (legacy OAuth 1.0a, disabled) alongside `google`, `github`, `linkedin_oidc`. Our GoTrue predates the `x` provider, so `providers.x` is permanently `undefined` and the X button could never render. Fails safe, but it was dead code.
+- Added `xProviderSlug(providers)` in `mobile/lib/auth.tsx`: prefers `'x'`, falls back to legacy `'twitter'`, returns `null` when neither is on. `signInWithX(slug)` takes it; `mobile/app/sign-in.tsx` gates on the resolved slug. Works whether or not the project is later upgraded — no follow-up edit needed.
+- Confirmed the one eslint error in `lib/auth.tsx` (`set-state-in-effect` in `AuthProvider`) is pre-existing, by stashing and re-running: same error at line 217 before my change, 225 after.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. Check what the server actually supports: `curl -s -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/settings | python3 -c "import json,sys;print((json.load(sys.stdin).get('external') or {}))"`.
+**Next step for whoever continues:** Enable the providers — neither is on. **Google:** create an OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth with that client id/secret. **X:** our instance only offers the legacy `twitter` provider, which needs an X developer app with OAuth 1.0a enabled and the same callback. Both then appear automatically — no code change, `enabledProviders()` picks them up.
+**Known issues / blockers:** `mobile/` is Adam's folder (`lib/auth.tsx`, `app/sign-in.tsx`). Two product notes: this is a further step away from MASTER_SPEC 65/174, which name LinkedIn as *the* sign-in identity; and the more login providers there are, the more likely one person ends up with duplicate accounts when a provider does not return a verified email that matches an existing one. Adam's `connectLoginProvider()` (links an identity to the current user) is the mitigation — worth using rather than adding more standalone sign-in paths.
+**Contract changes:** none
+
 ## 2026-09-26 06:27 | arjun | Codex
 **Task:** AR6 / AD11 — simplify navigation and restore floating AI
 **Status:** done

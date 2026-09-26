@@ -61,7 +61,7 @@ export async function completeAuthFromUrl(url: string): Promise<Session | null> 
 
 /** Shared OAuth handshake: open the provider in an in-app auth session, then trade the code. */
 async function signInWithProvider(
-  provider: 'linkedin_oidc' | 'github' | 'google' | 'x',
+  provider: 'linkedin_oidc' | 'github' | 'google' | 'x' | 'twitter',
   options?: { scopes?: string },
 ): Promise<Session | null> {
   console.log(`[auth] ${provider} sign-in, return URL`, redirectTo);
@@ -90,9 +90,20 @@ export async function signInWithLinkedIn(): Promise<void> {
   await signInWithProvider('linkedin_oidc');
 }
 
-/** X OAuth 2.0 (not the deprecated Twitter OAuth 1.0 provider). */
-export async function signInWithX(): Promise<void> {
-  await signInWithProvider('x');
+/** Current Supabase exposes X as `x` (OAuth 2.0). Older projects — including ours right now —
+ *  only list the legacy `twitter` (OAuth 1.0a) provider; `/auth/v1/settings` has no `x` key at all.
+ *  Resolve against what this project actually reports so the button is not permanently dead. */
+export type XSlug = 'x' | 'twitter';
+
+export function xProviderSlug(providers: Record<string, boolean>): XSlug | null {
+  if (providers.x) return 'x';
+  if (providers.twitter) return 'twitter';
+  return null;
+}
+
+/** X OAuth. Pass the slug from `xProviderSlug()`; defaults to the modern one. */
+export async function signInWithX(slug: XSlug = 'x'): Promise<void> {
+  await signInWithProvider(slug);
 }
 
 export async function signInWithGoogle(): Promise<void> {

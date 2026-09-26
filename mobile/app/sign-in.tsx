@@ -19,6 +19,7 @@ import {
   signInWithGoogle,
   useAuth,
   verifyEmailCode,
+  xProviderSlug,
 } from "@/lib/auth";
 
 import { Brand } from '@/components/Brand';
@@ -42,6 +43,8 @@ export default function SignInScreen() {
   useEffect(() => {
     enabledProviders().then(setProviders);
   }, []);
+  // `x` on current Supabase, legacy `twitter` on older projects; null when neither is on.
+  const xSlug = xProviderSlug(providers);
 
   const run = async (
     kind: SignInKind,
@@ -131,10 +134,10 @@ export default function SignInScreen() {
             </Pressable>
           )}
 
-          {providers.x && (
+          {xSlug && (
             <Pressable
               style={[styles.button, styles.outline, { borderColor: tint }]}
-              onPress={() => run("x", signInWithX)}
+              onPress={() => run("x", () => signInWithX(xSlug))}
               disabled={busy !== null}
               accessibilityRole="button"
             >
