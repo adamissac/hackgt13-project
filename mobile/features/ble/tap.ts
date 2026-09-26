@@ -1,6 +1,8 @@
 // "Hold your phones together" detection. Pure logic (node-testable): feed it what the engine hears each second;
 // it returns the token to claim once one phone has stayed at touching range for HOLD_MS.
-export const TAP_RSSI_DBM = -50; // same threshold as the server (ml/app/routers/tap.py)
+// "Touching": back-to-back reads about -30 to -45 dBm, charging port to port weaker (the antennas are along the
+// sides and back), 30 cm apart about -60 or below. The server only enforces a looser floor (-65, TAP_RSSI_DBM env).
+export const TAP_RSSI_DBM = -58;
 export const HOLD_MS = 2_000;
 
 export interface Heard {

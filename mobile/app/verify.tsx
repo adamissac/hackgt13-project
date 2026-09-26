@@ -8,7 +8,7 @@ import { ErrorState, Loading } from '@/components/States';
 import { Text, View, useThemeColor } from '@/components/Themed';
 import { startEngine, stopEngine, subscribe } from '@/features/ble/engine';
 import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from '@/features/ble/native';
-import { TapDetector } from '@/features/ble/tap';
+import { TAP_RSSI_DBM, TapDetector } from '@/features/ble/tap';
 import { decodeVerifyCode, encodeVerifyCode, handshakeErrorMessage } from '@/features/qr/code';
 import { Button, useColors } from '@/components/ui';
 import { ChecklistForm } from '@/features/checklist/ChecklistForm';
@@ -70,6 +70,7 @@ export default function VerifyScreen() {
 function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }) {
   const c = useColors();
   const [progress, setProgress] = useState(0);
+  const [signal, setSignal] = useState<number | null>(null); // strongest phone heard, dBm (for calibration)
   const [phase, setPhase] = useState<'looking' | 'holding' | 'waiting'>('looking');
   const [error, setError] = useState<string | null>(null);
   const available = bleAvailable();
@@ -84,6 +85,7 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
       if (snap.error) setError(snap.error);
       const d = detector.update(snap.heard, Date.now());
       setProgress(d.progress);
+      setSignal(d.rssi == null ? null : Math.round(d.rssi));
       setPhase(d.token ? 'waiting' : d.progress > 0 ? 'holding' : 'looking');
       if (!d.token || claiming || done) return;
       claiming = true; // one claim per engine tick (~1 s)
@@ -137,6 +139,9 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
       </View>
       <Text style={styles.body}>
         {phase === 'looking' ? 'Looking for the other phone…' : phase === 'holding' ? 'Keep holding…' : 'Almost there. Waiting for their phone…'}
+      </Text>
+      <Text style={styles.muted}>
+        {signal == null ? 'No phone heard yet' : `Signal ${signal} dBm (touching counts at ${TAP_RSSI_DBM} or stronger)`}
       </Text>
       {error ? <Text style={[styles.body, styles.error]}>{error}</Text> : null}
     </View>

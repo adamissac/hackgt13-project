@@ -11,6 +11,7 @@ The signed QR stays the always-available fallback.
 
 Pending claims live in process memory for TAP_WINDOW seconds (single uvicorn process for the hackathon).
 """
+import os
 import threading
 import time
 
@@ -24,7 +25,9 @@ from ..users import ensure_profile
 
 router = APIRouter(prefix="/tap", tags=["tap"])
 
-TAP_RSSI_DBM = -50    # phones touching or a few cm apart; across a table is ~-60 to -70
+# Server-side safety floor only. The app decides "touching" (mobile/features/ble/tap.ts, ~-58 dBm so that
+# charging-port-to-port contact counts, not just back-to-back). Tune on Railway without a code change.
+TAP_RSSI_DBM = int(os.getenv("TAP_RSSI_DBM", "-65"))
 TAP_WINDOW = 15.0     # seconds both claims must fall within
 _claims: dict[tuple[str, str], float] = {}   # (claimer, claimed) -> monotonic time
 _lock = threading.Lock()

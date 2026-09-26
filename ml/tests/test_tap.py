@@ -46,7 +46,7 @@ def test_one_sided_claim_never_verifies(dbclient, db, pair):
 
 def test_too_far_self_and_unknown(dbclient, db, pair):
     a, b, ta, tb = pair
-    r = claim(dbclient, a, tb, rssi=-65)
+    r = claim(dbclient, a, tb, rssi=-70)
     assert r.status_code == 400 and r.json() == {"error": "too_far"}
     assert claim(dbclient, a, ta).json() == {"error": "self_scan"}
     assert claim(dbclient, a, "zzzzzzzz").status_code == 404
