@@ -83,3 +83,46 @@ export function isGraphPayload(v: unknown): v is GraphPayload {
 export function selfId(g: GraphPayload): string {
   return g.self_id ?? g.nodes.find((n) => n.type === "self")?.id ?? "me";
 }
+
+// GET /dashboard/{event_id}: organizer community map (docs/api.md 14). Anonymous: no names, groups >= 5.
+export interface MapNode {
+  id: string;
+  x: number;
+  y: number;
+  cluster: number; // -1 = unclustered
+  role?: string;
+}
+export interface MapCluster {
+  id: number;
+  label: string;
+  size: number;
+}
+export interface MapEdge {
+  source: string;
+  target: string;
+  created_at?: string;
+}
+export interface MapGap {
+  clusters: [number, number];
+  expected: number;
+  actual: number;
+  gap: number;
+  ratio: number | null;
+  labels?: [string, string];
+}
+export interface EventMap {
+  nodes: MapNode[];
+  clusters: MapCluster[];
+  edges: MapEdge[];
+  gaps: MapGap[];
+  event_id?: number;
+  event_name?: string;
+  synthetic?: boolean;
+  generated_at?: string;
+  window?: { start: string; end: string };
+  stats?: { attendees: number; connections: number; clusters: number };
+}
+
+export function isEventMap(v: unknown): v is EventMap {
+  return isObj(v) && Array.isArray(v.nodes) && Array.isArray(v.clusters) && Array.isArray(v.edges) && Array.isArray(v.gaps);
+}

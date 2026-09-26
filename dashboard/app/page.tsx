@@ -7,6 +7,7 @@ export default function Home() {
       <p className="muted" style={{ marginTop: 0 }}>HackGT 13 dashboards</p>
       <ul style={{ lineHeight: 2, paddingLeft: 18 }}>
         <li><Link href="/graph">Connection Graph</Link></li>
+        <li><Link href="/map">Organizer community map</Link></li>
       </ul>
     </main>
   );

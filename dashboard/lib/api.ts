@@ -1,5 +1,5 @@
 import { enforceGraphPrivacy } from "./privacy";
-import { isGraphPayload, type GraphMode, type GraphPayload } from "./types";
+import { isEventMap, isGraphPayload, type EventMap, type GraphMode, type GraphPayload } from "./types";
 
 const API = process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ?? "";
 
@@ -74,4 +74,23 @@ export async function fetchExpand(
   const body = await getJson(`${API}/graph/expand?${params}`, token);
   if (!isGraphPayload(body)) throw new Error("Unexpected /graph/expand response");
   return body;
+}
+
+/** GET /dashboard/{event_id} (organizer map). Mock when no API URL is configured. */
+export async function fetchEventMap(eventId: number, signal?: AbortSignal): Promise<{ data: EventMap; source: Source }> {
+  const live = Boolean(API);
+  const body = await getJson(live ? `${API}/dashboard/${eventId}` : "/mocks/dashboard_event.json", null, signal);
+  if (!isEventMap(body)) throw new Error("Unexpected /dashboard response");
+  return { data: anonymizeMap(body), source: live ? "live" : "mock" };
+}
+
+/** Client-side guard: keep only anonymous fields, fold clusters under 5 into "unclustered". */
+export function anonymizeMap(m: EventMap): EventMap {
+  const small = new Set(m.clusters.filter((c) => c.id !== -1 && c.size < 5).map((c) => c.id));
+  return {
+    ...m,
+    nodes: m.nodes.map((n) => ({ id: n.id, x: n.x, y: n.y, cluster: small.has(n.cluster) ? -1 : n.cluster, role: n.role })),
+    clusters: m.clusters.filter((c) => !small.has(c.id)),
+    gaps: m.gaps.filter((g) => !small.has(g.clusters[0]) && !small.has(g.clusters[1])),
+  };
 }
