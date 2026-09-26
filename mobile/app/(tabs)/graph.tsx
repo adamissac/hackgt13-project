@@ -6,7 +6,8 @@ import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
 import { buildView } from '@/features/graph/model';
 import { PersonSheet } from '@/features/graph/PersonSheet';
-import { alphaFor, Globe3D } from '@/features/graph/Globe3D';
+import { alphaFor, Atom, groupByTopic } from '@/features/graph/Atom';
+import { useColorScheme } from '@/components/useColorScheme';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { useAsync } from '@/lib/useAsync';
@@ -20,11 +21,11 @@ const LIST_PREVIEW = 5;
 const COPY: Record<GraphMode, { title: string; explain: string }> = {
   matches: {
     title: 'Your people at HackGT',
-    explain: 'Your 12 best matches. The darker the color, the more you have in common. Tap anyone to see why.',
+    explain: 'You’re the center of the atom. Your 12 best matches orbit you, colored by the interest you share. Tap anyone to see why.',
   },
   network: {
     title: 'Who you’re closest to',
-    explain: 'People you’ve connected with. Darker = more in common. Tap anyone to see what you share.',
+    explain: 'Your connections orbit you, colored by what you share. The solid ones you’re closest to. Tap anyone.',
   },
 };
 
@@ -56,6 +57,11 @@ export default function GraphScreen() {
   const view = useMemo(() => (graph ? buildView(graph) : null), [graph]);
   const pool = useMemo(() => (view ? view.people.filter((p) => !topic || p.shared.includes(topic)) : []), [view, topic]);
   const featured = useMemo(() => pool.slice(0, FEATURED), [pool]);
+  const dark = useColorScheme() === 'dark';
+  const { groups, colorOf, groupOf } = useMemo(
+    () => groupByTopic(featured, view?.topics.map((t) => t.label) ?? [], dark),
+    [featured, view, dark],
+  );
   const selected = view?.people.find((p) => p.id === selectedId) ?? null;
   const topicObj = view?.topics.find((t) => t.label === topic) ?? null;
 
@@ -154,17 +160,27 @@ export default function GraphScreen() {
           )}
 
           <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-            <Globe3D size={size} people={featured} selectedId={selectedId} onSelect={setSelectedId} colors={c} />
-            <View style={styles.scale} accessibilityLabel="Color scale: faded means less similar, solid means more similar">
-              <Text style={[styles.scaleLabel, { color: c.muted }]}>Less similar</Text>
+            <Atom size={size} people={featured} colorOf={colorOf} groupOf={groupOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} />
+            <View style={styles.legend}>
+              {groups.map((g) => (
+                <View key={g.label} style={[styles.legendItem, { backgroundColor: c.surfaceAlt }]}>
+                  <View style={[styles.legendDot, { backgroundColor: g.color }]} />
+                  <Text style={[styles.legendText, { color: c.text }]} numberOfLines={1}>
+                    {g.label} <Text style={{ color: c.muted }}>{g.count}</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <View style={styles.scale} accessibilityLabel="Solid means a strong connection, see-through means weaker">
+              <Text style={[styles.scaleLabel, { color: c.muted }]}>Strong</Text>
               <View style={styles.scaleBar}>
-                {[0, 0.2, 0.4, 0.6, 0.8, 1].map((t) => (
-                  <View key={t} style={[styles.scaleStep, { backgroundColor: c.tint, opacity: alphaFor(t) }]} />
+                {[1, 0.8, 0.6, 0.4, 0.2, 0].map((t) => (
+                  <View key={t} style={[styles.scaleStep, { backgroundColor: c.text, opacity: alphaFor(t) }]} />
                 ))}
               </View>
-              <Text style={[styles.scaleLabel, { color: c.muted }]}>More similar</Text>
+              <Text style={[styles.scaleLabel, { color: c.muted }]}>Weaker</Text>
             </View>
-            <Text style={[styles.howToText, { color: c.muted }]}>Darker and closer to you = more in common · Drag to turn</Text>
+            <Text style={[styles.howToText, { color: c.muted }]}>Color = shared interest · Solid & closer = stronger · Drag to turn</Text>
           </View>
 
           {selected ? (
@@ -229,6 +245,10 @@ const styles = StyleSheet.create({
   topic: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   topicText: { fontSize: 14, fontWeight: '600' },
   chartCard: { borderRadius: 20, borderWidth: 1, alignItems: 'center', overflow: 'hidden', paddingBottom: 14, gap: 8 },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 12 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, maxWidth: '100%' },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { fontSize: 13, fontWeight: '700' },
   scale: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, alignSelf: 'stretch' },
   scaleLabel: { fontSize: 12, fontWeight: '700' },
   scaleBar: { flexDirection: 'row', flex: 1, height: 12, borderRadius: 6, overflow: 'hidden', gap: 2 },
