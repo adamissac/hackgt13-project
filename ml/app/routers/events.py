@@ -35,10 +35,11 @@ def matches(event_id: int, limit: int = Query(20, ge=1, le=100), user: User = De
     top = ranked[:limit]
     model = matching.model_name()
     matching.log_impressions(user.id, event_id, top, model)
+    bands = matching.proximity_bands(user.id, [r["id"] for r in top])
     out = []
     for r in top:
         p = m.people[r["id"]]
         out.append({"user_id": r["id"], "name": p.get("name"), "photo_url": p.get("photo_url"),
                     "role": p.get("role"), "score": round(r["score"], 4), "rank": r["rank"] + 1,
-                    "highlight": r["highlight"], "why": r["why"], "proximity": None})
+                    "highlight": r["highlight"], "why": r["why"], "proximity": bands.get(r["id"])})
     return {"event_id": event_id, "model": model, "matches": out}

@@ -143,3 +143,21 @@ def test_global_vectors_and_retention_jobs(db, event):
     db.execute("insert into sightings (observer_id, observed_token, rssi, ts) values "
                "(%s, 'old', -60, now() - interval '25 hours'), (%s, 'new', -60, now())", (u, u))
     assert tasks.run_retention()["sightings"] == 1
+
+
+def test_proximity_bands_from_recent_sightings(dbclient, db, event):
+    me = seed_person(db, "Me", [("robotics", "technical", 0.9)], event_id=event)
+    close = seed_person(db, "Close", [("robotics", "technical", 0.9)], event_id=event)
+    mid = seed_person(db, "Mid", [("robotics", "technical", 0.8)], event_id=event)
+    far = seed_person(db, "Far", [("robotics", "technical", 0.7)], event_id=event)
+    old = seed_person(db, "Old", [("robotics", "technical", 0.6)], event_id=event)
+    for uid, tok in ((me, "tme"), (close, "tc"), (mid, "tm"), (far, "tf"), (old, "to")):
+        db.execute("insert into ephemeral_ids (token, user_id, valid_from, valid_to) values "
+                   "(%s, %s, now() - interval '1 hour', now() + interval '1 hour')", (tok, uid))
+    rows = [(me, "tc", -52, 5), (me, "tc", -55, 10), (mid, "tme", -68, 5),      # mid heard ME: either direction counts
+            (me, "tf", -84, 5), (me, "to", -50, 600)]                           # 'old' only 10 minutes ago
+    for obs, tok, rssi, ago in rows:
+        db.execute("insert into sightings (observer_id, observed_token, rssi, ts) "
+                   "values (%s, %s, %s, now() - make_interval(secs => %s))", (obs, tok, rssi, ago))
+    got = {m["user_id"]: m["proximity"] for m in matches(dbclient, me, event).json()["matches"]}
+    assert got == {close: "immediate", mid: "near", far: "far", old: None}

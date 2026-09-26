@@ -31,7 +31,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 - [ ] (from alan) AK4 invites: on accept, create the connection (`how_met='invite'`, `invite_id`) and a chat with `app.social.ensure_chat(conn, a, b, "connection")` + `app.social.notify(conn, user, "connected", {...})`, and call `app.population.invalidate()`.
 
 ## alan
-- [ ] (from adam) AD10 push sender: tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.
+- [x] (from adam) AD10 push sender (done by alan: `ml/app/push.py`, worker every 5 s): tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.
 - [ ] Put server secrets in a local `.env` (never committed): DATABASE_URL, SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co, SUPABASE_JWT_SECRET (only if legacy HS256), QR_SIGNING_KEY (any long random string), ANTHROPIC_API_KEY, SUPABASE_SERVICE_KEY (for DELETE /me).
 - [ ] Run `./scripts/start-ml.sh` (Adam's script: service + cloudflared tunnel) on a laptop and share the printed URL as ML_API_URL (finishes AL1).
 - [ ] Get the team's OK, then run the four real profiles through `/profile/ingest` and tune from the `canon merge` log lines (finishes AL2).

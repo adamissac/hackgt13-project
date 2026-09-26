@@ -129,3 +129,25 @@ def is_valid_uuid(s: str) -> bool:
         return True
     except (ValueError, TypeError):
         return False
+
+
+PROXIMITY_WINDOW_S = 60
+
+
+def proximity_bands(viewer: str, others: list[str], window_s: int = PROXIMITY_WINDOW_S) -> dict[str, str]:
+    """Rough distance band per person from the last minute of Bluetooth sightings in either direction
+    (the viewer's phone hearing them, or theirs hearing the viewer). Median RSSI: > -60 dBm 'immediate',
+    -60 to -75 'near', weaker 'far'. People with no recent sightings are absent (API shows null).
+    Bands only, never distances or positions (MASTER_SPEC 3.4)."""
+    if not others:
+        return {}
+    rows = db.fetchall(
+        "select case when s.observer_id = %(v)s then e.user_id else s.observer_id end::text as other, "
+        "percentile_cont(0.5) within group (order by s.rssi) as med "
+        "from sightings s join ephemeral_ids e on e.token = s.observed_token "
+        "and (e.valid_from is null or s.ts >= e.valid_from) and (e.valid_to is null or s.ts < e.valid_to) "
+        "where s.ts > now() - make_interval(secs => %(w)s) and ("
+        "  (s.observer_id = %(v)s and e.user_id = any(%(o)s::uuid[])) or "
+        "  (e.user_id = %(v)s and s.observer_id = any(%(o)s::uuid[]))) "
+        "group by 1", {"v": viewer, "o": others, "w": window_s})
+    return {r["other"]: ("immediate" if r["med"] > -60 else "near" if r["med"] >= -75 else "far") for r in rows}

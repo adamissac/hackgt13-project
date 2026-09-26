@@ -76,3 +76,9 @@ def suggestions_tick() -> None:
 def encounters_tick() -> None:
     from . import encounters
     encounters.process()
+
+
+@every(5, "push")
+def push_tick() -> None:
+    from . import push
+    push.tick()
