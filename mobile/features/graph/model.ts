@@ -10,7 +10,7 @@ export interface Person {
   first: string;
   role: 'student' | 'recruiter';
   score: number;
-  top: boolean; // green ring: top match (or someone Open to Meet right now)
+  top: boolean; // green ring: top match
   openToMeet: boolean;
   shared: string[]; // topics you both have, strongest first
   metAt: string | null;
@@ -55,7 +55,7 @@ export function buildView(g: GraphResponse): GraphView {
         first: name.split(/\s+/)[0] ?? name,
         role: p.role ?? 'student',
         score: p.score,
-        top: p.highlight || p.open_to_meet,
+        top: p.highlight,
         openToMeet: p.open_to_meet,
         shared: shared.length ? shared : p.why ?? (p.top_topic ? [p.top_topic] : []),
         metAt: p.connected_at,
@@ -64,12 +64,14 @@ export function buildView(g: GraphResponse): GraphView {
     })
     .sort((a, b) => b.score - a.score);
 
+  const myWeight = new Map(g.edges.filter((e) => e.source === me && e.kind === 'has_topic').map((e) => [e.target, e.weight]));
   const counts = new Map<string, number>();
   people.forEach((p) => p.shared.forEach((t) => counts.set(t, (counts.get(t) ?? 0) + 1)));
   const topics: Topic[] = [...topicById.values()]
     .filter((t) => (counts.get(t.label) ?? 0) > 0)
     .map((t) => ({ id: t.id, label: t.label, facet: t.facet, count: counts.get(t.label) ?? 0 }))
-    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+    // your strongest interests first (a topic everyone shares, like "python", says less)
+    .sort((a, b) => (myWeight.get(b.id) ?? 0) - (myWeight.get(a.id) ?? 0) || a.count - b.count || a.label.localeCompare(b.label));
   return { people, topics, synthetic: Boolean(g.synthetic) };
 }
 
@@ -99,9 +101,9 @@ export interface Placed extends Person {
  */
 export function placeOnRings(people: Person[], size: number, mode: GraphMode): { placed: Placed[]; radii: number[]; hidden: number } {
   const c = size / 2;
-  const radii = [size * 0.2, size * 0.33, size * 0.46];
-  const minGap = 38; // px between dot centers (dot is ~32px wide)
-  const cap = radii.map((r) => Math.max(4, Math.floor((2 * Math.PI * r) / minGap)));
+  const radii = [size * 0.2, size * 0.32, size * 0.43];
+  // at most 20 dots so it stays readable; everyone is still in the list under the chart
+  const cap = [5, 7, 8];
 
   const strength = (p: Person) => (mode === 'network' ? p.shared.length + p.score : p.score);
   const sorted = [...people].sort((a, b) => strength(b) - strength(a));
@@ -115,9 +117,9 @@ export function placeOnRings(people: Person[], size: number, mode: GraphMode): {
   const placed: Placed[] = [];
   rings.forEach((ring, ri) => {
     const ordered = [...ring].sort((a, b) => (a.shared[0] ?? '').localeCompare(b.shared[0] ?? '') || b.score - a.score);
-    const offset = ri * 0.4 - Math.PI / 2; // start at the top, stagger rings so dots don't line up
+    // leave a gap at 12 o'clock so the ring's label stays readable
     ordered.forEach((p, i) => {
-      const a = offset + (i / Math.max(1, ordered.length)) * 2 * Math.PI;
+      const a = -Math.PI / 2 + ((i + 1) / (ordered.length + 1)) * 2 * Math.PI;
       placed.push({ ...p, ring: ri as 0 | 1 | 2, x: c + radii[ri] * Math.cos(a), y: c + radii[ri] * Math.sin(a) });
     });
   });

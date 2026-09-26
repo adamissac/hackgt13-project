@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Svg, { Circle, G, Line, Text as SvgText } from 'react-native-svg';
 
 import { useColors } from '@/components/ui';
@@ -6,6 +7,9 @@ import type { GraphMode } from '@/lib/api';
 import { RING_LABELS, type Placed } from './model';
 
 const DOT = 16;
+const FONT = Platform.OS === 'web' ? 'system-ui, -apple-system, sans-serif' : undefined;
+
+const press = (fn: () => void) => (Platform.OS === 'web' ? ({ onClick: fn } as object) : { onPress: fn });
 
 function initials(name: string) {
   return name
@@ -49,7 +53,7 @@ export function RingGraph({
       {radii.map((r, i) => (
         <G key={r}>
           <Circle cx={mid} cy={mid} r={r} stroke={c.border} strokeWidth={1} fill="none" />
-          <SvgText x={mid} y={mid - r - 4} fontSize={10} fill={c.muted} textAnchor="middle">
+          <SvgText fontFamily={FONT} x={mid} y={mid - r + 4} fontSize={11} fontWeight="600" fill={c.muted} textAnchor="middle">
             {RING_LABELS[mode][i]}
           </SvgText>
         </G>
@@ -63,7 +67,7 @@ export function RingGraph({
 
       {/* you */}
       <Circle cx={mid} cy={mid} r={22} fill={c.tint} />
-      <SvgText x={mid} y={mid + 4} fontSize={12} fontWeight="700" fill={c.onTint} textAnchor="middle">
+      <SvgText fontFamily={FONT} x={mid} y={mid + 4} fontSize={12} fontWeight="700" fill={c.onTint} textAnchor="middle">
         You
       </SvgText>
 
@@ -71,9 +75,9 @@ export function RingGraph({
       {placed.map((p) => {
         const on = lit(p.id);
         const selected = p.id === selectedId;
-        const showName = on && (selected || p.ring === 0 || (focus !== null && focus.has(p.id)));
+        const showName = on && (selected || (focus !== null && focus.has(p.id) && focus.size <= 8));
         return (
-          <G key={p.id} opacity={on ? 1 : 0.18} onPress={() => onSelect(selected ? null : p.id)}>
+          <G key={p.id} opacity={on ? 1 : 0.18} {...press(() => onSelect(selected ? null : p.id))}>
             {/* generous invisible hit area */}
             <Circle cx={p.x} cy={p.y} r={DOT + 8} fill="transparent" />
             {p.top && <Circle cx={p.x} cy={p.y} r={DOT + 4} stroke={c.success} strokeWidth={2.5} fill="none" />}
@@ -85,11 +89,12 @@ export function RingGraph({
               stroke={selected ? c.tint : c.surface}
               strokeWidth={selected ? 3 : 2}
             />
-            <SvgText x={p.x} y={p.y + 4} fontSize={11} fontWeight="700" fill={c.surface} textAnchor="middle">
+            <SvgText fontFamily={FONT} x={p.x} y={p.y + 4} fontSize={11} fontWeight="700" fill={c.surface} textAnchor="middle">
               {initials(p.name)}
             </SvgText>
             {showName && (
               <SvgText
+                fontFamily={FONT}
                 x={p.x}
                 y={p.y + DOT + 14}
                 fontSize={11}
