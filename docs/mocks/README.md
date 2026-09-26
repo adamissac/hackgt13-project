@@ -32,5 +32,6 @@ change to `docs/api.md`.
 | graph_network.json | GET /graph?mode=network |
 | graph_expand.json | GET /graph/expand (node_id = the "reinforcement learning" topic) |
 | dashboard_event.json | GET /dashboard/{event_id} (organizer map, real UMAP+HDBSCAN on synthetic) |
+| me_dashboard.json | GET /me/dashboard |
 
 Graph mocks are generated: `cd ml && .venv/bin/python scripts/make_graph_mocks.py` (then `cd dashboard && npm run sync-mocks`).

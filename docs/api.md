@@ -326,3 +326,13 @@ code server-side, stores the Fernet-encrypted token in `linked_accounts`, runs G
 (repo digest -> `raw_documents` -> extraction -> `user_interests` with evidence), then `302` to the app deep link
 `APP_GITHUB_REDIRECT?status=ok` (or `status=error&reason=denied|oauth`). Default deep link
 `formalconnect://connect/github`. Tokens never reach the client. Scope is `read:user` only (public repos).
+
+## 34. GET /me/dashboard?days=30   owner: Arjun (AR7)
+Private personal dashboard. Only the caller's own connections; nobody else's count or list is ever computed.
+```json
+{ "total": 12, "days": 30,
+  "growth": [ { "date": "2026-09-20", "total": 3 } ],          // cumulative, one row per day
+  "how_met": { "in_person": 9, "invite": 3 },
+  "top_topics": [ { "name": "reinforcement learning", "facet": "technical", "connections": 5, "talked": 3 } ] }
+```
+`connections` = how many of my connections share the topic; `talked` = conversations where I checked it as discussed.
