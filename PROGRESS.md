@@ -53,6 +53,20 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 23:30 | adam | Claude Code
+**Task:** Full pre-demo audit (repo, server, app, database, live API, dashboard)
+**Status:** done
+**What I did:**
+- Server suite now runs against a real Postgres + pgvector locally (pip `pgserver`): 214/214 pass, repeated runs; it had never run with a DB here before. Fixed what that exposed: signup-trigger test leaked a trigger into the shared test DB (26 errors), assistant topic search regressed to non-Open-to-Meet people + extra fields (privacy test), QUIET_HOURS comment crashed suggestions, short text PDFs rejected, tests read the developer's .env.
+- `.env` files: python-dotenv turns `KEY=   # note` into the value "# note". The Mac's root .env had 13 such keys (incl. SUPABASE_JWT_SECRET, DATABASE_URL): settings now treats comment-values as unset (+test); the local file was repaired (backup .env.bak-*). Production unaffected (Railway vars, no .env shipped).
+- App (Arjun's Constellation redesign included): tsc, eslint (0 errors), demo-flow 15/15, expo-doctor 21/21, iOS + Android bundles, every navigation link resolves. Live notifications now use payload-aware titles/routes; auto check-in per signed-in user.
+- DB: 11/11 migrations applied, 38/38 tables RLS, live RLS isolation 11/11 (incl. resumes, user_skill_profiles), `supabase db lint` clean. Secrets: none in files or full git history (only the public anon JWT).
+- Live API: `ml/scripts/smoke_all_endpoints.py` (36 checks) + `e2e_live_loop.py` pass after the final deploy. Dashboard: live 200, builds, tsc/eslint clean.
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=<pgvector db> python -m pytest -q`; `cd ml/scripts && npx @railway/cli run ../.venv/bin/python smoke_all_endpoints.py`; `cd mobile && npx tsc --noEmit && npx eslint . && npm run test:demo`
+**Next step for whoever continues:** Adam: `gh auth refresh -h github.com -s workflow`, then commit `.github/workflows/ci.yml` (on Adam's Mac, runs the full suite on pgvector + mobile checks).
+**Known issues / blockers:** Root .env on Adam's Mac has empty values for keys that were wiped (use `npx @railway/cli run` for local server runs). /assistant/demo is unauthenticated by design (rate-limited, api.md 43). Matches endpoint takes ~7 s cold.
+**Contract changes:** api.md 44 (simulate + additive fields)
+
 ## 2026-09-26 22:40 | adam | Claude Code
 **Task:** Live app loop broken (matches/graph 403, no suggestions, demo attendees inert) + milestone-only feed
 **Status:** done, verified live
