@@ -383,3 +383,27 @@ Errors: `not_found` (404, also when either side blocked the other), `expired` (4
 { "status": "ok" }                                                                   // decline: nothing is stored
 ```
 Errors: same as resolve, plus `self_invite` (400).
+
+## 37. Meetup location sharing (AK7, Akshar; code in `ml/app/routers/location.py`)
+Only between the two people in a `matched` suggestion, while both are Open to Meet, until they meet (any verified
+conversation after the match), for at most 30 minutes, and only within 2 hours of the match. Every "not allowed"
+reason returns the same `410 {"error": "sharing ended"}` and deletes both rows. The other phone can also subscribe
+to its `location_shares` row through Supabase Realtime (RLS: only the other participant reads).
+
+`POST /location-shares/{suggestion_id}` <- `{ "lat": 33.7756, "lng": -84.3963 }` (every ~10 s while sharing)
+-> `{ "sharing": true, "expires_at": "2026-09-26T15:34:05Z" }` (one shared 30-minute window; updates never extend it)
+
+`GET /location-shares/{suggestion_id}`
+```json
+{ "suggestion_id": 12, "other": { "user_id": "uuid", "name": "Maya R." }, "sharing": true,
+  "expires_at": "2026-09-26T15:34:05Z",
+  "their_location": { "lat": 33.7760, "lng": -84.3970, "updated_at": "2026-09-26T15:10:02Z" } }
+```
+`their_location` is null until the other person shares. The app shows only a rough distance band and an arrow.
+
+`DELETE /location-shares/{suggestion_id}` -> `{ "sharing": false }` (ends sharing for both)
+
+`GET /location-shares` -> `{ "meetups": [ { "suggestion_id": 12, "other": { "user_id": "uuid", "name": "Maya R.", "photo_url": null } } ] }`
+(matched in the last 2 hours and not met yet)
+
+Errors: `404 meetup not found` (not a participant), `410 sharing ended`.

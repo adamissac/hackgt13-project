@@ -40,5 +40,7 @@ change to `docs/api.md`.
 | invites_list.json | GET /invites |
 | invites_resolve.json | GET /invites/resolve/{token} |
 | invites_respond.json | POST /invites/{token}/respond |
+| location_share.json | GET /location-shares/{suggestion_id} |
+| location_meetups.json | GET /location-shares |
 
 Graph mocks are generated: `cd ml && .venv/bin/python scripts/make_graph_mocks.py` (then `cd dashboard && npm run sync-mocks`).
