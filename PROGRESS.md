@@ -2,6 +2,25 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK3 Verification QR screens
+
+**Status:** in progress (screens done on mocks; waiting on Alan's AL6 for live `/qr/token` + `/handshake`)
+
+**What I did:**
+- `mobile/app/verify.tsx` (route `/verify`, linked from the Nearby tab): "Show my code" renders `GET /qr/token` as a QR and refetches every 30 s; "Scan their code" uses `expo-camera` `CameraView` (`barcodeScannerSettings: { barcodeTypes: ['qr'] }`) → `POST /handshake` with `HACKGT_EVENT_ID`; friendly copy for `expired` / `invalid_signature` / `already_used` / `self_scan`; camera permission, loading and error states.
+- `mobile/features/qr/code.ts`: QR string format `fcv1:<payload>.<signature>` (both base64url, straight from `/qr/token`); non-matching QR codes are ignored with a message.
+- Added `expo-camera` (+ config plugin with camera permission text, mic disabled) to `mobile/app.json`. Native change → rebuild the dev build.
+
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo export --platform ios` (clean). On two phones with the dev build: phone A Nearby → "Verify with QR" → Show my code; phone B → Scan their code. With mocks it always "verifies" as Maya R.
+
+**Next step for whoever continues:** When AL6 lands, run the flow on two phones against the live API and confirm the error cases (wait 60 s → `expired`; scan the same code twice → `already_used`; scan your own → `self_scan`). Then Adam's AD8: in `Verified` in `mobile/app/verify.tsx`, replace the inline checklist preview with navigation into the AD8 checklist screen using `result.handshake_id`.
+
+**Known issues / blockers:** Not tested on a device (no Xcode here). The spec text says `/qr/verify-token` + `/qr/verify`, but `docs/api.md` (the contract) has `/qr/token` + `/handshake`; I followed api.md. Cross-folder: one `Link` added to Adam's `app/(tabs)/nearby.tsx`.
+
+**Contract changes:** none
+
 ## 2026-09-26 04:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK4 Invites
