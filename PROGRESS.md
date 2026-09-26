@@ -26,6 +26,20 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 22:40 | adam | Claude Code
+**Task:** Live app loop broken (matches/graph 403, no suggestions, demo attendees inert) + milestone-only feed
+**Status:** done, verified live
+**What I did:**
+- App checks in to HackGT 13 automatically after sign-in and retries any "check in first" 403 (matches/graph were 403 for anyone who hadn't toggled Open to Meet).
+- `ml/app/synthetic.py` (tick every 5 s): seeded attendees (is_synthetic) accept suggestions after the real person says yes, reply in chat in character (Haiku, grounded in their profile), and agree to connect. Suggestions never pair two synthetic people, and synthetic percentiles/caps never block a real person. POST /conversations/simulate (demo attendees only, after a mutual yes). quick-profile `demo_attendee`; match page shows "Simulate meeting".
+- Feed = milestones only: started working on, launched (links the live site: homepage/GitHub Pages), shipped release, open-sourced, star milestones. Deleted 102 "pushed to hackgt13-project" items.
+- Skill-profile backfill task; scanned PDFs transcribed by Claude; onboarding explains "no public repos".
+- Live e2e `ml/scripts/e2e_live_loop.py`: suggestion -> mutual yes -> in-character reply -> simulated meeting -> connected (throwaway account deleted).
+**How to run/test it:** `cd ml/scripts && npx @railway/cli run ../.venv/bin/python e2e_live_loop.py`
+**Next step for whoever continues:** Walk the same loop on a phone signed in live; then have a teammate test the PDF upload with the new [resume] logs.
+**Known issues / blockers:** Feed is empty until someone hits a real milestone (synthetic attendees have no feed items). Two people deploying Railway from different checkouts caused regressions; deploy only from up-to-date main.
+**Contract changes:** POST /conversations/simulate, quick-profile `demo_attendee` (additive), /me/accounts github.repo_count (additive)
+
 ## 2026-09-26 10:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Tap works port-to-port; checklist shows common interests; QR error follow-up
