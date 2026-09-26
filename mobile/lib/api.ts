@@ -67,6 +67,16 @@ export interface Connection {
 }
 export interface ConnectionsResponse { connections: Connection[] }
 
+// Bluetooth (section 12). Tokens rotate every 10 minutes; only the server maps them to users.
+export interface BleToken { token: string; valid_from: string; valid_to: string }
+export interface BleSighting { token: string; rssi: number; ts: string; zone_id: number | null }
+export interface BleSightingsRequest {
+  event_id: number | null;
+  device_model?: string | null;
+  foreground?: boolean;
+  sightings: BleSighting[];
+}
+
 // Private invites (section 15). The token appears only inside `url`, returned once.
 export type InviteChannel = 'link' | 'qr' | 'contact';
 export type InviteStatus = 'active' | 'accepted' | 'revoked' | 'expired';
@@ -106,6 +116,8 @@ const mocks = {
   handshake: () => require('../../docs/mocks/handshake.json') as HandshakeResponse,
   feedback: () => require('../../docs/mocks/feedback.json') as FeedbackResponse,
   connections: () => require('../../docs/mocks/connections.json') as ConnectionsResponse,
+  bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
+  bleSightings: () => require('../../docs/mocks/ble_sightings.json') as { accepted: number; dropped: number },
   inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
   inviteList: () => require('../../docs/mocks/invites_list.json') as { invites: MyInvite[] },
   inviteResolve: () => require('../../docs/mocks/invites_resolve.json') as InviteResolveResponse,
@@ -169,6 +181,9 @@ export const api = {
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),
   feedback: (body: FeedbackRequest) => call(mocks.feedback, () => request<FeedbackResponse>('POST', '/feedback', body)),
   connections: () => call(mocks.connections, () => request<ConnectionsResponse>('GET', '/connections')),
+  bleTokens: () => call(mocks.bleTokens, () => request<{ tokens: BleToken[] }>('POST', '/ble/tokens', {})),
+  bleSightings: (body: BleSightingsRequest) =>
+    call(mocks.bleSightings, () => request<{ accepted: number; dropped: number }>('POST', '/ble/sightings', body)),
   createInvite: (body: CreateInviteRequest = {}) =>
     call(mocks.inviteCreate, () => request<CreateInviteResponse>('POST', '/invites', body)),
   myInvites: () => call(mocks.inviteList, () => request<{ invites: MyInvite[] }>('GET', '/invites')),

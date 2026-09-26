@@ -1,46 +1,112 @@
-// Bluetooth proximity: Akshar owns this folder (MASTER_SPEC 7, task AK1+).
-// This stub lets the Home and Nearby tabs compile and render before the native module lands.
-// Replace the internals; keep the exported shapes, or update the screens that use them.
+// Bluetooth proximity: Akshar owns this folder (MASTER_SPEC 7, tasks AK1, AK2, AK5).
+// The phone only ever knows rotating tokens; the server maps sightings to people and returns
+// each match's proximity band in GET /events/{id}/matches. This hook runs the radio (when the dev
+// build has Bluetooth) and polls those matches, so the Nearby tab shows real people, as bands only.
 
 import { useEffect, useState } from 'react';
 
-// Distances are shown as bands, never meters.
-export type DistanceBand = 'very close' | 'nearby' | 'farther away';
+import { api, type Match } from '@/lib/api';
+import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { env } from '@/lib/env';
+
+import { startEngine, stopEngine, subscribe, type EngineSnapshot } from './engine';
+import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from './native';
+import type { DistanceBand } from './signal';
+
+export type { DistanceBand } from './signal';
 
 export interface Peer {
   user_id: string;
   name: string;
   band: DistanceBand;
   last_seen: string;
+  highlight?: boolean; // top matches for this viewer: green dot on the radar
+  why?: string[];
 }
 
 export interface ProximityState {
   scanning: boolean;
   peers: Peer[];
   error: string | null;
+  heardCount: number; // phones heard by this phone right now (debug; not people)
 }
 
-const MOCK_PEERS: Peer[] = [
-  { user_id: '00000000-0000-0000-0000-000000000101', name: 'Maya R.', band: 'very close', last_seen: new Date().toISOString() },
-  { user_id: '00000000-0000-0000-0000-000000000103', name: 'Priya S.', band: 'nearby', last_seen: new Date().toISOString() },
-];
+const POLL_MS = 15_000;
+const BAND_FOR_PROXIMITY: Record<NonNullable<Match['proximity']>, DistanceBand> = {
+  immediate: 'very close',
+  near: 'nearby',
+  far: 'farther away',
+};
 
-/** Peers the phone currently hears over Bluetooth. Stub: returns mock peers when enabled. */
+function toPeers(matches: Match[]): Peer[] {
+  const now = new Date().toISOString();
+  return matches
+    .filter((m) => m.proximity)
+    .map((m) => ({
+      user_id: m.user_id,
+      name: m.name,
+      band: BAND_FOR_PROXIMITY[m.proximity!],
+      last_seen: now,
+      highlight: m.highlight,
+      why: m.why,
+    }));
+}
+
+/** People nearby, as distance bands. Starts Bluetooth while `enabled`. */
 export function useProximity(enabled: boolean): ProximityState {
-  const [state, setState] = useState<ProximityState>({ scanning: false, peers: [], error: null });
+  const [peers, setPeers] = useState<Peer[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [engine, setEngine] = useState<EngineSnapshot | null>(null);
 
+  // Radio: advertise + scan + upload. In Expo Go (no Bluetooth) mocks still work; live mode says why not.
   useEffect(() => {
-    if (!enabled) {
-      setState({ scanning: false, peers: [], error: null });
-      return;
-    }
-    setState({ scanning: true, peers: [], error: null });
-    const t = setTimeout(() => setState({ scanning: true, peers: MOCK_PEERS, error: null }), 800);
-    return () => clearTimeout(t);
+    if (!enabled) return;
+    const unsub = subscribe(setEngine);
+    if (bleAvailable()) startEngine({ eventId: HACKGT_EVENT_ID });
+    return () => {
+      unsub();
+      stopEngine();
+      setEngine(null);
+    };
   }, [enabled]);
 
-  return state;
+  // People: the server resolves tokens and ranks matches.
+  useEffect(() => {
+    if (!enabled) {
+      setPeers([]);
+      setFetchError(null);
+      return;
+    }
+    let cancelled = false;
+    const load = () =>
+      api
+        .matches(HACKGT_EVENT_ID)
+        .then((r) => {
+          if (cancelled) return;
+          setPeers(toPeers(r.matches));
+          setFetchError(null);
+        })
+        .catch((e: unknown) => !cancelled && setFetchError(e instanceof Error ? e.message : String(e)));
+    load();
+    const t = setInterval(load, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(t);
+    };
+  }, [enabled]);
+
+  const radioError = !enabled ? null : !bleAvailable() ? (env.useMocks ? null : BLE_UNAVAILABLE_MESSAGE) : (engine?.error ?? null);
+
+  return {
+    scanning: enabled,
+    peers,
+    error: radioError ?? fetchError,
+    heardCount: engine?.heard.length ?? 0,
+  };
 }
 
-/** Start/stop advertising this phone's rotating ephemeral ID. Stub: no-op. */
-export async function setAdvertising(_on: boolean): Promise<void> {}
+/** Start/stop advertising and scanning outside the Nearby screen (e.g. Event Mode, AK8). */
+export async function setAdvertising(on: boolean): Promise<void> {
+  if (on) await startEngine({ eventId: HACKGT_EVENT_ID });
+  else stopEngine();
+}
