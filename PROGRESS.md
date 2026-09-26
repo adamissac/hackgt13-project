@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 02:55 | adam | Cursor (Grok 4.7)
+**Task:** Put the ML API on Railway so a laptop does not have to stay on
+**Status:** done
+**What I did:**
+- Filled the gitignored root `.env` and `mobile/.env` from the secrets already on this Mac. `SUPABASE_JWT_SECRET` stays empty (JWKS). `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` are not on this Mac (Alan has them on his laptop).
+- Railway project `formal-connection`, service `ml`, domain `https://ml-production-04c0.up.railway.app`. `GET /health` returns `{"ok":true,"db":true}`. The public domain targets port 8080 because that is the `PORT` Railway gave the process.
+- `mobile/.env` now has `EXPO_PUBLIC_API_BASE_URL` set to that domain and `EXPO_PUBLIC_USE_MOCKS=0`.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Redeploy after `ml/` changes: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Next step for whoever continues:** On Alan's laptop, add callback `https://ml-production-04c0.up.railway.app/connect/github/callback` to the existing GitHub OAuth app, then set `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` on the Railway `ml` service from his root `.env` (`cd ml && npx @railway/cli variable set GITHUB_CLIENT_ID --stdin`). Do not paste them into chat or commit them.
+**Known issues / blockers:** GitHub connect on the Railway URL stays off until those two variables are set there. GitHub auto-deploy is not connected; root directory must be `ml` before connecting the repo, or the build will miss the Dockerfile.
+**Contract changes:** none
+
 ## 2026-09-26 06:50 | alan | Claude Code (Opus 5)
 **Task:** AL1 finish — GitHub OAuth wired on a second laptop; ML service running from Alan's Mac
 **Status:** in progress (OAuth verified; `/health` still `db:false` until DATABASE_URL lands)
