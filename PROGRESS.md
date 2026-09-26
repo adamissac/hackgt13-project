@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 04:55 UTC | adam | Cursor cloud agent
+**Task:** AD1 Supabase project (verification)
+**Status:** done
+**What I did:**
+- Replayed all 8 `supabase/migrations/` from scratch on Postgres 16 + pgvector: all apply cleanly. 35/35 public tables have RLS; HackGT 13 event present; realtime = messages, location_shares, notifications; HNSW cosine index on profile_vectors; resumes bucket private; signup trigger fills name and photo.
+- Policies checked line by line against MASTER_SPEC 8.3 (chats/messages participants, location_shares other participant, feed_items author + connections, owner-only invites/notifications/web_mentions/feed_prefs, no client access to suggestions/conversations/sightings/encounters/impressions).
+- New `supabase/tests/run-local.sh` (+ `supabase_stub.sql`, `rls_checks.sql`): user A sees none of B's rows in 13 tables or Storage and can't write into B's chat; C (B's match) reads the chat and B's meetup location. Negative check: a leaking policy on notifications makes it fail.
+- No schema changes since 0e6086d, so the live project (migrations 1-8 pushed earlier from Adam's Mac) still matches the repo.
+**How to run/test it:** `./supabase/tests/run-local.sh` (local, no secrets). Live: `node scripts/rls-isolation-test.mjs` with the three keys (AGENTS.md).
+**Next step for whoever continues:** On Adam's Mac: `npx supabase config push` (y for auth, n for storage) so magic-link redirects to `formalconnect://auth/callback` work, then sign in by email on the phone (AD2). Then add `push_tokens` (owner-only table) via /contract-change for AD10 per REQUESTS.md.
+**Known issues / blockers:** This cloud VM has no Supabase MCP or keys, so live state was not re-queried here; Adam's Claude session verified it via CLI at 01:15. The DB password was pasted in chat: rotate it (Supabase > Project Settings > Database) and update root `.env`.
+**Contract changes:** none
+
 ## 2026-09-26 05:30 | adam | Claude Code
 **Task:** AD4-AD6 UI redesign + Alan's requests
 **Status:** in progress
