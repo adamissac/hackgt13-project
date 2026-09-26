@@ -64,7 +64,9 @@ def test_jwks_mode_verifies_asymmetric_token(client, monkeypatch):
 
 
 def test_health_reports_db(dbclient):
-    assert dbclient.get("/health").json() == {"ok": True, "db": True}
+    body = dbclient.get("/health").json()
+    assert body["ok"] is True and body["db"] is True
+    assert {"embedder", "umap"} <= set(body)   # model status added in c4022fd (loud fallbacks)
 
 
 def test_transaction_pooler_disables_prepared_statements():
