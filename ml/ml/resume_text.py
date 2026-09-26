@@ -73,6 +73,23 @@ def extract_interests_from_pdf(pdf_bytes):
     return llm._json(llm._call(LLM_SMART, llm.EXTRACT_SYSTEM, content))
 
 
+def ingest_resume(user_id, storage_path):
+    """AR2 entry point for POST /profile/ingest (source=resume) after the app uploads to
+    resumes/<user_id>/...: download, extract text (or hand the PDF to Claude if scanned),
+    save raw_documents, store interests. Returns the stored interests."""
+    from . import supa
+    from .llm import extract_interests
+    from .store import store_extraction
+    if not storage_path.lstrip("/").startswith(f"{user_id}/"):
+        raise PermissionError("resume path must be under the caller's own folder")
+    pdf = supa.storage_download(BUCKET, storage_path)
+    r = pdf_to_text(pdf)
+    supa.insert("raw_documents", [{"user_id": user_id, "source": "resume", "text": r["text"],
+                                   "meta": {"path": storage_path, "pages": r["pages"], "scanned": r["scanned"]}}])
+    extraction = extract_interests_from_pdf(pdf) if r["scanned"] else extract_interests(r["text"], "resume")
+    return store_extraction(user_id, "resume", extraction)
+
+
 if __name__ == "__main__":
     import sys
     with open(sys.argv[1], "rb") as f:

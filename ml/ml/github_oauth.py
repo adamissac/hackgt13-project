@@ -26,7 +26,7 @@ TOKEN_URL = "https://github.com/login/oauth/access_token"
 SCOPE = "read:user"          # public repos only; never request `repo`
 STATE_TTL_S = 600
 CALLBACK_PATH = "/connect/github/callback"
-DEFAULT_APP_REDIRECT = "formalconnection://connect/github"
+DEFAULT_APP_REDIRECT = "formalconnect://connect/github"   # mobile/app.json scheme
 
 
 class OAuthError(Exception):
@@ -117,10 +117,11 @@ def exchange_code(code):
     return out
 
 
-def app_redirect(status):
-    """Deep link back into the app after the callback: status is 'ok' or a short error code."""
-    base = os.getenv("APP_GITHUB_REDIRECT", DEFAULT_APP_REDIRECT)
-    return f"{base}?{urllib.parse.urlencode({'status': status})}"
+def app_redirect(status, reason=None):
+    """Deep link back into the app after the callback: status 'ok' or 'error' (+ short reason)."""
+    base = os.getenv("APP_GITHUB_REDIRECT") or DEFAULT_APP_REDIRECT
+    q = {"status": status, **({"reason": reason} if reason else {})}
+    return f"{base}?{urllib.parse.urlencode(q)}"
 
 
 def linked_account_row(user_id, token_response, github_login):
