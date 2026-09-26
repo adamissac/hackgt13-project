@@ -248,19 +248,18 @@
 **Known issues / blockers:** Spec lists no event zones, so none seeded. organizations/org_members/org_subscriptions/event_posts have no client policies (FastAPI only) since 8.3 doesn't name them. event_registrations is owner-only.
 **Contract changes:** docs/schema.sql extended with Section 8.1/8.2 exactly as in the spec.
 
-## 2026-09-26 00:35 | arjun | Claude Code (Claude Opus 5.5)
-**Task:** AR1-AR6 (MASTER_SPEC now in repo; aligned everything to it)
-**Status:** in progress (code done + tested locally; live runs need secrets below)
+## 2026-09-26 00:45 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR1-AR6 (rebased onto Alan's AL1-AL10 + Adam's latest)
+**Status:** in progress (code done + tested locally; NOT PUSHED yet: Arjun's `gh auth login` pending)
 **What I did:**
-- AR1: `ml/main.py` (minimal FastAPI shell: /health, CORS, `{"error"}` errors; Alan's AL1 can extend/replace, keep `include_router`), `ml/ml/github_routes.py` (`GET /connect/github/start`, `GET /connect/github/callback`, `ingest_github(user_id)`), `ml/ml/supa.py` (JWT check via Supabase `/auth/v1/user`, PostgREST helpers with service key), `ml/ml/store.py` (extraction -> interests/user_interests with evidence; never touches confirmed/hidden). AR2: `resume_text.ingest_resume(user_id, path)`.
-- AR3: `ml/scripts/seed_synthetic.py` (80 attendees via Supabase admin API, @example.com, is_synthetic, registered + checked in to HackGT 13, 35% Open to Meet, bge-small vectors via profiles.py, 6 RL "demo boosters"; `--dry-run`, `--delete`). Dry run verified with real bge-small.
-- AR4/AR5: `/graph` page aligned to MASTER_SPEC 9 (`nodes`+`edges`, ids me/u_*/t_*, kinds match/connection/has_topic): controls (Depth, Max, Min score, Facet, Color facet|cluster, Rebuild, Export PNG), left panel list + search, expand (topic -> more people, merged by id without layout reset), My Network timeline, privacy guards (no person-person edges, network never shows non-connections).
-- AR6: `/map` organizer community map from `GET /dashboard/{event_id}`: UMAP-placed community bubbles, c-TF-IDF labels, connections replayed/polled every 7s, "should be talking, aren't" gap table with bridge; anonymous ids, groups >= 5. Mock made with the real pipeline: `ml/scripts/make_dashboard_mock.py`.
-- docs/api.md sections 15-17 added (/connect/github/*, /graph, /graph/expand). Mocks: docs/mocks/graph_*.json, dashboard_event.json.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (18 pass); `cd dashboard && npm install && npm run typecheck && npm run lint && npm test && npm run build` (11 tests pass); dev: `cd dashboard && npm run dev` -> /graph and /map; ML: `cd ml && .venv/bin/uvicorn main:app --port 8000`.
-**Next step for whoever continues:** (1) Push these commits (`git push`; needs Arjun's `gh auth login`). (2) With `.env` filled (SUPABASE_URL, SUPABASE_SERVICE_KEY from `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`), run `cd ml && .venv/bin/python scripts/seed_synthetic.py --n 80`. (3) Create the GitHub OAuth app (callback `<ML_API_URL>/connect/github/callback`), set GITHUB_CLIENT_ID/SECRET + TOKEN_ENCRYPTION_KEY, test connect on a phone. (4) Deploy dashboard to Vercel (root `dashboard`), send URL to Adam (AD9). (5) AR8 GitHub activity poller into feed_items.
-**Known issues / blockers:** No Supabase/GitHub OAuth/Vercel credentials on this Mac yet. Alan owns /graph, /graph/expand, /dashboard/{id} server side (AL7/AL3) - shapes in api.md 14-17 and mocks. Organizer map labels are small on phones (it's designed for the big screen).
-**Contract changes:** docs/api.md: added 15 (/connect/github/*), 16 (/graph, spec 9 shape + optional display fields), 17 (/graph/expand). New env var APP_GITHUB_REDIRECT (default formalconnect://connect/github).
+- AR1: `ml/app/routers/github.py` inside Alan's app (his `current_user`, `db`, `profile_store.ingest_text`): `GET /connect/github/start`, `GET /connect/github/callback` (signed state, Fernet token in linked_accounts, 302 to `formalconnect://connect/github`), `ingest_github(user_id)` (ETag-cached repo digest -> raw_documents -> shared extraction pipeline). Helpers: `ml/ml/github_oauth.py`, `ml/ml/github_ingest.py`. Tests: `ml/tests/test_github_connect.py`, `test_github_oauth.py`.
+- AR2: `ml/ml/resume_text.py` (pdfplumber + scanned detection + `extract_interests_from_pdf` Claude document fallback; Alan's /profile/ingest currently 400s on scanned PDFs and could call it).
+- AR3: `ml/scripts/seed_synthetic.py` (80 attendees via Supabase admin API, is_synthetic, registered + checked in, 35% Open to Meet, bge-small vectors, 6 RL demo boosters; `--dry-run`, `--delete`). Uses `ml/ml/supa.py` (PostgREST + service key).
+- AR4/AR5: dashboard `/graph` renders Alan's /graph shape (api.md 26/27): controls, left panel + search, expand merge, My Network timeline, privacy guards. AR6: `/map` organizer community map for api.md 14.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (all pass except Alan's test_ranker_job on Macs without `brew install libomp`); `cd dashboard && npm install && npm run typecheck && npm run lint && npm test && npm run build`; dev: `cd dashboard && npm run dev` -> /graph, /map.
+**Next step for whoever continues:** (1) `git push` (needs Arjun's GitHub login). (2) Fill `.env` (SUPABASE_URL, SUPABASE_SERVICE_KEY) and run `cd ml && .venv/bin/python scripts/seed_synthetic.py --n 80`. (3) GitHub OAuth app (callback `<ML_API_URL>/connect/github/callback`) + GITHUB_CLIENT_ID/SECRET + TOKEN_ENCRYPTION_KEY, then test connect on a phone. (4) Vercel deploy of `dashboard/` with NEXT_PUBLIC_ML_API_URL, URL to Adam (AD9). (5) AR8 GitHub poller.
+**Known issues / blockers:** no Supabase/GitHub OAuth/Vercel credentials on Arjun's Mac. Organizer map labels are small on phones (big-screen design).
+**Contract changes:** docs/api.md 33 (GitHub connect). New env var APP_GITHUB_REDIRECT.
 
 ## 2026-09-26 00:30 | adam | Claude Code
 **Task:** AD1 Supabase project
