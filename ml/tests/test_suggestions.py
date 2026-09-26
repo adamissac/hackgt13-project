@@ -87,6 +87,24 @@ def test_pair_must_clear_both_percentiles():
     assert [(x[0], x[1]) for x in plan] == [("a", "b")]
 
 
+def test_synthetic_attendees_never_pair_together_or_block_a_real_person():
+    from app import suggestions
+    import numpy as np
+    from app.population import Index
+    v = lambda i: np.eye(384, dtype=np.float32)[i]
+    def person(pid, vec):
+        return {"id": pid, "interests": {}, "vec": {"technical": vec, "career": np.zeros(384, np.float32),
+                "personal": np.zeros(384, np.float32), "academic": np.zeros(384, np.float32)},
+                "combined": vec, "seek_vec": np.zeros(384, np.float32), "offer_vec": np.zeros(384, np.float32)}
+    # s1, s2 are near-identical synthetic twins; "me" (real) is only somewhat like them.
+    people = {"me": person("me", (v(0) + v(1)) / np.sqrt(2)), "s1": person("s1", v(0)), "s2": person("s2", v(0))}
+    today = {"s1": 3, "s2": 3}                       # synthetic daily caps are ignored for real people
+    plan = suggestions.plan_room(people, Index({}, {}, {}, {}), None, set(), today, synthetic={"s1", "s2"})
+    pairs = [tuple(sorted((x[0], x[1]))) for x in plan]
+    assert ("s1", "s2") not in pairs                 # never synthetic + synthetic
+    assert pairs and all("me" in p for p in pairs)   # me gets a suggestion although s1/s2 prefer each other
+
+
 def test_list_and_silent_no(dbclient, db, room):
     ev, a, b, c = room
     gen()

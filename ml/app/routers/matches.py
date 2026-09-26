@@ -14,7 +14,7 @@ from fastapi import APIRouter, Depends
 from ml import scoring
 from ml.config import FACETS
 
-from .. import matching, population
+from .. import synthetic, matching, population
 from ..auth import User, current_user
 from ..errors import ApiError
 
@@ -52,6 +52,8 @@ def quick_profile(user_id: str, user: User = Depends(current_user)):
         "role": them.get("role"), "headline": them.get("headline") or "",
         "seeking": them.get("seeking") or "", "offering": them.get("offering") or "",
         "connected": rel["kind"] == "connection",
+        # Seeded demo attendee (Arjun's population): the app offers "simulate meeting" instead of Bluetooth/QR.
+        "demo_attendee": bool(them.get("is_synthetic")) or synthetic.is_synthetic(them["id"]),
         "score": round(score, 4),
         "shared_topics": [{"interest_id": s["id"], "name": s["name"], "facet": index.facets[s["id"]],
                            "strength": round(min(me["interests"][s["id"]]["weight"],

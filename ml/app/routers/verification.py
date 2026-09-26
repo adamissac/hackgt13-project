@@ -114,3 +114,16 @@ def legacy_feedback(body: LegacyFeedbackBody, user: User = Depends(current_user)
         conv_id = row["id"]
     return feedback(conv_id, FeedbackBody(talked_about=body.talked_about, other_topic=body.other_topic,
                                           wants_connect=body.wants_connect), user)
+
+
+class SimulateBody(BaseModel):
+    user_id: str
+
+
+@router.post("/conversations/simulate")
+def simulate(body: SimulateBody, user: User = Depends(current_user)):
+    """Demo attendees can't tap phones: after a mutual yes, create the verified conversation (demo only)."""
+    from .. import conversations, synthetic
+    cid = synthetic.simulate_conversation(user.id, body.user_id)
+    return next((p for p in conversations.pending(user.id) if p["conversation_id"] == cid),
+                {"conversation_id": cid})

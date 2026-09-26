@@ -83,6 +83,8 @@ export interface QuickProfile {
   seeking: string;
   offering: string;
   connected: boolean;
+  /** Seeded demo attendee: can't meet over Bluetooth/QR, so the app offers "simulate meeting". */
+  demo_attendee?: boolean;
   score: number;
   shared_topics: SharedTopic[];
   facet_overlap: Record<Facet, number>;
@@ -314,7 +316,24 @@ export class ApiError extends Error {
 
 const REQUEST_TIMEOUT_MS = 30_000;
 
+// Event features (matches, graph, nearby, assistant search) need the user checked in to the event.
+// This is a one-event app, so instead of making people find a "check in" button, a "check in first"
+// answer checks them in and retries once. Idempotent on the server.
 async function request<T>(method: string, path: string, body?: unknown | FormData): Promise<T> {
+  try {
+    return await rawRequest<T>(method, path, body);
+  } catch (e) {
+    const eventId = path.match(/\/events\/(\d+)/)?.[1] ?? path.match(/[?&]event_id=(\d+)/)?.[1];
+    if (e instanceof ApiError && e.status === 403 && /check in/i.test(e.message) && eventId && !/checkin/.test(path)) {
+      console.log('[api] not checked in; checking in to event', eventId, 'and retrying', path);
+      await rawRequest('POST', `/events/${eventId}/checkin`, {});
+      return rawRequest<T>(method, path, body);
+    }
+    throw e;
+  }
+}
+
+async function rawRequest<T>(method: string, path: string, body?: unknown | FormData): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const headers: Record<string, string> = {};
   if (data.session) headers.Authorization = `Bearer ${data.session.access_token}`;
@@ -628,11 +647,15 @@ export const api = {
         return 'partial' as const;
       },
     ),
-  /** Demo only: stand in for Bluetooth verifying an in-person conversation. */
+  /** Demo mode, or a live match with a seeded demo attendee: stand in for Bluetooth/QR verification. */
   simulateConversation: (userId: string) =>
     call(
       () => demo.verifyConversation(userId, 'ble'),
-      () => Promise.reject(new Error('Only available in demo mode')),
+      () =>
+        request<PendingConversation>('POST', '/conversations/simulate', { user_id: userId }).then((r) => {
+          emitChange('relationships', 'meetups', 'notifications');
+          return r;
+        }),
     ),
   /** Where I stand with this person (features/relationship/stage.ts). */
   relationship: (userId: string) => call(() => demo.relationship(userId), () => liveRelationship(userId)),

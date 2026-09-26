@@ -1,6 +1,11 @@
 import { SymbolView, type SymbolViewProps } from "expo-symbols";
 import { Tabs } from "expo-router";
+import { useEffect } from "react";
 import { View, type ColorValue } from "react-native";
+
+import { api } from "@/lib/api";
+import { HACKGT_EVENT_ID } from "@/lib/constants";
+import { env } from "@/lib/env";
 
 import { AiFab } from "@/components/AiFab";
 import { HeaderActions } from "@/components/HeaderActions";
@@ -17,7 +22,22 @@ function icon(name: IconName) {
   };
 }
 
+// Signed-in users are at HackGT 13: check in once when the app opens (idempotent on the server), so
+// matches, graph, nearby and the assistant work without hunting for a button.
+let checkedInThisSession = false;
+function useAutoCheckin() {
+  useEffect(() => {
+    if (checkedInThisSession || env.useMocks) return;
+    checkedInThisSession = true;
+    api.checkin(HACKGT_EVENT_ID).catch((e) => {
+      checkedInThisSession = false;
+      console.warn('[api] auto check-in failed:', e instanceof Error ? e.message : e);
+    });
+  }, []);
+}
+
 export default function TabLayout() {
+  useAutoCheckin();
   const colorScheme = useColorScheme();
   const headerShown = useClientOnlyValue(false, true);
 

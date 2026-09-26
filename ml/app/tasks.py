@@ -98,3 +98,12 @@ def skill_profile_backfill() -> None:
         skill_profile.build_safely(r["id"], "rebuild")
     if rows:
         log.info("skill profiles backfilled for %d people", len(rows))
+
+
+@every(5, "synthetic")
+def synthetic_tick() -> None:
+    """Seeded demo attendees answer suggestions, chat, and connect (app/synthetic.py)."""
+    from . import synthetic
+    out = synthetic.tick()
+    if any(out.values()):
+        log.info("synthetic attendees: %s", out)

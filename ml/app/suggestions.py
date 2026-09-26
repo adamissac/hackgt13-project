@@ -58,8 +58,13 @@ def _today_counts(ids: list[str]) -> dict[str, int]:
     return {r["id"]: r["n"] for r in rows}
 
 
-def plan_room(people: dict, index, cluster, banned: set[frozenset], today: dict[str, int]) -> list[tuple]:
-    """Pure function: which pairs to suggest in one room. Returns [(a, b, score, shared)]."""
+def plan_room(people: dict, index, cluster, banned: set[frozenset], today: dict[str, int],
+              synthetic: set[str] | None = None) -> list[tuple]:
+    """Pure function: which pairs to suggest in one room. Returns [(a, b, score, shared)].
+
+    Synthetic (seeded demo) attendees are never paired with each other, and their own percentile bar and
+    daily cap never block a real person: only the real person's rules apply to a real-synthetic pair."""
+    synthetic = synthetic or set()
     ids = sorted(people)
     if len(ids) < 2:
         return []
@@ -71,16 +76,17 @@ def plan_room(people: dict, index, cluster, banned: set[frozenset], today: dict[
             s = scoring.v1_score(f)
             per_user[a].append(s)      # percentiles use EVERY pair in the room, so using up or
             per_user[b].append(s)      # banning a top pair never lowers anyone's bar
-            if frozenset((a, b)) not in banned:
+            if frozenset((a, b)) not in banned and not (a in synthetic and b in synthetic):
                 scores[frozenset((a, b))] = s
     cutoff = {u: (np.percentile(v, HIGHLIGHT_PERCENTILE) if v else np.inf) for u, v in per_user.items()}
     eligible = sorted(((s, tuple(sorted(p))) for p, s in scores.items()
-                       if all(s >= cutoff[u] for u in p)), reverse=True)
+                       if all(s >= cutoff[u] for u in p if u not in synthetic)), reverse=True)
     used, out = set(), []
     for s, (a, b) in eligible:
-        if a in used or b in used or today.get(a, 0) >= MAX_PER_DAY or today.get(b, 0) >= MAX_PER_DAY:
+        real = [u for u in (a, b) if u not in synthetic]
+        if any(u in used or today.get(u, 0) >= MAX_PER_DAY for u in real):
             continue
-        used |= {a, b}
+        used |= set(real)
         shared = [{"interest_id": x["id"], "name": x["name"], "contribution": round(x["contribution"], 4)}
                   for x in scoring.shared_interests(people[a], people[b], index, 5)]
         out.append((a, b, s, shared))
@@ -114,7 +120,9 @@ def generate() -> int:
         ids = list(room["people"])
         if len(ids) < 2:
             continue
-        plan = plan_room(room["people"], room["index"], room["cluster"], _blocked_pairs(ids), _today_counts(ids))
+        from .synthetic import synthetic_ids
+        plan = plan_room(room["people"], room["index"], room["cluster"], _blocked_pairs(ids), _today_counts(ids),
+                         synthetic_ids(ids))
         with db.conn() as c:
             for a, b, score, shared in plan:
                 sid = c.execute(
