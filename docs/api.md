@@ -447,3 +447,16 @@ The caller's sign-in method and profile sources for the "Your sources" screen. N
 ## 41. DELETE /profile/sources/{source}   owner: Alan
 `source` = `github | resume | manual`. Removes that source's documents and rebuilds interests from what's left (interests added on the review
 screen stay). `github` also deletes the stored OAuth token and the user's GitHub feed items. Response: `{ "removed": "github", ...same shape as 3 }`.
+
+## 42. GET /profile/skills   owner: Adam (onboarding, docs/ONBOARDING.md)
+The caller's active structured skill profile. Empty (`skills: []`, `profile_version: 0`) until the builder has run.
+```json
+{ "user_id": "uuid",
+  "skills": [ { "name": "python", "confidence": 0.92, "sources": ["github", "resume"] } ],
+  "experience_years_estimate": 3.5, "domains": ["ml", "backend"],
+  "project_highlights": [ { "name": "rag-eval", "description": "", "stars": 12, "forks": 2, "languages": ["Python"],
+                            "frameworks": ["fastapi"], "commits_last_year": 80, "pinned": true, "url": "https://github.com/..." } ],
+  "education": [], "certifications": [], "generated_at": "2026-09-26T19:00:00Z", "profile_version": 1 }
+```
+`POST /profile/ingest` (1) now also accepts DOCX resumes (multipart `file`, max 10 MB); the file is stored in the private
+`resumes` bucket and tracked in the `resumes` table.

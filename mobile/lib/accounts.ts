@@ -40,10 +40,13 @@ export async function connectGithub(): Promise<ConnectResult> {
 
 /** Pick a PDF and upload it; returns the extraction job id, or null if the user cancelled. */
 export async function uploadResume(): Promise<string | null> {
-  const picked = await DocumentPicker.getDocumentAsync({ type: 'application/pdf', copyToCacheDirectory: true });
+  const picked = await DocumentPicker.getDocumentAsync({
+    type: ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+    copyToCacheDirectory: true,
+  });
   if (picked.canceled) return null;
   const file = picked.assets[0];
-  if (file.size != null && file.size > 10 * 1024 * 1024) throw new Error('That PDF is over 10 MB.');
+  if (file.size != null && file.size > 10 * 1024 * 1024) throw new Error('That file is over 10 MB.');
   if (env.useMocks) {
     await new Promise((r) => setTimeout(r, 1500));
     demo.addSource('resume');

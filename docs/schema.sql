@@ -417,4 +417,6 @@ create table user_skill_profiles (
   generated_at timestamptz not null default now(),
   unique (user_id, version)
 );
--- one active version per user; GIN on skills; user_interests(interest_id) index for matching
+create unique index user_skill_profiles_active_idx on user_skill_profiles (user_id) where is_active;
+create index user_skill_profiles_skills_gin on user_skill_profiles using gin (skills jsonb_path_ops);
+create index user_interests_interest_idx on user_interests (interest_id) where not hidden;

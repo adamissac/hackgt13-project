@@ -112,10 +112,9 @@ def years_of_experience(experience: list[Job], today: date | None = None) -> flo
 
 
 # ---------------------------------------------------------------- heuristic parser
-_RANGE = re.compile(
-    r"((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|\d{1,2}/\d{4})\s*(?:-|–|—|to)\s*((?:[A-Za-z]{3,9}\.?\s+)?\d{4}|\d{1,2}/\d{4}|present|current|now)",
-    re.I,
-)
+_MONTH = r"(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*\.?"
+_WHEN = rf"(?:{_MONTH}\s+)?\d{{4}}|\d{{1,2}}/\d{{4}}"
+_RANGE = re.compile(rf"\b({_WHEN})\s*(?:-|–|—|to)\s*({_WHEN}|present|current|now)\b", re.I)
 
 
 def _split_sections(text: str) -> dict[str, str]:

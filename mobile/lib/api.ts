@@ -224,6 +224,26 @@ export interface FeedPostResponse {
   url: string | null;
   created_at: string;
 }
+// Structured skill profile (GET /profile/skills, docs/ONBOARDING.md).
+export interface SkillProfile {
+  user_id: string;
+  skills: { name: string; confidence: number; sources: ('github' | 'resume' | 'manual')[] }[];
+  experience_years_estimate: number | null;
+  domains: string[];
+  project_highlights: {
+    name: string;
+    description: string;
+    stars: number;
+    forks: number;
+    languages: string[];
+    frameworks: string[];
+    commits_last_year: number | null;
+    pinned: boolean;
+    url: string | null;
+  }[];
+  generated_at: string | null;
+  profile_version: number;
+}
 export interface AssistantMessage { role: 'user' | 'assistant'; content: string }
 
 // ---------- account connections (api.md 33, 39-41) ----------
@@ -556,6 +576,7 @@ export const api = {
           return r;
         }),
     ),
+  skillProfile: () => call(demo.skillProfile, () => request<SkillProfile>('GET', '/profile/skills')),
   /** Onboarding status on my profile (profiles.onboarding_status; the server sets 'complete'). */
   onboardingStatus: () =>
     call(

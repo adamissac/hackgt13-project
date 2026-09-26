@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
-import { api, type AccountsResponse, type Facet, type Interest, type InterestsResponse } from '@/lib/api';
+import { api, type AccountsResponse, type Facet, type Interest, type InterestsResponse, type SkillProfile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { demo } from '@/lib/demo';
 import { env, missingEnv } from '@/lib/env';
@@ -31,6 +31,7 @@ export default function ProfileScreen() {
   const { session, guest, leaveDemo } = useAuth();
   const interests = useAsync(() => api.getInterests(), [], ['profile']);
   const accounts = useAsync(() => api.accounts(), [], ['profile']);
+  const skills = useAsync(() => api.skillProfile(), [], ['profile']);
   const [override, setOverride] = useState<InterestsResponse | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -112,6 +113,8 @@ export default function ProfileScreen() {
           </Card>
         </>
       )}
+
+      {skills.state.status === 'ready' && skills.state.data.skills.length > 0 && <SkillProfileCard p={skills.state.data} />}
 
       <SectionTitle
         right={
@@ -228,6 +231,53 @@ export default function ProfileScreen() {
   );
 }
 
+const SOURCE_LABEL = { github: 'GitHub', resume: 'Resume', manual: 'You' } as const;
+
+function SkillProfileCard({ p }: { p: SkillProfile }) {
+  const c = useColors();
+  return (
+    <>
+      <SectionTitle right={<AiBadge label={`v${p.profile_version}`} />}>Skill profile</SectionTitle>
+      <Card>
+        <View style={styles.chips}>
+          {p.domains.map((d) => (
+            <Chip key={d} label={d} tone="ai" />
+          ))}
+          {p.experience_years_estimate != null && <Chip label={`~${p.experience_years_estimate} yrs experience`} tone="tint" />}
+        </View>
+        {p.skills.slice(0, 8).map((s, i) => (
+          <View key={s.name} style={[styles.skillRow, i > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: c.border }]}>
+            <Text style={[styles.interestName, { color: c.text, flex: 1 }]}>{s.name}</Text>
+            <Text style={[styles.tiny, { color: c.muted }]}>{s.sources.map((x) => SOURCE_LABEL[x] ?? x).join(' + ')}</Text>
+            <View style={[styles.meter, { backgroundColor: c.surfaceAlt }]}>
+              <View style={{ width: `${Math.round(s.confidence * 100)}%`, height: 6, borderRadius: 3, backgroundColor: c.tint }} />
+            </View>
+          </View>
+        ))}
+        {p.project_highlights.length > 0 && (
+          <View style={{ gap: 8, marginTop: 4 }}>
+            <Text style={[styles.facet, { color: c.muted }]}>Project highlights</Text>
+            {p.project_highlights.slice(0, 3).map((h) => (
+              <View key={h.name} style={[styles.project, { backgroundColor: c.surfaceAlt }]}>
+                <Text style={[styles.interestName, { color: c.text }]}>
+                  {h.pinned ? '📌 ' : ''}
+                  {h.name}
+                </Text>
+                {!!h.description && <Text style={[styles.small, { color: c.muted }]}>{h.description}</Text>}
+                <Text style={[styles.tiny, { color: c.muted }]}>
+                  {[...h.languages, ...h.frameworks].slice(0, 4).join(' · ')}
+                  {h.stars ? `  ★ ${h.stars}` : ''}
+                  {h.commits_last_year ? `  · ${h.commits_last_year} commits this year` : ''}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </Card>
+    </>
+  );
+}
+
 function Field({ label, value, divider }: { label: string; value: string; divider?: boolean }) {
   const c = useColors();
   return (
@@ -275,4 +325,7 @@ const styles = StyleSheet.create({
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, minHeight: 64 },
   menuIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   menuTitle: { fontSize: 16, fontWeight: '600' },
+  skillRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 8 },
+  meter: { width: 56, height: 6, borderRadius: 3, overflow: 'hidden' },
+  project: { borderRadius: 12, padding: 12, gap: 3 },
 });

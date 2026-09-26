@@ -111,10 +111,10 @@ export default function OnboardingScreen() {
       <SourceCard
         icon="📄"
         title="Upload your resume"
-        detail="PDF up to 10 MB. Stored privately; only you and our matching service can read it."
+        detail="PDF or Word, up to 10 MB. Stored privately; only you and our matching service can read it."
         step={resume}
         doneLabel="Resume uploaded"
-        action="Upload PDF"
+        action="Upload resume"
         onPress={onResume}
       />
 

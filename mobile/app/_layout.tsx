@@ -54,7 +54,16 @@ function RootLayoutNav() {
   const signedIn = Boolean(session) || guest;
   const onboarding = useOnboarding(signedIn);
   if (loading || (signedIn && onboarding === 'loading')) return null;
-  // Every new account (any sign-in method) sees onboarding once before the app.
+  // ⚠️ IMPORTANT — DO NOT REMOVE:
+  // Every new-account creation path, regardless of auth provider, MUST
+  // trigger the onboarding flow (GitHub connect + resume upload prompt)
+  // and the background skill-profile-builder job. See docs/ONBOARDING.md.
+  // If you are adding a new auth provider (SSO, another OAuth provider,
+  // invite-based signup, etc.), you MUST wire it into the same
+  // onCreateAccount() hook — do not create a new signup path that
+  // bypasses this.
+  // (The hook is the DB trigger public.on_create_account(); it sets onboarding_status = 'pending',
+  // and this gate shows onboarding for any signed-in user in that state, whatever the provider.)
   const needsOnboarding = signedIn && onboarding === 'pending';
   const c = Colors[colorScheme];
 

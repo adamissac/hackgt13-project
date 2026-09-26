@@ -161,6 +161,33 @@ export function addSource(source: 'github' | 'resume') {
   return { interests: DEMO_MY_INTERESTS.filter((i) => source === 'github' ? i.source === 'github' : i.source !== 'github').length };
 }
 
+export function skillProfile() {
+  const has = state.sources.github || state.sources.resume;
+  const src = (s: string) => DEMO_MY_INTERESTS.find((i) => i.name === s)?.source;
+  const tag = (name: string): ('github' | 'resume')[] =>
+    state.sources.github && state.sources.resume ? ['github', 'resume'] : state.sources.github ? ['github'] : ['resume'];
+  return {
+    user_id: DEMO_ME,
+    skills: has
+      ? DEMO_MY_INTERESTS.filter((i) => i.facet === 'technical').map((i) => ({
+          name: i.name,
+          confidence: i.weight,
+          sources: src(i.name) === 'github' ? tag(i.name) : (['resume'] as ('github' | 'resume')[]),
+        }))
+      : [],
+    experience_years_estimate: state.sources.resume ? 1.5 : null,
+    domains: has ? ['ml', 'backend', 'mobile'] : [],
+    project_highlights: state.sources.github
+      ? [
+          { name: 'course-rag', description: 'Retrieval pipeline over lecture notes', stars: 14, forks: 3, languages: ['Python'], frameworks: ['fastapi', 'pytorch'], commits_last_year: 212, pinned: true, url: null },
+          { name: 'formal-connection', description: 'HackGT 13 networking app', stars: 6, forks: 1, languages: ['TypeScript'], frameworks: ['react native', 'expo'], commits_last_year: 98, pinned: false, url: null },
+        ]
+      : [],
+    generated_at: has ? now() : null,
+    profile_version: has ? 1 : 0,
+  };
+}
+
 // ---------- me ----------
 export function getOpenToMeet() {
   return state.openToMeet;
