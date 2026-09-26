@@ -154,6 +154,31 @@ export type InviteRespondResponse =
   | { status: 'connected'; connection: { user_id: string; name: string | null } }
   | { status: 'ok' };
 
+
+// ---------- graph + personal dashboard + feed insights (api.md 26, 27, 32, 34) ----------
+export type GraphMode = 'matches' | 'network';
+export interface GraphPerson {
+  id: string; type: 'person'; label: string; score: number; highlight: boolean; open_to_meet: boolean;
+  cluster: number | null; connected: boolean; connected_at: string | null; top_topic: string;
+  name?: string; role?: 'student' | 'recruiter'; why?: string[]; shared_count?: number; how_met?: 'in_person' | 'invite';
+}
+export interface GraphTopic { id: string; type: 'topic'; label: string; facet: Facet; evidence?: string }
+export type GraphNode = { id: string; type: 'self'; label: string } | GraphPerson | GraphTopic;
+export interface GraphEdge { source: string; target: string; kind: 'match' | 'connection' | 'has_topic'; weight: number; facet?: Facet }
+export interface GraphResponse { nodes: GraphNode[]; edges: GraphEdge[]; synthetic?: boolean }
+export interface MeDashboard {
+  total: number; days: number;
+  growth: { date: string; total: number }[];
+  how_met: { in_person: number; invite: number };
+  top_topics: { name: string; facet: Facet; connections: number; talked: number }[];
+}
+export interface FeedInsights {
+  days: number;
+  trending_topics: { name: string; count: number }[];
+  activity: { date: string; count: number }[];
+  by_kind: { github: number; post: number; update: number };
+}
+
 // ---------- mocks ----------
 /* eslint-disable @typescript-eslint/no-require-imports */
 const mocks = {
@@ -182,6 +207,11 @@ const mocks = {
   inviteList: () => require('../../docs/mocks/invites_list.json') as { invites: MyInvite[] },
   inviteResolve: () => require('../../docs/mocks/invites_resolve.json') as InviteResolveResponse,
   inviteRespond: () => require('../../docs/mocks/invites_respond.json') as InviteRespondResponse,
+  graphMatches: () => require('../../docs/mocks/graph_matches.json') as GraphResponse,
+  graphNetwork: () => require('../../docs/mocks/graph_network.json') as GraphResponse,
+  graphExpand: () => require('../../docs/mocks/graph_expand.json') as GraphResponse & { node_id: string },
+  meDashboard: () => require('../../docs/mocks/me_dashboard.json') as MeDashboard,
+  feedInsights: () => require('../../docs/mocks/feed_insights.json') as FeedInsights,
 };
 /* eslint-enable @typescript-eslint/no-require-imports */
 
@@ -282,6 +312,24 @@ export const api = {
       () => ({ open_to_meet: open }),
       () => request<{ open_to_meet: boolean }>('PATCH', '/me/open-to-meet', { open }),
     ),
+  graph: (mode: GraphMode, eventId?: number) =>
+    call(mode === 'network' ? mocks.graphNetwork : mocks.graphMatches, () =>
+      request<GraphResponse>('GET', `/graph?mode=${mode}${eventId ? `&event_id=${eventId}` : ''}&max_people=30`),
+    ),
+  graphExpand: (nodeId: string, mode: GraphMode, eventId?: number) =>
+    call<GraphResponse>(
+      () => {
+        const m = mocks.graphExpand();
+        return m.node_id === nodeId && mode === 'matches' ? m : { nodes: [], edges: [] };
+      },
+      () =>
+        request<GraphResponse>(
+          'GET',
+          `/graph/expand?node_id=${encodeURIComponent(nodeId)}&mode=${mode}${eventId ? `&event_id=${eventId}` : ''}`,
+        ),
+    ),
+  meDashboard: (days = 30) => call(mocks.meDashboard, () => request<MeDashboard>('GET', `/me/dashboard?days=${days}`)),
+  feedInsights: (days = 7) => call(mocks.feedInsights, () => request<FeedInsights>('GET', `/feed/insights?days=${days}`)),
   suggestions: () => call(mocks.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
   respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
     call(
