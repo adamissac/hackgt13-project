@@ -167,3 +167,28 @@ Only SHARED topics are returned, never the other person's full interest list.
 ```
 `strength` = min of both people's weights on the topic (0-1). `evidence` is the other person's evidence line.
 `facet_overlap` = cosine similarity of the two people's facet vectors (0-1), for the overlap radar chart.
+
+## 16. PATCH /me/open-to-meet
+Request `{ "open": true }`   Response `{ "open_to_meet": true }`
+OFF also ends any live meetup location sharing the caller is part of (chats remain).
+
+## 17. GET /suggestions
+Open "Do you want to meet X?" suggestions still waiting for MY answer. Never shows the other person's answer.
+```json
+{ "suggestions": [ {
+    "suggestion_id": 12, "context": "event", "event_id": 1, "building_id": null,
+    "expires_at": "2026-09-26T15:34:05+00:00",
+    "other": { "user_id": "uuid", "name": "Sam Lee", "photo_url": null, "role": "recruiter", "headline": "" },
+    "score": 0.62,
+    "shared_topics": ["reinforcement learning", "rock climbing"] } ] }
+```
+`context` is `event | public | reconnect`. Created by a server job every 30 s for checked-in (or same-building) Open to Meet
+users: above both people's 80th percentile, max 3 per person per day, same pair at most once per 7 days, expires after 30 min.
+
+## 18. POST /suggestions/{suggestion_id}/respond
+Request `{ "response": "yes" }` (or `"no"`)
+```json
+{ "status": "waiting" }                       // every outcome except a mutual yes, whatever the other person did
+{ "status": "matched", "chat_id": 7 }         // both said yes: chats row created, both get a notification
+```
+Errors: `404 suggestion not found` (not a participant).
