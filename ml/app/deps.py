@@ -1,7 +1,8 @@
-"""Dependencies shared by Akshar's routers (invites, ble). AL1's app overrides them once:
-    app.dependency_overrides[deps.get_user_id] = verify_supabase_jwt
-Every router re-exports `get_user_id`, so overriding it here covers all of them."""
+"""Dependencies shared by Akshar's routers (invites, ble). Tests override `get_user_id`."""
+from fastapi import Depends
+
+from .auth import User, current_user
 
 
-def get_user_id() -> str:
-    raise NotImplementedError("wire Supabase JWT verification (AL1) via app.dependency_overrides")
+def get_user_id(user: User = Depends(current_user)) -> str:
+    return user.id

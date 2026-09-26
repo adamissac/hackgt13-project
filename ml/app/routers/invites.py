@@ -6,16 +6,13 @@ Rules this file enforces (AGENTS.md product rules):
 - Accept creates the connection (how_met = 'invite'). Decline or ignore writes nothing,
   so the sender can never tell a "no" from silence.
 
-Wiring (for AL1's app): `app.include_router(invites.router)` and override the two
-dependencies below, e.g.
-    app.dependency_overrides[invites.get_user_id] = verify_supabase_jwt
-    app.dependency_overrides[invites.get_invite_store] = lambda: SupabaseInviteStore(...)
-The store only needs the methods on `InviteStore`; `MemoryInviteStore` is the reference
-implementation used by tests/test_invites.py.
+Mounted via ROUTERS in app/main.py. Storage goes through `InviteStore`: `PgInviteStore` (Postgres,
+service connection) in the app, `MemoryInviteStore` in tests/test_invites.py.
 """
 import hashlib
 import os
 import secrets
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Protocol
 
@@ -23,7 +20,9 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
-from app.deps import get_user_id  # noqa: F401  (re-exported; the app overrides it)
+from app import db
+from app.deps import get_user_id
+from app.errors import ApiError
 
 INVITE_TTL = timedelta(days=7)
 DAILY_LIMIT = 10
@@ -60,7 +59,7 @@ class InviteStore(Protocol):
     def get_profile(self, user_id: str) -> Optional[Dict]: ...
     def is_blocked(self, a: str, b: str) -> bool: ...
     def connection_exists(self, a: str, b: str) -> bool: ...
-    def insert_connection(self, user_a: str, user_b: str, how_met: str, invite_id: int) -> None: ...
+    def accept(self, invite_id: int, sender_id: str, recipient_id: str) -> None: ...
 
 
 class MemoryInviteStore:
@@ -107,11 +106,79 @@ class MemoryInviteStore:
     def insert_connection(self, user_a, user_b, how_met, invite_id):
         self.connections[(user_a, user_b)] = {"how_met": how_met, "invite_id": invite_id}
 
+    def accept(self, invite_id, sender_id, recipient_id):
+        if not self.connection_exists(sender_id, recipient_id):
+            self.insert_connection(*sorted((sender_id, recipient_id)), "invite", invite_id)
+        self.update_invite(invite_id, {"status": "accepted", "used_by": recipient_id})
+
+
+def _norm(row: Optional[Dict]) -> Optional[Dict]:
+    """psycopg returns uuid columns as UUID objects; the router compares them with the caller's id string."""
+    if row is None:
+        return None
+    return {k: (str(v) if isinstance(v, uuid.UUID) else v) for k, v in row.items()}
+
+
+class PgInviteStore:
+    """Postgres via Alan's pool (service role: every query filters by the caller itself)."""
+
+    def count_created_since(self, sender_id, since):
+        return db.fetchone("select count(*) as n from invites where sender_id = %s and created_at >= %s",
+                           (sender_id, since))["n"]
+
+    def insert_invite(self, row):
+        return _norm(db.fetchone(
+            "insert into invites (sender_id, token_hash, channel, recipient_hint, note, status, expires_at, created_at) "
+            "values (%(sender_id)s, %(token_hash)s, %(channel)s, %(recipient_hint)s, %(note)s, %(status)s, "
+            "%(expires_at)s, %(created_at)s) returning *", row))
+
+    def get_by_hash(self, token_hash):
+        return _norm(db.fetchone("select * from invites where token_hash = %s", (token_hash,)))
+
+    def get_by_id(self, invite_id):
+        return _norm(db.fetchone("select * from invites where id = %s", (invite_id,)))
+
+    def update_invite(self, invite_id, fields):
+        sets = ", ".join(f"{k} = %({k})s" for k in fields)  # keys are ours, never user input
+        db.execute(f"update invites set {sets} where id = %(id)s", {**fields, "id": invite_id})
+
+    def list_by_sender(self, sender_id):
+        return [_norm(r) for r in db.fetchall(
+            "select * from invites where sender_id = %s order by created_at desc limit 100", (sender_id,))]
+
+    def get_profile(self, user_id):
+        return db.fetchone("select name, photo_url, headline from profiles where id = %s", (user_id,))
+
+    def is_blocked(self, a, b):
+        return db.fetchone("select 1 as ok from blocks where (blocker_id = %s and blocked_id = %s) "
+                           "or (blocker_id = %s and blocked_id = %s)", (a, b, b, a)) is not None
+
+    def connection_exists(self, a, b):
+        lo, hi = sorted((a, b))
+        return db.fetchone("select 1 as ok from connections where user_a = %s and user_b = %s", (lo, hi)) is not None
+
+    def accept(self, invite_id, sender_id, recipient_id):
+        from app import population, social
+        lo, hi = sorted((sender_id, recipient_id))
+        with db.conn() as c:  # one transaction: connection, invite, chat, notification
+            # Re-check under a row lock so two people can't both use a single-use invite.
+            row = c.execute("select status from invites where id = %s for update", (invite_id,)).fetchone()
+            if row["status"] != "active":
+                raise ApiError(410, "expired")
+            new = c.execute("insert into connections (user_a, user_b, how_met, invite_id) values (%s, %s, 'invite', %s) "
+                            "on conflict (user_a, user_b) do nothing returning user_a", (lo, hi, invite_id)).fetchone()
+            c.execute("update invites set status = 'accepted', used_by = %s where id = %s", (recipient_id, invite_id))
+            if new:
+                social.ensure_chat(c, sender_id, recipient_id, "connection")
+                social.notify(c, sender_id, "connected", {"user_id": recipient_id, "how_met": "invite"})
+                social.notify(c, recipient_id, "connected", {"user_id": sender_id, "how_met": "invite"})
+        population.invalidate()
+
 
 # ---------- dependencies (overridden by the app) ----------
 
 def get_invite_store() -> InviteStore:
-    raise NotImplementedError("wire a Supabase-backed InviteStore (AL1) via app.dependency_overrides")
+    return PgInviteStore()
 
 
 # ---------- request bodies ----------
@@ -229,9 +296,6 @@ def respond_invite(token: str, body: RespondBody, user_id: str = Depends(get_use
     if body.response == "decline":
         # Deliberately a no-op: the invite stays active and nothing records the "no".
         return {"status": "ok"}
-    if not store.connection_exists(sender_id, user_id):
-        a, b = sorted((sender_id, user_id))  # connections requires user_a < user_b
-        store.insert_connection(a, b, "invite", row["id"])
-    store.update_invite(row["id"], {"status": "accepted", "used_by": user_id})
+    store.accept(row["id"], sender_id, user_id)
     sender = store.get_profile(sender_id) or {}
     return {"status": "connected", "connection": {"user_id": sender_id, "name": sender.get("name")}}

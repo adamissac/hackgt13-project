@@ -11,7 +11,8 @@ Token size: 5 random bytes as 8 base32 characters. iOS only advertises a local n
 128-bit service UUID, leaving about 8 to 10 bytes, so a 13-character (8-byte) token risks truncation.
 40 bits keeps collisions negligible at event scale, and issuance retries on the rare clash.
 
-Wiring (AL1): `app.include_router(ble.router)`, override `deps.get_user_id` and `ble.get_ble_store`.
+Mounted via ROUTERS in app/main.py. Alan's AL8 reads `sightings` + `ephemeral_ids`; his retention task also
+deletes sightings older than 24 h. Tests use `MemoryBleStore`; the app uses `PgBleStore`.
 """
 import base64
 import secrets
@@ -22,6 +23,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
+from app import db
 from app.deps import get_user_id
 
 WINDOW = timedelta(minutes=10)
@@ -101,8 +103,46 @@ class MemoryBleStore:
         return len(old)
 
 
+class PgBleStore:
+    """Postgres via Alan's pool. `sightings` has no event_id/device_model/foreground columns yet, so
+    those fields are accepted but not stored (see PROGRESS)."""
+
+    def tokens_for_user(self, user_id, start, end):
+        return db.fetchall("select token, user_id, valid_from, valid_to from ephemeral_ids "
+                           "where user_id = %s and valid_to > %s and valid_from < %s order by valid_from",
+                           (user_id, start, end))
+
+    def token_exists(self, token):
+        return db.fetchone("select 1 as ok from ephemeral_ids where token = %s", (token,)) is not None
+
+    def insert_tokens(self, rows):
+        with db.conn() as c:
+            with c.cursor() as cur:
+                cur.executemany("insert into ephemeral_ids (token, user_id, valid_from, valid_to) "
+                                "values (%(token)s, %(user_id)s, %(valid_from)s, %(valid_to)s)", rows)
+
+    def resolve_token(self, token, ts):
+        row = db.fetchone("select user_id from ephemeral_ids where token = %s and valid_from <= %s and %s < valid_to",
+                          (token, ts, ts))
+        return str(row["user_id"]) if row else None
+
+    def insert_sightings(self, rows):
+        with db.conn() as c:
+            with c.cursor() as cur:
+                cur.executemany("insert into sightings (observer_id, observed_token, rssi, ts, zone_id) "
+                                "values (%(observer_id)s, %(observed_token)s, %(rssi)s, %(ts)s, %(zone_id)s)", rows)
+
+    def delete_sightings_before(self, cutoff):
+        with db.conn() as c:
+            return c.execute("delete from sightings where ts < %s", (cutoff,)).rowcount
+
+    def delete_tokens_before(self, cutoff):
+        with db.conn() as c:
+            return c.execute("delete from ephemeral_ids where valid_to < %s", (cutoff,)).rowcount
+
+
 def get_ble_store() -> BleStore:
-    raise NotImplementedError("wire a Supabase-backed BleStore (AL1) via app.dependency_overrides")
+    return PgBleStore()
 
 
 # ---------- logic ----------
