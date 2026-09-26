@@ -19,6 +19,8 @@ from . import db, social
 log = logging.getLogger("synthetic")
 MAX_REPLIES_PER_CHAT = 12
 REPLY_AFTER_S = 2
+RETRY_AFTER_FAILURE_S = 60
+_retry_at: dict[int, float] = {}   # chat_id -> monotonic time; don't hammer the model while it's failing
 
 
 def synthetic_ids(ids: list[str]) -> set[str]:
@@ -101,11 +103,16 @@ def reply_to_chats() -> int:
         age = db.fetchone("select extract(epoch from now() - %s) as s", (msgs[-1]["created_at"],))["s"]
         if age < REPLY_AFTER_S:
             continue
+        import time
+        if _retry_at.get(r["id"], 0) > time.monotonic():
+            continue
         try:
             text = _reply_text(_persona(r["syn"]), [{"mine": m["sender"] == r["syn"], "body": m["body"]} for m in msgs])
         except Exception:
-            log.exception("synthetic reply failed for chat %s", r["id"])
+            log.exception("synthetic reply failed for chat %s; retrying in %ss", r["id"], RETRY_AFTER_FAILURE_S)
+            _retry_at[r["id"]] = time.monotonic() + RETRY_AFTER_FAILURE_S
             continue
+        _retry_at.pop(r["id"], None)
         if text:
             db.execute("insert into messages (chat_id, sender_id, body, is_ai_draft) values (%s, %s, %s, false)",
                        (r["id"], r["syn"], text[:1000]))

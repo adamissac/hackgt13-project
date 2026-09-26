@@ -182,3 +182,21 @@ def test_quiet_hours(monkeypatch):
     assert not quiet_now(dt.datetime(2026, 9, 26, 12))
     monkeypatch.setenv("QUIET_HOURS", "")
     assert not quiet_now(dt.datetime(2026, 9, 26, 2))
+
+
+def test_synthetic_reply_backs_off_after_model_failure(monkeypatch):
+    """A failing model call is retried after a pause, not every 5-second tick."""
+    from app import synthetic
+    calls = {"n": 0}
+    monkeypatch.setattr(synthetic.db, "fetchall", lambda sql, params=None: (
+        [{"id": 1, "syn": "s"}] if "from chats" in sql else [{"sender": "real", "body": "hi", "created_at": 0}]))
+    monkeypatch.setattr(synthetic.db, "fetchone", lambda sql, params=None: {"s": 99})
+    monkeypatch.setattr(synthetic, "_persona", lambda uid: {})
+
+    def boom(persona, history):
+        calls["n"] += 1
+        raise RuntimeError("model down")
+    monkeypatch.setattr(synthetic, "_reply_text", boom)
+    synthetic._retry_at.clear()
+    assert synthetic.reply_to_chats() == 0 and synthetic.reply_to_chats() == 0
+    assert calls["n"] == 1

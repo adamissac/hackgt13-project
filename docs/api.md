@@ -483,3 +483,18 @@ Rate-limited in memory: 12 requests/minute per client IP and 600/hour overall; `
 Request `{ "messages": [ { "role": "user", "content": "Who should I meet?" } ], "context": { ... } }` (max 20 messages)
 Response `{ "reply": "..." }`; `503` if the model can't be reached (the app then falls back to its offline answers).
 Live mode keeps using 35 (`/assistant/chat`, JWT + server-scoped tools).
+
+## 44. POST /conversations/simulate   owner: Adam (demo attendees)
+Seeded demo attendees (profiles.is_synthetic) can't tap phones or scan a QR, so after a mutual yes with one, the app
+may create the verified conversation directly. Request `{ "user_id": "<demo attendee uuid>" }`.
+Response: the same shape as one item of `GET /conversations/pending` (conversation_id, method, other, checklist).
+`403 only available with demo attendees` for a real person (or if the caller is synthetic);
+`403 you can simulate meeting only after you both said yes` without a matched suggestion.
+Demo attendees also answer on their own (ml/app/synthetic.py): they say yes after the real person does, reply in chat
+in character, and say yes to connecting. Suggestions never pair two demo attendees.
+
+Additive fields (no breaking changes):
+- `GET /matches/{id}/quick-profile` (15): `"demo_attendee": true|false`.
+- `GET /me/accounts` (40): `sources.github.repo_count` = public repos read by the last import (`0` = connected but nothing
+  public; `null` = never imported).
+- `POST /profile/ingest` (1): a PDF with little or no text layer is transcribed by Claude before extraction.
