@@ -145,7 +145,7 @@ Only the caller's own connections. Never return counts of other users' connectio
 ## 13. Presence / open to chat (nice to have)
 - `POST /presence` <- `{ "building_id": "student_center", "open_to_chat": true }`
 - `DELETE /presence`
-- Invites: see section 35.
+- Invites: see section 36.
 
 ## 14. GET /dashboard/{event_id}   (organizer dashboard, no auth for demo)
 ```json
@@ -343,7 +343,15 @@ Private personal dashboard. Only the caller's own connections; nobody else's cou
 ```
 `connections` = how many of my connections share the topic; `talked` = conversations where I checked it as discussed.
 
-## 35. Private invites (AK4, Akshar; code in `ml/app/routers/invites.py`)
+## 35. POST /assistant/chat   owner: Alan (AL11)
+Request `{ "messages": [ { "role": "user", "content": "Who at this event works in quant finance?" } ], "event_id": 1 }`
+(the full conversation so far, last message from the user; the server keeps no chat history)
+Response `{ "reply": "Quinn (recruiter) lists quantitative finance ..." }`. `503 the assistant is unavailable right now` if Claude can't be reached.
+Tools are scoped server-side: Open to Meet attendees of events I'm checked in to, quick profiles of current
+matches/suggestions/connections only, my own connections feed, my own profile. It never reveals anyone's connections,
+connection count, or whether someone declined.
+
+## 36. Private invites (AK4, Akshar; code in `ml/app/routers/invites.py`)
 Token: 128-bit random, returned once at creation, stored only as a SHA-256 hash. 7-day expiry, single use,
 revocable, 10 new invites per sender per rolling 24 hours. Decline writes nothing: the sender can't tell it from silence.
 

@@ -28,6 +28,7 @@ change to `docs/api.md`.
 | feed.json | GET /feed |
 | feed_insights.json | GET /feed/insights |
 | feed_reply_suggestion.json | POST /feed/{item_id}/reply-suggestion |
+| assistant_chat.json | POST /assistant/chat |
 | graph_matches.json | GET /graph?mode=matches |
 | graph_network.json | GET /graph?mode=network |
 | graph_expand.json | GET /graph/expand (node_id = the "reinforcement learning" topic) |

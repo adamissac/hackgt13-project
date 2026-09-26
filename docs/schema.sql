@@ -378,3 +378,13 @@ create table notifications (
   read boolean default false,
   created_at timestamptz default now()
 );
+
+-- AD10: Expo push tokens (supabase/migrations/20260926000009_push_tokens.sql). Owner-only table rather than
+-- a profiles column, since other users can read profile rows. RLS: owner select/insert/update/delete.
+create table push_tokens (
+  user_id uuid not null references profiles(id) on delete cascade,
+  token text not null,                  -- ExponentPushToken[...]
+  platform text check (platform in ('ios','android')),
+  updated_at timestamptz not null default now(),
+  primary key (user_id, token)
+);

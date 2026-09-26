@@ -87,6 +87,43 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Contract changes:** `docs/api.md` new section 15 (invites; section 13's `POST /invites/{invite_id}/respond` now points to 15 and is keyed by token, per MASTER_SPEC/AK4). New mocks `docs/mocks/invites_{create,list,resolve,respond}.json`. New env var `INVITE_BASE_URL` in `.env.example` (ML service only). No schema change: uses existing `invites` table and `connections.how_met/invite_id`.
 
+## 2026-09-26 05:05 UTC | adam | Cursor cloud agent
+**Task:** AD10 Push notifications (schema part: `push_tokens`)
+**Status:** in progress
+**What I did:**
+- New migration `supabase/migrations/20260926000009_push_tokens.sql`: `push_tokens(user_id → profiles on delete cascade, token, platform ios|android, updated_at)`, PK (user_id, token), RLS on with owner-only select/insert/update/delete. A table, not a profiles column, because any signed-in user can read profile rows.
+- Same table appended to `docs/schema.sql`.
+- `supabase/tests/rls_checks.sql`: A can't see, insert for, update, or delete B's token; A can insert its own; B reads its own unchanged; deleting a profile cascades its tokens. A leaky select policy makes the run fail (checked, then reverted).
+- Alan's DELETE /me (`ml/app/account.py` `delete_rows`) deletes the profile and relies on cascades, so it already covers `push_tokens`. REQUESTS.md: Alan's push-column ask marked done; new ask for Alan to build the Expo sender on this table.
+**How to run/test it:** `./supabase/tests/run-local.sh` (local Postgres + pgvector, no secrets) ends with `ALL AD1 CHECKS PASSED`.
+**Next step for whoever continues:** On Adam's Mac from repo root: `npx supabase db push --linked` to apply migration 9 to the live project, then `npx supabase gen types typescript --linked > mobile/lib/database.types.ts`. Then in `mobile/`, after sign-in, get the Expo push token and upsert `{user_id, token, platform}` into `push_tokens`.
+**Known issues / blockers:** Not applied to live yet (this VM has no Supabase keys or MCP). Expo push sender in `ml/` is Alan's (REQUESTS.md).
+**Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926000009_push_tokens.sql`: new owner-only table `push_tokens`. Additive. Affects Alan (reads it to send pushes) and Adam's mobile (writes it).
+
+## 2026-09-26 04:55 UTC | adam | Cursor cloud agent
+**Task:** AD1 Supabase project (verification)
+**Status:** done
+**What I did:**
+- Replayed all 8 `supabase/migrations/` from scratch on Postgres 16 + pgvector: all apply cleanly. 35/35 public tables have RLS; HackGT 13 event present; realtime = messages, location_shares, notifications; HNSW cosine index on profile_vectors; resumes bucket private; signup trigger fills name and photo.
+- Policies checked line by line against MASTER_SPEC 8.3 (chats/messages participants, location_shares other participant, feed_items author + connections, owner-only invites/notifications/web_mentions/feed_prefs, no client access to suggestions/conversations/sightings/encounters/impressions).
+- New `supabase/tests/run-local.sh` (+ `supabase_stub.sql`, `rls_checks.sql`): user A sees none of B's rows in 13 tables or Storage and can't write into B's chat; C (B's match) reads the chat and B's meetup location. Negative check: a leaking policy on notifications makes it fail.
+- No schema changes since 0e6086d, so the live project (migrations 1-8 pushed earlier from Adam's Mac) still matches the repo.
+**How to run/test it:** `./supabase/tests/run-local.sh` (local, no secrets). Live: `node scripts/rls-isolation-test.mjs` with the three keys (AGENTS.md).
+**Next step for whoever continues:** On Adam's Mac: `npx supabase config push` (y for auth, n for storage) so magic-link redirects to `formalconnect://auth/callback` work, then sign in by email on the phone (AD2). Then add `push_tokens` (owner-only table) via /contract-change for AD10 per REQUESTS.md.
+**Known issues / blockers:** This cloud VM has no Supabase MCP or keys, so live state was not re-queried here; Adam's Claude session verified it via CLI at 01:15. The DB password was pasted in chat: rotate it (Supabase > Project Settings > Database) and update root `.env`.
+**Contract changes:** none
+## 2026-09-26 04:30 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL11 Chatbot
+**Status:** done (tested with a scripted adversarial model; live replies need ANTHROPIC_API_KEY)
+**What I did:**
+- `ml/app/assistant.py`: Sonnet manual tool loop (max 6 turns, strict tool schemas, cached system prompt); the viewer id is bound in Python and no tool takes one. Tools reuse the REST scope rules: search_event_attendees (checked-in event only, Open to Meet only, candidate-pool exclusions, first name/role/shared topics), get_match_profile (matching.relationship), get_connections_activity (my connections' feed, 1-14 days), get_my_profile.
+- `ml/app/routers/assistant.py`: POST /assistant/chat {messages[], event_id?} -> {reply}; 503 when Claude is unreachable. docs/api.md 35 + docs/mocks/assistant_chat.json.
+- Tests (`ml/tests/test_assistant.py`): an adversarial fake model asking for a connection's connections, another event's attendees, and a stranger's profile gets only 'not available' results; no tool output contains connection lists or counts; Open-to-Meet-off and other-event people never surface.
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_assistant.py`
+**Next step for whoever continues:** All Section 13 AL tasks now have code. Remaining for Alan: (1) with real keys, finish AL1 (tunnel URL) and AL2 (tune extraction on the four real profiles), and try the chatbot's adversarial prompts live; (2) when Adam adds a push-token column, add the Expo push sender in `ml/app/social.py::notify`; (3) when Akshar's AK2/AK6 land, retrain with `python scripts/train_encounter.py` and check the real same-table false-positive rate; (4) pitch prep (Sunday): IDF overlap, complementarity, ranker, encounter limitation, every number labeled simulated vs real.
+**Known issues / blockers:** Chatbot quality untested against the live model (no key in the cloud container).
+**Contract changes:** docs/api.md: new 35 POST /assistant/chat (renumbered from 33 on merge with Arjun's 33-34); docs/mocks/assistant_chat.json. No owner currently has the chat screen in Section 13; mention to Adam if there is time.
+
 ## 2026-09-26 01:20 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR8 GitHub activity poller + AR7 personal dashboard and feed insights
 **Status:** done (code + tests); live data needs connected GitHub accounts and Supabase

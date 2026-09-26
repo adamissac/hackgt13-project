@@ -107,7 +107,7 @@ export interface BleSightingsRequest {
   sightings: BleSighting[];
 }
 
-// Private invites (section 35). The token appears only inside `url`, returned once.
+// Private invites (section 36). The token appears only inside `url`, returned once.
 export type InviteChannel = 'link' | 'qr' | 'contact';
 export type InviteStatus = 'active' | 'accepted' | 'revoked' | 'expired';
 export interface CreateInviteRequest { channel?: InviteChannel; recipient_hint?: string; note?: string }
