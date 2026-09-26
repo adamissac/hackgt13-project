@@ -24,14 +24,16 @@ export function LineChart({ data, height = 190, label }: { data: { date: string;
   const [hover, setHover] = useState<number | null>(null);
   const pad = { l: 34, r: 12, t: 12, b: 26 };
   const max = Math.max(1, ...data.map((d) => d.value));
-  const niceMax = max <= 5 ? max : Math.ceil(max / 5) * 5;
+  // nice ticks: step 1/2/5/10... giving 2-4 intervals
+  const step = [1, 2, 5, 10, 20, 25, 50, 100, 200, 500].find((st) => Math.ceil(max / st) <= 4) ?? Math.ceil(max / 4);
+  const niceMax = Math.ceil(max / step) * step;
   const iw = Math.max(0, width - pad.l - pad.r);
   const ih = height - pad.t - pad.b;
   const x = (i: number) => pad.l + (data.length <= 1 ? iw / 2 : (i / (data.length - 1)) * iw);
   const y = (v: number) => pad.t + ih - (v / niceMax) * ih;
   const path = data.map((d, i) => `${i ? "L" : "M"}${x(i)},${y(d.value)}`).join(" ");
   const area = data.length ? `${path} L${x(data.length - 1)},${pad.t + ih} L${x(0)},${pad.t + ih} Z` : "";
-  const ticks = [0, Math.round(niceMax / 2), niceMax].filter((v, i, a) => a.indexOf(v) === i);
+  const ticks = Array.from({ length: niceMax / step + 1 }, (_, i) => i * step);
   const labelEvery = Math.max(1, Math.ceil(data.length / Math.max(2, Math.floor(iw / 70))));
   const h = hover !== null ? data[hover] : null;
 
@@ -58,7 +60,7 @@ export function LineChart({ data, height = 190, label }: { data: { date: string;
             </g>
           ))}
           {data.map((d, i) =>
-            i % labelEvery === 0 || i === data.length - 1 ? (
+            (i % labelEvery === 0 && data.length - 1 - i >= labelEvery * 0.6) || i === data.length - 1 ? (
               <text key={d.date} className="tick" x={x(i)} y={height - 6} textAnchor={i === 0 ? "start" : i === data.length - 1 ? "end" : "middle"}>
                 {fmtDay(d.date)}
               </text>

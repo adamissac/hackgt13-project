@@ -99,7 +99,7 @@ export default function MeDashboard() {
               ) : (
                 <Bars
                   unit="connections"
-                  rows={d.top_topics.map((t) => ({
+                  rows={[...d.top_topics].sort((a, b) => b.connections - a.connections || b.talked - a.talked).map((t) => ({
                     name: t.name,
                     value: t.connections,
                     mark: <span style={{ color: palette.facet[t.facet] }} aria-label={t.facet}>{FACET_GLYPH[t.facet]}</span>,
