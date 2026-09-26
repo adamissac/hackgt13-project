@@ -4,7 +4,7 @@ import { Image, Pressable, StyleSheet } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Text, View, useThemeColor } from '@/components/Themed';
-import { ApiError, api } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
 import { useAsync } from '@/lib/useAsync';
 

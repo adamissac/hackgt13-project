@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { Button } from 'react-native';
+import { Button, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import {
   beginAdvertising,
