@@ -1,0 +1,98 @@
+{
+ "node_id": "t_63",
+ "mode": "matches",
+ "event_id": 1,
+ "synthetic": true,
+ "nodes": [
+  {
+   "id": "u_092",
+   "type": "person",
+   "label": "Leo",
+   "name": "Leo O.",
+   "role": "student",
+   "score": 0.389,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": false,
+   "connected_at": null,
+   "top_topic": "reinforcement learning",
+   "why": [
+    "reinforcement learning",
+    "ai research"
+   ],
+   "topics": [
+    "natural language processing",
+    "transformers",
+    "reinforcement learning",
+    "linear algebra",
+    "anime",
+    "poker",
+    "ml engineering",
+    "ai research"
+   ],
+   "shared_count": 2,
+   "rank": 31,
+   "photo_url": null
+  },
+  {
+   "id": "u_071",
+   "type": "person",
+   "label": "Sofia",
+   "name": "Sofia T.",
+   "role": "student",
+   "score": 0.291,
+   "highlight": false,
+   "open_to_meet": true,
+   "cluster": 0,
+   "connected": false,
+   "connected_at": null,
+   "top_topic": "reinforcement learning",
+   "why": [
+    "reinforcement learning",
+    "python"
+   ],
+   "topics": [
+    "python",
+    "reinforcement learning",
+    "salsa dancing",
+    "probability",
+    "guitar",
+    "ml engineering",
+    "machine learning",
+    "startups"
+   ],
+   "shared_count": 2,
+   "rank": 32,
+   "photo_url": null
+  }
+ ],
+ "edges": [
+  {
+   "source": "me",
+   "target": "u_092",
+   "kind": "match",
+   "weight": 0.389,
+   "facet": "technical"
+  },
+  {
+   "source": "u_092",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.8
+  },
+  {
+   "source": "me",
+   "target": "u_071",
+   "kind": "match",
+   "weight": 0.291,
+   "facet": "technical"
+  },
+  {
+   "source": "u_071",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.82
+  }
+ ]
+}

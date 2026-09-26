@@ -1,91 +1,96 @@
 {
  "mode": "network",
  "event_id": 1,
- "self_id": "self",
+ "self_id": "me",
  "generated_at": "2026-09-26T12:00:00-04:00",
  "synthetic": true,
  "nodes": [
   {
-   "id": "self",
+   "id": "me",
    "type": "self",
-   "label": "You",
-   "role": "student"
+   "label": "You"
   },
   {
-   "id": "t:reinforcement learning",
+   "id": "t_63",
    "type": "topic",
    "label": "reinforcement learning",
    "facet": "technical",
    "idf": 2.51
   },
   {
-   "id": "t:quantitative research",
+   "id": "t_59",
    "type": "topic",
    "label": "quantitative research",
    "facet": "career",
    "idf": 2.6
   },
   {
-   "id": "t:time series analysis",
+   "id": "t_76",
    "type": "topic",
    "label": "time series analysis",
    "facet": "technical",
    "idf": 1.77
   },
   {
-   "id": "t:pytorch",
+   "id": "t_58",
    "type": "topic",
    "label": "pytorch",
    "facet": "technical",
    "idf": 2.13
   },
   {
-   "id": "t:mathematics",
+   "id": "t_42",
    "type": "topic",
    "label": "mathematics",
    "facet": "academic",
    "idf": 3.29
   },
   {
-   "id": "t:rock climbing",
+   "id": "t_65",
    "type": "topic",
    "label": "rock climbing",
    "facet": "personal",
    "idf": 1.69
   },
   {
-   "id": "t:python",
+   "id": "t_57",
    "type": "topic",
    "label": "python",
    "facet": "technical",
    "idf": 0.78
   },
   {
-   "id": "t:ai research",
+   "id": "t_1",
    "type": "topic",
    "label": "ai research",
    "facet": "career",
    "idf": 2.26
   },
   {
-   "id": "t:chess",
+   "id": "t_13",
    "type": "topic",
    "label": "chess",
    "facet": "personal",
    "idf": 2.07
   },
   {
-   "id": "u046",
+   "id": "u_046",
    "type": "person",
-   "label": "Jordan U.",
+   "label": "Jordan",
+   "name": "Jordan U.",
    "role": "recruiter",
    "score": 0.838,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 1,
+   "connected": true,
+   "connected_at": "2026-09-26T19:13:00-04:00",
+   "top_topic": "mathematics",
    "why": [
     "mathematics",
     "quantitative research",
     "time series analysis"
    ],
-   "top_topic": "mathematics",
    "topics": [
     "python",
     "time series analysis",
@@ -96,50 +101,30 @@
     "guitar",
     "atlanta united"
    ],
+   "shared_count": 4,
+   "rank": 1,
    "photo_url": null,
-   "connected_at": "2026-09-26T11:13:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "in_person"
   },
   {
-   "id": "u089",
+   "id": "u_004",
    "type": "person",
-   "label": "Maya L.",
-   "role": "recruiter",
-   "score": 0.691,
-   "why": [
-    "mathematics",
-    "quantitative research",
-    "python"
-   ],
-   "top_topic": "mathematics",
-   "topics": [
-    "backtesting",
-    "c++",
-    "trading",
-    "quantitative research",
-    "statistics",
-    "piano",
-    "stochastic calculus",
-    "mathematics"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T12:26:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "in_person"
-  },
-  {
-   "id": "u004",
-   "type": "person",
-   "label": "Leo E.",
+   "label": "Leo",
+   "name": "Leo E.",
    "role": "student",
    "score": 0.654,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-26T14:26:00-04:00",
+   "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
     "pytorch",
     "ai research"
    ],
-   "top_topic": "reinforcement learning",
    "topics": [
     "reinforcement learning",
     "ai research",
@@ -150,23 +135,30 @@
     "pytorch",
     "python"
    ],
+   "shared_count": 4,
+   "rank": 2,
    "photo_url": null,
-   "connected_at": "2026-09-26T13:39:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "in_person"
   },
   {
-   "id": "u088",
+   "id": "u_088",
    "type": "person",
-   "label": "Aarav K.",
+   "label": "Aarav",
+   "name": "Aarav K.",
    "role": "student",
    "score": 0.602,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-27T23:39:00-04:00",
+   "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
     "ai research",
     "rock climbing"
    ],
-   "top_topic": "reinforcement learning",
    "topics": [
     "machine learning",
     "reinforcement learning",
@@ -177,50 +169,30 @@
     "rock climbing",
     "python"
    ],
+   "shared_count": 4,
+   "rank": 3,
    "photo_url": null,
-   "connected_at": "2026-09-26T14:52:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "in_person"
   },
   {
-   "id": "u081",
+   "id": "u_010",
    "type": "person",
-   "label": "Nia D.",
-   "role": "student",
-   "score": 0.59,
-   "why": [
-    "reinforcement learning",
-    "pytorch",
-    "ai research"
-   ],
-   "top_topic": "reinforcement learning",
-   "topics": [
-    "reinforcement learning",
-    "transformers",
-    "natural language processing",
-    "probability",
-    "volunteering",
-    "guitar",
-    "ai research",
-    "pytorch"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T15:05:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "in_person"
-  },
-  {
-   "id": "u010",
-   "type": "person",
-   "label": "Kai K.",
+   "label": "Kai",
+   "name": "Kai K.",
    "role": "student",
    "score": 0.584,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-26T18:52:00-04:00",
+   "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
     "pytorch",
     "ai research"
    ],
-   "top_topic": "reinforcement learning",
    "topics": [
     "reinforcement learning",
     "basketball",
@@ -231,23 +203,30 @@
     "pytorch",
     "probability"
    ],
+   "shared_count": 3,
+   "rank": 4,
    "photo_url": null,
-   "connected_at": "2026-09-26T16:18:00-04:00",
    "met_at": "HackGT 13",
-   "via": "invite"
+   "how_met": "in_person"
   },
   {
-   "id": "u102",
+   "id": "u_102",
    "type": "person",
-   "label": "Arjun Y.",
+   "label": "Arjun",
+   "name": "Arjun Y.",
    "role": "student",
    "score": 0.537,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-26T13:05:00-04:00",
+   "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
     "pytorch",
     "chess"
    ],
-   "top_topic": "reinforcement learning",
    "topics": [
     "pytorch",
     "ml engineering",
@@ -258,50 +237,30 @@
     "chess",
     "reinforcement learning"
    ],
+   "shared_count": 4,
+   "rank": 5,
    "photo_url": null,
-   "connected_at": "2026-09-26T17:31:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "invite"
   },
   {
-   "id": "u061",
+   "id": "u_096",
    "type": "person",
-   "label": "Lina J.",
-   "role": "student",
-   "score": 0.512,
-   "why": [
-    "reinforcement learning",
-    "pytorch",
-    "ai research"
-   ],
-   "top_topic": "reinforcement learning",
-   "topics": [
-    "ml engineering",
-    "computer science",
-    "ai research",
-    "anime",
-    "natural language processing",
-    "pytorch",
-    "reinforcement learning",
-    "basketball"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T18:44:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "invite"
-  },
-  {
-   "id": "u096",
-   "type": "person",
-   "label": "Noah S.",
+   "label": "Noah",
+   "name": "Noah S.",
    "role": "student",
    "score": 0.459,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 1,
+   "connected": true,
+   "connected_at": "2026-09-27T22:18:00-04:00",
+   "top_topic": "quantitative research",
    "why": [
     "quantitative research",
     "time series analysis",
     "python"
    ],
-   "top_topic": "quantitative research",
    "topics": [
     "time series analysis",
     "hedge funds",
@@ -312,103 +271,30 @@
     "film photography",
     "python"
    ],
+   "shared_count": 3,
+   "rank": 6,
    "photo_url": null,
-   "connected_at": "2026-09-26T19:57:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "in_person"
   },
   {
-   "id": "u075",
+   "id": "u_110",
    "type": "person",
-   "label": "Ava X.",
-   "role": "student",
-   "score": 0.431,
-   "why": [
-    "quantitative research",
-    "time series analysis",
-    "python"
-   ],
-   "top_topic": "quantitative research",
-   "topics": [
-    "time series analysis",
-    "statistics",
-    "c++",
-    "reading sci-fi",
-    "hedge funds",
-    "guitar",
-    "stochastic calculus",
-    "backtesting"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T20:10:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "in_person"
-  },
-  {
-   "id": "u119",
-   "type": "person",
-   "label": "Ava P.",
-   "role": "student",
-   "score": 0.414,
-   "why": [
-    "quantitative research",
-    "time series analysis",
-    "python"
-   ],
-   "top_topic": "quantitative research",
-   "topics": [
-    "volunteering",
-    "atlanta united",
-    "statistics",
-    "python",
-    "economics",
-    "backtesting",
-    "quantitative research",
-    "security engineering"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T21:23:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "in_person"
-  },
-  {
-   "id": "u092",
-   "type": "person",
-   "label": "Leo O.",
-   "role": "student",
-   "score": 0.389,
-   "why": [
-    "reinforcement learning",
-    "ai research"
-   ],
-   "top_topic": "reinforcement learning",
-   "topics": [
-    "natural language processing",
-    "transformers",
-    "reinforcement learning",
-    "linear algebra",
-    "anime",
-    "poker",
-    "ml engineering",
-    "ai research"
-   ],
-   "photo_url": null,
-   "connected_at": "2026-09-26T10:36:00-04:00",
-   "met_at": "HackGT 13",
-   "via": "invite"
-  },
-  {
-   "id": "u110",
-   "type": "person",
-   "label": "Aarav G.",
+   "label": "Aarav",
+   "name": "Aarav G.",
    "role": "student",
    "score": 0.376,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-26T17:31:00-04:00",
+   "top_topic": "pytorch",
    "why": [
     "pytorch",
     "ai research",
     "python"
    ],
-   "top_topic": "pytorch",
    "topics": [
     "computer vision",
     "computer science",
@@ -419,23 +305,30 @@
     "natural language processing",
     "anime"
    ],
+   "shared_count": 3,
+   "rank": 7,
    "photo_url": null,
-   "connected_at": "2026-09-27T11:49:00-04:00",
    "met_at": "HackGT 13",
-   "via": "in_person"
+   "how_met": "in_person"
   },
   {
-   "id": "u094",
+   "id": "u_094",
    "type": "person",
-   "label": "Ethan Q.",
+   "label": "Ethan",
+   "name": "Ethan Q.",
    "role": "student",
    "score": 0.339,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-26T12:44:00-04:00",
+   "top_topic": "pytorch",
    "why": [
     "pytorch",
     "chess",
     "python"
    ],
-   "top_topic": "pytorch",
    "topics": [
     "phd programs",
     "pytorch",
@@ -446,474 +339,617 @@
     "python",
     "salsa dancing"
    ],
+   "shared_count": 3,
+   "rank": 8,
    "photo_url": null,
-   "connected_at": "2026-09-26T12:02:00-04:00",
    "met_at": "HackGT 13",
-   "via": "invite"
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_056",
+   "type": "person",
+   "label": "Mateo",
+   "name": "Mateo E.",
+   "role": "recruiter",
+   "score": 0.329,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 0,
+   "connected": true,
+   "connected_at": "2026-09-27T21:57:00-04:00",
+   "top_topic": "pytorch",
+   "why": [
+    "pytorch",
+    "ai research"
+   ],
+   "topics": [
+    "natural language processing",
+    "pytorch",
+    "machine learning",
+    "ai research",
+    "computer science",
+    "running",
+    "reading sci-fi",
+    "atlanta united"
+   ],
+   "shared_count": 2,
+   "rank": 9,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_040",
+   "type": "person",
+   "label": "Ravi",
+   "name": "Ravi O.",
+   "role": "student",
+   "score": 0.32,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 1,
+   "connected": true,
+   "connected_at": "2026-09-26T16:10:00-04:00",
+   "top_topic": "mathematics",
+   "why": [
+    "mathematics",
+    "python"
+   ],
+   "topics": [
+    "hedge funds",
+    "trading",
+    "mathematics",
+    "volunteering",
+    "energy policy",
+    "reading sci-fi",
+    "python",
+    "c++"
+   ],
+   "shared_count": 2,
+   "rank": 10,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "invite"
+  },
+  {
+   "id": "u_044",
+   "type": "person",
+   "label": "Aarav",
+   "name": "Aarav S.",
+   "role": "student",
+   "score": 0.319,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 4,
+   "connected": true,
+   "connected_at": "2026-09-26T11:23:00-04:00",
+   "top_topic": "time series analysis",
+   "why": [
+    "time series analysis",
+    "chess",
+    "python"
+   ],
+   "topics": [
+    "biotech",
+    "cooking",
+    "python",
+    "chess",
+    "genomics",
+    "time series analysis",
+    "biology",
+    "bioinformatics"
+   ],
+   "shared_count": 3,
+   "rank": 11,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_020",
+   "type": "person",
+   "label": "Diego",
+   "name": "Diego U.",
+   "role": "student",
+   "score": 0.305,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 4,
+   "connected": true,
+   "connected_at": "2026-09-27T20:36:00-04:00",
+   "top_topic": "time series analysis",
+   "why": [
+    "time series analysis",
+    "rock climbing",
+    "python"
+   ],
+   "topics": [
+    "python",
+    "biology",
+    "time series analysis",
+    "bioinformatics",
+    "biotech",
+    "poker",
+    "genomics",
+    "r"
+   ],
+   "shared_count": 3,
+   "rank": 12,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_002",
+   "type": "person",
+   "label": "Jordan",
+   "name": "Jordan C.",
+   "role": "student",
+   "score": 0.217,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 1,
+   "connected": true,
+   "connected_at": "2026-09-26T15:49:00-04:00",
+   "top_topic": "time series analysis",
+   "why": [
+    "time series analysis",
+    "python"
+   ],
+   "topics": [
+    "hedge funds",
+    "statistics",
+    "time series analysis",
+    "python",
+    "c++",
+    "formula 1",
+    "backtesting",
+    "trading"
+   ],
+   "shared_count": 2,
+   "rank": 13,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_036",
+   "type": "person",
+   "label": "Arjun",
+   "name": "Arjun K.",
+   "role": "recruiter",
+   "score": 0.217,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 4,
+   "connected": true,
+   "connected_at": "2026-09-26T10:02:00-04:00",
+   "top_topic": "time series analysis",
+   "why": [
+    "time series analysis",
+    "python"
+   ],
+   "topics": [
+    "genomics",
+    "biomedical engineering",
+    "computational biology research",
+    "bioinformatics",
+    "film photography",
+    "time series analysis",
+    "r",
+    "biotech"
+   ],
+   "shared_count": 2,
+   "rank": 14,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
   }
  ],
- "links": [
+ "edges": [
   {
-   "source": "self",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.95,
-   "facet": "technical"
+   "source": "me",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.95
   },
   {
-   "source": "self",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.85,
-   "facet": "career"
+   "source": "me",
+   "target": "t_59",
+   "kind": "has_topic",
+   "weight": 0.85
   },
   {
-   "source": "self",
-   "target": "t:time series analysis",
-   "kind": "interest",
-   "weight": 0.8,
-   "facet": "technical"
+   "source": "me",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.8
   },
   {
-   "source": "self",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.7,
-   "facet": "technical"
+   "source": "me",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.7
   },
   {
-   "source": "self",
-   "target": "t:mathematics",
-   "kind": "interest",
-   "weight": 0.7,
+   "source": "me",
+   "target": "t_42",
+   "kind": "has_topic",
+   "weight": 0.7
+  },
+  {
+   "source": "me",
+   "target": "t_65",
+   "kind": "has_topic",
+   "weight": 0.7
+  },
+  {
+   "source": "me",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.6
+  },
+  {
+   "source": "me",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.6
+  },
+  {
+   "source": "me",
+   "target": "t_13",
+   "kind": "has_topic",
+   "weight": 0.5
+  },
+  {
+   "source": "me",
+   "target": "u_046",
+   "kind": "connection",
+   "weight": 0.838,
    "facet": "academic"
   },
   {
-   "source": "self",
-   "target": "t:rock climbing",
-   "kind": "interest",
-   "weight": 0.7,
-   "facet": "personal"
+   "source": "u_046",
+   "target": "t_42",
+   "kind": "has_topic",
+   "weight": 0.89
   },
   {
-   "source": "self",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.6,
+   "source": "u_046",
+   "target": "t_59",
+   "kind": "has_topic",
+   "weight": 0.78
+  },
+  {
+   "source": "u_046",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.93
+  },
+  {
+   "source": "u_046",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.96
+  },
+  {
+   "source": "me",
+   "target": "u_004",
+   "kind": "connection",
+   "weight": 0.654,
    "facet": "technical"
   },
   {
-   "source": "self",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.6,
+   "source": "u_004",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.97
+  },
+  {
+   "source": "u_004",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.69
+  },
+  {
+   "source": "u_004",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.92
+  },
+  {
+   "source": "u_004",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.58
+  },
+  {
+   "source": "me",
+   "target": "u_088",
+   "kind": "connection",
+   "weight": 0.602,
+   "facet": "technical"
+  },
+  {
+   "source": "u_088",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.96
+  },
+  {
+   "source": "u_088",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.7
+  },
+  {
+   "source": "u_088",
+   "target": "t_65",
+   "kind": "has_topic",
+   "weight": 0.63
+  },
+  {
+   "source": "u_088",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.52
+  },
+  {
+   "source": "me",
+   "target": "u_010",
+   "kind": "connection",
+   "weight": 0.584,
+   "facet": "technical"
+  },
+  {
+   "source": "u_010",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.88
+  },
+  {
+   "source": "u_010",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.78
+  },
+  {
+   "source": "u_010",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.84
+  },
+  {
+   "source": "me",
+   "target": "u_102",
+   "kind": "connection",
+   "weight": 0.537,
+   "facet": "technical"
+  },
+  {
+   "source": "u_102",
+   "target": "t_63",
+   "kind": "has_topic",
+   "weight": 0.66
+  },
+  {
+   "source": "u_102",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.99
+  },
+  {
+   "source": "u_102",
+   "target": "t_13",
+   "kind": "has_topic",
+   "weight": 0.69
+  },
+  {
+   "source": "u_102",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.89
+  },
+  {
+   "source": "me",
+   "target": "u_096",
+   "kind": "connection",
+   "weight": 0.459,
    "facet": "career"
   },
   {
-   "source": "self",
-   "target": "t:chess",
-   "kind": "interest",
-   "weight": 0.5,
-   "facet": "personal"
+   "source": "u_096",
+   "target": "t_59",
+   "kind": "has_topic",
+   "weight": 0.81
   },
   {
-   "source": "self",
-   "target": "u046",
+   "source": "u_096",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.95
+  },
+  {
+   "source": "u_096",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.58
+  },
+  {
+   "source": "me",
+   "target": "u_110",
    "kind": "connection",
-   "weight": 0.838
+   "weight": 0.376,
+   "facet": "technical"
   },
   {
-   "source": "u046",
-   "target": "t:mathematics",
-   "kind": "interest",
-   "weight": 0.89,
+   "source": "u_110",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.78
+  },
+  {
+   "source": "u_110",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.6
+  },
+  {
+   "source": "u_110",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.52
+  },
+  {
+   "source": "me",
+   "target": "u_094",
+   "kind": "connection",
+   "weight": 0.339,
+   "facet": "technical"
+  },
+  {
+   "source": "u_094",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.9
+  },
+  {
+   "source": "u_094",
+   "target": "t_13",
+   "kind": "has_topic",
+   "weight": 0.47
+  },
+  {
+   "source": "u_094",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.61
+  },
+  {
+   "source": "me",
+   "target": "u_056",
+   "kind": "connection",
+   "weight": 0.329,
+   "facet": "technical"
+  },
+  {
+   "source": "u_056",
+   "target": "t_58",
+   "kind": "has_topic",
+   "weight": 0.98
+  },
+  {
+   "source": "u_056",
+   "target": "t_1",
+   "kind": "has_topic",
+   "weight": 0.94
+  },
+  {
+   "source": "me",
+   "target": "u_040",
+   "kind": "connection",
+   "weight": 0.32,
    "facet": "academic"
   },
   {
-   "source": "u046",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.78,
-   "facet": "career"
+   "source": "u_040",
+   "target": "t_42",
+   "kind": "has_topic",
+   "weight": 0.88
   },
   {
-   "source": "u046",
-   "target": "t:time series analysis",
-   "kind": "interest",
-   "weight": 0.93,
-   "facet": "technical"
+   "source": "u_040",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.68
   },
   {
-   "source": "u046",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.96,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u089",
+   "source": "me",
+   "target": "u_044",
    "kind": "connection",
-   "weight": 0.691
-  },
-  {
-   "source": "u089",
-   "target": "t:mathematics",
-   "kind": "interest",
-   "weight": 0.71,
-   "facet": "academic"
-  },
-  {
-   "source": "u089",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.92,
-   "facet": "career"
-  },
-  {
-   "source": "u089",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.54,
+   "weight": 0.319,
    "facet": "technical"
   },
   {
-   "source": "self",
-   "target": "u004",
+   "source": "u_044",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.71
+  },
+  {
+   "source": "u_044",
+   "target": "t_13",
+   "kind": "has_topic",
+   "weight": 0.79
+  },
+  {
+   "source": "u_044",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.82
+  },
+  {
+   "source": "me",
+   "target": "u_020",
    "kind": "connection",
-   "weight": 0.654
-  },
-  {
-   "source": "u004",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.97,
+   "weight": 0.305,
    "facet": "technical"
   },
   {
-   "source": "u004",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.69,
-   "facet": "technical"
+   "source": "u_020",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.94
   },
   {
-   "source": "u004",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.92,
-   "facet": "career"
+   "source": "u_020",
+   "target": "t_65",
+   "kind": "has_topic",
+   "weight": 0.45
   },
   {
-   "source": "u004",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.58,
-   "facet": "technical"
+   "source": "u_020",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 1.0
   },
   {
-   "source": "self",
-   "target": "u088",
+   "source": "me",
+   "target": "u_002",
    "kind": "connection",
-   "weight": 0.602
-  },
-  {
-   "source": "u088",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.96,
+   "weight": 0.217,
    "facet": "technical"
   },
   {
-   "source": "u088",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.7,
-   "facet": "career"
+   "source": "u_002",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.87
   },
   {
-   "source": "u088",
-   "target": "t:rock climbing",
-   "kind": "interest",
-   "weight": 0.63,
-   "facet": "personal"
+   "source": "u_002",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.84
   },
   {
-   "source": "u088",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.52,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u081",
+   "source": "me",
+   "target": "u_036",
    "kind": "connection",
-   "weight": 0.59
-  },
-  {
-   "source": "u081",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.96,
+   "weight": 0.217,
    "facet": "technical"
   },
   {
-   "source": "u081",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.64,
-   "facet": "technical"
+   "source": "u_036",
+   "target": "t_76",
+   "kind": "has_topic",
+   "weight": 0.81
   },
   {
-   "source": "u081",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.67,
-   "facet": "career"
-  },
-  {
-   "source": "self",
-   "target": "u010",
-   "kind": "connection",
-   "weight": 0.584
-  },
-  {
-   "source": "u010",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.88,
-   "facet": "technical"
-  },
-  {
-   "source": "u010",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.78,
-   "facet": "technical"
-  },
-  {
-   "source": "u010",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.84,
-   "facet": "career"
-  },
-  {
-   "source": "self",
-   "target": "u102",
-   "kind": "connection",
-   "weight": 0.537
-  },
-  {
-   "source": "u102",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.66,
-   "facet": "technical"
-  },
-  {
-   "source": "u102",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.99,
-   "facet": "technical"
-  },
-  {
-   "source": "u102",
-   "target": "t:chess",
-   "kind": "interest",
-   "weight": 0.69,
-   "facet": "personal"
-  },
-  {
-   "source": "u102",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.89,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u061",
-   "kind": "connection",
-   "weight": 0.512
-  },
-  {
-   "source": "u061",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.63,
-   "facet": "technical"
-  },
-  {
-   "source": "u061",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.7,
-   "facet": "technical"
-  },
-  {
-   "source": "u061",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.94,
-   "facet": "career"
-  },
-  {
-   "source": "self",
-   "target": "u096",
-   "kind": "connection",
-   "weight": 0.459
-  },
-  {
-   "source": "u096",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.81,
-   "facet": "career"
-  },
-  {
-   "source": "u096",
-   "target": "t:time series analysis",
-   "kind": "interest",
-   "weight": 0.95,
-   "facet": "technical"
-  },
-  {
-   "source": "u096",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.58,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u075",
-   "kind": "connection",
-   "weight": 0.431
-  },
-  {
-   "source": "u075",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.71,
-   "facet": "career"
-  },
-  {
-   "source": "u075",
-   "target": "t:time series analysis",
-   "kind": "interest",
-   "weight": 0.95,
-   "facet": "technical"
-  },
-  {
-   "source": "u075",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.61,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u119",
-   "kind": "connection",
-   "weight": 0.414
-  },
-  {
-   "source": "u119",
-   "target": "t:quantitative research",
-   "kind": "interest",
-   "weight": 0.75,
-   "facet": "career"
-  },
-  {
-   "source": "u119",
-   "target": "t:time series analysis",
-   "kind": "interest",
-   "weight": 0.66,
-   "facet": "technical"
-  },
-  {
-   "source": "u119",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.8,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u092",
-   "kind": "connection",
-   "weight": 0.389
-  },
-  {
-   "source": "u092",
-   "target": "t:reinforcement learning",
-   "kind": "interest",
-   "weight": 0.8,
-   "facet": "technical"
-  },
-  {
-   "source": "u092",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.67,
-   "facet": "career"
-  },
-  {
-   "source": "self",
-   "target": "u110",
-   "kind": "connection",
-   "weight": 0.376
-  },
-  {
-   "source": "u110",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.78,
-   "facet": "technical"
-  },
-  {
-   "source": "u110",
-   "target": "t:ai research",
-   "kind": "interest",
-   "weight": 0.6,
-   "facet": "career"
-  },
-  {
-   "source": "u110",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.52,
-   "facet": "technical"
-  },
-  {
-   "source": "self",
-   "target": "u094",
-   "kind": "connection",
-   "weight": 0.339
-  },
-  {
-   "source": "u094",
-   "target": "t:pytorch",
-   "kind": "interest",
-   "weight": 0.9,
-   "facet": "technical"
-  },
-  {
-   "source": "u094",
-   "target": "t:chess",
-   "kind": "interest",
-   "weight": 0.47,
-   "facet": "personal"
-  },
-  {
-   "source": "u094",
-   "target": "t:python",
-   "kind": "interest",
-   "weight": 0.61,
-   "facet": "technical"
+   "source": "u_036",
+   "target": "t_57",
+   "kind": "has_topic",
+   "weight": 0.62
   }
  ]
 }

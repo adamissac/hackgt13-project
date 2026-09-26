@@ -1,4 +1,4 @@
-// /graph payload. PROVISIONAL: mirrors docs/mocks/graph_*.json until MASTER_SPEC Section 9 lands.
+// GET /graph and GET /graph/expand (MASTER_SPEC Section 9; additive display fields in docs/api.md).
 
 export type Facet = "technical" | "career" | "personal" | "academic";
 export type GraphMode = "matches" | "network";
@@ -8,27 +8,29 @@ export interface SelfNode {
   id: string;
   type: "self";
   label: string;
-  role: Role;
 }
 
 export interface PersonNode {
   id: string;
   type: "person";
-  label: string;
-  role: Role;
+  label: string; // first name
   score: number;
-  why: string[];
+  highlight: boolean;
+  open_to_meet: boolean;
+  cluster: number | null;
+  connected: boolean;
+  connected_at: string | null;
   top_topic: string;
-  topics: string[];
-  photo_url: string | null;
-  // matches mode
+  // additive display fields
+  name?: string;
+  role?: Role;
+  why?: string[];
+  topics?: string[];
+  shared_count?: number;
   rank?: number;
-  highlight?: boolean;
-  open_to_meet?: boolean;
-  // network mode
-  connected_at?: string;
+  photo_url?: string | null;
   met_at?: string;
-  via?: "in_person" | "invite";
+  how_met?: "in_person" | "invite";
 }
 
 export interface TopicNode {
@@ -36,29 +38,29 @@ export interface TopicNode {
   type: "topic";
   label: string;
   facet: Facet;
-  idf: number;
+  idf?: number;
 }
 
 export type GraphNode = SelfNode | PersonNode | TopicNode;
 
-export type LinkKind = "interest" | "suggested" | "connection";
+export type EdgeKind = "match" | "connection" | "has_topic";
 
-export interface GraphLink {
+export interface GraphEdge {
   source: string;
   target: string;
-  kind: LinkKind;
+  kind: EdgeKind;
   weight: number;
   facet?: Facet;
 }
 
 export interface GraphPayload {
-  mode: GraphMode;
-  event_id: number;
-  self_id: string;
-  generated_at: string;
-  synthetic?: boolean;
   nodes: GraphNode[];
-  links: GraphLink[];
+  edges: GraphEdge[];
+  mode?: GraphMode;
+  event_id?: number;
+  self_id?: string;
+  generated_at?: string;
+  synthetic?: boolean;
 }
 
 export const FACETS: Facet[] = ["technical", "career", "personal", "academic"];
@@ -71,9 +73,13 @@ function isObj(v: unknown): v is Record<string, unknown> {
 export function isGraphPayload(v: unknown): v is GraphPayload {
   return (
     isObj(v) &&
-    typeof v.self_id === "string" &&
     Array.isArray(v.nodes) &&
-    Array.isArray(v.links) &&
-    v.nodes.every((n) => isObj(n) && typeof n.id === "string" && typeof n.type === "string")
+    Array.isArray(v.edges) &&
+    v.nodes.every((n) => isObj(n) && typeof n.id === "string" && typeof n.type === "string") &&
+    v.edges.every((e) => isObj(e) && typeof e.source === "string" && typeof e.target === "string")
   );
+}
+
+export function selfId(g: GraphPayload): string {
+  return g.self_id ?? g.nodes.find((n) => n.type === "self")?.id ?? "me";
 }
