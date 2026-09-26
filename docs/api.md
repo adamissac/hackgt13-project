@@ -407,3 +407,16 @@ to its `location_shares` row through Supabase Realtime (RLS: only the other part
 (matched in the last 2 hours and not met yet)
 
 Errors: `404 meetup not found` (not a participant), `410 sharing ended`.
+
+## 38. POST /tap/claim   "hold your phones together" (Akshar; code in `ml/app/routers/tap.py`)
+Request `{ "token": "k3j9x2p1", "rssi": -38, "event_id": 1 }`: the other phone's current Bluetooth token (api.md 12), heard
+at touching range (smoothed RSSI >= -50 dBm) for ~2 s. The app repeats the claim every second while the phones stay together.
+```json
+{ "status": "waiting" }      // the other phone hasn't claimed me back yet (within 15 s)
+{ "status": "verified", "conversation_id": 31, "handshake_id": null,
+  "other": { "user_id": "uuid", "name": "Maya R.", "photo_url": null },
+  "checklist": [ { "interest_id": 42, "name": "reinforcement learning" } ] }
+```
+Verified only when BOTH phones claim each other within 15 s. Creates a `conversations` row with method `ble` (no schema
+change) and `connect_prompt` notifications, same as 20. Errors: `400 too_far`, `400 self_scan`, `404 not_found` (token not live),
+`403 this profile isn't available` (blocked). QR (19-20) stays the fallback.

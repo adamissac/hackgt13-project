@@ -1,0 +1,3 @@
+{ "status": "verified", "conversation_id": 31, "handshake_id": null,
+  "other": { "user_id": "00000000-0000-0000-0000-000000000101", "name": "Maya R.", "photo_url": null },
+  "checklist": [ { "interest_id": 42, "name": "reinforcement learning" }, { "interest_id": 7, "name": "rock climbing" } ] }
