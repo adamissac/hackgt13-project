@@ -532,6 +532,12 @@ export const api = {
           return r;
         }),
     ),
+  /** Demo only: stand in for Bluetooth verifying an in-person conversation. */
+  simulateConversation: (userId: string) =>
+    call(
+      () => demo.verifyConversation(userId, 'ble'),
+      () => Promise.reject(new Error('Only available in demo mode')),
+    ),
   /** Where I stand with this person (features/relationship/stage.ts). */
   relationship: (userId: string) => call(() => demo.relationship(userId), () => liveRelationship(userId)),
   /** Open to Meet as stored on my profile. */

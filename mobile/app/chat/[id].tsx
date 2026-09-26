@@ -1,4 +1,4 @@
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   FlatList,
@@ -16,6 +16,8 @@ import { AiBadge, Button, Card, useColors } from '@/components/ui';
 import { appendMessage, isSuggestedOpener, type ChatMessage } from '@/features/chat/model';
 import { loadThread, sendMessage, subscribeToMessages, type ChatThread } from '@/features/chat/store';
 import { api } from '@/lib/api';
+import type { Relationship } from '@/features/relationship/stage';
+import { useAsync } from '@/lib/useAsync';
 import { useAuth } from '@/lib/auth';
 
 export default function ChatThreadScreen() {
@@ -82,6 +84,13 @@ export default function ChatThreadScreen() {
   }, [otherId]);
 
   const title = thread?.other_name ?? params.name ?? 'Chat';
+  const rel = useAsync<Relationship | null>(
+    () => (otherId ? api.relationship(otherId) : Promise.resolve(null)),
+    [otherId],
+    ['relationships'],
+  );
+  const meet = rel.state.status === 'ready' ? rel.state.data : null;
+  const canFind = !!meet?.suggestion_id && (meet.stage === 'MUTUAL_MEET' || meet.stage === 'MEETUP_IN_PROGRESS');
   const showOpener = status === 'ready' && !!opener && !openerHidden && (thread?.messages.length ?? 0) === 0;
 
   const send = async (body: string) => {
@@ -109,6 +118,24 @@ export default function ChatThreadScreen() {
       <Stack.Screen options={{ title }} />
       {status === 'loading' && <Loading label="Opening chat…" />}
       {status === 'error' && <ErrorState message={error ?? 'This chat is not available'} />}
+      {status === 'ready' && thread && (
+        <View style={[styles.actions, { borderBottomColor: c.border, backgroundColor: c.surface }]}>
+          <Button
+            label="View profile"
+            variant="ghost"
+            onPress={() => router.push({ pathname: '/match/[id]', params: { id: thread.other_user_id } })}
+            style={{ flex: 1 }}
+          />
+          {canFind && (
+            <Button
+              label="Find each other"
+              variant="secondary"
+              onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(meet!.suggestion_id) } })}
+              style={{ flex: 1 }}
+            />
+          )}
+        </View>
+      )}
       {status === 'ready' && thread && (
         <FlatList
           data={thread.messages}
@@ -162,6 +189,9 @@ function Bubble({ message, mine }: { message: ChatMessage; mine: boolean }) {
       <View style={[styles.bubble, { backgroundColor: mine ? c.tint : c.surface, borderColor: mine ? c.tint : c.border }]}>
         {message.is_ai_draft && <Text style={[styles.draft, { color: mine ? c.onTint : c.ai }]}>Suggested opener</Text>}
         <Text style={[styles.body, { color: mine ? c.onTint : c.text }]}>{message.body}</Text>
+        <Text style={[styles.stamp, { color: mine ? c.onTint : c.muted }]}>
+          {new Date(message.created_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+        </Text>
       </View>
     </View>
   );
@@ -169,6 +199,8 @@ function Bubble({ message, mine }: { message: ChatMessage; mine: boolean }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  actions: { flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth },
+  stamp: { fontSize: 11, opacity: 0.75, marginTop: 4, alignSelf: 'flex-end' },
   list: { padding: 16, gap: 10, flexGrow: 1 },
   body: { fontSize: 16, lineHeight: 22 },
   openerCard: { width: '100%', flexDirection: 'column', alignItems: 'stretch' },

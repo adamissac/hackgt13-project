@@ -103,7 +103,7 @@ export default function MeetupScreen() {
     const perm = await Location.requestForegroundPermissionsAsync();
     if (!perm.granted) {
       setPhase('idle');
-      setError('Location permission is needed to share where you are. You can still meet with the QR code.');
+      setError(`Location unavailable. You can still message ${first} to pick a meeting spot.`);
       return;
     }
     try {
@@ -147,16 +147,7 @@ export default function MeetupScreen() {
   const theirAge = them ? Math.round((now - Date.parse(them.updated_at)) / 1000) : null;
 
   if (phase === 'ended' || expiresIn === 0) {
-    return (
-      <View style={[styles.center, { backgroundColor: c.background }]}>
-        <Stack.Screen options={{ title: 'Meetup' }} />
-        <Text style={[styles.title, { color: c.text }]}>Location sharing ended</Text>
-        <Text style={[styles.body, { color: c.muted }]}>
-          Locations were deleted. If you found each other, verify with the QR code to connect.
-        </Text>
-        <Button label="Verify with QR" onPress={() => router.replace('/verify')} />
-      </View>
-    );
+    return <Ended otherId={info?.other.user_id ?? null} name={name} />;
   }
 
   const bearing = me && them ? bearingDeg(me, them) : null;
@@ -212,11 +203,68 @@ export default function MeetupScreen() {
       {band?.close ? (
         <Button label="Found them? Verify with QR" onPress={() => router.push('/verify')} />
       ) : null}
-      {phase === 'sharing' ? <Button label="Stop sharing" variant="secondary" onPress={stop} /> : null}
+      {info && (
+        <Button
+          label={`Message ${first}`}
+          variant="secondary"
+          onPress={async () => {
+            const rel = await api.relationship(info.other.user_id).catch(() => null);
+            if (rel?.chat_id != null) router.push({ pathname: '/chat/[id]', params: { id: String(rel.chat_id), name, other: info.other.user_id } });
+          }}
+        />
+      )}
+      {phase === 'sharing' ? <Button label="Stop sharing" variant="ghost" onPress={stop} /> : null}
+      {env.useMocks && info && (
+        <Button
+          label="Demo: we met and talked (simulate Bluetooth)"
+          variant="ghost"
+          onPress={async () => {
+            const conv = await api.simulateConversation(info.other.user_id);
+            router.replace({ pathname: '/checklist/[id]', params: { id: String(conv.conversation_id) } });
+          }}
+        />
+      )}
       <Text style={[styles.small, { color: c.muted, textAlign: 'center' }]}>
         Only {first} sees your location, only as a direction and rough distance. It&apos;s deleted when sharing ends.
       </Text>
     </ScrollView>
+  );
+}
+
+/** Sharing is over: either they met (checklist is waiting) or it stopped/expired. */
+function Ended({ otherId, name }: { otherId: string | null; name: string }) {
+  const c = useColors();
+  const [pending, setPending] = useState<number | null>(null);
+  useEffect(() => {
+    if (!otherId) return;
+    api
+      .pendingConversations()
+      .then((r) => setPending(r.conversations.find((x) => x.other.user_id === otherId)?.conversation_id ?? null))
+      .catch(() => undefined);
+  }, [otherId]);
+  const first = name.split(' ')[0];
+  return (
+    <View style={[styles.center, { backgroundColor: c.background }]}>
+      <Stack.Screen options={{ title: 'Find each other' }} />
+      {pending !== null ? (
+        <>
+          <Text style={{ fontSize: 44 }}>✓</Text>
+          <Text style={[styles.title, { color: c.text }]}>Conversation verified</Text>
+          <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>
+            You and {first} talked in person. Location sharing stopped and was deleted.
+          </Text>
+          <Button label="How did it go?" onPress={() => router.replace({ pathname: '/checklist/[id]', params: { id: String(pending) } })} />
+        </>
+      ) : (
+        <>
+          <Text style={[styles.title, { color: c.text }]}>Location sharing ended</Text>
+          <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>
+            Locations were deleted. If you found each other, verify with the QR code to connect.
+          </Text>
+          <Button label="Verify with QR" onPress={() => router.replace('/verify')} />
+        </>
+      )}
+    </View>
   );
 }
 
