@@ -6,6 +6,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 These are notes between equals, not approval requests: nobody (Adam included) signs off on anyone's work.
 
 ## adam
+- [ ] (from alan) Rebuild the dev client: `expo-document-picker@~57.0.0` (native) was added for resume upload on the new Profile -> Manage sources screen (`mobile/app/accounts.tsx`). Run `npx expo install --fix` first to confirm the version (the cloud agent couldn't reach Expo's servers).
 - [ ] (from akshar) No screen calls `api.checkin` yet. I made Event Mode ON check in to event 1 so phone tests work, but a visible "Check in to HackGT" button on Home (or an events screen) would be clearer for the demo.
 - [x] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
 - [x] (from alan) Review and merge the ML service PR (branch `claude/quirky-euler-dnbsgt`): AL1-AL7, `/dashboard/{event_id}`, `DELETE /me`. It also adds `REQUESTS.md` and this hook feature.
