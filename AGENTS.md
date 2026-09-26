@@ -66,7 +66,7 @@ Every push updates it. Newest entry at the top. Exactly this template:
 
 ## Run and test commands
 Each owner adds their area's commands here in the same commit that first makes them work, and keeps them current.
-- supabase (Adam): not set yet
+- supabase (Adam): from repo root. New migration: `npx supabase migration new <name>`. Apply to our project (ref mwfzgkikbmnghueolfnw): `npx supabase db push --linked`. Inspect: `npx supabase db query --linked "<sql>"`. DB types: `npx supabase gen types typescript --linked > mobile/lib/database.types.ts`. First time on a laptop: `npx supabase login`, then `npx supabase link --project-ref mwfzgkikbmnghueolfnw`.
 - mobile (Adam, Akshar): not set yet
 - ml (Alan, Arjun): not set yet
 - dashboard (Arjun): not set yet
