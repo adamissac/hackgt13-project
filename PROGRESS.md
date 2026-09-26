@@ -6,6 +6,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Task:** AD1 Supabase project
 **Status:** in progress
 **What I did:**
+- Added `./scripts/check-ad1-live.sh`: finds repo root, runs the linked one-line AD1 SQL (tables/RLS/seed/migrations), prints three-line expected output so Adam does not paste stale `db push` or `start-ml.sh` logs.
+- Documented the script on the AGENTS.md supabase run-and-test line.
+**How to run/test it:** From repo root on a linked Mac: `./scripts/check-ad1-live.sh`
+**Next step for whoever continues:** Adam runs `./scripts/check-ad1-live.sh` from ~/hackgt-project and pastes output.
+**Known issues / blockers:** Live query still requires Adam's machine (`npx supabase login` + link); this VM has no linked Supabase credentials.
+**Contract changes:** none
+
+## 2026-09-26 05:30 UTC | adam | Cursor cloud agent
+**Task:** AD1 Supabase project
+**Status:** in progress
+**What I did:**
 - Local replay on this VM (`sudo service postgresql start && ./supabase/tests/run-local.sh`) ends with `ALL AD1 CHECKS PASSED` — all nine migrations replay cleanly into throwaway Postgres with pgvector and `rls_checks.sql` passes.
 - Nine migration files on disk under `supabase/migrations/` (`20260926000001` through `20260926000009_push_tokens.sql`).
 - Adam ran `npx supabase db push --linked` on his Mac, applying `20260926000009_push_tokens.sql` to the live project `mwfzgkikbmnghueolfnw` (recorded in team PROGRESS; not re-run here — no `SUPABASE_*` on this VM).
