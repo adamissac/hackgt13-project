@@ -1,5 +1,18 @@
 # PROGRESS
 
+## 2026-09-26 01:20 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR8 GitHub activity poller + AR7 personal dashboard and feed insights
+**Status:** done (code + tests); live data needs connected GitHub accounts and Supabase
+**What I did:**
+- AR8: `ml/app/github_activity.py`, worker `github_activity` every 10 min (registered via import in app/main.py). Public events (new repo, push, release) with ETags + `/user/repos` pushed_at catch-up for events-API lag, deduped by payload.key, bge-embedded, into feed_items(kind='github'). Tests: `ml/tests/test_github_activity.py`.
+- AR7 API: `GET /me/dashboard` (`ml/app/routers/me_dashboard.py`, api.md 34): total, cumulative growth, how_met, top shared topics (+ talked). Private: only the caller's connections. DB tests: `ml/tests/test_me_dashboard.py`.
+- AR7 pages: dashboard `/me` (hero count, growth line with crosshair, in-person vs invite donut, shared-topic bars) and `/insights` (activity sparkline, by-kind counts, trending topics; uses Alan's /feed/insights). Both take the WebView token via postMessage, mocks otherwise. Components: `dashboard/components/charts.tsx`.
+- Ran the full ML suite against a real local Postgres+pgvector: 106 pass (only failure: Alan's LightGBM test needs `brew install libomp`).
+**How to run/test it:** DB tests locally: `/opt/homebrew/bin/python3.12 -m venv /tmp/pgenv && /tmp/pgenv/bin/pip install pgserver`, start it (`pgserver.get_server(dir).psql("create database fc_test")`), then `cd ml && TEST_DATABASE_URL="postgresql://postgres@/fc_test?host=<dir>" .venv/bin/python -m pytest -q tests`. Dashboard: `cd dashboard && npm run dev` -> /me, /insights.
+**Next step for whoever continues:** Adam: embed `/me` and `/insights` in the app (same postMessage auth as /graph). Then Arjun's remaining: AR9 datasets, AR10 web mentions (stretch). Blocked items unchanged: Supabase keys (seed_synthetic.py), GitHub OAuth app, Vercel deploy.
+**Known issues / blockers:** same as below (credentials).
+**Contract changes:** docs/api.md 34 `GET /me/dashboard` (new, additive).
+
 ## 2026-09-26 05:30 | adam | Claude Code
 **Task:** AD4-AD6 UI redesign + Alan's requests
 **Status:** in progress
