@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Start the Expo Go dev server from any folder.
+# Start the Expo Go dev server from any folder (LAN). Campus Wi-Fi often blocks this.
+# For a phone QR that works on campus, run scripts/phone-qr.sh instead.
 # Usage: /path/to/hackgt13-project/scripts/start-app.sh
 set -euo pipefail
 

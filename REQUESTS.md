@@ -22,6 +22,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [x] (from alan) For the ML server `.env`: the Supabase session-pooler `DATABASE_URL`, and whether the project signs user JWTs with JWKS (new signing keys) or the legacy HS256 secret (then share `SUPABASE_JWT_SECRET`). Done: values are in the gitignored root `.env` and on the Railway `ml` service. `SUPABASE_JWT_SECRET` stays empty (JWKS). `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` are still empty.
 
 ## arjun
+- [ ] (from adam) On your laptop run `./scripts/phone-qr.sh`. It pulls main, starts the app, and opens a QR at `~/Desktop/formal-connection-expo.png`. Scan that with Expo Go and leave the terminal open. Do not use someone else's QR.
 - [ ] (from adam) FYI: Graph is a tab again (Home/Nearby/Graph/Messages/Assistant/Profile). Feed opens from Profile at /feed. PersonSheet now always uses api.quickProfile (demo mode is per-person now, lib/demo).
 - [x] (from alan) AR1 GitHub (done: `app/routers/github.py` stores the digest via profile_store.ingest_text): don't write extraction. Store the digest as a `raw_documents` row (`source='github'`, `text=ml.llm.github_to_text(repos)`), then either the app calls `POST /profile/ingest {"source":"github"}` or you call `app.profile_store.extract_existing(user_id, doc_id, "github", text)`.
 - [ ] (from alan) AR2 resume from Storage: after pdfplumber, call `app.profile_store.ingest_text(user_id, "resume", text, {"path": ...})`. (Multipart upload to `/profile/ingest` already works too.)
@@ -32,6 +33,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [ ] (from alan) AR10 web mentions: `raw_documents.source` has no `'web'` value, so `/profile/ingest {"source":"web"}` returns 400 until a /contract-change adds it.
 
 ## akshar
+- [ ] (from adam) On your laptop run `./scripts/phone-qr.sh`. It pulls main, starts the app, and opens a QR at `~/Desktop/formal-connection-expo.png`. Scan that with Expo Go and leave the terminal open. Do not use someone else's QR.
 - [ ] (from adam) FYI: useProximity now also returns `radioError`, `fetchError`, `radio` ('demo'|'off'|'on'); Nearby shows people even when the radio is unavailable. Your Nearby map screen is unchanged (a radar replacement was reverted). Poll effect now resets peers in cleanup (lint).
 - [x] (from alan) AK3 QR screens: show `GET /qr/verify-token` (refresh every 30 s, expires in 60 s); scanner sends `POST /qr/verify {payload, signature, event_id?}`; errors `invalid_signature | expired | self_scan | already_used`; the response has `conversation_id` + `checklist` for the checklist screen.
 - [x] (from alan) AK2 BLE: your `/ble/tokens` + `/ble/sightings` router goes in `ml/app/routers/ble.py` (expose `router`, add `"ble"` to `ROUTERS` in `ml/app/main.py`). I read `sightings` (observer_id, observed_token, rssi, ts, zone_id) + `ephemeral_ids` for AL8. Upload batches every 30 s as in api.md 12.
@@ -41,6 +43,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [x] (from alan) AK4 invites: on accept, create the connection (`how_met='invite'`, `invite_id`) and a chat with `app.social.ensure_chat(conn, a, b, "connection")` + `app.social.notify(conn, user, "connected", {...})`, and call `app.population.invalidate()`.
 
 ## alan
+- [ ] (from adam) On your laptop run `./scripts/phone-qr.sh`. It pulls main, starts the app, and opens a QR at `~/Desktop/formal-connection-expo.png`. Scan that with Expo Go and leave the terminal open. Do not use someone else's QR.
 - [ ] (from adam) You do **not** need Railway access. Follow `docs/secrets-setup.md` §4 and §8: add redirect URI `https://ml-production-04c0.up.railway.app/connect/github/callback` on the GitHub OAuth app, then AirDrop (not chat/git) `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, and your current `TOKEN_ENCRYPTION_KEY` to Adam. Prefer regenerating the client secret first if it was ever pasted into a chat. When you’ve sent them, mark this `[x]` and note it in PROGRESS.md.
 - [ ] (from arjun) FYI I changed `app/population.event_model()` to rebuild when the attendee list changes (it missed attendees written outside the process: the 80 seeded synthetics). Small diff + test in `tests/test_hackathon_seed.py`; shout if you'd rather do it differently.
 - [x] (from adam) AD10 push sender (done by alan: `ml/app/push.py`, worker every 5 s): tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.

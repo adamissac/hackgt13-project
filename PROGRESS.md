@@ -14,6 +14,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** `mobile/.env` still points at Alan's trycloudflare tunnel — switch `EXPO_PUBLIC_API_BASE_URL` to `https://ml-production-04c0.up.railway.app` before demo day so the demo doesn't depend on a laptop staying awake. The dashboard's "Should be talking, aren't" panel reads `0 made` on every row until someone completes a verified conversation. GitHub client secret and the Supabase DB password were both pasted into a chat transcript — rotate after the hackathon (the DB one needs coordinating with Adam, since Railway's `DATABASE_URL` embeds it).
 **Contract changes:** `.env.example` gains `EMBED_DEVICE` (optional, defaults to `cpu`). Additive; nothing renamed or removed.
 
+## 2026-09-26 04:55 | adam | Adam
+**Task:** Each laptop runs the app and makes its own Expo QR
+**Status:** done
+**What I did:**
+- Added `scripts/phone-qr.sh`. On a clean `main` it pulls, starts Expo through a tunnel, writes `~/Desktop/formal-connection-expo.png`, and prints `PHONE_URL`.
+- Asked Alan, Arjun, and Akshar in REQUESTS.md to run that script instead of scanning someone else's QR.
+**How to run/test it:** `bash -n scripts/phone-qr.sh`. On a laptop: `./scripts/phone-qr.sh`, then scan the Desktop PNG with Expo Go.
+**Next step for whoever continues:** Alan, Arjun, Akshar: run `./scripts/phone-qr.sh` and leave it open.
+**Known issues / blockers:** The QR only works while that laptop stays awake. Campus Wi-Fi still cannot use the LAN script `scripts/start-app.sh`.
+**Contract changes:** none
+
 ## 2026-09-26 09:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Diagnose HTTP 500s on the two-iPhone Release build (Nearby, Home check-in / Open to Meet, Event Mode, Tap, QR)
