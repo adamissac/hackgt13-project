@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:50 | adam | Cursor cloud agent
+**Task:** Infra: one-command Expo start
+**Status:** done
+**What I did:**
+- Added `scripts/start-app.sh` so Expo can be started from any folder (Adam hit `ConfigError` running `npx expo start` from `~`).
+- Script finds the repo (`git rev-parse --show-toplevel` from the script dir, or walks up), `cd`s to `mobile`, copies `mobile/.env.example` → `mobile/.env` if missing and tells him to fill it, warns if `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_API_BASE_URL` is empty, `npm install`s only when `node_modules` is missing, then `npx expo start --go --lan --clear`.
+- Documented the command on the AGENTS.md mobile run-and-test line.
+**How to run/test it:** From any folder: `<this-repo>/scripts/start-app.sh`. Syntax check: `bash -n scripts/start-app.sh`.
+**Next step for whoever continues:** Adam: on his Mac run the full path to this repo's `scripts/start-app.sh` (often `~/hackgt13-project/scripts/start-app.sh`). Open Expo Go and scan the QR. Do not run `npx expo start` from `$HOME`.
+**Known issues / blockers:** Expo Go cannot do Bluetooth (needs a dev build). If `mobile/.env` is new, fill the Supabase publishable values or keep `EXPO_PUBLIC_USE_MOCKS=1`.
+**Contract changes:** none
+
 ## 2026-09-26 05:45 | adam | Cursor cloud agent
 **Task:** Infra: Railway deploy for ml + auto-update mobile/.env
 **Status:** done
