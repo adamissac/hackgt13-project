@@ -13,7 +13,7 @@ import { useAsync } from '@/lib/useAsync';
 // No one else's list or count is on this screen.
 export default function ConnectionsScreen() {
   const c = useColors();
-  const { state, reload } = useAsync(() => api.connections(), []);
+  const { state, reload } = useAsync(() => api.connections(), [], ['connections']);
   const [opening, setOpening] = useState<string | null>(null);
 
   const openChat = async (person: Connection) => {
@@ -66,12 +66,23 @@ export default function ConnectionsScreen() {
             {person.minutes_talked > 0 && (
               <Text style={[styles.body, { color: c.muted }]}>You talked for about {person.minutes_talked} minutes.</Text>
             )}
-            <Button
-              label={`Chat with ${person.name.split(' ')[0]}`}
-              variant="secondary"
-              onPress={() => openChat(person)}
-              loading={opening === person.user_id}
-            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Button
+                label="Message"
+                variant="secondary"
+                onPress={() => openChat(person)}
+                loading={opening === person.user_id}
+                style={{ flex: 1 }}
+              />
+              <Button
+                label="✦ Ask AI"
+                variant="secondary"
+                onPress={() =>
+                  router.push({ pathname: '/assistant', params: { q: `How should I follow up with ${person.name.split(' ')[0]}?` } })
+                }
+                style={{ flex: 1 }}
+              />
+            </View>
           </Card>
         ))}
     </ScrollView>

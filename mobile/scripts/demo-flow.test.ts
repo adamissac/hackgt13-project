@@ -124,6 +124,7 @@ step('Assistant answers who to meet, topic search, icebreakers, why', () => {
   assert.match(ask('Who is into quant?'), /Daniel/);
   assert.match(ask('What should I ask Maya?'), /RAG|retrieval/);
   assert.match(ask('Why did you match me with Daniel?'), /reinforcement learning/);
+  assert.match(ask('How should I follow up with Maya?'), /coffee/);
 });
 
 step('Graph: Maya is a connection in network mode', () => {

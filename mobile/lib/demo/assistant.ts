@@ -2,7 +2,7 @@
 // This answers from the demo backend's data so the assistant is demoable offline, with the same
 // rules: only people you can already see, never anyone's connections or a "no".
 import type { AssistantMessage } from '../api';
-import { snapshot } from './backend';
+import { followupDraft, snapshot } from './backend';
 import { DEMO_MY_INTERESTS, type DemoPerson } from './people';
 
 const TOPIC_WORDS: { words: RegExp; topics: string[]; label: string }[] = [
@@ -45,6 +45,9 @@ export function demoAssistantReply(messages: AssistantMessage[]): string {
   const who = named(q) ?? (/\b(her|him|them|they|she|he)\b/i.test(q) ? lastNamed(messages.slice(0, -1)) : undefined);
   const open = snapshot().openToMeet;
 
+  if (who && /follow ?up|reach out|message after|keep in touch/i.test(q)) {
+    return `A good follow-up for ${firstName(who)} mentions what you actually talked about and one concrete next step:\n\n“${followupDraft(who.user_id).draft}”`;
+  }
   if (who && /icebreaker|ask|say|talk about|open(er)?|start/i.test(q)) {
     return `Here’s a good way to start with ${firstName(who)}:\n\n“${who.openers[0]}”\n\n${who.openers[1] ? `Another option: “${who.openers[1]}”` : ''}`.trim();
   }
