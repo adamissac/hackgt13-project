@@ -5,6 +5,7 @@ character n-gram embedder so every script still runs offline or on a laptop
 with no model download. The fallback is fine for testing plumbing, NOT for demo.
 """
 from functools import lru_cache
+import logging
 import numpy as np
 from .config import EMBED_DEVICE, EMBED_MODEL
 
@@ -20,8 +21,20 @@ def _load():
         from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(EMBED_MODEL, device=EMBED_DEVICE)
     except Exception as e:  # no package, no network, etc.
-        print(f"[embed] sentence-transformers unavailable ({type(e).__name__}); using hashed fallback")
+        # Loud on purpose: this silently changes every vector in the product, and a deployed
+        # server in this state looks healthy. /health reports it too (see app/routers/health.py).
+        logging.getLogger("embed").error(
+            "sentence-transformers unavailable (%s: %s); falling back to the hashed embedder, "
+            "which is NOT demo quality", type(e).__name__, e)
         _fallback = True
+
+
+def status() -> dict:
+    """What this process is actually using, so a deploy can be checked from outside."""
+    _load()
+    return {"model": None if _fallback else EMBED_MODEL,
+            "device": None if _fallback else EMBED_DEVICE,
+            "fallback": _fallback}
 
 
 def _hash_embed(texts, dim=384):

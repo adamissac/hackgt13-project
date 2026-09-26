@@ -3,6 +3,7 @@
 Unsupervised, nothing to train. Output JSON the Next.js / D3 dashboard renders.
 """
 from collections import Counter, defaultdict
+import logging
 import math
 import numpy as np
 
@@ -18,6 +19,16 @@ def layout(people, seed=42):
     return xy
 
 
+def umap_available() -> bool:
+    """Reported by /health: without umap, communities() clusters raw 384-d vectors and
+    HDBSCAN labels almost everyone as noise, which empties the organizer map."""
+    try:
+        import umap  # noqa: F401
+        return True
+    except Exception:
+        return False
+
+
 def communities(people, min_cluster_size=5):
     from sklearn.cluster import HDBSCAN
     X = np.vstack([p["combined"] for p in people])
@@ -26,7 +37,12 @@ def communities(people, min_cluster_size=5):
         import umap
         Z = umap.UMAP(n_neighbors=15, n_components=10, min_dist=0.0, metric="cosine",
                       random_state=0).fit_transform(X)
-    except Exception:
+    except Exception as e:
+        # Loud on purpose: measured on 78 planted clusters, this fallback labels every point
+        # noise (0 clusters) instead of finding them. A server here serves an empty map.
+        logging.getLogger("viz").error(
+            "umap unavailable (%s: %s); clustering raw vectors, communities will be empty",
+            type(e).__name__, e)
         Z = X
     labels = HDBSCAN(min_cluster_size=min_cluster_size, copy=True).fit_predict(Z)
     return {p["id"]: int(l) for p, l in zip(people, labels)}

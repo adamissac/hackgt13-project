@@ -1,3 +1,15 @@
+## 2026-09-26 12:20 | alan | Claude Code (Opus 5)
+**Task:** Chase the Railway-vs-laptop clustering split; make both silent ML fallbacks visible
+**Status:** done — 96 passed, 118 skipped. Clustering split diagnosed as numerical instability, not a broken deploy.
+**What I did:**
+- Tested two hypotheses for Railway `[65,14,1]` vs laptop `[20,20,12,15,8,5]` on the same 80 people. **Both were wrong, and I checked before reporting them.** (a) umap missing on Railway: reproduced on 78 planted clusters — the `Z = X` fallback in `ml/ml/viz.py` labels **every point noise (0 clusters)**, it does not make one blob. (b) hashed fallback embedder: it yields *more* clusters (5, largest 20%) than the real model (3, largest 48%), not fewer.
+- **Actual cause: the pipeline is numerically unstable across environments.** Direct evidence from earlier tonight — switching this laptop's embedder MPS -> CPU changed local clustering from `[18,15,13,15,9,6]` to `[20,20,12,15,8,5]` on identical data. Tiny float differences feed UMAP, which is chaotic, and HDBSCAN amplifies the result. Each server is internally deterministic (3 identical requests each) but they disagree. Neither is "broken"; the community structure is simply not reproducible across machines.
+- **The bug worth fixing was the silence.** `ml/ml/embed.py` and `ml/ml/viz.py` both degrade without anyone noticing: a server with a failed `sentence-transformers` or `umap` import still returns 200 and still serves a dashboard, just with different vectors or an empty map. Both now log at ERROR, and `/health` reports `embedder` (`model`/`device`/`fallback`) and `umap`. Comparing two deployments took an hour; it is now one curl.
+**How to run/test it:** `curl -s localhost:8000/health` -> `{"ok":true,"db":true,"embedder":{"model":"BAAI/bge-small-en-v1.5","device":"cpu","fallback":false},"umap":true}`. `cd ml && .venv/bin/python -m pytest -q tests`.
+**Next step for whoever continues:** After the next Railway deploy, `curl -s https://ml-production-04c0.up.railway.app/health` and compare the `embedder`/`umap` block with a laptop. If both read `fallback:false` and `umap:true`, the clustering difference is confirmed as environment noise and can be left alone.
+**Known issues / blockers:** Community structure is not reproducible across machines, so demo the organizer map from whichever server you rehearsed on — the cluster count and labels will differ elsewhere. The deeper fix (pin the numerics, or cache the layout per event instead of recomputing) is out of scope tonight.
+**Contract changes:** `/health` response gains `embedder` and `umap` keys. Additive; existing `ok`/`db` unchanged, so nothing that reads it today breaks. docs/api.md does not document `/health`.
+
 ## 2026-09-26 11:45 | alan | Claude Code (Opus 5)
 **Task:** Google and X become link-only (Adam's `linkIdentity` path), so they can never create a duplicate account
 **Status:** done (`tsc --noEmit` clean; only pre-existing eslint error in `AuthProvider` remains). Providers still need enabling in Supabase.
