@@ -18,7 +18,8 @@ def table_exists(name: str) -> bool:
 
 
 def excluded_ids(viewer: str) -> set[str]:
-    """Everyone the viewer must never be matched with right now."""
+    """Everyone the viewer must not see as a match right now: blocks (either direction), existing
+    connections, and people the viewer declined. Another person's "no" is never used here."""
     out = {r["id"] for r in db.fetchall(
         "select blocked_id::text as id from blocks where blocker_id = %s "
         "union select blocker_id::text from blocks where blocked_id = %s "
@@ -26,16 +27,17 @@ def excluded_ids(viewer: str) -> set[str]:
         "where user_a = %s or user_b = %s",
         (viewer, viewer, viewer, viewer, viewer))}
     if table_exists("suggestions"):
+        # only the VIEWER's own "no": hiding people who declined the viewer would reveal their "no"
         out |= {r["id"] for r in db.fetchall(
             "select case when user_a = %s then user_b else user_a end::text as id from suggestions "
-            "where (user_a = %s or user_b = %s) and (a_response = 'no' or b_response = 'no')",
+            "where (user_a = %s and a_response = 'no') or (user_b = %s and b_response = 'no')",
             (viewer, viewer, viewer))}
     if table_exists("conversations"):
         out |= {r["id"] for r in db.fetchall(
             "select case when c.user_a = %s then c.user_b else c.user_a end::text as id "
             "from conversations c join feedback f on f.conversation_id = c.id "
-            "where (c.user_a = %s or c.user_b = %s) and not f.wants_connect",
-            (viewer, viewer, viewer))}
+            "where (c.user_a = %s or c.user_b = %s) and f.rater_id = %s and not f.wants_connect",
+            (viewer, viewer, viewer, viewer))}
     return out
 
 
