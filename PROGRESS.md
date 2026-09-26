@@ -2,13 +2,24 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 03:26 | adam | Adam
+**Task:** Fix the Alan GitHub/Railway ask (Alan has no Railway access)
+**Status:** done
+**What I did:**
+- Rewrote Alan's open ask: he only adds the Railway callback on the GitHub OAuth app and privately sends `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `TOKEN_ENCRYPTION_KEY` to Adam. Adam sets them on Railway.
+- Added a matching open item under Adam's `REQUESTS.md` section for when those values arrive.
+**How to run/test it:** After Adam sets the vars, Profile → Manage sources → Connect GitHub on a phone against `https://ml-production-04c0.up.railway.app`.
+**Next step for whoever continues:** Alan: do the open `(from adam)` item (callback + private send). Adam: when the three values arrive, run `cd ml && npx @railway/cli variable set NAME --stdin` for each.
+**Known issues / blockers:** Do not put the client secret in git or chat.
+**Contract changes:** none
+
 ## 2026-09-26 03:25 | adam | Adam
 **Task:** Ask Alan to finish GitHub connect on Railway
-**Status:** done
+**Status:** superseded (Alan has no Railway login; see 03:26 entry)
 **What I did:**
 - Added an open ask in Alan's `REQUESTS.md` section: add the Railway callback on the GitHub OAuth app, then set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (and confirm `ML_API_URL` + `TOKEN_ENCRYPTION_KEY`) on the Railway `ml` service. Secret stays out of git and chat.
 **How to run/test it:** After Alan marks it done, on a phone open Profile → Manage sources → Connect GitHub against `https://ml-production-04c0.up.railway.app`.
-**Next step for whoever continues:** Alan: do the open `(from adam)` GitHub/Railway item at the top of his `REQUESTS.md` section. Adam: redeploy Railway for Arjun's population cache fix (`cd ml && npx @railway/cli up --detach --path-as-root .`).
+**Next step for whoever continues:** See the 03:26 entry. Alan does not set Railway vars.
 **Known issues / blockers:** GitHub connect stays off on Railway until those vars are set. `GITHUB_CLIENT_SECRET` must not be committed.
 **Contract changes:** none
 
