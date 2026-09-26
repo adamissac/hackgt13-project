@@ -393,3 +393,28 @@ create table push_tokens (
 alter table profiles add column onboarding_status text not null default 'pending'
   check (onboarding_status in ('pending', 'partial', 'complete'));
 -- trigger on user_interests insert sets 'complete' (first successful profile build)
+
+-- ========== Skill profiles (supabase/migrations/20260926200000_skill_profiles_and_on_create_account.sql) ==========
+-- on_create_account(): trigger on auth.users insert, the single account-creation hook for every auth provider
+create table resumes (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  storage_path text not null, filename text not null default '',
+  mime_type text not null,              -- application/pdf | ...wordprocessingml.document (DOCX)
+  size_bytes int not null,              -- <= 10 MB
+  status text not null default 'uploaded' check (status in ('uploaded','parsed','failed')),
+  error text, raw_document_id bigint references raw_documents(id) on delete set null,
+  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
+);
+create table user_skill_profiles (
+  id bigserial primary key,
+  user_id uuid not null references profiles(id) on delete cascade,
+  version int not null, is_active boolean not null default true,
+  trigger_source text not null,         -- github | resume | manual | rebuild
+  input_hash text not null,             -- same inputs -> no new version (idempotent re-runs)
+  profile jsonb not null,               -- see docs/ONBOARDING.md
+  skills jsonb not null default '[]',   -- [{name, interest_id, confidence, sources}]
+  generated_at timestamptz not null default now(),
+  unique (user_id, version)
+);
+-- one active version per user; GIN on skills; user_interests(interest_id) index for matching
