@@ -6,7 +6,6 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar, Button, Card, Chip, MatchMeter, useColors } from '@/components/ui';
 import { api, type GraphMode } from '@/lib/api';
-import { env } from '@/lib/env';
 import { useAsync } from '@/lib/useAsync';
 
 import { whySentence, type Person } from './model';
@@ -20,19 +19,6 @@ interface Detail {
 }
 
 async function load(p: Person, mode: GraphMode): Promise<Detail> {
-  if (env.useMocks) {
-    // Sample data: the mock endpoints return one fixed person, so build the sheet from the graph's own data.
-    return {
-      headline: p.role === 'recruiter' ? `Hiring for ${p.shared[0] ?? 'tech'} roles` : `Into ${p.shared.slice(0, 2).join(' and ')}`,
-      seeking: p.role === 'recruiter' ? `Students with ${p.shared[0] ?? 'ML'} experience` : `Internships and collaborators in ${p.shared[0] ?? 'tech'}`,
-      offering: p.role === 'recruiter' ? 'Internship and new grad roles' : `Projects in ${p.shared.slice(0, 2).join(', ')}`,
-      interests: p.shared.map((name) => ({ name, evidence: '' })),
-      connection:
-        mode === 'network'
-          ? { metAt: 'HackGT 13', when: p.metAt, howMet: p.howMet === 'invite' ? 'a private invite' : 'in person', minutes: 12, talkedAbout: p.shared.slice(0, 2) }
-          : null,
-    };
-  }
   const [qp, conn] = await Promise.all([
     api.quickProfile(p.userId).catch(() => null),
     mode === 'network' ? api.connection(p.userId).catch(() => null) : Promise.resolve(null),

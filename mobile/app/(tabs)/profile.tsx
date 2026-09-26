@@ -8,6 +8,7 @@ import { api, type Facet, type Interest, type InterestsResponse } from '@/lib/ap
 import { useAuth } from '@/lib/auth';
 import { env, missingEnv } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
+import { demo } from '@/lib/demo';
 import { useAsync } from '@/lib/useAsync';
 
 const FACET_LABEL: Record<Facet, string> = {
@@ -20,8 +21,13 @@ const FACET_LABEL: Record<Facet, string> = {
 // Profile: AI-extracted interests with evidence; confirm or hide each one (AD5, api.md 3-4).
 export default function ProfileScreen() {
   const c = useColors();
-  const { session } = useAuth();
-  const { state, reload } = useAsync(() => api.getInterests(), []);
+  const { session, guest, leaveDemo } = useAuth();
+  const restartDemo = () =>
+    Alert.alert('Restart the demo?', 'This clears your demo chats, matches, and connections.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Restart', style: 'destructive', onPress: () => demo.resetDemo() },
+    ]);
+  const { state, reload } = useAsync(() => api.getInterests(), [], ['profile']);
   const [override, setOverride] = useState<InterestsResponse | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [reviewing, setReviewing] = useState(false);
@@ -156,16 +162,15 @@ export default function ProfileScreen() {
         </Card>
       ))}
 
-      <SectionTitle>Make it yours</SectionTitle>
+      <SectionTitle>Your stuff</SectionTitle>
       <View style={[styles.menu, { backgroundColor: c.surface, borderColor: c.border }]}>
         {([
-          { title: 'Your chats', detail: 'Continue a conversation', route: '/chats' },
-          { title: 'Ask', detail: 'Questions about people you can already see', route: '/assistant' },
-          { title: 'Your connections', detail: 'How you met and what you talked about', route: '/connections' },
-          { title: 'Profile sources', detail: 'Resume, GitHub & a little about you', route: '/accounts' },
-          { title: 'Invite someone', detail: 'Reconnect with someone you know', route: '/invites' },
-          { title: 'Your network', detail: 'The connections you’ve made', route: '/network' },
-          { title: 'Network activity', detail: 'What your connections are exploring', route: '/insights' },
+          { title: 'Edit profile', detail: 'Headline, resume, GitHub, what you’re looking for', route: '/accounts' },
+          { title: 'Your connections', detail: 'Who you met, when, and what you talked about', route: '/connections' },
+          { title: 'Connection graph', detail: 'You, your matches, and the topics that link you', route: '/graph' },
+          { title: 'Feed', detail: 'What your connections are building', route: '/feed' },
+          { title: 'Your network', detail: 'How your network has grown', route: '/network' },
+          { title: 'My connect QR & invites', detail: 'Connect with someone you already know', route: '/invites' },
         ] as const).map((item, index) => (
           <Pressable key={item.route} accessibilityRole="button" onPress={() => router.push(item.route)} style={[styles.menuRow, { borderTopWidth: index ? 1 : 0, borderTopColor: c.border }]}>
             <View style={{ flex: 1, gap: 4 }}>
@@ -177,10 +182,16 @@ export default function ProfileScreen() {
         ))}
       </View>
 
-      <Disclosure title="Account settings" subtitle="Sign-in and privacy controls">
+      <Disclosure title={guest ? 'Demo settings' : 'Account settings'} subtitle={guest ? 'Restart or exit the demo' : 'Sign-in and privacy controls'}>
         {session && <Button label="Sign out" variant="secondary" onPress={() => supabase.auth.signOut()} />}
         {session && <Button label="Delete my account" variant="danger" onPress={confirmDelete} loading={deleting} />}
-        {!session && <Text style={[styles.body, { color: c.muted }]}>Sign in to manage your account.</Text>}
+        {!session && guest && (
+          <>
+            <Text style={[styles.body, { color: c.muted }]}>You’re exploring the demo with simulated people.</Text>
+            <Button label="Restart the demo" variant="secondary" onPress={restartDemo} />
+            <Button label="Exit demo and sign in" onPress={leaveDemo} />
+          </>
+        )}
       </Disclosure>
     </ScrollView>
   );

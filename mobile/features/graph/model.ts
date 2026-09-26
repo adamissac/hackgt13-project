@@ -1,7 +1,7 @@
 // Turns GET /graph (api.md 26) into something a person can read at a glance:
 // people on three rings around you (inner = stronger match), topics you share as filters,
 // and one plain sentence per person saying why. Pure functions: no React, easy to test.
-import type { Facet, GraphMode, GraphPerson, GraphResponse } from '@/lib/api';
+import type { Facet, GraphPerson, GraphResponse } from '@/lib/api';
 
 export interface Person {
   id: string;
