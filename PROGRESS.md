@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-09-26 01:15 | adam | Claude Code
+**Task:** AD1 Supabase project
+**Status:** done
+**What I did:**
+- Added MASTER_SPEC.md to the repo.
+- Migrations 6-8 applied to remote: Section 8.1 alters, 8.2 new tables, 8.3 RLS (security-definer helper for location_shares), realtime publication for messages, location_shares, notifications.
+- Verified remotely: 35/35 public tables have RLS on; realtime publication = location_shares, messages, notifications; presence.open_to_meet exists; HackGT 13 event id 1.
+- `scripts/rls-isolation-test.mjs`: all checks pass (signup trigger, 7 owner-only tables, resumes bucket). Test users and files cleaned up.
+- docs/schema.sql now mirrors Section 8.
+**How to run/test it:** see AGENTS.md "Run and test commands" (supabase).
+**Next step for whoever continues:** AD2 auth. Adam must create the LinkedIn developer app (with a LinkedIn Page, "Sign In with LinkedIn using OpenID Connect" product, redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`) and paste client ID/secret into Supabase Auth > LinkedIn (OIDC). Meanwhile start AD3 (Expo shell in mobile/).
+**Known issues / blockers:** Spec lists no event zones, so none seeded. organizations/org_members/org_subscriptions/event_posts have no client policies (FastAPI only) since 8.3 doesn't name them. event_registrations is owner-only.
+**Contract changes:** docs/schema.sql extended with Section 8.1/8.2 exactly as in the spec.
+
 ## 2026-09-26 00:30 | adam | Claude Code
 **Task:** AD1 Supabase project
 **Status:** in progress
