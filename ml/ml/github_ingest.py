@@ -58,6 +58,14 @@ def _get(path, token=None, cache=None, accept="application/vnd.github+json"):
         raise GitHubError(f"GitHub {e.code} for {url}") from e
 
 
+def get_user(token):
+    """GET /user for the connected account (login is stored as linked_accounts.provider_uid)."""
+    me = _get("/user", token)
+    if not me or "login" not in me:
+        raise GitHubError("could not read GitHub user")
+    return me
+
+
 def fetch_repos(token=None, username=None, cache=None, max_repos=MAX_REPOS):
     """Return (repos, cache). repos match the shape `llm.github_to_text` expects:
     {name, description, languages{lang: bytes}, topics, readme, stars, fork, pushed_at, owner}.
