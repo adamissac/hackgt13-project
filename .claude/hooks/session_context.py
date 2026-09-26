@@ -128,6 +128,17 @@ def minutes_since(epoch: str) -> int | None:
         return None
 
 
+def open_requests(root: str, owner: str) -> list[str]:
+    """Unchecked '- [ ]' items under '## <owner>' in REQUESTS.md."""
+    items, inside = [], False
+    for line in read(os.path.join(root, "REQUESTS.md")).splitlines():
+        if line.startswith("## "):
+            inside = line[3:].strip().lower() == owner
+        elif inside and line.startswith("- [ ]"):
+            items.append(line[5:].strip())
+    return items
+
+
 def build(root: str, source: str, brief_only: bool) -> str:
     out: list[str] = []
     owner = get_owner(root)
@@ -167,6 +178,11 @@ def build(root: str, source: str, brief_only: bool) -> str:
                 out.append(f"Known issues: {issues[:200]}")
     else:
         out.append("PROGRESS.md has no entries yet. Create it with the first /handoff.")
+
+    if owner:
+        asks = open_requests(root, owner)
+        if asks:
+            out.append(f"Open requests for {owner} in REQUESTS.md ({len(asks)}): " + " | ".join(a[:160] for a in asks[:6]))
 
     if prefix:
         todo = [(t, title) for t, title in spec_tasks(root, prefix) if status.get(t) != "done"]

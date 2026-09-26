@@ -1,0 +1,149 @@
+{
+  "nodes": [
+    {
+      "id": "me",
+      "type": "self",
+      "label": "You"
+    },
+    {
+      "id": "u_00000000-0000-0000-0000-000000000101",
+      "type": "person",
+      "label": "Sam",
+      "score": 0.382,
+      "highlight": true,
+      "open_to_meet": true,
+      "cluster": null,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "shared_count": 2
+    },
+    {
+      "id": "t_2",
+      "type": "topic",
+      "label": "rock climbing",
+      "facet": "personal"
+    },
+    {
+      "id": "t_1",
+      "type": "topic",
+      "label": "reinforcement learning",
+      "facet": "technical"
+    },
+    {
+      "id": "u_00000000-0000-0000-0000-000000000102",
+      "type": "person",
+      "label": "Ivy",
+      "score": 0.3379,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": null,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "genomics",
+      "shared_count": 2
+    },
+    {
+      "id": "t_3",
+      "type": "topic",
+      "label": "genomics",
+      "facet": "academic"
+    },
+    {
+      "id": "t_4",
+      "type": "topic",
+      "label": "quantitative research",
+      "facet": "career"
+    },
+    {
+      "id": "u_00000000-0000-0000-0000-000000000103",
+      "type": "person",
+      "label": "Zed",
+      "score": 0.2192,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": null,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "reinforcement learning",
+      "shared_count": 1
+    }
+  ],
+  "edges": [
+    {
+      "source": "me",
+      "target": "u_00000000-0000-0000-0000-000000000101",
+      "kind": "match",
+      "weight": 0.382,
+      "facet": "personal"
+    },
+    {
+      "source": "u_00000000-0000-0000-0000-000000000101",
+      "target": "t_2",
+      "kind": "has_topic",
+      "weight": 0.5132
+    },
+    {
+      "source": "me",
+      "target": "t_2",
+      "kind": "has_topic",
+      "weight": 0.5683
+    },
+    {
+      "source": "u_00000000-0000-0000-0000-000000000101",
+      "target": "t_1",
+      "kind": "has_topic",
+      "weight": 0.6171
+    },
+    {
+      "source": "me",
+      "target": "t_1",
+      "kind": "has_topic",
+      "weight": 0.6604
+    },
+    {
+      "source": "me",
+      "target": "u_00000000-0000-0000-0000-000000000102",
+      "kind": "match",
+      "weight": 0.3379,
+      "facet": "career"
+    },
+    {
+      "source": "u_00000000-0000-0000-0000-000000000102",
+      "target": "t_3",
+      "kind": "has_topic",
+      "weight": 0.6604
+    },
+    {
+      "source": "me",
+      "target": "t_3",
+      "kind": "has_topic",
+      "weight": 0.5132
+    },
+    {
+      "source": "u_00000000-0000-0000-0000-000000000102",
+      "target": "t_4",
+      "kind": "has_topic",
+      "weight": 0.4512
+    },
+    {
+      "source": "me",
+      "target": "t_4",
+      "kind": "has_topic",
+      "weight": 0.6171
+    },
+    {
+      "source": "me",
+      "target": "u_00000000-0000-0000-0000-000000000103",
+      "kind": "match",
+      "weight": 0.2192,
+      "facet": "technical"
+    },
+    {
+      "source": "u_00000000-0000-0000-0000-000000000103",
+      "target": "t_1",
+      "kind": "has_topic",
+      "weight": 0.4512
+    }
+  ]
+}

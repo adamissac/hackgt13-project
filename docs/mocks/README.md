@@ -12,7 +12,19 @@ change to `docs/api.md`.
 | event_matches.json | GET /events/{event_id}/matches |
 | event_checkin.json | POST /events/{event_id}/checkin |
 | match_starters.json | GET /matches/{other_user_id}/starters |
+| match_quick_profile.json | GET /matches/{other_user_id}/quick-profile |
 | qr_token.json | GET /qr/token |
 | handshake.json | POST /handshake |
 | feedback.json | POST /feedback |
 | connections.json | GET /connections |
+| me_open_to_meet.json | PATCH /me/open-to-meet |
+| suggestions.json | GET /suggestions |
+| suggestion_respond.json | POST /suggestions/{id}/respond (mutual-yes case; otherwise {"status": "waiting"}) |
+| qr_verify.json | POST /qr/verify (GET /qr/verify-token uses qr_token.json) |
+| conversations_pending.json | GET /conversations/pending |
+| conversation_feedback.json | POST /conversations/{id}/feedback (mutual-yes case) |
+| followup_draft.json | POST /connections/{user_id}/followup-draft |
+| graph.json | GET /graph?mode=matches (real output of the service on seeded data) |
+| feed.json | GET /feed |
+| feed_insights.json | GET /feed/insights |
+| feed_reply_suggestion.json | POST /feed/{item_id}/reply-suggestion |
