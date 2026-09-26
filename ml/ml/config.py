@@ -3,6 +3,12 @@ import os
 
 # ---- Models ----
 EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")   # 384-dim, CPU friendly
+# CPU on purpose. Left to itself sentence-transformers picks Apple's MPS backend on an M-series
+# Mac, and bge-small on MPS aborts the whole process with a Metal assertion
+# ("_status < MTLCommandBufferStatusCommitted") under the background workers' concurrent calls.
+# CPU also keeps laptop vectors identical to Railway's, which has no GPU and writes the same
+# pgvector column. Set EMBED_DEVICE=mps or =cuda to override.
+EMBED_DEVICE = os.getenv("EMBED_DEVICE", "cpu")
 LLM_SMART = os.getenv("LLM_SMART", "claude-sonnet-5")               # resumes, starters
 LLM_FAST = os.getenv("LLM_FAST", "claude-haiku-4-5-20251001")       # bulk: likes, bios, tie-breaks
 

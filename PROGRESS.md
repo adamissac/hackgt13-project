@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 09:20 | alan | Claude Code (Opus 5)
+**Task:** AL1 stability — server aborted mid-session on an Apple GPU assertion; LinkedIn + GitHub config verified
+**Status:** done (local, Railway and tunnel all `{"ok":true,"db":true}`; 71 passed, 108 skipped)
+**What I did:**
+- The local uvicorn died with SIGABRT: `failed assertion _status < MTLCommandBufferStatusCommitted at -[IOGPUMetalCommandBuffer setCurrentCommandEncoder:]`. `SentenceTransformer(EMBED_MODEL)` took no `device`, so on an M-series Mac it auto-selected the **MPS** backend, and bge-small on MPS aborts the whole process once the background workers call it concurrently. Added `EMBED_DEVICE` (default `cpu`) in `ml/ml/config.py` and passed it in `ml/ml/embed.py`. Verified 384-dim unit-normalized output, then 30 s of polling with workers running and zero Metal errors. macOS-only — Railway has no GPU — and pinning CPU also keeps laptop vectors identical to Railway's, which writes the same pgvector column.
+- **LinkedIn OIDC verified live**: `GET /auth/v1/settings` now returns `external: {email, linkedin_oidc}` (OIDC, not the legacy `linkedin`, matching `signInWithOAuth({provider:'linkedin_oidc'})`). Real people signed in.
+- **Proved the `TOKEN_ENCRYPTION_KEY` mismatch and fixed it.** Railway's key differed from this laptop's. Without knowing Railway's value: sign an OAuth `state` with the laptop key, send it to Railway's callback with a junk `code`, and time the redirect — a rejected signature returns immediately, an accepted one first round-trips to GitHub. Before: +0 ms (differ). After Alan copied Railway's value into `.env`: +207 ms (match).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests`. Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+**Next step for whoever continues:** Complete one GitHub connect on a phone (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Every piece is verified but the end-to-end flow has never run to completion; on failure the deep link carries `reason=oauth` (state/exchange) or `reason=denied` (user cancelled).
+**Known issues / blockers:** `mobile/.env` still points at Alan's trycloudflare tunnel — switch `EXPO_PUBLIC_API_BASE_URL` to `https://ml-production-04c0.up.railway.app` before demo day so the demo doesn't depend on a laptop staying awake. The dashboard's "Should be talking, aren't" panel reads `0 made` on every row until someone completes a verified conversation. GitHub client secret and the Supabase DB password were both pasted into a chat transcript — rotate after the hackathon (the DB one needs coordinating with Adam, since Railway's `DATABASE_URL` embeds it).
+**Contract changes:** `.env.example` gains `EMBED_DEVICE` (optional, defaults to `cpu`). Additive; nothing renamed or removed.
+
 ## 2026-09-26 09:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Diagnose HTTP 500s on the two-iPhone Release build (Nearby, Home check-in / Open to Meet, Event Mode, Tap, QR)

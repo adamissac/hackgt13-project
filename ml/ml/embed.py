@@ -6,7 +6,7 @@ with no model download. The fallback is fine for testing plumbing, NOT for demo.
 """
 from functools import lru_cache
 import numpy as np
-from .config import EMBED_MODEL
+from .config import EMBED_DEVICE, EMBED_MODEL
 
 _model = None
 _fallback = False
@@ -18,7 +18,7 @@ def _load():
         return
     try:
         from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer(EMBED_MODEL)
+        _model = SentenceTransformer(EMBED_MODEL, device=EMBED_DEVICE)
     except Exception as e:  # no package, no network, etc.
         print(f"[embed] sentence-transformers unavailable ({type(e).__name__}); using hashed fallback")
         _fallback = True
