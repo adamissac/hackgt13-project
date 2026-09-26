@@ -1,7 +1,7 @@
 """Shared test fixtures.
 
 DB tests need a throwaway Postgres with pgvector. Point TEST_DATABASE_URL at an empty database
-(it is wiped and rebuilt from docs/schema.sql + tests/sql/section8.sql). Without it, DB tests skip.
+(it is wiped and rebuilt from docs/schema.sql). Without it, DB tests skip.
   e.g. TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test
 """
 import os
@@ -43,8 +43,7 @@ def auth(sub: str) -> dict:
 
 def _reset_schema(url: str) -> None:
     import psycopg
-    sql_files = [ML_DIR / "tests/sql/auth_stub.sql", REPO / "docs/schema.sql",
-                 ML_DIR / "tests/sql/section8.sql"]
+    sql_files = [ML_DIR / "tests/sql/auth_stub.sql", REPO / "docs/schema.sql"]
     extra = sorted((ML_DIR / "migrations").glob("*.sql")) if (ML_DIR / "migrations").exists() else []
     with psycopg.connect(url, autocommit=True) as c:
         c.execute("drop schema if exists public cascade; create schema public;"
