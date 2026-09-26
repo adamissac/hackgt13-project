@@ -1,0 +1,88 @@
+#!/usr/bin/env python3
+"""Git pre-commit hook for everyone (humans and agents).
+
+Blocks commits that include real .env files, files over 10 MB, literal API keys or
+Supabase service_role tokens, or server-only secret names in mobile/ or dashboard/.
+Enabled by scripts/claude-setup.sh via `git config core.hooksPath .githooks`.
+"""
+import base64
+import json
+import re
+import subprocess
+import sys
+
+LITERAL_KEYS = [
+    (re.compile(r"sk-ant-[A-Za-z0-9_\-]{20,}"), "an Anthropic API key"),
+    (re.compile(r"\bsb_secret_[A-Za-z0-9_\-]{16,}"), "a Supabase secret key"),
+    (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}"), "a GitHub token"),
+    (re.compile(r"\bgithub_pat_[A-Za-z0-9_]{30,}"), "a GitHub token"),
+    (re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"), "a private key"),
+    (re.compile(r"\bAKIA[0-9A-Z]{16}\b"), "an AWS access key"),
+]
+JWT = re.compile(r"eyJ[A-Za-z0-9_\-]{8,}\.(eyJ[A-Za-z0-9_\-]{8,})\.[A-Za-z0-9_\-]{8,}")
+SERVER_SECRET_NAMES = re.compile(
+    r"\b(?:SUPABASE_SERVICE(?:_ROLE)?_KEY|SERVICE_ROLE_KEY|SUPABASE_SECRET_KEY|ANTHROPIC_API_KEY|"
+    r"TOKEN_ENCRYPTION_KEY|GITHUB_CLIENT_SECRET|QR_SIGNING_KEY)\b"
+)
+CLIENT_CODE_EXT = (".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".json", ".plist", ".xml", ".gradle", ".kt", ".swift", ".example")
+MAX_BYTES = 10 * 1024 * 1024
+
+
+def git(*args: str) -> bytes:
+    return subprocess.check_output(["git", *args], stderr=subprocess.DEVNULL)
+
+
+def jwt_role(payload_b64: str):
+    try:
+        pad = "=" * (-len(payload_b64) % 4)
+        return json.loads(base64.urlsafe_b64decode(payload_b64 + pad)).get("role")
+    except Exception:
+        return None
+
+
+def main() -> int:
+    try:
+        names = git("diff", "--cached", "--name-only", "--diff-filter=ACMR").decode().splitlines()
+    except Exception:
+        return 0
+    problems = []
+    for path in filter(None, names):
+        base = path.rsplit("/", 1)[-1]
+        if re.fullmatch(r"\.env(\..+)?", base) and base != ".env.example":
+            problems.append(f"{path}: .env files never go in git (only .env.example with empty values).")
+            continue
+        try:
+            size = int(git("cat-file", "-s", f":{path}").decode().strip())
+        except Exception:
+            size = 0
+        if size > MAX_BYTES:
+            problems.append(f"{path}: {size // (1024 * 1024)} MB. Keep datasets and binaries out of git (put them in ml/data/external/, which is ignored).")
+            continue
+        if size > 2 * 1024 * 1024:
+            continue
+        try:
+            text = git("show", f":{path}").decode("utf-8", "ignore")
+        except Exception:
+            continue
+        for pattern, label in LITERAL_KEYS:
+            if pattern.search(text):
+                problems.append(f"{path}: contains what looks like {label}.")
+                break
+        for m in JWT.finditer(text):
+            if jwt_role(m.group(1)) == "service_role":
+                problems.append(f"{path}: contains a Supabase service_role token.")
+                break
+        if path.startswith(("mobile/", "dashboard/")) and path.lower().endswith(CLIENT_CODE_EXT):
+            if SERVER_SECRET_NAMES.search(text):
+                problems.append(f"{path}: client code references a server-only secret name. Move that logic behind FastAPI.")
+    if problems:
+        print("\n[pre-commit] Commit blocked:")
+        for p in problems:
+            print(f"  - {p}")
+        print("Keep secrets in untracked .env files and list their names in .env.example. Unstage the file, fix it, commit again.\n")
+        return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
