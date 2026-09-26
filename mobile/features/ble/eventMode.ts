@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { PermissionsAndroid, Platform } from 'react-native';
 
+import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 
 import EventModeNative from '../../modules/event-mode/src/EventModeModule';
@@ -55,6 +56,8 @@ export async function enableEventMode(): Promise<void> {
     return;
   }
   set({ error: null });
+  // Being in Event Mode means "I'm at the event": check in so matches and suggestions include me.
+  api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
   await startEngine({ eventId: HACKGT_EVENT_ID, owner: OWNER });
   await activateKeepAwakeAsync(TAG);
   let service: EventModeStatus['backgroundService'] = 'unavailable';

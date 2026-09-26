@@ -5,6 +5,7 @@ session start. When you finish one, change `- [ ]` to `- [x]` and mention it in 
 Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item actionable in one line or two.
 
 ## adam
+- [ ] (from akshar) No screen calls `api.checkin` yet. I made Event Mode ON check in to event 1 so phone tests work, but a visible "Check in to HackGT" button on Home (or an events screen) would be clearer for the demo.
 - [x] (from alan) Review and merge the follow-up ML PR (AL11 chatbot `/assistant/chat`, branch `claude/quirky-euler-dnbsgt`).
 - [x] (from alan) Review and merge the ML service PR (branch `claude/quirky-euler-dnbsgt`): AL1-AL7, `/dashboard/{event_id}`, `DELETE /me`. It also adds `REQUESTS.md` and this hook feature.
 - [ ] (from alan) Mobile endpoints now live (docs/api.md 15-28, mocks in docs/mocks/): AD6 uses `GET /events/{id}/matches`, `GET /matches/{id}/quick-profile` (overlap radar = `facet_overlap`), `GET /matches/{id}/starters`, `GET /suggestions` + `POST /suggestions/{id}/respond`; AD8 uses `GET /conversations/pending`, `POST /conversations/{id}/feedback`, `GET /connections`, `POST /connections/{id}/followup-draft`. The old `/qr/token`, `/handshake`, `/feedback` names still work as aliases.
