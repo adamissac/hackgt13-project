@@ -54,7 +54,7 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors, paus
   return (
     <View style={{ width: size, height }}>
       <Animated.View style={{ width: size, height, transform: [{ rotate: spin }] }}>
-      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none" accessible={false}>
+      <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none">
         <Defs><RadialGradient id="nucleusHalo">
           <Stop offset="0" stopColor={colors.tint} stopOpacity={0.16} />
           <Stop offset="1" stopColor={colors.tint} stopOpacity={0} />

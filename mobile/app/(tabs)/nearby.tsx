@@ -164,7 +164,7 @@ export default function NearbyScreen() {
               <Text style={{ color: c.text }}>{p.name}</Text>
             </Pressable>)}
           </ScrollView>
-          {selected && <Button label={`View ${selected.name.split(' ')[0]}’s profile →`} onPress={() => { setExpanded(false); router.push(`/match/${selected.user_id}`); }} />}
+          {selected && <Button label={`View ${(selected.name || 'match').split(' ')[0]}’s profile →`} onPress={() => { setExpanded(false); router.push(`/match/${selected.user_id}`); }} />}
         </View>
       </View>
     </Modal>

@@ -17,6 +17,7 @@ export default function FeedScreen() {
   const [body, setBody] = useState('');
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
 
   const publish = async () => {
     const text = body.trim();
@@ -27,6 +28,7 @@ export default function FeedScreen() {
       const created = await api.createPost({ kind, body: text });
       setMine((prev) => [postedEntry(created), ...prev]);
       setBody('');
+      setComposing(false);
     } catch (e) {
       setPostError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -41,11 +43,16 @@ export default function FeedScreen() {
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
       <View style={{ gap: 6, paddingVertical: 8 }}>
-        <Text style={{ color: c.ai, fontSize: 11, fontWeight: '700', letterSpacing: 2 }}>YOUR PEOPLE, IN MOTION</Text>
-        <Text style={{ color: c.text, fontSize: 32, fontWeight: '700', letterSpacing: -1 }}>Good things travel.</Text>
-        <Text style={[styles.lead, { color: c.muted }]}>A private feed of ideas, milestones, and people you know.</Text>
+        <Text style={{ color: c.muted, fontSize: 11, fontWeight: '600', letterSpacing: 1.5 }}>YOUR CIRCLE</Text>
+        <Text style={{ color: c.text, fontSize: 32, fontWeight: '600', letterSpacing: -1 }}>Stay in the loop.</Text>
+        <Text style={[styles.lead, { color: c.muted }]}>The latest from people you know.</Text>
       </View>
       <Card>
+        <Pressable onPress={() => setComposing(!composing)} accessibilityRole="button" accessibilityState={{ expanded: composing }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
+          <Text style={{ flex: 1, marginRight: 12, color: c.text, fontSize: 16, fontWeight: '500' }}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
+          <Text style={{ color: c.muted, fontSize: 22 }}>{composing ? '−' : '+'}</Text>
+        </Pressable>
+        {composing && <>
         <View style={styles.kinds}>
           {(['update', 'post'] as const).map((option) => (
             <Pressable
@@ -71,6 +78,7 @@ export default function FeedScreen() {
         />
         <Button label="Share" onPress={publish} loading={posting} disabled={!body.trim()} />
         {postError && <Text style={{ color: c.danger }}>{postError}</Text>}
+        </>}
       </Card>
 
       {feed.state.status === 'loading' && <Loading label="Loading your feed…" />}

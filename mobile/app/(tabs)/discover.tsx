@@ -46,7 +46,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
-          <Text style={[styles.title, { color: c.text }]}>Meeting activity</Text>
+          <Text style={[styles.title, { color: c.text }]}>Find your people.</Text>
         </View>
         <HeaderActions />
       </View>
@@ -114,30 +114,28 @@ function OpenToMeetCard({ presence }: { presence: ReturnType<typeof useOpenToMee
   const c = useColors();
   const on = presence.on;
   return (
-    <View style={[styles.hero, { backgroundColor: on ? c.tint : c.surface, borderColor: on ? c.tint : c.border }]}>
+    <View style={[styles.hero, { backgroundColor: c.surface, borderColor: c.border }]}>
       <View style={styles.heroRow}>
         <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[styles.heroLabel, { color: on ? c.onTint : c.muted }]}>{on ? '● ON' : '○ OFF'}</Text>
-          <Text style={[styles.heroTitle, { color: on ? c.onTint : c.text }]}>{on ? 'Open to meet' : 'Not open to meet'}</Text>
+          <Text style={[styles.heroLabel, { color: c.muted }]}>{on ? 'AVAILABLE' : 'PAUSED'}</Text>
+          <Text style={[styles.heroTitle, { color: c.text }]}>Open to meet</Text>
         </View>
         <Switch
           value={on}
           onValueChange={presence.toggle}
           disabled={presence.status === 'loading' || presence.status === 'saving'}
-          trackColor={{ true: c.onTint, false: c.surfaceAlt }}
-          thumbColor={on ? c.tint : undefined}
+          trackColor={{ true: c.tint, false: c.surfaceAlt }}
           accessibilityLabel="Open to Meet"
-          style={{ transform: [{ scale: 1.25 }] }}
         />
       </View>
-      <Text style={[styles.body, { color: on ? c.onTint : c.muted }]}>
+      <Text style={[styles.body, { color: c.muted }]}>
         {on
-          ? 'Discovery is on. Compatible people here can be suggested to you, and you to them. Nobody sees your exact location.'
-          : 'Discovery is paused. Nobody nearby can find you, and you won’t get new suggestions.'}
+          ? 'Available for nearby introductions. Your exact location stays private.'
+          : 'Turn on when you’re ready for nearby introductions.'}
       </Text>
-      {presence.error && <Text style={[styles.small, { color: on ? c.onTint : c.danger }]}>{presence.error}</Text>}
+      {presence.error && <Text style={[styles.small, { color: c.danger }]}>{presence.error}</Text>}
       {on && (
-        <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.heroButton, { backgroundColor: c.onTint }]}>
+        <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.heroButton, { backgroundColor: c.surfaceAlt }]}>
           <Text style={{ color: c.tint, fontWeight: '800', fontSize: 16 }}>Find people nearby</Text>
         </Pressable>
       )}
@@ -302,10 +300,10 @@ const styles = StyleSheet.create({
   bell: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
-  hero: { borderRadius: 22, borderWidth: 2, padding: 20, gap: 12 },
+  hero: { borderRadius: 18, borderWidth: 1, padding: 18, gap: 12 },
   heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   heroLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 1 },
-  heroTitle: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
+  heroTitle: { fontSize: 22, fontWeight: '600', letterSpacing: -0.5 },
   heroButton: { minHeight: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },

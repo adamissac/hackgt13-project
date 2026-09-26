@@ -1,3 +1,16 @@
+## 2026-09-26 15:40 | adam | Codex
+**Task:** AD9 / AD11 / AR5 / AK5 — user-requested Home, Nearby and graph polish (cross-owner presentation changes)
+**Status:** done
+**What I did:**
+- Integrated with the team's latest navigation and facet-based graph; preserved Feed as Home and meeting activity under Nearby. Replayed only this increment after the remote history rewrite.
+- Warm-white/charcoal theme, quieter avatars/cards, compact Home composer with draft preservation, and a neutral Open to Meet card instead of a large colored panel.
+- Full-screen Nearby map with band filters and a match selector. Preview shows at most three per band; every eligible match stays in the list and selecting one includes them on the map. Selected-only native pin labels and evenly spaced decorative positions reduce crowding. Fixed asynchronous location-watcher cleanup on expansion/close.
+- Slow 90-second graph rotation with upright names, pause/resume, selected-profile pause, reduced-motion support and focus/background cleanup. Added rotating-layout bounds and dense-map regression tests.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo && EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform web`. Passed: 24 unit checks, 15 demo-flow checks, touched-file ESLint, iOS/web exports. Browser at 390x844 verified Home, Nearby expand/close/filter/select, graph movement/pause and profile opening.
+**Next step for whoever continues:** Pull main, run `./scripts/start-app.sh`, then on a physical phone test Nearby → scan → Expand map → select/filter → Done, and Constellation → pause/resume → select a person. Native street maps/Bluetooth cannot be verified by the browser radar fallback.
+**Known issues / blockers:** No physical-phone verification claimed. Existing Node module-type and Expo color-environment warnings persist. Dependency installation reports 16 moderate advisories; dependency upgrades are outside this UI increment. Local mock web preview is on port 8086, not continuously monitored after handoff.
+**Contract changes:** none
+
 ## 2026-09-26 12:20 | alan | Claude Code (Opus 5)
 **Task:** Chase the Railway-vs-laptop clustering split; make both silent ML fallbacks visible
 **Status:** done — 96 passed, 118 skipped. Clustering split diagnosed as numerical instability, not a broken deploy.
