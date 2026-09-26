@@ -25,16 +25,27 @@ export async function completeAuthFromUrl(url: string): Promise<void> {
   if (exchangeError) throw exchangeError;
 }
 
-/** LinkedIn OIDC through Supabase, in an in-app auth session. */
-export async function signInWithLinkedIn(): Promise<void> {
+/** Shared OAuth handshake: open the provider in an in-app auth session, then trade the code. */
+async function signInWithProvider(provider: 'linkedin_oidc' | 'github'): Promise<void> {
   const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'linkedin_oidc',
+    provider,
     options: { redirectTo, skipBrowserRedirect: true },
   });
   if (error) throw error;
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
   if (result.type !== 'success') return; // user cancelled
   await completeAuthFromUrl(result.url);
+}
+
+/** LinkedIn OIDC through Supabase, in an in-app auth session. */
+export async function signInWithLinkedIn(): Promise<void> {
+  return signInWithProvider('linkedin_oidc');
+}
+
+/** GitHub through Supabase Auth. Note this is identity only: it does NOT populate
+ *  linked_accounts, so the user is still asked to Connect GitHub for repo ingestion. */
+export async function signInWithGitHub(): Promise<void> {
+  return signInWithProvider('github');
 }
 
 /** Fallback: email magic link that returns through the same deep link. */

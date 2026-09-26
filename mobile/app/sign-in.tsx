@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 
 import { Text, View, useThemeColor } from '@/components/Themed';
-import { sendMagicLink, signInWithLinkedIn, useAuth, verifyEmailCode } from '@/lib/auth';
+import { sendMagicLink, signInWithGitHub, signInWithLinkedIn, useAuth, verifyEmailCode } from '@/lib/auth';
+
+type SignInKind = 'linkedin' | 'github' | 'email' | 'code';
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
@@ -11,10 +13,10 @@ export default function SignInScreen() {
   const muted = useThemeColor({}, 'muted');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
-  const [busy, setBusy] = useState<'linkedin' | 'email' | 'code' | null>(null);
+  const [busy, setBusy] = useState<SignInKind | null>(null);
   const [message, setMessage] = useState<{ kind: 'error' | 'info'; text: string } | null>(null);
 
-  const run = async (kind: 'linkedin' | 'email' | 'code', fn: () => Promise<void>, success?: string) => {
+  const run = async (kind: SignInKind, fn: () => Promise<void>, success?: string) => {
     setBusy(kind);
     setMessage(null);
     try {
@@ -44,6 +46,14 @@ export default function SignInScreen() {
           disabled={busy !== null}
           accessibilityRole="button">
           {busy === 'linkedin' ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonTextLight}>Continue with LinkedIn</Text>}
+        </Pressable>
+
+        <Pressable
+          style={[styles.button, styles.outline, { borderColor: tint }]}
+          onPress={() => run('github', signInWithGitHub)}
+          disabled={busy !== null}
+          accessibilityRole="button">
+          {busy === 'github' ? <ActivityIndicator /> : <Text style={[styles.buttonText, { color: tint }]}>Continue with GitHub</Text>}
         </Pressable>
 
         <Text style={[styles.or, { color: muted }]}>or continue with email</Text>

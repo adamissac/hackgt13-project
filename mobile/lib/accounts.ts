@@ -71,6 +71,7 @@ export async function waitForJob(jobId: string, timeoutMs = 90_000): Promise<Exc
 
 export function signInLabel(provider: string | null): string {
   if (provider === 'linkedin') return 'LinkedIn';
+  if (provider === 'github') return 'GitHub';
   if (provider === 'email') return 'email link';
   return provider ?? 'unknown';
 }

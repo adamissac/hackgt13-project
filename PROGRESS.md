@@ -18,6 +18,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Known issues / blockers:** The ~60 s stall cause is unconfirmed without the Railway logs (asked Adam in REQUESTS). Don't redeploy right before or during the demo.
 
+## 2026-09-26 10:25 | alan | Claude Code (Opus 5)
+**Task:** Add "Continue with GitHub" to the sign-in screen (Alan's request) — **edits in Adam's folder**
+**Status:** code done, typecheck + lint clean; **dead until the Supabase GitHub provider is enabled**
+**What I did:**
+- `mobile/lib/auth.tsx`: pulled the OAuth handshake into `signInWithProvider(provider)` (LinkedIn and GitHub were otherwise identical) and added `signInWithGitHub()`.
+- `mobile/app/sign-in.tsx`: "Continue with GitHub" as an outline button under LinkedIn; extracted the `SignInKind` union so `busy` covers the new state.
+- `mobile/lib/accounts.ts`: `signInLabel('github') -> 'GitHub'` so Manage sources doesn't render a raw provider string.
+- Ran `npm install` first — `expo-clipboard` had landed in `package.json` after my earlier install and was failing typecheck for an unrelated reason.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .` (both clean). On a phone the button 400s until the provider below is enabled.
+**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers, and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on a GitHub OAuth app (the existing `Ov23liFFJ8BwrDTDqrUW` app can carry it alongside the Railway callback). Until then the button fails.
+**Known issues / blockers:** Two things Adam should weigh, since this is his area and his call. (1) **Spec deviation** — MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as the sign-in identity; GitHub sign-in is not in the spec. (2) **Double authorization** — signing in with GitHub creates a Supabase identity but does **not** write `linked_accounts`, which is what `/connect/github` populates. A user who signs in with GitHub will still see "Connect GitHub" as unconnected and authorize GitHub a second time. Worth either wiring sign-in to seed `linked_accounts`, or relabelling the connect step so the repeat isn't confusing. Adam was pushing to `mobile/` while I wrote this — conflict risk is real; revert freely if it cuts across his onboarding work.
 **Contract changes:** none
 
 ## 2026-09-26 10:05 | alan | Claude Code (Opus 5)
