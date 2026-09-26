@@ -2,6 +2,20 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 14:00 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR3 synthetic attendees, modeled on HackGT 12 (MLH) winners
+**Status:** done in code + tested on a local Postgres; NOT yet run against the live Supabase (needs DATABASE_URL)
+**What I did:**
+- `ml/ml/hackathon_winners.py`: all 27 HackGT 12 winning projects (name, tagline, Built-with tech, prize, hand-tagged topics/career) from the Devpost gallery. No team members' names.
+- `ml/ml/hackathon_population.py`: ~80 fictional attendees: 2-3 per winning project (interests = that project's tech + topics + career), 25% cross-disciplinary, 5-person RL/quant demo crowd (always kept), 11 sponsor-style recruiters. Fictional names, initials avatars.
+- `ml/scripts/seed_hackathon_attendees.py`: seeds through Alan's pipeline (auth user via admin API when SUPABASE_SERVICE_KEY is set, profiles is_synthetic, profile_store.store_extraction, attendance + registrations for HackGT 13, ~half open_to_meet). Idempotent; `--dry-run`, `--delete`. Tests: `ml/tests/test_hackathon_seed.py` (a real user checking in gets 10 ranked matches with RL on top).
+- App sample data (docs/mocks/graph_*.json) regenerated from this population, so mock mode shows the same crowd.
+- REQUESTS.md: marked AR1, AR3, AR4/5, AR6, AR8 asks done.
+**How to run/test it:** `cd ml && .venv/bin/python scripts/seed_hackathon_attendees.py --dry-run`; live: `DATABASE_URL=<session pooler> SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co SUPABASE_SERVICE_KEY=... .venv/bin/python scripts/seed_hackathon_attendees.py`.
+**Next step for whoever continues:** Get DATABASE_URL + SUPABASE_SERVICE_KEY from Adam/Alan (put in ml/.env, never commit) and run the live seed command above; then check `GET /events/1/matches` returns people.
+**Known issues / blockers:** Live DB credentials not on Arjun's Mac. Old `ml/scripts/seed_synthetic.py` (PostgREST version) is superseded by this one.
+**Contract changes:** none
+
 ## 2026-09-26 | adam | Codex
 **Task:** AD9 / AR5 Graph phone readability (user-requested cross-owner graph presentation update)
 **Status:** done

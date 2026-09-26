@@ -1,66 +1,67 @@
 {
- "node_id": "t_63",
+ "node_id": "t_127",
  "mode": "matches",
  "event_id": 1,
  "synthetic": true,
  "nodes": [
   {
-   "id": "u_092",
+   "id": "u_062",
    "type": "person",
-   "label": "Leo",
-   "name": "Leo O.",
+   "label": "Nia",
+   "name": "Nia E.",
    "role": "student",
-   "score": 0.389,
-   "highlight": false,
+   "score": 0.434,
+   "highlight": true,
    "open_to_meet": false,
-   "cluster": 0,
+   "cluster": 32,
    "connected": false,
    "connected_at": null,
    "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
-    "ai research"
+    "ai research",
+    "mathematics"
    ],
    "topics": [
-    "natural language processing",
     "transformers",
+    "mathematics",
+    "ai research",
+    "basketball",
+    "phd programs",
     "reinforcement learning",
-    "linear algebra",
-    "anime",
-    "poker",
-    "ml engineering",
-    "ai research"
+    "offline rl",
+    "running"
    ],
-   "shared_count": 2,
+   "shared_count": 3,
    "rank": 31,
    "photo_url": null
   },
   {
-   "id": "u_071",
+   "id": "u_001",
    "type": "person",
-   "label": "Sofia",
-   "name": "Sofia T.",
+   "label": "Hana",
+   "name": "Hana S.",
    "role": "student",
-   "score": 0.291,
+   "score": 0.314,
    "highlight": false,
    "open_to_meet": true,
-   "cluster": 0,
+   "cluster": 32,
    "connected": false,
    "connected_at": null,
    "top_topic": "reinforcement learning",
    "why": [
     "reinforcement learning",
-    "python"
+    "ai research"
    ],
    "topics": [
-    "python",
+    "control systems",
+    "robot learning",
+    "ai research",
+    "computer science",
     "reinforcement learning",
-    "salsa dancing",
-    "probability",
-    "guitar",
-    "ml engineering",
-    "machine learning",
-    "startups"
+    "robotics",
+    "cooking",
+    "salsa dancing"
    ],
    "shared_count": 2,
    "rank": 32,
@@ -70,29 +71,29 @@
  "edges": [
   {
    "source": "me",
-   "target": "u_092",
+   "target": "u_062",
    "kind": "match",
-   "weight": 0.389,
+   "weight": 0.434,
    "facet": "technical"
   },
   {
-   "source": "u_092",
-   "target": "t_63",
+   "source": "u_062",
+   "target": "t_127",
    "kind": "has_topic",
-   "weight": 0.8
+   "weight": 0.66
   },
   {
    "source": "me",
-   "target": "u_071",
+   "target": "u_001",
    "kind": "match",
-   "weight": 0.291,
+   "weight": 0.314,
    "facet": "technical"
   },
   {
-   "source": "u_071",
-   "target": "t_63",
+   "source": "u_001",
+   "target": "t_127",
    "kind": "has_topic",
-   "weight": 0.82
+   "weight": 0.69
   }
  ]
 }

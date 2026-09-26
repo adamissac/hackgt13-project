@@ -15,15 +15,19 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from ml.synth import ARCHETYPES, make_population  # noqa: E402
+from ml.hackathon_population import make_population  # noqa: E402
 
 OUT = os.path.join(os.path.dirname(__file__), "..", "..", "docs", "mocks")
 MAX_PEOPLE = 30
 EXPAND_TOPIC = "reinforcement learning"
 random.seed(4)
 
-people = make_population(n=120, seed=21)
-CLUSTER = {k: i for i, k in enumerate(ARCHETYPES)}
+# synthetic attendees modeled on HackGT 12 (MLH) winning projects (ml/ml/hackathon_winners.py)
+people = make_population(n=89, seed=13)
+for i, p in enumerate(people):
+    p["id"] = f"u{i:03d}"
+    p["archetype"] = p["team"]
+CLUSTER = {k: i for i, k in enumerate(sorted({p["team"] for p in people}))}
 me = {"id": "me", "name": "You", "role": "student", "raw_interests": [
     {"name": n, "facet": f, "strength": s, "evidence": e} for n, f, s, e in [
         ("reinforcement learning", "technical", 0.95, "Built an RL trading agent (repo: rl-trader)"),
@@ -73,7 +77,7 @@ def dominant_facet(contrib):
 scored = sorted(((score(p), p) for p in people), key=lambda t: -t[0][0])
 candidates = [t for t in scored if t[0][1]]
 # hold two mid-ranked people who share EXPAND_TOPIC back, so expanding that topic pulls them in (demo 12.1)
-held = [t for t in candidates[10:] if EXPAND_TOPIC in t[0][1]][:2]
+held = [t for t in candidates[3:] if EXPAND_TOPIC in t[0][1]][:2]
 ranked = [t for t in candidates if t not in held][:MAX_PEOPLE]
 in_view = {p["id"] for _, p in ranked}
 cut = sorted(s for (s, _, _), _p in ranked)[int(0.8 * len(ranked))]

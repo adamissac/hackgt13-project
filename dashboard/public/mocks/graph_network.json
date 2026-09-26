@@ -11,95 +11,95 @@
    "label": "You"
   },
   {
-   "id": "t_63",
+   "id": "t_127",
    "type": "topic",
    "label": "reinforcement learning",
    "facet": "technical",
-   "idf": 2.51
+   "idf": 2.66
   },
   {
-   "id": "t_59",
+   "id": "t_118",
    "type": "topic",
    "label": "quantitative research",
    "facet": "career",
-   "idf": 2.6
+   "idf": 2.53
   },
   {
-   "id": "t_76",
+   "id": "t_158",
    "type": "topic",
    "label": "time series analysis",
    "facet": "technical",
-   "idf": 1.77
+   "idf": 3.51
   },
   {
-   "id": "t_58",
+   "id": "t_116",
    "type": "topic",
    "label": "pytorch",
    "facet": "technical",
-   "idf": 2.13
+   "idf": 3.51
   },
   {
-   "id": "t_42",
+   "id": "t_84",
    "type": "topic",
    "label": "mathematics",
    "facet": "academic",
-   "idf": 3.29
+   "idf": 1.84
   },
   {
-   "id": "t_65",
+   "id": "t_132",
    "type": "topic",
    "label": "rock climbing",
    "facet": "personal",
-   "idf": 1.69
+   "idf": 2.13
   },
   {
-   "id": "t_57",
+   "id": "t_115",
    "type": "topic",
    "label": "python",
    "facet": "technical",
-   "idf": 0.78
+   "idf": 1.35
   },
   {
-   "id": "t_1",
+   "id": "t_6",
    "type": "topic",
    "label": "ai research",
    "facet": "career",
-   "idf": 2.26
+   "idf": 2.21
   },
   {
-   "id": "t_13",
+   "id": "t_19",
    "type": "topic",
    "label": "chess",
    "facet": "personal",
-   "idf": 2.07
+   "idf": 2.53
   },
   {
-   "id": "u_046",
+   "id": "u_028",
    "type": "person",
-   "label": "Jordan",
-   "name": "Jordan U.",
-   "role": "recruiter",
-   "score": 0.838,
+   "label": "Tara",
+   "name": "Tara A.",
+   "role": "student",
+   "score": 0.785,
    "highlight": false,
    "open_to_meet": false,
-   "cluster": 1,
+   "cluster": 32,
    "connected": true,
    "connected_at": "2026-09-26T19:13:00-04:00",
-   "top_topic": "mathematics",
+   "top_topic": "pytorch",
    "why": [
-    "mathematics",
-    "quantitative research",
-    "time series analysis"
+    "pytorch",
+    "reinforcement learning",
+    "quantitative research"
    ],
    "topics": [
-    "python",
-    "time series analysis",
-    "mathematics",
-    "c++",
+    "reward shaping",
+    "computer science",
+    "reinforcement learning",
     "quantitative research",
-    "stochastic calculus",
-    "guitar",
-    "atlanta united"
+    "pytorch",
+    "poker",
+    "ai research",
+    "multi-agent systems"
    ],
    "shared_count": 4,
    "rank": 1,
@@ -108,373 +108,35 @@
    "how_met": "in_person"
   },
   {
-   "id": "u_004",
+   "id": "u_082",
    "type": "person",
-   "label": "Leo",
-   "name": "Leo E.",
+   "label": "Aisha",
+   "name": "Aisha M.",
    "role": "student",
-   "score": 0.654,
+   "score": 0.374,
    "highlight": false,
    "open_to_meet": false,
-   "cluster": 0,
+   "cluster": 20,
    "connected": true,
    "connected_at": "2026-09-26T14:26:00-04:00",
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "pytorch",
-    "ai research"
-   ],
-   "topics": [
-    "reinforcement learning",
-    "ai research",
-    "machine learning",
-    "probability",
-    "soccer",
-    "transformers",
-    "pytorch",
-    "python"
-   ],
-   "shared_count": 4,
-   "rank": 2,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_088",
-   "type": "person",
-   "label": "Aarav",
-   "name": "Aarav K.",
-   "role": "student",
-   "score": 0.602,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-27T23:39:00-04:00",
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "ai research",
-    "rock climbing"
-   ],
-   "topics": [
-    "machine learning",
-    "reinforcement learning",
-    "probability",
-    "phd programs",
-    "ai research",
-    "natural language processing",
-    "rock climbing",
-    "python"
-   ],
-   "shared_count": 4,
-   "rank": 3,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_010",
-   "type": "person",
-   "label": "Kai",
-   "name": "Kai K.",
-   "role": "student",
-   "score": 0.584,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-26T18:52:00-04:00",
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "pytorch",
-    "ai research"
-   ],
-   "topics": [
-    "reinforcement learning",
-    "basketball",
-    "ai research",
-    "salsa dancing",
-    "computer vision",
-    "phd programs",
-    "pytorch",
-    "probability"
-   ],
-   "shared_count": 3,
-   "rank": 4,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_102",
-   "type": "person",
-   "label": "Arjun",
-   "name": "Arjun Y.",
-   "role": "student",
-   "score": 0.537,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-26T13:05:00-04:00",
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "pytorch",
-    "chess"
-   ],
-   "topics": [
-    "pytorch",
-    "ml engineering",
-    "python",
-    "anime",
-    "computer science",
-    "film photography",
-    "chess",
-    "reinforcement learning"
-   ],
-   "shared_count": 4,
-   "rank": 5,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "invite"
-  },
-  {
-   "id": "u_096",
-   "type": "person",
-   "label": "Noah",
-   "name": "Noah S.",
-   "role": "student",
-   "score": 0.459,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 1,
-   "connected": true,
-   "connected_at": "2026-09-27T22:18:00-04:00",
    "top_topic": "quantitative research",
    "why": [
     "quantitative research",
-    "time series analysis",
-    "python"
-   ],
-   "topics": [
-    "time series analysis",
-    "hedge funds",
-    "quantitative research",
-    "stochastic calculus",
-    "economics",
-    "backtesting",
-    "film photography",
-    "python"
-   ],
-   "shared_count": 3,
-   "rank": 6,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_110",
-   "type": "person",
-   "label": "Aarav",
-   "name": "Aarav G.",
-   "role": "student",
-   "score": 0.376,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-26T17:31:00-04:00",
-   "top_topic": "pytorch",
-   "why": [
-    "pytorch",
-    "ai research",
-    "python"
-   ],
-   "topics": [
-    "computer vision",
-    "computer science",
-    "phd programs",
-    "film photography",
-    "pytorch",
-    "transformers",
-    "natural language processing",
-    "anime"
-   ],
-   "shared_count": 3,
-   "rank": 7,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_094",
-   "type": "person",
-   "label": "Ethan",
-   "name": "Ethan Q.",
-   "role": "student",
-   "score": 0.339,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-26T12:44:00-04:00",
-   "top_topic": "pytorch",
-   "why": [
-    "pytorch",
-    "chess",
-    "python"
-   ],
-   "topics": [
-    "phd programs",
-    "pytorch",
-    "natural language processing",
-    "computer science",
-    "transformers",
-    "jazz",
-    "python",
-    "salsa dancing"
-   ],
-   "shared_count": 3,
-   "rank": 8,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_056",
-   "type": "person",
-   "label": "Mateo",
-   "name": "Mateo E.",
-   "role": "recruiter",
-   "score": 0.329,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 0,
-   "connected": true,
-   "connected_at": "2026-09-27T21:57:00-04:00",
-   "top_topic": "pytorch",
-   "why": [
-    "pytorch",
-    "ai research"
-   ],
-   "topics": [
-    "natural language processing",
-    "pytorch",
-    "machine learning",
-    "ai research",
-    "computer science",
-    "running",
-    "reading sci-fi",
-    "atlanta united"
-   ],
-   "shared_count": 2,
-   "rank": 9,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_040",
-   "type": "person",
-   "label": "Ravi",
-   "name": "Ravi O.",
-   "role": "student",
-   "score": 0.32,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 1,
-   "connected": true,
-   "connected_at": "2026-09-26T16:10:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
     "mathematics",
     "python"
    ],
    "topics": [
-    "hedge funds",
     "trading",
     "mathematics",
-    "volunteering",
-    "energy policy",
-    "reading sci-fi",
+    "fastapi",
     "python",
-    "c++"
-   ],
-   "shared_count": 2,
-   "rank": 10,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "invite"
-  },
-  {
-   "id": "u_044",
-   "type": "person",
-   "label": "Aarav",
-   "name": "Aarav S.",
-   "role": "student",
-   "score": 0.319,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 4,
-   "connected": true,
-   "connected_at": "2026-09-26T11:23:00-04:00",
-   "top_topic": "time series analysis",
-   "why": [
-    "time series analysis",
-    "chess",
-    "python"
-   ],
-   "topics": [
-    "biotech",
-    "cooking",
-    "python",
-    "chess",
-    "genomics",
-    "time series analysis",
-    "biology",
-    "bioinformatics"
+    "openai",
+    "llm apps",
+    "jazz",
+    "quantitative finance"
    ],
    "shared_count": 3,
-   "rank": 11,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_020",
-   "type": "person",
-   "label": "Diego",
-   "name": "Diego U.",
-   "role": "student",
-   "score": 0.305,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 4,
-   "connected": true,
-   "connected_at": "2026-09-27T20:36:00-04:00",
-   "top_topic": "time series analysis",
-   "why": [
-    "time series analysis",
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "python",
-    "biology",
-    "time series analysis",
-    "bioinformatics",
-    "biotech",
-    "poker",
-    "genomics",
-    "r"
-   ],
-   "shared_count": 3,
-   "rank": 12,
+   "rank": 2,
    "photo_url": null,
    "met_at": "HackGT 13",
    "how_met": "in_person"
@@ -482,64 +144,386 @@
   {
    "id": "u_002",
    "type": "person",
-   "label": "Jordan",
-   "name": "Jordan C.",
+   "label": "Rosa",
+   "name": "Rosa Q.",
    "role": "student",
-   "score": 0.217,
+   "score": 0.328,
    "highlight": false,
    "open_to_meet": false,
-   "cluster": 1,
+   "cluster": 17,
    "connected": true,
-   "connected_at": "2026-09-26T15:49:00-04:00",
-   "top_topic": "time series analysis",
+   "connected_at": "2026-09-27T23:39:00-04:00",
+   "top_topic": "ai research",
    "why": [
-    "time series analysis",
+    "ai research",
+    "rock climbing",
     "python"
    ],
    "topics": [
-    "hedge funds",
-    "statistics",
-    "time series analysis",
+    "knowledge graphs",
+    "data science",
+    "ai research",
+    "research tools",
+    "computer engineering",
     "python",
-    "c++",
-    "formula 1",
-    "backtesting",
-    "trading"
+    "data visualization",
+    "tailwind css"
+   ],
+   "shared_count": 3,
+   "rank": 3,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_080",
+   "type": "person",
+   "label": "Jonah",
+   "name": "Jonah B.",
+   "role": "student",
+   "score": 0.259,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 17,
+   "connected": true,
+   "connected_at": "2026-09-26T18:52:00-04:00",
+   "top_topic": "ai research",
+   "why": [
+    "ai research",
+    "mathematics"
+   ],
+   "topics": [
+    "flask",
+    "research tools",
+    "react",
+    "knowledge graphs",
+    "data science",
+    "mathematics",
+    "d3.js",
+    "data visualization"
    ],
    "shared_count": 2,
+   "rank": 4,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_008",
+   "type": "person",
+   "label": "Zara",
+   "name": "Zara C.",
+   "role": "student",
+   "score": 0.256,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 2,
+   "connected": true,
+   "connected_at": "2026-09-26T13:05:00-04:00",
+   "top_topic": "rock climbing",
+   "why": [
+    "rock climbing",
+    "mathematics"
+   ],
+   "topics": [
+    "fastapi",
+    "aws",
+    "ai agents",
+    "privacy",
+    "mongodb",
+    "ml engineering",
+    "mathematics",
+    "typescript"
+   ],
+   "shared_count": 2,
+   "rank": 5,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "invite"
+  },
+  {
+   "id": "u_000",
+   "type": "person",
+   "label": "Theo",
+   "name": "Theo W.",
+   "role": "student",
+   "score": 0.148,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 6,
+   "connected": true,
+   "connected_at": "2026-09-27T22:18:00-04:00",
+   "top_topic": "rock climbing",
+   "why": [
+    "rock climbing"
+   ],
+   "topics": [
+    "pgvector",
+    "biomedical engineering",
+    "ml engineering",
+    "sentence transformers",
+    "semantic search",
+    "health tech",
+    "rock climbing",
+    "healthcare"
+   ],
+   "shared_count": 1,
+   "rank": 6,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_076",
+   "type": "person",
+   "label": "Andre",
+   "name": "Andre W.",
+   "role": "student",
+   "score": 0.148,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 3,
+   "connected": true,
+   "connected_at": "2026-09-26T17:31:00-04:00",
+   "top_topic": "rock climbing",
+   "why": [
+    "rock climbing"
+   ],
+   "topics": [
+    "creative tools",
+    "node.js",
+    "powerlifting",
+    "generative ai",
+    "product engineering",
+    "computer engineering",
+    "atlanta united",
+    "edtech"
+   ],
+   "shared_count": 1,
+   "rank": 7,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_058",
+   "type": "person",
+   "label": "Noah",
+   "name": "Noah K.",
+   "role": "student",
+   "score": 0.135,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 3,
+   "connected": true,
+   "connected_at": "2026-09-26T12:44:00-04:00",
+   "top_topic": "rock climbing",
+   "why": [
+    "rock climbing"
+   ],
+   "topics": [
+    "product engineering",
+    "openai",
+    "react",
+    "film photography",
+    "generative ai",
+    "computer engineering",
+    "creative tools",
+    "ai engineering"
+   ],
+   "shared_count": 1,
+   "rank": 8,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_052",
+   "type": "person",
+   "label": "Maya",
+   "name": "Maya U.",
+   "role": "student",
+   "score": 0.132,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 25,
+   "connected": true,
+   "connected_at": "2026-09-27T21:57:00-04:00",
+   "top_topic": "ai research",
+   "why": [
+    "ai research"
+   ],
+   "topics": [
+    "fastapi",
+    "data visualization",
+    "video games",
+    "react-force-graph",
+    "ai research",
+    "knowledge graphs",
+    "rag",
+    "computer engineering"
+   ],
+   "shared_count": 1,
+   "rank": 9,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_004",
+   "type": "person",
+   "label": "Lina",
+   "name": "Lina C.",
+   "role": "student",
+   "score": 0.128,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 9,
+   "connected": true,
+   "connected_at": "2026-09-26T16:10:00-04:00",
+   "top_topic": "mathematics",
+   "why": [
+    "mathematics"
+   ],
+   "topics": [
+    "ai agents",
+    "productivity",
+    "mobile engineering",
+    "ai engineering",
+    "piano",
+    "next.js",
+    "gemini",
+    "ios development"
+   ],
+   "shared_count": 1,
+   "rank": 10,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "invite"
+  },
+  {
+   "id": "u_034",
+   "type": "person",
+   "label": "Ines",
+   "name": "Ines X.",
+   "role": "student",
+   "score": 0.128,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 22,
+   "connected": true,
+   "connected_at": "2026-09-26T11:23:00-04:00",
+   "top_topic": "mathematics",
+   "why": [
+    "mathematics"
+   ],
+   "topics": [
+    "opencv",
+    "assistive tech",
+    "gemini",
+    "mathematics",
+    "jazz",
+    "accessibility",
+    "yolo",
+    "speech to text"
+   ],
+   "shared_count": 1,
+   "rank": 11,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_044",
+   "type": "person",
+   "label": "Ines",
+   "name": "Ines R.",
+   "role": "student",
+   "score": 0.128,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 4,
+   "connected": true,
+   "connected_at": "2026-09-27T20:36:00-04:00",
+   "top_topic": "mathematics",
+   "why": [
+    "mathematics"
+   ],
+   "topics": [
+    "typescript",
+    "developer experience",
+    "video games",
+    "mathematics",
+    "software engineering",
+    "gemini",
+    "legacy code",
+    "developer tools"
+   ],
+   "shared_count": 1,
+   "rank": 12,
+   "photo_url": null,
+   "met_at": "HackGT 13",
+   "how_met": "in_person"
+  },
+  {
+   "id": "u_064",
+   "type": "person",
+   "label": "Rohan",
+   "name": "Rohan P.",
+   "role": "student",
+   "score": 0.128,
+   "highlight": false,
+   "open_to_meet": false,
+   "cluster": 3,
+   "connected": true,
+   "connected_at": "2026-09-26T15:49:00-04:00",
+   "top_topic": "mathematics",
+   "why": [
+    "mathematics"
+   ],
+   "topics": [
+    "mastra",
+    "generative ai",
+    "mathematics",
+    "product engineering",
+    "openai",
+    "react",
+    "ai engineering",
+    "edtech"
+   ],
+   "shared_count": 1,
    "rank": 13,
    "photo_url": null,
    "met_at": "HackGT 13",
    "how_met": "in_person"
   },
   {
-   "id": "u_036",
+   "id": "u_068",
    "type": "person",
-   "label": "Arjun",
-   "name": "Arjun K.",
-   "role": "recruiter",
-   "score": 0.217,
+   "label": "Sofia",
+   "name": "Sofia D.",
+   "role": "student",
+   "score": 0.128,
    "highlight": false,
    "open_to_meet": false,
-   "cluster": 4,
+   "cluster": 10,
    "connected": true,
    "connected_at": "2026-09-26T10:02:00-04:00",
-   "top_topic": "time series analysis",
+   "top_topic": "mathematics",
    "why": [
-    "time series analysis",
-    "python"
+    "mathematics"
    ],
    "topics": [
-    "genomics",
-    "biomedical engineering",
-    "computational biology research",
-    "bioinformatics",
-    "film photography",
-    "time series analysis",
-    "r",
-    "biotech"
+    "openai",
+    "ai agents",
+    "fintech",
+    "mastra",
+    "twilio",
+    "mathematics",
+    "fraud detection",
+    "node.js"
    ],
-   "shared_count": 2,
+   "shared_count": 1,
    "rank": 14,
    "photo_url": null,
    "met_at": "HackGT 13",
@@ -549,407 +533,293 @@
  "edges": [
   {
    "source": "me",
-   "target": "t_63",
+   "target": "t_127",
    "kind": "has_topic",
    "weight": 0.95
   },
   {
    "source": "me",
-   "target": "t_59",
+   "target": "t_118",
    "kind": "has_topic",
    "weight": 0.85
   },
   {
    "source": "me",
-   "target": "t_76",
+   "target": "t_158",
    "kind": "has_topic",
    "weight": 0.8
   },
   {
    "source": "me",
-   "target": "t_58",
+   "target": "t_116",
    "kind": "has_topic",
    "weight": 0.7
   },
   {
    "source": "me",
-   "target": "t_42",
+   "target": "t_84",
    "kind": "has_topic",
    "weight": 0.7
   },
   {
    "source": "me",
-   "target": "t_65",
+   "target": "t_132",
    "kind": "has_topic",
    "weight": 0.7
   },
   {
    "source": "me",
-   "target": "t_57",
+   "target": "t_115",
    "kind": "has_topic",
    "weight": 0.6
   },
   {
    "source": "me",
-   "target": "t_1",
+   "target": "t_6",
    "kind": "has_topic",
    "weight": 0.6
   },
   {
    "source": "me",
-   "target": "t_13",
+   "target": "t_19",
    "kind": "has_topic",
    "weight": 0.5
   },
   {
    "source": "me",
-   "target": "u_046",
+   "target": "u_028",
    "kind": "connection",
-   "weight": 0.838,
-   "facet": "academic"
-  },
-  {
-   "source": "u_046",
-   "target": "t_42",
-   "kind": "has_topic",
-   "weight": 0.89
-  },
-  {
-   "source": "u_046",
-   "target": "t_59",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "u_046",
-   "target": "t_76",
-   "kind": "has_topic",
-   "weight": 0.93
-  },
-  {
-   "source": "u_046",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.96
-  },
-  {
-   "source": "me",
-   "target": "u_004",
-   "kind": "connection",
-   "weight": 0.654,
+   "weight": 0.785,
    "facet": "technical"
   },
   {
-   "source": "u_004",
-   "target": "t_63",
-   "kind": "has_topic",
-   "weight": 0.97
-  },
-  {
-   "source": "u_004",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.69
-  },
-  {
-   "source": "u_004",
-   "target": "t_1",
-   "kind": "has_topic",
-   "weight": 0.92
-  },
-  {
-   "source": "u_004",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.58
-  },
-  {
-   "source": "me",
-   "target": "u_088",
-   "kind": "connection",
-   "weight": 0.602,
-   "facet": "technical"
-  },
-  {
-   "source": "u_088",
-   "target": "t_63",
-   "kind": "has_topic",
-   "weight": 0.96
-  },
-  {
-   "source": "u_088",
-   "target": "t_1",
+   "source": "u_028",
+   "target": "t_116",
    "kind": "has_topic",
    "weight": 0.7
   },
   {
-   "source": "u_088",
-   "target": "t_65",
+   "source": "u_028",
+   "target": "t_127",
    "kind": "has_topic",
-   "weight": 0.63
+   "weight": 0.8
   },
   {
-   "source": "u_088",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.52
-  },
-  {
-   "source": "me",
-   "target": "u_010",
-   "kind": "connection",
-   "weight": 0.584,
-   "facet": "technical"
-  },
-  {
-   "source": "u_010",
-   "target": "t_63",
-   "kind": "has_topic",
-   "weight": 0.88
-  },
-  {
-   "source": "u_010",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "u_010",
-   "target": "t_1",
-   "kind": "has_topic",
-   "weight": 0.84
-  },
-  {
-   "source": "me",
-   "target": "u_102",
-   "kind": "connection",
-   "weight": 0.537,
-   "facet": "technical"
-  },
-  {
-   "source": "u_102",
-   "target": "t_63",
-   "kind": "has_topic",
-   "weight": 0.66
-  },
-  {
-   "source": "u_102",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.99
-  },
-  {
-   "source": "u_102",
-   "target": "t_13",
-   "kind": "has_topic",
-   "weight": 0.69
-  },
-  {
-   "source": "u_102",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.89
-  },
-  {
-   "source": "me",
-   "target": "u_096",
-   "kind": "connection",
-   "weight": 0.459,
-   "facet": "career"
-  },
-  {
-   "source": "u_096",
-   "target": "t_59",
-   "kind": "has_topic",
-   "weight": 0.81
-  },
-  {
-   "source": "u_096",
-   "target": "t_76",
-   "kind": "has_topic",
-   "weight": 0.95
-  },
-  {
-   "source": "u_096",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.58
-  },
-  {
-   "source": "me",
-   "target": "u_110",
-   "kind": "connection",
-   "weight": 0.376,
-   "facet": "technical"
-  },
-  {
-   "source": "u_110",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "u_110",
-   "target": "t_1",
-   "kind": "has_topic",
-   "weight": 0.6
-  },
-  {
-   "source": "u_110",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.52
-  },
-  {
-   "source": "me",
-   "target": "u_094",
-   "kind": "connection",
-   "weight": 0.339,
-   "facet": "technical"
-  },
-  {
-   "source": "u_094",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.9
-  },
-  {
-   "source": "u_094",
-   "target": "t_13",
-   "kind": "has_topic",
-   "weight": 0.47
-  },
-  {
-   "source": "u_094",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.61
-  },
-  {
-   "source": "me",
-   "target": "u_056",
-   "kind": "connection",
-   "weight": 0.329,
-   "facet": "technical"
-  },
-  {
-   "source": "u_056",
-   "target": "t_58",
-   "kind": "has_topic",
-   "weight": 0.98
-  },
-  {
-   "source": "u_056",
-   "target": "t_1",
-   "kind": "has_topic",
-   "weight": 0.94
-  },
-  {
-   "source": "me",
-   "target": "u_040",
-   "kind": "connection",
-   "weight": 0.32,
-   "facet": "academic"
-  },
-  {
-   "source": "u_040",
-   "target": "t_42",
-   "kind": "has_topic",
-   "weight": 0.88
-  },
-  {
-   "source": "u_040",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.68
-  },
-  {
-   "source": "me",
-   "target": "u_044",
-   "kind": "connection",
-   "weight": 0.319,
-   "facet": "technical"
-  },
-  {
-   "source": "u_044",
-   "target": "t_76",
-   "kind": "has_topic",
-   "weight": 0.71
-  },
-  {
-   "source": "u_044",
-   "target": "t_13",
+   "source": "u_028",
+   "target": "t_118",
    "kind": "has_topic",
    "weight": 0.79
   },
   {
-   "source": "u_044",
-   "target": "t_57",
+   "source": "u_028",
+   "target": "t_6",
    "kind": "has_topic",
-   "weight": 0.82
+   "weight": 0.65
   },
   {
    "source": "me",
-   "target": "u_020",
+   "target": "u_082",
    "kind": "connection",
-   "weight": 0.305,
-   "facet": "technical"
+   "weight": 0.374,
+   "facet": "career"
   },
   {
-   "source": "u_020",
-   "target": "t_76",
+   "source": "u_082",
+   "target": "t_118",
    "kind": "has_topic",
-   "weight": 0.94
+   "weight": 0.66
   },
   {
-   "source": "u_020",
-   "target": "t_65",
+   "source": "u_082",
+   "target": "t_84",
    "kind": "has_topic",
-   "weight": 0.45
+   "weight": 0.9
   },
   {
-   "source": "u_020",
-   "target": "t_57",
+   "source": "u_082",
+   "target": "t_115",
    "kind": "has_topic",
-   "weight": 1.0
+   "weight": 0.85
   },
   {
    "source": "me",
    "target": "u_002",
    "kind": "connection",
-   "weight": 0.217,
-   "facet": "technical"
+   "weight": 0.328,
+   "facet": "career"
   },
   {
    "source": "u_002",
-   "target": "t_76",
+   "target": "t_6",
    "kind": "has_topic",
-   "weight": 0.87
+   "weight": 0.81
   },
   {
    "source": "u_002",
-   "target": "t_57",
+   "target": "t_132",
+   "kind": "has_topic",
+   "weight": 0.55
+  },
+  {
+   "source": "u_002",
+   "target": "t_115",
+   "kind": "has_topic",
+   "weight": 0.76
+  },
+  {
+   "source": "me",
+   "target": "u_080",
+   "kind": "connection",
+   "weight": 0.259,
+   "facet": "career"
+  },
+  {
+   "source": "u_080",
+   "target": "t_6",
+   "kind": "has_topic",
+   "weight": 0.68
+  },
+  {
+   "source": "u_080",
+   "target": "t_84",
+   "kind": "has_topic",
+   "weight": 0.77
+  },
+  {
+   "source": "me",
+   "target": "u_008",
+   "kind": "connection",
+   "weight": 0.256,
+   "facet": "personal"
+  },
+  {
+   "source": "u_008",
+   "target": "t_132",
+   "kind": "has_topic",
+   "weight": 0.61
+  },
+  {
+   "source": "u_008",
+   "target": "t_84",
+   "kind": "has_topic",
+   "weight": 0.76
+  },
+  {
+   "source": "me",
+   "target": "u_000",
+   "kind": "connection",
+   "weight": 0.148,
+   "facet": "personal"
+  },
+  {
+   "source": "u_000",
+   "target": "t_132",
+   "kind": "has_topic",
+   "weight": 0.73
+  },
+  {
+   "source": "me",
+   "target": "u_076",
+   "kind": "connection",
+   "weight": 0.148,
+   "facet": "personal"
+  },
+  {
+   "source": "u_076",
+   "target": "t_132",
+   "kind": "has_topic",
+   "weight": 0.7
+  },
+  {
+   "source": "me",
+   "target": "u_058",
+   "kind": "connection",
+   "weight": 0.135,
+   "facet": "personal"
+  },
+  {
+   "source": "u_058",
+   "target": "t_132",
+   "kind": "has_topic",
+   "weight": 0.64
+  },
+  {
+   "source": "me",
+   "target": "u_052",
+   "kind": "connection",
+   "weight": 0.132,
+   "facet": "career"
+  },
+  {
+   "source": "u_052",
+   "target": "t_6",
+   "kind": "has_topic",
+   "weight": 0.78
+  },
+  {
+   "source": "me",
+   "target": "u_004",
+   "kind": "connection",
+   "weight": 0.128,
+   "facet": "academic"
+  },
+  {
+   "source": "u_004",
+   "target": "t_84",
+   "kind": "has_topic",
+   "weight": 0.71
+  },
+  {
+   "source": "me",
+   "target": "u_034",
+   "kind": "connection",
+   "weight": 0.128,
+   "facet": "academic"
+  },
+  {
+   "source": "u_034",
+   "target": "t_84",
+   "kind": "has_topic",
+   "weight": 0.85
+  },
+  {
+   "source": "me",
+   "target": "u_044",
+   "kind": "connection",
+   "weight": 0.128,
+   "facet": "academic"
+  },
+  {
+   "source": "u_044",
+   "target": "t_84",
+   "kind": "has_topic",
+   "weight": 0.77
+  },
+  {
+   "source": "me",
+   "target": "u_064",
+   "kind": "connection",
+   "weight": 0.128,
+   "facet": "academic"
+  },
+  {
+   "source": "u_064",
+   "target": "t_84",
    "kind": "has_topic",
    "weight": 0.84
   },
   {
    "source": "me",
-   "target": "u_036",
+   "target": "u_068",
    "kind": "connection",
-   "weight": 0.217,
-   "facet": "technical"
+   "weight": 0.128,
+   "facet": "academic"
   },
   {
-   "source": "u_036",
-   "target": "t_76",
+   "source": "u_068",
+   "target": "t_84",
    "kind": "has_topic",
-   "weight": 0.81
-  },
-  {
-   "source": "u_036",
-   "target": "t_57",
-   "kind": "has_topic",
-   "weight": 0.62
+   "weight": 0.77
   }
  ]
 }

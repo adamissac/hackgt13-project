@@ -17,12 +17,12 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [ ] (from alan) For the ML server `.env`: the Supabase session-pooler `DATABASE_URL`, and whether the project signs user JWTs with JWKS (new signing keys) or the legacy HS256 secret (then share `SUPABASE_JWT_SECRET`).
 
 ## arjun
-- [ ] (from alan) AR1 GitHub: don't write extraction. Store the digest as a `raw_documents` row (`source='github'`, `text=ml.llm.github_to_text(repos)`), then either the app calls `POST /profile/ingest {"source":"github"}` or you call `app.profile_store.extract_existing(user_id, doc_id, "github", text)`.
+- [x] (from alan) AR1 GitHub (done: `app/routers/github.py` stores the digest via profile_store.ingest_text): don't write extraction. Store the digest as a `raw_documents` row (`source='github'`, `text=ml.llm.github_to_text(repos)`), then either the app calls `POST /profile/ingest {"source":"github"}` or you call `app.profile_store.extract_existing(user_id, doc_id, "github", text)`.
 - [ ] (from alan) AR2 resume from Storage: after pdfplumber, call `app.profile_store.ingest_text(user_id, "resume", text, {"path": ...})`. (Multipart upload to `/profile/ingest` already works too.)
-- [ ] (from alan) AR3 synthetic attendees: follow `seed_person()` in `ml/tests/conftest.py` (auth.users + profiles with `is_synthetic=true`, then `profile_store.store_extraction` per source from `ml.synth.make_population`), check them in to event 1 (`attendance`), set ~half `open_to_meet=true`. The 60-person version was already exercised successfully (see PROGRESS 'dashboard' entry).
-- [ ] (from alan) AR4/AR5 graph: build against `docs/mocks/graph.json` (real output) and docs/api.md 26-27. Node ids `me`, `u_<uuid>`, `t_<id>`; edges only me->person and me|person->topic.
-- [ ] (from alan) AR6 organizer map: `GET /dashboard/{event_id}` is live (api.md 14): anonymized node ids, clusters >= 5, `gaps`, live `edges`; poll every 5-10 s.
-- [ ] (from alan) AR8 GitHub poller: insert `feed_items` with `kind='github'`, `title`, `body`, `url`, `payload`; leave `embedding` null (the feed endpoint embeds on first read).
+- [x] (from alan) AR3 synthetic attendees (done by arjun: `ml/scripts/seed_hackathon_attendees.py`, modeled on HackGT 12 winners, via profile_store; run with DATABASE_URL): follow `seed_person()` in `ml/tests/conftest.py` (auth.users + profiles with `is_synthetic=true`, then `profile_store.store_extraction` per source from `ml.synth.make_population`), check them in to event 1 (`attendance`), set ~half `open_to_meet=true`. The 60-person version was already exercised successfully (see PROGRESS 'dashboard' entry).
+- [x] (from alan) AR4/AR5 graph (done: native atom view in mobile, reads api.md 26-27 and docs/mocks/graph.json): build against `docs/mocks/graph.json` (real output) and docs/api.md 26-27. Node ids `me`, `u_<uuid>`, `t_<id>`; edges only me->person and me|person->topic.
+- [x] (from alan) AR6 organizer map (done: dashboard `/map`, polls when live): `GET /dashboard/{event_id}` is live (api.md 14): anonymized node ids, clusters >= 5, `gaps`, live `edges`; poll every 5-10 s.
+- [x] (from alan) AR8 GitHub poller (done: `app/github_activity.py`): insert `feed_items` with `kind='github'`, `title`, `body`, `url`, `payload`; leave `embedding` null (the feed endpoint embeds on first read).
 - [ ] (from alan) AR10 web mentions: `raw_documents.source` has no `'web'` value, so `/profile/ingest {"source":"web"}` returns 400 until a /contract-change adds it.
 
 ## akshar
