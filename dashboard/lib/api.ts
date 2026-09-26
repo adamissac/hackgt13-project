@@ -52,7 +52,7 @@ export async function fetchGraph(
   });
   const body = await getJson(live ? `${API}/graph?${params}` : `/mocks/graph_${q.mode}.json`, live ? token : null, signal);
   if (!isGraphPayload(body)) throw new Error("Unexpected /graph response");
-  return { data: enforceGraphPrivacy(body), source: live ? "live" : "mock" };
+  return { data: enforceGraphPrivacy({ ...body, mode: body.mode ?? q.mode }), source: live ? "live" : "mock" };
 }
 
 /** GET /graph/expand?node_id=&mode=&event_id= -> nodes and edges to merge in. */
@@ -66,7 +66,8 @@ export async function fetchExpand(
     // mock: only the demo topic has an expansion; anything else returns nothing new
     const body = await getJson("/mocks/graph_expand.json", null);
     if (!isGraphPayload(body)) throw new Error("Unexpected /graph/expand response");
-    const matches = (body as GraphPayload & { node_id?: string }).node_id === nodeId;
+    const mock = body as GraphPayload & { node_id?: string };
+    const matches = mock.node_id === nodeId && (mock.mode ?? "matches") === q.mode;
     return matches ? body : { nodes: [], edges: [] };
   }
   const params = new URLSearchParams({ node_id: nodeId, mode: q.mode, event_id: String(q.eventId) });
