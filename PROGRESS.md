@@ -2,6 +2,25 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:40 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK6 Labeled Bluetooth recordings
+
+**Status:** in progress (tooling done; the 45-minute recording session itself needs the team + phones)
+
+**What I did:**
+- `mobile/app/record.tsx` (route `/record`, dev-only link on the Nearby tab): pick a label (talking face to face, standing in line, walking past, across the room, same table on laptops), optional distance note, Start/Stop. While recording the phone advertises and scans; every sighting (peer local name, ts, RSSI, app state) is kept, then "Share JSON with Alan" writes `ak6_<label>_<phone>_<time>.json` and opens the share sheet.
+- `mobile/features/ble/recording.ts`: recording format v1 (label, conversation flag, device model, platform, OS version, start/end, sightings). New deps: `expo-device`, `expo-file-system`, `expo-sharing` → rebuild the dev build.
+- `ml/scripts/ak6_to_sessions.py` (+ `ml/tests/test_ak6_to_sessions.py`): turns those files into `{t, rssi, label}` sessions for `ml/ml/encounter.py`. Placed in Alan's folder as a helper; Alan, move it if you want.
+
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest tests -q` (20 passed). Recording: dev build on both phones → Nearby → "Record session (AK6)" → same label on both → Start on both → Stop on both → Share. Then `python scripts/ak6_to_sessions.py ak6_*.json > data/ak6_sessions.json`.
+
+**Next step for whoever continues:** Needs AK1 confirmed on real phones first (same dev build). Saturday morning: 5 to 10 recordings per label per pair, both phones recording each time, collect files in one shared folder, run the converter, hand `data/ak6_sessions.json` to Alan for AL8.
+
+**Known issues / blockers:** Untested on hardware. Uses the AK1 per-launch local name as the peer ID (fine for recordings; AK2 swaps in rotating tokens). No keep-awake yet: keep the screen on while recording.
+
+**Contract changes:** none
+
 ## 2026-09-26 05:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK3 Verification QR screens
