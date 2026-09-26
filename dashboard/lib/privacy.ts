@@ -7,6 +7,10 @@ import { selfId, type GraphPayload } from "./types";
  */
 export function enforceGraphPrivacy(g: GraphPayload): GraphPayload {
   const me = selfId(g);
+  // My Network shows only your connections: never a suggested match or anyone else
+  if (g.mode === "network") {
+    g = { ...g, nodes: g.nodes.filter((n) => n.type !== "person" || n.connected) };
+  }
   const ids = new Set(g.nodes.map((n) => n.id));
   const people = new Set(g.nodes.filter((n) => n.type === "person").map((n) => n.id));
   const edges = g.edges.filter((e) => {

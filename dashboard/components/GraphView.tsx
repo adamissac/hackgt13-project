@@ -9,7 +9,9 @@ import { mergeGraph } from "@/lib/privacy";
 import { FACET_GLYPH, clusterColor, usePalette } from "@/lib/theme";
 import { FACETS, type Facet, type GraphMode, type GraphPayload, type PersonNode, type TopicNode } from "@/lib/types";
 
-type Result = { key: string; data: GraphPayload; source: Source } | { key: string; error: string };
+type Result =
+  | { key: string; data: GraphPayload; source: Source; pinned: Set<string> }
+  | { key: string; error: string };
 
 function useSize<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -37,6 +39,7 @@ interface ViewFilter {
   facet: Facet | null;
   query: string;
   until: number | null; // timeline cutoff (ms) in My Network
+  pinned: Set<string>; // people added by an expand: always shown, even past Max people
 }
 
 /** Client-side view of one fetch: filters, max people, timeline. Never adds people the API didn't return. */
@@ -60,9 +63,11 @@ function filterGraph(g: GraphPayload, f: ViewFilter): GraphPayload {
         (n.name ?? "").toLowerCase().includes(q) ||
         (personTopics.get(n.id) ?? []).some((t) => t.label.includes(q)),
     )
-    .sort((a, b) => b.score - a.score)
-    .slice(0, f.maxPeople);
-  const keep = new Set<string>(people.map((p) => p.id));
+    .sort((a, b) => b.score - a.score);
+  // top `maxPeople` by score, plus anyone pulled in by an expand (on top of the cap)
+  const capped = people.filter((n) => !f.pinned.has(n.id)).slice(0, f.maxPeople);
+  const shown = [...capped, ...people.filter((n) => f.pinned.has(n.id))].sort((a, b) => b.score - a.score);
+  const keep = new Set<string>(shown.map((p) => p.id));
   for (const n of g.nodes) {
     if (n.type === "self") keep.add(n.id);
     if (n.type === "topic" && (!f.facet || n.facet === f.facet)) keep.add(n.id);
@@ -84,7 +89,7 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
   const [timeline, setTimeline] = useState(100); // percent through the connection history
   const [reload, setReload] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const [expanded, setExpanded] = useState<{ key: string; data: GraphPayload } | null>(null);
+  const [expanded, setExpanded] = useState<{ key: string; data: GraphPayload; pinned: Set<string> } | null>(null);
   const [expanding, setExpanding] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -110,12 +115,15 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
     )
       .then(async ({ data, source }) => {
         // depth 2 on mocks: also expand through shared topics (the live server does this itself)
-        if (depth === 2 && source === "mock") {
+        const pinned = new Set<string>();
+        if (depth === 2 && source === "mock" && mode === "matches") {
           for (const t of data.nodes.filter((n) => n.type === "topic")) {
-            data = mergeGraph(data, await fetchExpand(t.id, { mode, eventId }, token));
+            const add = await fetchExpand(t.id, { mode, eventId }, token);
+            add.nodes.forEach((n) => n.type === "person" && pinned.add(n.id));
+            data = mergeGraph(data, add);
           }
         }
-        setResult({ key, data, source });
+        setResult({ key, data, source, pinned });
       })
       .catch((e: unknown) => {
         if (ac.signal.aborted) return;
@@ -129,6 +137,15 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
   const current = result?.key === key ? result : null;
   const base = current && "data" in current ? current.data : null;
   const raw = base && expanded?.key === key ? expanded.data : base;
+  const pinned = useMemo(
+    () =>
+      expanded?.key === key
+        ? expanded.pinned
+        : current && "pinned" in current
+          ? current.pinned
+          : new Set<string>(),
+    [expanded, key, current],
+  );
   const source = current && "data" in current ? current.source : null;
   const error = current && "error" in current ? current.error : null;
 
@@ -144,8 +161,8 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
   const until = hasTimeline ? times[0] + ((times[times.length - 1] - times[0]) * timeline) / 100 : null;
 
   const view = useMemo(
-    () => (raw ? filterGraph(raw, { minScore, maxPeople, facet, query, until }) : null),
-    [raw, minScore, maxPeople, facet, query, until],
+    () => (raw ? filterGraph(raw, { minScore, maxPeople, facet, query, until, pinned }) : null),
+    [raw, minScore, maxPeople, facet, query, until, pinned],
   );
   const people = useMemo(() => view?.nodes.filter((n): n is PersonNode => n.type === "person") ?? [], [view]);
   const selected = view?.nodes.find((n) => n.id === selectedId) ?? null;
@@ -175,7 +192,9 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
       const add = await fetchExpand(nodeId, { mode, eventId }, token);
       const before = new Set(raw.nodes.map((n) => n.id));
       const added = add.nodes.filter((n) => n.type === "person" && !before.has(n.id)).length;
-      setExpanded({ key, data: mergeGraph(raw, add) });
+      const nextPinned = new Set(pinned);
+      add.nodes.forEach((n) => n.type === "person" && nextPinned.add(n.id));
+      setExpanded({ key, data: mergeGraph(raw, add), pinned: nextPinned });
       setNotice(added ? `Added ${added} ${added === 1 ? "person" : "people"}` : "No one new to show here");
     } catch (e) {
       setNotice(e instanceof Error ? e.message : "Couldn't expand");
