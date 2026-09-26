@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-09-26 02:10 | adam | Claude Code
+**Task:** AD3 Expo app shell
+**Status:** in progress (code done; needs a dev build on a physical phone)
+**What I did:**
+- `mobile/`: Expo SDK 57 + Expo Router, five tabs (Home with Open to Meet toggle writing profiles.open_to_meet, Nearby, Graph, Feed, Profile), each with loading/empty/error states.
+- `mobile/lib/`: env.ts, supabase.ts (PKCE, AsyncStorage, detectSessionInUrl false), api.ts typed from docs/api.md 1-11 with mock mode (EXPO_PUBLIC_USE_MOCKS=1).
+- `docs/mocks/*.json` for api.md 1-11. `mobile/features/ble/index.ts` stub (useProximity, setAdvertising) for Akshar.
+- app.json: name Formal Connection, scheme `formalconnect`, bundle id com.formalconnection.app.
+- Verified: `npx tsc --noEmit` clean, iOS bundle exports, web static render shows all five tabs.
+**How to run/test it:** see AGENTS.md "Run and test commands" (mobile).
+**Next step for whoever continues:** Build the dev client on a physical phone. This Mac has no Xcode, so either install Xcode and run `cd mobile && npx expo run:ios --device`, or `npx eas-cli login` then `npx eas-cli build --profile development --platform ios`. Then AD2: LinkedIn developer app (Adam's manual steps in prompts/adam.md) and sign-in screen using deep link `formalconnect://auth/callback`.
+**Known issues / blockers:** No Xcode/EAS on Adam's Mac yet. mobile/.env is local only (gitignored); teammates copy .env.example and get the anon key via `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`.
+**Contract changes:** none (added docs/mocks matching api.md)
+
 ## 2026-09-26 01:15 | adam | Claude Code
 **Task:** AD1 Supabase project
 **Status:** done

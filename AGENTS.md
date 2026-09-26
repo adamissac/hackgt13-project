@@ -67,6 +67,6 @@ Every push updates it. Newest entry at the top. Exactly this template:
 ## Run and test commands
 Each owner adds their area's commands here in the same commit that first makes them work, and keeps them current.
 - supabase (Adam): from repo root. New migration: `npx supabase migration new <name>`. Apply to our project (ref mwfzgkikbmnghueolfnw): `npx supabase db push --linked`. Inspect: `npx supabase db query --linked "<sql>"`. DB types: `npx supabase gen types typescript --linked > mobile/lib/database.types.ts`. RLS isolation test: `SUPABASE_URL=... SUPABASE_ANON_KEY=... SUPABASE_SERVICE_KEY=... node scripts/rls-isolation-test.mjs` (keys: `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`). First time on a laptop: `npx supabase login`, then `npx supabase link --project-ref mwfzgkikbmnghueolfnw`.
-- mobile (Adam, Akshar): not set yet
+- mobile (Adam, Akshar): `cd mobile && npm install && cp .env.example .env` (fill in; `EXPO_PUBLIC_USE_MOCKS=1` serves docs/mocks). Typecheck: `npx tsc --noEmit`. Bundle check: `npx expo export --platform ios`. Dev build on a phone: `npx expo run:ios --device` (needs Xcode) / `npx expo run:android --device`, or `npx eas-cli build --profile development`. Then `npx expo start --dev-client`.
 - ml (Alan, Arjun): not set yet
 - dashboard (Arjun): not set yet
