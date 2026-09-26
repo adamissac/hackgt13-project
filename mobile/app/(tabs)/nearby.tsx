@@ -1,3 +1,4 @@
+import { Link } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, StyleSheet, Switch } from 'react-native';
 
@@ -17,6 +18,10 @@ export default function NearbyScreen() {
         <Text style={styles.title}>Scan for people nearby</Text>
         <Switch value={scan} onValueChange={setScan} accessibilityLabel="Scan for people nearby" />
       </View>
+      {/* AK3 (Akshar): QR verification fallback, always available. */}
+      <Link href="/verify" style={styles.verifyLink}>
+        Just talked with someone? Verify with QR
+      </Link>
       {error ? (
         <ErrorState message={error} onRetry={() => setScan(true)} />
       ) : !scan ? (
@@ -42,6 +47,7 @@ export default function NearbyScreen() {
 }
 
 const styles = StyleSheet.create({
+  verifyLink: { fontSize: 16, fontWeight: '600', color: '#2f95dc', paddingHorizontal: 16, paddingVertical: 12 },
   container: { flex: 1, padding: 16 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 56 },
   title: { fontSize: 20, fontWeight: '600' },

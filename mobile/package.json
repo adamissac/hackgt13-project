@@ -7,6 +7,7 @@
     "@supabase/supabase-js": "^2.117.2",
     "expo": "~57.0.25",
     "expo-auth-session": "~57.0.13",
+    "expo-camera": "~57.0.5",
     "expo-constants": "~57.0.19",
     "expo-crypto": "~57.0.3",
     "expo-dev-client": "~57.0.19",

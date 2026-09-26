@@ -51,6 +51,14 @@
           ],
           "multipeerServiceTypes": false
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Scan the other person's QR code to verify you talked in person.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {
