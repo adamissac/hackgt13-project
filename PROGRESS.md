@@ -2,6 +2,26 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 09:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Diagnose HTTP 500s on the two-iPhone Release build (Nearby, Home check-in / Open to Meet, Event Mode, Tap, QR)
+
+**Status:** fixed in code; NEEDS A RAILWAY REDEPLOY of the `ml` service to take effect
+
+**What I did:**
+- Root cause: two slow endpoints on the live server. `POST /ble/tokens` took **41 s** (my per-row queries: ~290 round trips at ~150 ms Railway→Supabase) and a cold `GET /events/1/matches` took **96 s** (~500 one-sentence embedding calls for ~80 attendees after every restart, with concurrent requests each starting their own build). The phones poll matches every 15 s, so requests piled up, the 10-connection pool / thread pool starved, and every endpoint failed with a plain 500 (no JSON body → the app shows "HTTP 500"); `/health` itself hung for minutes.
+- Verified it was not auth or config: `mobile/.env` points at Railway with the publishable key and mocks off; both phones were signed in as different users (profiles exist, not checked in, zero BLE tokens ever issued); bad or missing tokens correctly return 401 JSON; all 9 migrations are applied; DB connections were healthy. With throwaway accounts (created with the admin key and deleted afterwards), the full flow worked on the live server, just slowly.
+- Fixes: `ml/app/routers/ble.py` issues tokens and ingests sightings in constant round trips (3 statements, verified with statement logging). `ml/app/population.py` does one build per event at a time and batch-embeds all texts first (6× faster locally, same vectors); `tests/test_event_model_singleflight.py`. Mobile: 30 s API timeout with a readable error, no stacked matches polls, Event Mode reports why Bluetooth failed instead of "Starting Bluetooth..." forever.
+- Deploy: GitHub pushes don't deploy the live `ml` service (all 26 GitHub-triggered deploys belong to a misconfigured `hackgt13-project` service and failed). REQUESTS.md asks Adam to run `cd ml && npx @railway/cli up --detach --path-as-root .`.
+
+**How to run/test it:** Backend: 177 tests pass (`TEST_DATABASE_URL=... pytest -q tests`, minus the 2 libomp LightGBM tests). After the redeploy, a new account's `POST /ble/tokens` should take about 1 s, not 41 s.
+
+**Next step for whoever continues:** Adam redeploys `ml` → phones: sign in → Nearby → Event Mode ON on both → Tap phones. A mobile rebuild is optional (the fixes above are UX hardening); the server fix alone unblocks the existing Release builds.
+
+**Known issues / blockers:** No Railway access from Akshar's Mac. The first matches request after each redeploy still does one cold build (now ~6× faster), and the background clusters job starts it at boot.
+
+**Contract changes:** none
+
 ## 2026-09-26 04:40 | adam | Adam
 **Task:** AD2 sign-in for every phone, not only a filled-in mobile/.env
 **Status:** done
