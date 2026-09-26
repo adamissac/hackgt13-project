@@ -2,6 +2,24 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:30 UTC | adam | Cursor cloud agent
+**Task:** AD1 Supabase project
+**Status:** in progress
+**What I did:**
+- Local replay on this VM (`sudo service postgresql start && ./supabase/tests/run-local.sh`) ends with `ALL AD1 CHECKS PASSED` — all nine migrations replay cleanly into throwaway Postgres with pgvector and `rls_checks.sql` passes.
+- Nine migration files on disk under `supabase/migrations/` (`20260926000001` through `20260926000009_push_tokens.sql`).
+- Adam ran `npx supabase db push --linked` on his Mac, applying `20260926000009_push_tokens.sql` to the live project `mwfzgkikbmnghueolfnw` (recorded in team PROGRESS; not re-run here — no `SUPABASE_*` on this VM).
+- AL1 FastAPI `GET /health` from this VM against Adam's cloudflared tunnel URL returned `{"ok":true,"db":true}`, so the live database is reachable from the ML service.
+- The live table-count / RLS / HackGT 13 seed verification query has **not** been pasted into PROGRESS or the agent transcript yet (no read-only Supabase MCP here).
+**How to run/test it:** On Adam's Mac from repo root, run and paste the full output back into chat / PROGRESS:
+
+`npx supabase db query --linked "select (select count(*) from pg_tables where schemaname='public') as tables, (select count(*) from pg_tables where schemaname='public' and rowsecurity) as tables_with_rls, (select string_agg(tablename, ', ') from pg_tables where schemaname='public' and not rowsecurity) as missing_rls, (select name from events where name='HackGT 13') as seed_event, (select string_agg(version, ', ' order by version) from supabase_migrations.schema_migrations) as migrations"`
+
+Local check (no secrets): `sudo service postgresql start && ./supabase/tests/run-local.sh` → last line `ALL AD1 CHECKS PASSED`.
+**Next step for whoever continues:** Adam runs the `npx supabase db query --linked "select …"` one-liner above and pastes the row. Expected: `tables` = `tables_with_rls` = **36**, `missing_rls` empty/null, `seed_event` = `HackGT 13`, `migrations` lists all **9** versions ending with `20260926000009`. Then add a PROGRESS entry with that output and set AD1 **done**.
+**Known issues / blockers:** This cloud VM has no Supabase MCP and no `SUPABASE_*` env — cannot run linked queries or invent live results.
+**Contract changes:** none
+
 ## 2026-09-26 13:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Tap to verify ("hold your phones together"), extends AK3 verification
