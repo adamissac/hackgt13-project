@@ -24,3 +24,4 @@ change to `docs/api.md`.
 | conversations_pending.json | GET /conversations/pending |
 | conversation_feedback.json | POST /conversations/{id}/feedback (mutual-yes case) |
 | followup_draft.json | POST /connections/{user_id}/followup-draft |
+| graph.json | GET /graph?mode=matches (real output of the service on seeded data) |
