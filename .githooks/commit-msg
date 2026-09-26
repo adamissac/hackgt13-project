@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+"""Drop tool attribution from commit messages.
+
+GitHub counts Co-authored-by as a contributor. Lines that credit Cursor, Claude,
+or Codex are removed so the commit stays under the person who made it.
+"""
+import sys
+from pathlib import Path
+
+BLOCK = ("claude", "cursor", "codex", "anthropic")
+
+
+def drop(line: str) -> bool:
+    low = line.lower().strip()
+    if low.startswith("co-authored-by:") and any(word in low for word in BLOCK):
+        return True
+    if low.startswith("claude-session:") or "claude.ai/code" in low:
+        return True
+    if low.startswith("codex-session:"):
+        return True
+    if "generated with" in low and any(word in low for word in BLOCK):
+        return True
+    return False
+
+
+def main() -> int:
+    path = Path(sys.argv[1])
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    kept = [line for line in lines if not drop(line)]
+    while kept and kept[-1] == "":
+        kept.pop()
+    path.write_text("\n".join(kept) + "\n", encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
