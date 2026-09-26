@@ -153,3 +153,20 @@ def active_event_ids() -> list[int]:
     return [r["id"] for r in db.fetchall(
         "select distinct e.id from events e join attendance a on a.event_id = e.id "
         "where e.ends_at is null or e.ends_at > now() - interval '12 hours'")]
+
+
+def pair_model(a: str, b: str, event_id: int | None) -> tuple[dict, dict, Index, dict | None]:
+    """Two people ready for scoring: the event's model (event IDF) when both attend it,
+    else a small model with global IDF from interests.idf (written by the global_vectors worker)."""
+    if event_id is not None:
+        m = event_model(event_id)
+        if a in m.people and b in m.people:
+            return m.people[a], m.people[b], m.index, (m.cluster or None)
+    people, names, facets, vecs = load_people([a, b])
+    idf = {r["id"]: float(r["idf"]) for r in db.fetchall(
+        "select id, idf from interests where id = any(%s)", (list(names),))} if names else {}
+    index = Index(names, facets, vecs, {i: idf.get(i, 1.0) for i in names})
+    for p in people:
+        build_vectors(p, index)
+    by_id = {p["id"]: p for p in people}
+    return by_id[a], by_id[b], index, None
