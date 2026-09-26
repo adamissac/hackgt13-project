@@ -49,4 +49,6 @@ if [ ! -d node_modules ]; then
   npm install
 fi
 
-exec npx expo start --go --lan --clear
+# --tunnel, not --lan: Supabase Auth rejects sign-in return links on raw IP hosts (exp://10.x.x.x),
+# so LinkedIn / email-link sign-in only returns to Expo Go through a tunnel URL (*.exp.direct).
+exec npx expo start --go --tunnel --clear
