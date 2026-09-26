@@ -1,5 +1,19 @@
 # PROGRESS
 
+## 2026-09-26 04:05 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** AL7 Graph data
+**Status:** done (shape needs a quick look from Arjun for AR4; event mode is /dashboard/{event_id}, not built yet)
+**What I did:**
+- `ml/app/graph.py`: Builder emits only me->person and (me|person)->topic edges, so no person->person edge can exist; matches mode reuses `matching.rank_for_viewer` (allowed people only), depth 2 via shared topics, facet/min_score/max_people filters, 150-node cap; network mode = my connections with connected_at for the timeline.
+- Expand: topic -> allowed holders ranked by score; person -> shared topics with their evidence lines (never their connections); strangers get an empty graph.
+- `ml/app/routers/graph.py`: GET /graph and GET /graph/expand (must be checked in for matches mode).
+- `docs/mocks/graph.json` generated from the real endpoint on seeded data; docs/api.md 26-27.
+- 67 tests pass (`ml/tests/test_graph.py`: shape, only shared topics, no person->person edges even when my connections are connected to each other, filters, check-in rule, expand scope/ranking/evidence).
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_graph.py`
+**Next step for whoever continues:** Build GET /dashboard/{event_id} for Arjun's AR6 in a new `ml/app/routers/dashboard.py` using `ml/ml/viz.py` (layout, clusters from population._clusters via recompute_clusters, ctfidf_labels, connection_gaps with predicted pairs = top-10 V1 matches per person, edges = connections formed at the event) with NO names and min cluster size 5 (organizer-only once orgs exist; open for the demo per api.md 14). Then AL8 (needs Akshar's AK2 sightings) or AL10 feed.
+**Known issues / blockers:** Network-mode IDF is computed over me + my connections (small population); fine for display, not for ranking. Clusters are null until the 5-minute worker has run for an event with 10+ people.
+**Contract changes:** docs/api.md: new 26 GET /graph and 27 GET /graph/expand (MASTER_SPEC 9 shape plus an additive `shared_count` on person nodes and `evidence` on expanded topic nodes). docs/mocks/graph.json. Affects Arjun (AR4/AR5) and Adam (AD9).
+
 ## 2026-09-26 04:03 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL6 Verification and connecting
 **Status:** done (follow-up drafts use a template until ANTHROPIC_API_KEY is set)

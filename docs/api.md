@@ -239,3 +239,34 @@ My connection only (else `404 connection not found`): the 11 row plus `"shared_t
 ## 25. POST /connections/{user_id}/followup-draft
 `{ "draft": "Hi Maya, great talking with you about reward design ..." }` (2-3 sentences from what I checked, typed, and our
 shared interests; the user edits and sends it in chat). Connections only.
+
+## 26. GET /graph?mode=matches|network&event_id=1&depth=1&max_people=30&min_score=0&facet=all
+Connection Graph data (MASTER_SPEC 3.12). Full sample: `docs/mocks/graph.json`.
+```json
+{
+  "nodes": [
+    {"id": "me", "type": "self", "label": "You"},
+    {"id": "u_<uuid>", "type": "person", "label": "Maya", "score": 0.74, "highlight": true, "open_to_meet": true,
+     "cluster": 3, "connected": false, "connected_at": null, "top_topic": "reinforcement learning", "shared_count": 2},
+    {"id": "t_42", "type": "topic", "label": "reinforcement learning", "facet": "technical"}
+  ],
+  "edges": [
+    {"source": "me", "target": "u_<uuid>", "kind": "match", "weight": 0.74, "facet": "technical"},
+    {"source": "u_<uuid>", "target": "t_42", "kind": "has_topic", "weight": 0.9},
+    {"source": "me", "target": "t_42", "kind": "has_topic", "weight": 0.8}
+  ]
+}
+```
+- `matches` (default): me, my allowed matches at the event (must be checked in; `event_id` defaults to my latest check-in),
+  and topics we share (top 3 per person). `depth=2` also pulls in allowed people through those topics.
+- `network`: me, my connections (`kind: "connection"`, `connected_at` set, for the timeline slider), shared topics.
+- `mode=event` -> `400`, the organizer map is 14 `GET /dashboard/{event_id}`.
+- `facet` keeps people who share a topic in that facet and only those topic nodes. `shared_count` sizes connection nodes.
+- Edges are only `me -> person` and `me|person -> topic`. Never person -> person. Labels are first names. `cluster` is the
+  HDBSCAN community id (null until computed, -1 = unclustered). Max ~150 nodes.
+
+## 27. GET /graph/expand?node_id=t_42&mode=matches&event_id=1
+Nodes and edges to merge into the current graph (by id).
+- Topic (`t_<id>`): other allowed people holding that topic, ranked by score (max 10), with their `has_topic` edge.
+- Person (`u_<uuid>`): the topics I share with them, each topic node with an `"evidence"` line (theirs). Never their connections.
+  Someone I'm not allowed to see returns `{"nodes": [], "edges": []}`.
