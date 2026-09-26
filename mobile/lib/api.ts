@@ -105,6 +105,9 @@ export type ConversationFeedbackResponse =
   | { status: 'connected'; connection: { user_id: string; name: string }; chat_id: number }
   | { status: 'no_connection' };
 
+// Tap to verify (section 38): both phones claim each other's Bluetooth token at touching range.
+export type TapClaimResponse = { status: 'waiting' } | ({ status: 'verified' } & QrVerifyResponse);
+
 // Meetup location sharing (section 37). Only after a mutual yes; ends when they meet or after 30 min.
 export interface LocationShareState {
   suggestion_id: number;
@@ -170,6 +173,7 @@ const mocks = {
   openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
   qrVerify: () => require('../../docs/mocks/qr_verify.json') as QrVerifyResponse,
   conversationFeedback: () => require('../../docs/mocks/conversation_feedback.json') as ConversationFeedbackResponse,
+  tapClaim: () => require('../../docs/mocks/tap_claim.json') as TapClaimResponse,
   locationShare: () => require('../../docs/mocks/location_share.json') as LocationShareState,
   meetups: () => require('../../docs/mocks/location_meetups.json') as { meetups: Meetup[] },
   bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
@@ -244,6 +248,8 @@ export const api = {
     call(mocks.conversationFeedback, () =>
       request<ConversationFeedbackResponse>('POST', `/conversations/${conversationId}/feedback`, body),
     ),
+  tapClaim: (body: { token: string; rssi: number; event_id?: number }) =>
+    call(mocks.tapClaim, () => request<TapClaimResponse>('POST', '/tap/claim', body)),
   meetups: () => call(mocks.meetups, () => request<{ meetups: Meetup[] }>('GET', '/location-shares')),
   shareLocation: (suggestionId: number, point: { lat: number; lng: number }) =>
     call(

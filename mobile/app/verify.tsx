@@ -1,15 +1,19 @@
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { Stack } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, Vibration } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Text, View, useThemeColor } from '@/components/Themed';
+import { startEngine, stopEngine, subscribe } from '@/features/ble/engine';
+import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from '@/features/ble/native';
+import { TapDetector } from '@/features/ble/tap';
 import { decodeVerifyCode, encodeVerifyCode, handshakeErrorMessage } from '@/features/qr/code';
 import { Avatar, Button, Card, useColors } from '@/components/ui';
 import { api, type ConversationFeedbackResponse, type QrToken, type QrVerifyResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { env } from '@/lib/env';
 
 // AK3: verification fallback (MASTER_SPEC 3.5). One person shows a short-lived signed code, the
 // other scans it; the server checks signature, expiry, and single-use nonce (POST /qr/verify), creates a
@@ -17,11 +21,13 @@ import { HACKGT_EVENT_ID } from '@/lib/constants';
 // Always available, so the demo survives if Bluetooth verification doesn't.
 const REFRESH_MS = 30_000; // docs/api.md 19: refresh every 30 s (server tokens live 60 s)
 
-type Mode = 'show' | 'scan';
+type Mode = 'tap' | 'show' | 'scan';
+const MODE_LABEL: Record<Mode, string> = { tap: 'Tap phones', show: 'Show code', scan: 'Scan code' };
 
 export default function VerifyScreen() {
   const tint = useThemeColor({}, 'tint');
-  const [mode, setMode] = useState<Mode>('show');
+  // Tap is the quick path when Bluetooth is available; the QR code always works.
+  const [mode, setMode] = useState<Mode>(() => (bleAvailable() || env.useMocks ? 'tap' : 'show'));
   const [verified, setVerified] = useState<QrVerifyResponse | null>(null);
 
   return (
@@ -32,7 +38,7 @@ export default function VerifyScreen() {
       ) : (
         <View style={styles.flex}>
           <View style={styles.tabs} accessibilityRole="tablist">
-            {(['show', 'scan'] as const).map((m) => (
+            {(['tap', 'show', 'scan'] as const).map((m) => (
               <Pressable
                 key={m}
                 onPress={() => setMode(m)}
@@ -40,15 +46,99 @@ export default function VerifyScreen() {
                 accessibilityRole="tab"
                 accessibilityState={{ selected: mode === m }}>
                 <Text style={[styles.tabText, mode === m && styles.tabTextActive]}>
-                  {m === 'show' ? 'Show my code' : 'Scan their code'}
+                  {MODE_LABEL[m]}
                 </Text>
               </Pressable>
             ))}
           </View>
-          {mode === 'show' ? <ShowCode /> : <ScanCode onVerified={setVerified} />}
+          {mode === 'tap' ? (
+            <TapPhones onVerified={setVerified} />
+          ) : mode === 'show' ? (
+            <ShowCode />
+          ) : (
+            <ScanCode onVerified={setVerified} />
+          )}
         </View>
       )}
     </>
+  );
+}
+
+// "Hold your phones together": both phones advertise their rotating token; once each hears the other at
+// touching range for 2 s it claims it, and the server verifies when both claims arrive (api.md 38).
+function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }) {
+  const c = useColors();
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState<'looking' | 'holding' | 'waiting'>('looking');
+  const [error, setError] = useState<string | null>(null);
+  const available = bleAvailable();
+
+  useEffect(() => {
+    if (!available) return;
+    const detector = new TapDetector();
+    let claiming = false;
+    let done = false;
+    startEngine({ eventId: HACKGT_EVENT_ID, owner: 'tap' });
+    const unsub = subscribe(async (snap) => {
+      if (snap.error) setError(snap.error);
+      const d = detector.update(snap.heard, Date.now());
+      setProgress(d.progress);
+      setPhase(d.token ? 'waiting' : d.progress > 0 ? 'holding' : 'looking');
+      if (!d.token || claiming || done) return;
+      claiming = true; // one claim per engine tick (~1 s)
+      try {
+        const r = await api.tapClaim({ token: d.token, rssi: Math.round(d.rssi!), event_id: HACKGT_EVENT_ID });
+        if (r.status === 'verified' && !done) {
+          done = true;
+          Vibration.vibrate(120);
+          onVerified(r);
+        }
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        // too_far / not_found are normal while phones move; keep holding.
+        if (msg !== 'too_far' && msg !== 'not_found') setError(handshakeErrorMessage(msg));
+      } finally {
+        claiming = false;
+      }
+    });
+    return () => {
+      done = true;
+      unsub();
+      stopEngine('tap');
+    };
+  }, [available, onVerified]);
+
+  if (!available) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.body}>{env.useMocks ? 'Mock mode: no Bluetooth here.' : BLE_UNAVAILABLE_MESSAGE}</Text>
+        {env.useMocks ? (
+          <Button
+            label="Simulate a tap"
+            onPress={async () => {
+              const r = await api.tapClaim({ token: 'mockmock', rssi: -35 });
+              if (r.status === 'verified') onVerified(r);
+            }}
+          />
+        ) : null}
+        <Text style={styles.muted}>You can always use Show code / Scan code instead.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.center}>
+      <Text style={styles.tapIcon}>📱📱</Text>
+      <Text style={styles.title}>Hold your phones together</Text>
+      <Text style={styles.muted}>Both of you open this screen, then touch the backs of your phones.</Text>
+      <View style={[styles.meter, { backgroundColor: c.surfaceAlt }]}>
+        <View style={[styles.meterFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: phase === 'waiting' ? c.success : c.tint }]} />
+      </View>
+      <Text style={styles.body}>
+        {phase === 'looking' ? 'Looking for the other phone…' : phase === 'holding' ? 'Keep holding…' : 'Almost there. Waiting for their phone…'}
+      </Text>
+      {error ? <Text style={[styles.body, styles.error]}>{error}</Text> : null}
+    </View>
   );
 }
 
@@ -257,6 +347,9 @@ function Verified({ result, onAgain }: { result: QrVerifyResponse; onAgain: () =
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  tapIcon: { fontSize: 56 },
+  meter: { alignSelf: 'stretch', height: 14, borderRadius: 7, overflow: 'hidden' },
+  meterFill: { height: '100%', borderRadius: 7 },
   tabs: { flexDirection: 'row', gap: 8, padding: 12 },
   tab: { flex: 1, minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: '#8886', alignItems: 'center', justifyContent: 'center' },
   tabText: { fontSize: 16, fontWeight: '600' },

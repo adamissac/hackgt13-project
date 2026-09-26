@@ -2,6 +2,25 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 13:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Tap to verify ("hold your phones together"), extends AK3 verification
+
+**Status:** in progress (server tested on Postgres; phone side needs two dev-build phones)
+
+**What I did:**
+- Why: NameDrop and iPhone NFC phone-to-phone aren't available to apps, and UWB is iPhone-only. A Bluetooth "hold together" gives the same tap moment on iPhone + Android using the AK2 tokens/engine. QR stays the fallback.
+- `ml/app/routers/tap.py` (mounted), api.md **38**: `POST /tap/claim {token, rssi}`. Needs rssi >= -50 dBm, the token live now (1-min grace across rotation), not self, not blocked. Verified only when BOTH phones claim each other within 15 s → `conversations` row method `ble` (no schema change; Alan's 10-min dedupe gives both the same id) + `connect_prompt` notifications. `ml/tests/test_tap.py` 6 tests (incl. one-sided claims never verify, window expiry).
+- `mobile/features/ble/tap.ts` `TapDetector` (strongest heard phone at >= -50 dBm for 2 s; `tap.test.mjs` 4 tests). `app/verify.tsx` gets a **Tap phones** tab (default when Bluetooth is available): progress meter, claims every engine tick, vibrates, then the same checklist + silent connect prompt as QR. Mock mode has a "Simulate a tap" button.
+
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test .venv/bin/python -m pytest tests/test_tap.py -q`. `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs`. Phones: both on Nearby → "Just talked with someone?" → Tap phones → touch backs → both land on the checklist.
+
+**Next step for whoever continues:** On real phones, log the RSSI when touching vs. 30 cm vs. across a table (the Tap meter / `/ble-debug`). If touching reads weaker than -50 on some model, lower `TAP_RSSI_DBM` in BOTH `mobile/features/ble/tap.ts` and `ml/app/routers/tap.py`.
+
+**Known issues / blockers:** Pending claims are held in process memory (fine with one uvicorn process; with several workers use a table). iPhone ↔ iPhone needs both apps open (iOS foreground-only scanning), which the tap flow already assumes.
+
+**Contract changes:** `docs/api.md` section 38 (new endpoint), mock `tap_claim.json`. No schema change.
+
 ## 2026-09-26 12:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK8 Event Mode
