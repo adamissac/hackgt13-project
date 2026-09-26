@@ -45,7 +45,8 @@ def _demo_allowed(ip: str) -> bool:
 
 @router.post("/demo")
 def demo(body: DemoBody, request: Request):
-    """Assistant for the app's demo mode: real model, but it only sees the demo data the app sends."""
+    """Assistant for the app's demo mode: real model, but it only sees the demo data the app sends.
+    Documented exception to "every endpoint verifies the JWT" (docs/api.md 43): no DB access, rate-limited."""
     if body.messages[-1].role != "user":
         raise ApiError(422, "invalid request: the last message must be from the user")
     ip = (request.headers.get("x-forwarded-for") or (request.client.host if request.client else "?")).split(",")[0]

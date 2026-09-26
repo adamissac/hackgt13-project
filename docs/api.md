@@ -475,3 +475,11 @@ The caller's active structured skill profile. Empty (`skills: []`, `profile_vers
 ```
 `POST /profile/ingest` (1) now also accepts DOCX resumes (multipart `file`, max 10 MB); the file is stored in the private
 `resumes` bucket and tracked in the `resumes` table.
+
+## 43. POST /assistant/demo   owner: Adam (demo mode)   ⚠️ no JWT (documented exception to the ml rules)
+The assistant for the app's demo mode, which has no account. It never reads the database: the model only sees the
+fictional demo data the app sends in `context` (lib/demo/backend.ts `assistantContext()`), capped at 20 KB.
+Rate-limited in memory: 12 requests/minute per client IP and 600/hour overall; `429 slow down...` beyond that.
+Request `{ "messages": [ { "role": "user", "content": "Who should I meet?" } ], "context": { ... } }` (max 20 messages)
+Response `{ "reply": "..." }`; `503` if the model can't be reached (the app then falls back to its offline answers).
+Live mode keeps using 35 (`/assistant/chat`, JWT + server-scoped tools).
