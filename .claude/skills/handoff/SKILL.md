@@ -29,7 +29,7 @@ allowed-tools: Bash(git status *) Bash(git diff *) Bash(git log *) Bash(git add 
 ```
 
    Write "Next step" so a fresh agent with zero memory can start in one minute: name the file, the function, and the command.
-4. Commit and push in this order: `git add -A`, `git commit -m "[area] what changed"` (area: ml, mobile, dashboard, supabase, docs, ble, infra), `git pull --rebase`, `git push`.
-5. If the rebase conflicts and the fix isn't obviously safe: `git rebase --abort`, `git switch -c <owner>/<task-id>`, commit, `git push -u origin <owner>/<task-id>`, and say so in the PROGRESS.md entry.
+4. Commit and push in this order: `git add -A`, `git commit -m "[area] what changed"` (area: ml, mobile, dashboard, supabase, docs, ble, infra), `git pull --rebase origin main`, `git push origin HEAD:main`. No PRs: land on `main` even if your tool started you on another branch.
+5. Resolve rebase conflicts yourself, keeping both sides in PROGRESS.md, REQUESTS.md, and docs/api.md. Last resort only, if the fix truly isn't safe: `git rebase --abort`, `git switch -c <owner>/<task-id>`, commit, `git push -u origin <owner>/<task-id>`, and say so in the PROGRESS.md entry.
 6. Never force push, never `--no-verify`, never commit `.env` files. If the pre-commit hook blocks a secret, move the value into an env var listed in `.env.example` and commit again.
 7. Reply with one line: commit hash, status, and the next step.

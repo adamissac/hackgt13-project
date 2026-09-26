@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 04:55 UTC | adam | Cursor cloud agent
+**Task:** Team process: push straight to main
+**Status:** done
+**What I did:**
+- AGENTS.md "Commit and push protocol": everyone pushes straight to `main` (`git pull --rebase origin main`, `git push origin HEAD:main`), no PRs, no waiting on Adam; cloud-agent branches land on `main` themselves; PROGRESS.md/REQUESTS.md/api.md conflicts keep both sides; side branch only as a last resort, with a note to the owner.
+- CLAUDE.md: one line saying push directly to `main`, never open a PR or ask Adam to merge. Handoff skill (`.claude/skills/handoff/SKILL.md`) updated to the same sequence.
+- Confirmed `adami/ad1-verify-fe21` (PR #3) is already in `main`; `./supabase/tests/run-local.sh` ends with ALL AD1 CHECKS PASSED.
+**How to run/test it:** `sudo service postgresql start && ./supabase/tests/run-local.sh`
+**Next step for whoever continues:** Nothing for this task. Everyone: from your next push on, use `git pull --rebase origin main && git push origin HEAD:main`.
+**Known issues / blockers:** The force-push hint in `.claude/hooks/guard.py` (line 103-104) still says "push to a new branch" without "last resort"; the file couldn't be edited from here because its own scraping guard matches text inside it. Edit it by hand if you care.
+**Contract changes:** none
+
 ## 2026-09-26 07:00 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK2 Tokens, advertising, scanning, uploads + AK5 Proximity radar

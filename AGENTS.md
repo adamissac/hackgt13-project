@@ -13,12 +13,15 @@ HackGT 13 · Team: Adam, Alan, Arjun, Akshar · Tracks: AI/ML + Data Visualizati
 4. If the newest PROGRESS.md entry for your task has a "Next step for whoever continues", do that first.
 
 ## Commit and push protocol (mandatory)
+- Push straight to `main`. No pull requests, no waiting for review or approval from Adam.
+- If your tool puts you on its own branch (Claude Code cloud sessions, Cursor cloud agents), still land on `main` yourself: `git fetch origin && git rebase origin/main` (or merge), resolve conflicts, run your area tests, then `git push origin HEAD:main`. Don't leave work sitting in a PR.
+- Conflicts in PROGRESS.md, REQUESTS.md, or docs/api.md: keep both sides (PROGRESS.md stays newest-first). If two people take the same api.md section number, the later one renumbers.
 - Commit and push after every working increment: an endpoint that returns data, a screen that renders, a script that produces output, a passing test.
 - Never go more than 30 minutes without a commit and push. If it doesn't work yet, commit anyway with a `WIP:` prefix and describe the exact state in PROGRESS.md.
 - Near the end of your context or credits: stop, commit, push, and update PROGRESS.md immediately. Unpushed work is lost work.
-- Sequence: `git add -A`, `git commit -m "[area] what changed"`, `git pull --rebase`, `git push`. Areas: ml, mobile, dashboard, supabase, docs, ble, infra.
+- Sequence: `git add -A`, `git commit -m "[area] what changed"`, `git pull --rebase origin main`, `git push origin HEAD:main`. Areas: ml, mobile, dashboard, supabase, docs, ble, infra.
 - Never force push, never rewrite history, never use `--no-verify`, never commit `.env` or any key.
-- Rebase conflict you can't resolve safely: `git rebase --abort`, commit to a new branch `<owner>/<task>`, push that branch, note it in PROGRESS.md.
+- Last resort only, when you truly can't resolve a conflict: `git rebase --abort`, commit to a new branch `<owner>/<task>`, push that branch, and tell the owner of the conflicting code in PROGRESS.md so they land it on `main`.
 
 ## PROGRESS.md
 Every push updates it. Newest entry at the top. Exactly this template:
