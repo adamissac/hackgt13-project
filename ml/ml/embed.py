@@ -31,16 +31,31 @@ def _hash_embed(texts, dim=384):
     return hv.transform(texts).toarray().astype(np.float32)
 
 
-def embed(texts):
-    """Return L2-normalized (n, 384) float32 array."""
-    if isinstance(texts, str):
-        texts = [texts]
+_cache: dict = {}
+_CACHE_MAX = 50000
+
+
+def _embed_uncached(texts):
     _load()
     if _fallback:
         return _hash_embed(texts)
     # bge models expect no instruction prefix for symmetric similarity
     v = _model.encode(texts, normalize_embeddings=True, batch_size=64, show_progress_bar=False)
     return np.asarray(v, dtype=np.float32)
+
+
+def embed(texts):
+    """Return L2-normalized (n, 384) float32 array. Results are cached per text."""
+    if isinstance(texts, str):
+        texts = [texts]
+    missing = list(dict.fromkeys(t for t in texts if t not in _cache))
+    if missing:
+        if len(_cache) + len(missing) > _CACHE_MAX:
+            _cache.clear()
+        for t, v in zip(missing, _embed_uncached(missing)):
+            v.setflags(write=False)
+            _cache[t] = v
+    return np.vstack([_cache[t] for t in texts]) if texts else np.zeros((0, 384), np.float32)
 
 
 @lru_cache(maxsize=20000)

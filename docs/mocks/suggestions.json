@@ -1,0 +1,23 @@
+{
+  "suggestions": [
+    {
+      "suggestion_id": 12,
+      "context": "event",
+      "event_id": 1,
+      "building_id": null,
+      "expires_at": "2026-09-26T15:34:05+00:00",
+      "other": {
+        "user_id": "00000000-0000-0000-0000-000000000101",
+        "name": "Maya R.",
+        "photo_url": null,
+        "role": "student",
+        "headline": "CS @ Georgia Tech"
+      },
+      "score": 0.62,
+      "shared_topics": [
+        "reinforcement learning",
+        "rock climbing"
+      ]
+    }
+  ]
+}
