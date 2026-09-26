@@ -1,27 +1,57 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { onChange, type ChangeTopic } from './changes';
 
 export type AsyncState<T> =
   | { status: 'loading' }
   | { status: 'error'; message: string }
   | { status: 'ready'; data: T };
 
-/** Runs `fn` on mount; `reload` runs it again. Drives loading, empty, and error states. */
-export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = []) {
+/**
+ * Runs `fn` on mount and whenever `deps` change; `reload` runs it again. Drives loading, empty,
+ * and error states. `reloadOn` refetches quietly (no loading flash) when those topics change.
+ */
+export function useAsync<T>(fn: () => Promise<T>, deps: unknown[] = [], reloadOn: ChangeTopic[] = []) {
   const [state, setState] = useState<AsyncState<T>>({ status: 'loading' });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const run = useCallback(fn, deps);
+  const fnRef = useRef(fn);
+  const run = useRef(0);
+  const key = JSON.stringify(deps);
+  const topics = reloadOn.join(',');
 
-  const reload = useCallback(() => {
-    let cancelled = false;
-    setState({ status: 'loading' });
-    run()
-      .then((data) => !cancelled && setState({ status: 'ready', data }))
-      .catch((e: unknown) => !cancelled && setState({ status: 'error', message: e instanceof Error ? e.message : String(e) }));
+  useEffect(() => {
+    fnRef.current = fn;
+  });
+
+  const load = useCallback((quiet: boolean) => {
+    const mine = ++run.current;
+    if (!quiet) setState({ status: 'loading' });
+    fnRef
+      .current()
+      .then((data) => mine === run.current && setState({ status: 'ready', data }))
+      .catch((e: unknown) => {
+        if (mine !== run.current) return;
+        const message = e instanceof Error ? e.message : String(e);
+        // A quiet refresh that fails keeps showing the last good data.
+        setState((prev) => (quiet && prev.status === 'ready' ? prev : { status: 'error', message }));
+      });
+  }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => load(false), 0);
+    const counter = run;
     return () => {
-      cancelled = true;
+      clearTimeout(t);
+      counter.current++; // drop results of a run that finishes after deps changed
     };
-  }, [run]);
+  }, [key, load]);
 
-  useEffect(reload, [reload]);
-  return { state, reload };
+  useEffect(() => {
+    if (!topics) return;
+    const wanted = topics.split(',');
+    return onChange((topic) => wanted.includes(topic) && load(true));
+  }, [topics, load]);
+
+  const reload = useCallback(() => load(false), [load]);
+  const refresh = useCallback(() => load(true), [load]);
+  return { state, reload, refresh };
 }
