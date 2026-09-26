@@ -602,6 +602,51 @@ export function graph(mode: 'matches' | 'network'): GraphResponse {
   return { nodes, edges, synthetic: true };
 }
 
+/** Everything the demo assistant may know, sent to POST /assistant/demo (fictional people only). */
+export function assistantContext() {
+  const me = interests();
+  return {
+    event: DEMO_EVENT,
+    user: {
+      name: 'You',
+      headline: 'CS @ Georgia Tech · building RAG tools',
+      seeking: me.seeking,
+      offering: me.offering,
+      open_to_meet: state.openToMeet,
+      interests: me.interests.filter((i) => !i.hidden).map((i) => ({ name: i.name, evidence: i.evidence })),
+    },
+    people: DEMO_PEOPLE.map((p) => ({
+      name: p.name,
+      role: p.role,
+      headline: p.headline,
+      school: p.school,
+      bio: p.bio,
+      skills: p.skills,
+      goals: p.goals,
+      seeking: p.seeking,
+      offering: p.offering,
+      match_percent: Math.round(p.score * 100),
+      proximity: state.openToMeet ? { immediate: 'very close', near: 'nearby', far: 'farther away' }[p.band] : 'unknown (Open to Meet is off)',
+      why_you_match: p.why,
+      shared_topics: p.shared.map((t) => ({ topic: t.name, their_evidence: t.evidence })),
+      suggested_openers: p.openers,
+      status_with_user: {
+        DISCOVERED: 'not introduced yet',
+        MEET_INTEREST_PENDING: 'user said they want to meet; waiting',
+        MUTUAL_MEET: 'both want to meet; chat is open',
+        MEETUP_IN_PROGRESS: 'on the way to meet',
+        CONVERSATION_VERIFIED: 'talked in person',
+        POST_CONVERSATION_PENDING: 'talked in person; deciding whether to connect',
+        CONNECTED: 'connected',
+        DECLINED: 'user passed',
+        EXPIRED: 'introduction ended',
+        CANCELLED: 'introduction ended',
+      }[rel(p.user_id).stage],
+      talked_about: rel(p.user_id).talked_about,
+    })),
+  };
+}
+
 /** Read-only view for the assistant. */
 export function snapshot() {
   return { openToMeet: state.openToMeet, people: DEMO_PEOPLE.map((p) => ({ person: p, stage: rel(p.user_id).stage })) };

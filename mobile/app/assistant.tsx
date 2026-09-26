@@ -2,11 +2,17 @@ import { useLocalSearchParams, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { RichText } from '@/components/RichText';
 import { Button, useColors } from '@/components/ui';
 import { api, type AssistantMessage } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 
-const PROMPTS = ['Who should I meet?', 'Who here works on RAG?', 'Help me talk to a recruiter', 'Who is into quant?'];
+const PROMPTS = [
+  'Who should I meet first?',
+  'Who here works on AI or ML?',
+  'Help me talk to a recruiter',
+  'What should I ask my top match?',
+];
 
 // AI assistant (MASTER_SPEC 6.12). Live: POST /assistant/chat, Claude with server-scoped tools (people
 // you can already see, your profile, your connections). It never reveals anyone's connections or a "no".
@@ -94,7 +100,11 @@ export default function AssistantScreen() {
             <View key={`${m.role}-${i}`} style={mine ? styles.mine : styles.theirs}>
               {!mine && <Text style={[styles.who, { color: c.ai }]}>✦ Assistant</Text>}
               <View style={[styles.bubble, mine ? { backgroundColor: c.tint } : { backgroundColor: c.surface, borderColor: c.border, borderWidth: 1 }]}>
-                <Text style={[styles.body, { color: mine ? c.onTint : c.text }]}>{m.content}</Text>
+                {mine ? (
+                  <Text style={[styles.body, { color: c.onTint }]}>{m.content}</Text>
+                ) : (
+                  <RichText text={m.content} style={{ ...styles.body, color: c.text }} />
+                )}
               </View>
             </View>
           );

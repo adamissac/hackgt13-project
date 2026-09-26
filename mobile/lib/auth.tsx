@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { env } from './env';
 import { setDemo } from './mode';
 import { supabase } from './supabase';
 
@@ -82,6 +83,17 @@ export async function signInWithLinkedIn(): Promise<void> {
  *  linked_accounts, so the user is still asked to Connect GitHub for repo ingestion. */
 export async function signInWithGitHub(): Promise<void> {
   return signInWithProvider('github');
+}
+
+/** Which OAuth providers Supabase Auth has switched on (so the sign-in screen never shows a dead button). */
+export async function enabledProviders(): Promise<Record<string, boolean>> {
+  try {
+    const res = await fetch(`${env.supabaseUrl}/auth/v1/settings`, { headers: { apikey: env.supabaseAnonKey } });
+    const json = (await res.json()) as { external?: Record<string, boolean> };
+    return json.external ?? {};
+  } catch {
+    return { linkedin_oidc: true }; // offline: show the main button; the error explains itself
+  }
 }
 
 /** Fallback: email magic link that returns through the same deep link. */

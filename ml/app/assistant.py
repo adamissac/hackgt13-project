@@ -23,23 +23,47 @@ log = logging.getLogger("assistant")
 MAX_TURNS = 6
 TOPIC_SIM = 0.6
 
-SYSTEM = """You are the assistant inside Formal Connection, a networking app where people only connect with people
-they have actually talked to. You help the signed-in user prepare for and follow up on real conversations.
+SYSTEM = """You are the AI networking assistant inside Formal Connection, a HackGT 13 app where people only connect
+after they've actually talked in person. Your job: help the signed-in user decide who to meet, understand why they
+match, and walk into each conversation with something specific to say.
 
-Use the tools to look things up; never guess facts about people. Tools only return what this user is allowed
-to see. If a tool says something is not available, tell the user you can't share that, without speculating why.
+How to answer:
+- Ground everything in tool results. Call get_my_top_matches for "who should I meet" questions,
+  search_event_attendees for topic questions ("who here does X"), get_match_profile for details on one person,
+  get_conversation_starters for icebreakers, get_connections_activity for follow-ups.
+- Be specific: name the shared topic AND the evidence ("Maya built a RAG eval harness; you built course-rag").
+  Generic advice ("say hi!", "be yourself") is useless here.
+- Recommend clearly. Lead with the one best person and why, then at most two alternatives.
+- If someone is physically close (proximity "very close"/"nearby"), say so; it matters at an event.
+- Write like a sharp friend texting: short paragraphs, "•" bullets for lists, **bold** only for names. No headings.
+  Usually under 120 words unless asked for more.
+- Use first names. Mention match strength as a percentage only when it helps the decision.
+- If the user isn't checked in, or a tool says something is not available, say what they can do instead
+  (turn on Open to Meet / check in), without speculating about other people.
 
-Rules you always follow:
-- Never reveal or estimate anyone's number of connections, or who they are connected to. Only the user may
-  know their own connections.
-- Never say or hint whether someone declined, ignored, or said no to the user.
-- Never list or search people outside what the tools return (no browsing strangers).
-- Keep answers short and practical. Use first names."""
+Privacy rules you always follow:
+- Never reveal or estimate anyone's number of connections, or who they are connected to.
+- Never say or hint whether someone declined, ignored, or said no.
+- Only talk about people the tools return. No browsing strangers, no guessing facts."""
 
 TOOLS = [
+    {"name": "get_my_top_matches",
+     "description": "The user's best matches at an event they're checked in to, ranked by the matching model: "
+                    "user_id, name, role, match percentage, why they match, rough proximity, shared topics with evidence.",
+     "strict": True,
+     "input_schema": {"type": "object", "additionalProperties": False, "required": ["event_id", "limit"],
+                      "properties": {"event_id": {"type": "integer"},
+                                     "limit": {"type": "integer", "description": "1 to 10"}}}},
+    {"name": "get_conversation_starters",
+     "description": "Grounded icebreakers for talking to one match: a one-line 'why you should talk' and 2-3 openers "
+                    "based on real shared evidence.",
+     "strict": True,
+     "input_schema": {"type": "object", "additionalProperties": False, "required": ["user_id"],
+                      "properties": {"user_id": {"type": "string"}}}},
     {"name": "search_event_attendees",
-     "description": "Find Open to Meet attendees at an event the user is checked in to who share a topic. "
-                    "Returns user_id, first name, role, and shared topics only.",
+     "description": "Find people at an event the user is checked in to whose interests match a topic "
+                    "(semantic match, e.g. 'RAG' finds retrieval-augmented generation). Returns user_id, first name, "
+                    "role, matching topics, topics shared with the user, and whether they're Open to Meet.",
      "strict": True,
      "input_schema": {"type": "object", "additionalProperties": False, "required": ["event_id", "topic"],
                       "properties": {"event_id": {"type": "integer"},
@@ -78,8 +102,6 @@ class Tools:
         me = m.people[self.viewer]
         out = []
         for r in ranked:
-            if r["id"] not in open_ids:
-                continue
             p = m.people[r["id"]]
             hits = [m.index.names[i] for i in p["interests"]
                     if topic.lower() in m.index.names[i] or float(m.index.vecs[i] @ q) >= TOPIC_SIM]
@@ -87,10 +109,40 @@ class Tools:
                 continue
             shared = [s["name"] for s in scoring.shared_interests(me, p, m.index, 5)]
             out.append({"user_id": p["id"], "first_name": (p.get("name") or "").split(" ")[0], "role": p.get("role"),
+                        "match_percent": round(100 * r["score"]), "open_to_meet": p["id"] in open_ids,
                         "matching_topics": hits[:5], "shared_topics_with_user": shared})
-            if len(out) >= 10:
+            if len(out) >= 8:
                 break
         return {"event_id": int(event_id), "results": out}
+
+    def get_my_top_matches(self, event_id: int, limit: int) -> dict:
+        if not matching.is_checked_in(self.viewer, int(event_id)):
+            return {"error": "the user is not checked in to that event"}
+        ranked, m = matching.rank_for_viewer(self.viewer, int(event_id), explore_eps=0.0)
+        top = ranked[: max(1, min(10, int(limit)))]
+        bands = matching.proximity_bands(self.viewer, [r["id"] for r in top])
+        label = {"immediate": "very close", "near": "nearby", "far": "farther away"}
+        me = m.people[self.viewer]
+        out = []
+        for r in top:
+            p = m.people[r["id"]]
+            shared = scoring.shared_interests(me, p, m.index, 3)
+            out.append({"user_id": p["id"], "name": p.get("name"), "role": p.get("role"),
+                        "headline": p.get("headline") or "", "match_percent": round(100 * r["score"]),
+                        "why": r["why"], "proximity": label.get(bands.get(r["id"]) or "", None),
+                        "seeking": p.get("seeking") or "", "offering": p.get("offering") or "",
+                        "shared_topics": [{"topic": s["name"], "their_evidence": s.get("evidence_b", ""),
+                                           "user_evidence": s.get("evidence_a", "")} for s in shared]})
+        return {"event_id": int(event_id), "matches": out}
+
+    def get_conversation_starters(self, user_id: str) -> dict:
+        from .auth import User
+        from .errors import ApiError
+        from .routers.matches import starters
+        try:
+            return starters(user_id, User(id=self.viewer))
+        except ApiError:
+            return NOT_AVAILABLE
 
     def get_match_profile(self, user_id: str) -> dict:
         from .auth import User
@@ -119,6 +171,7 @@ class Tools:
 
     def run(self, name: str, args: dict) -> dict:
         fn = {"search_event_attendees": self.search_event_attendees, "get_match_profile": self.get_match_profile,
+              "get_my_top_matches": self.get_my_top_matches, "get_conversation_starters": self.get_conversation_starters,
               "get_connections_activity": self.get_connections_activity,
               "get_my_profile": self.get_my_profile}.get(name)
         if fn is None:
@@ -134,17 +187,31 @@ def _client():
     return client()
 
 
-def chat(viewer: str, messages: list[dict], event_id: int | None = None) -> str:
-    tools = Tools(viewer)
-    system = SYSTEM
-    if event_id is not None:
-        system += f"\n\nThe user is currently viewing event_id {int(event_id)}."
+def _snapshot(tools: "Tools", event_id: int | None) -> str:
+    """Who the user is, up front, so the first answer is already personal (saves a tool round trip)."""
+    try:
+        me = tools.get_my_profile()
+        interests = ", ".join(i["name"] for i in me["interests"][:12])
+        checked_in = event_id is not None and matching.is_checked_in(tools.viewer, int(event_id))
+        return (f"\n\nAbout the user: {me.get('name') or 'unknown name'}; {me.get('headline') or 'no headline'}. "
+                f"Interests: {interests or 'none yet (suggest adding GitHub or a resume)'}. "
+                f"Looking for: {me.get('seeking') or 'not set'}. Can offer: {me.get('offering') or 'not set'}. "
+                f"Checked in to event {event_id}: {'yes' if checked_in else 'no'}.")
+    except Exception:
+        log.exception("assistant snapshot failed")
+        return ""
+
+
+def run_loop(system: str, tools_spec: list, messages: list[dict], run_tool) -> str:
     convo = [{"role": m["role"], "content": m["content"]} for m in messages]
     for _ in range(MAX_TURNS):
         resp = _client().messages.create(
-            model=LLM_SMART, max_tokens=2000,
+            model=LLM_SMART, max_tokens=1200,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            tools=TOOLS, messages=convo)
+            tools=tools_spec, messages=convo) if tools_spec else _client().messages.create(
+            model=LLM_SMART, max_tokens=1200,
+            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
+            messages=convo)
         log.info("assistant model=%s in=%s out=%s stop=%s", LLM_SMART, resp.usage.input_tokens,
                  resp.usage.output_tokens, resp.stop_reason)
         if resp.stop_reason == "refusal":
@@ -156,8 +223,31 @@ def chat(viewer: str, messages: list[dict], event_id: int | None = None) -> str:
         for b in resp.content:
             if getattr(b, "type", "") != "tool_use":
                 continue
-            out = tools.run(b.name, dict(b.input or {}))
+            out = run_tool(b.name, dict(b.input or {}))
             results.append({"type": "tool_result", "tool_use_id": b.id, "content": json.dumps(out, default=str),
-                            **({"is_error": True} if "error" in out else {})})
+                            **({"is_error": True} if isinstance(out, dict) and "error" in out else {})})
         convo.append({"role": "user", "content": results})
     return "Sorry, I couldn't finish that. Try asking a narrower question."
+
+
+def chat(viewer: str, messages: list[dict], event_id: int | None = None) -> str:
+    tools = Tools(viewer)
+    system = SYSTEM
+    if event_id is not None:
+        system += f"\n\nThe user is currently at event_id {int(event_id)}; use it for event tools."
+    system += _snapshot(tools, event_id)
+    return run_loop(system, TOOLS, messages, tools.run)
+
+
+# ---------------------------------------------------------------- demo mode (no account, simulated people)
+DEMO_SYSTEM = SYSTEM + """
+
+This is the app's DEMO MODE. There are no tools: everything you know is in the DEMO DATA below (the user's own
+profile and the people at the event, with match percentages, rough distance, shared topics with evidence, and
+suggested openers). Answer only from it; if something isn't there, say you don't know. The people are fictional
+demo attendees, so their data is fine to discuss; still never invent facts beyond the data."""
+
+
+def demo_chat(messages: list[dict], context: dict) -> str:
+    data = json.dumps(context, default=str)[:20000]
+    return run_loop(f"{DEMO_SYSTEM}\n\nDEMO DATA:\n{data}", [], messages, lambda *_: {})

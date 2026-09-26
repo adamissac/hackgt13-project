@@ -561,7 +561,17 @@ export const api = {
   replySuggestion: (itemId: number) =>
     call(mocks.feedReply, () => request<{ reply: string }>('POST', `/feed/${itemId}/reply-suggestion`, {})),
   assistantChat: (messages: AssistantMessage[], eventId?: number) =>
-    call(() => ({ reply: demoAssistantReply(messages) }), () =>
+    call(
+      // Demo mode: the real model over the demo people (server rate-limits it). Offline -> local fallback.
+      async () => {
+        try {
+          return await request<{ reply: string }>('POST', '/assistant/demo', { messages, context: demo.assistantContext() });
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 429) throw e;
+          return { reply: demoAssistantReply(messages) };
+        }
+      },
+      () =>
       request<{ reply: string }>('POST', '/assistant/chat', { messages, event_id: eventId ?? null }),
     ),
   suggestions: () => call(demo.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
