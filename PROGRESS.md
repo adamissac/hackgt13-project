@@ -2,6 +2,26 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 07:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK2 Tokens, advertising, scanning, uploads + AK5 Proximity radar
+
+**Status:** in progress (code + tests done; needs real phones and AL1's app to go live)
+
+**What I did:**
+- Server `ml/app/routers/ble.py`: `POST /ble/tokens` (144 tokens, one per 10-min window for 24 h, idempotent, 8-char base32 = 5 bytes to fit the iOS local name) and `POST /ble/sightings` (max 2000, drops own/unknown/not-live tokens and stale or future timestamps; returns `{accepted, dropped}`), `purge_old_sightings()` for 24 h retention. `ml/tests/test_ble.py`: 10 tests. Shared `ml/app/deps.py:get_user_id` (invites now uses it too).
+- App `mobile/features/ble/`: `native.ts` loads ble-plx/munim lazily, so **Expo Go no longer crashes**; BLE screens say "needs the dev build" instead. `tokens.ts` (batch + rotation; local random tokens in mock mode), `signal.ts` (5 s rolling median → 1D Kalman, bands -60/-75 dBm, per-model offsets hook; `signal.test.mjs` 5 tests), `uploader.ts` (1 reading/token/s, flush every 30 s, retries only unsent), `engine.ts` (advertise current token, re-advertise at each window boundary, one long scan, publish heard tokens every 1 s).
+- `useProximity` (Adam's stub) is now real, with the same exported shape (+ optional `highlight`, `why`, `heardCount`): runs the engine and polls `GET /events/1/matches` every 15 s, turning `proximity` immediate/near/far into bands.
+- `features/ble/Radar.tsx` on the Nearby tab (list header): 3 rings, dots at stable pseudo-random angles (not positions), green = highlight, tap or pill shows band + shared topics.
+
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest tests -q` (30 passed). `cd mobile && node --experimental-strip-types --test features/ble/signal.test.mjs && npx tsc --noEmit`. Mock mode: Nearby → toggle on → radar shows Maya (nearby, green) and Jordan (farther away).
+
+**Next step for whoever continues:** Alan (AL1/AL3/AL8): mount `ble.router`, back `BleStore` with `ephemeral_ids`/`sightings`, schedule `purge_old_sightings`, and have `/events/{id}/matches` fill `proximity` from each viewer's recent sightings (smoothed RSSI > -60 immediate, -60..-75 near, else far). Akshar: dev build on 2 phones → Nearby toggle on both → check `/ble-debug`-style logs that tokens rotate every 10 min and sightings upload.
+
+**Known issues / blockers:** Nothing tested on hardware. Expo Go can show the UI on mocks but can never do Bluetooth; a dev build is required. `sightings` has no `device_model`/`foreground`/`event_id` columns yet; the router passes them to the store, which can drop them until Adam adds columns. Quick-profile tap target is an inline card until Adam's AD6 screen exists. Cross-folder: `app/(tabs)/nearby.tsx` (radar as list header, removed the forever-loading branch), `lib/api.ts` (bleTokens, bleSightings).
+
+**Contract changes:** `docs/api.md` section 12 rewritten additively: token format (8 lowercase base32), idempotent batch, optional `device_model`/`foreground` on sightings, sightings response `{accepted, dropped}`, drop rules. New mocks `ble_tokens.json`, `ble_sightings.json`.
+
 ## 2026-09-26 05:40 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK6 Labeled Bluetooth recordings
