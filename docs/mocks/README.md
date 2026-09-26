@@ -28,3 +28,9 @@ change to `docs/api.md`.
 | feed.json | GET /feed |
 | feed_insights.json | GET /feed/insights |
 | feed_reply_suggestion.json | POST /feed/{item_id}/reply-suggestion |
+| graph_matches.json | GET /graph?mode=matches |
+| graph_network.json | GET /graph?mode=network |
+| graph_expand.json | GET /graph/expand (node_id = the "reinforcement learning" topic) |
+| dashboard_event.json | GET /dashboard/{event_id} (organizer map, real UMAP+HDBSCAN on synthetic) |
+
+Graph mocks are generated: `cd ml && .venv/bin/python scripts/make_graph_mocks.py` (then `cd dashboard && npm run sync-mocks`).
