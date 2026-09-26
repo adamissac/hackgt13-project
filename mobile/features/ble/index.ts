@@ -28,6 +28,12 @@ export interface ProximityState {
   scanning: boolean;
   peers: Peer[];
   error: string | null;
+  /** Radio problem only (no Bluetooth in Expo Go, permission denied). People can still load. */
+  radioError: string | null;
+  /** Server problem only (couldn't load matches). */
+  fetchError: string | null;
+  /** 'demo' in demo mode, 'off' when the dev build has no Bluetooth, 'on' while the radio runs. */
+  radio: 'demo' | 'off' | 'on';
   heardCount: number; // phones heard by this phone right now (debug; not people)
 }
 
@@ -108,6 +114,9 @@ export function useProximity(enabled: boolean): ProximityState {
     scanning: enabled,
     peers,
     error: radioError ?? fetchError,
+    radioError,
+    fetchError,
+    radio: env.useMocks ? 'demo' : bleAvailable() ? 'on' : 'off',
     heardCount: engine?.heard.length ?? 0,
   };
 }
