@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Bars, Donut, LineChart } from "./charts";
 import { fetchMeDashboard, type Source } from "@/lib/api";
-import { useEmbeddedToken } from "@/lib/auth";
+import { useEmbeddedAuth } from "@/lib/auth";
 import { FACET_GLYPH, usePalette } from "@/lib/theme";
 import type { MeDashboard as Data } from "@/lib/types";
 
@@ -11,19 +11,20 @@ type Result = { key: string; data: Data; source: Source } | { key: string; error
 
 /** AR7 personal dashboard: private to the viewer (embedded in the app's Profile tab via WebView). */
 export default function MeDashboard() {
-  const token = useEmbeddedToken();
+  const { token, api, ready } = useEmbeddedAuth();
   const palette = usePalette();
   const [reload, setReload] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const key = `${token ?? ""}|${reload}`;
+  const key = `${token ?? ""}|${api ?? ""}|${ready ? 1 : 0}|${reload}`;
 
   useEffect(() => {
+    if (!ready) return;
     const ac = new AbortController();
     fetchMeDashboard(token, 30, ac.signal)
       .then(({ data, source }) => setResult({ key, data, source }))
       .catch((e: unknown) => !ac.signal.aborted && setResult({ key, error: e instanceof Error ? e.message : "Couldn't load" }));
     return () => ac.abort();
-  }, [key, token]);
+  }, [key, token, ready]);
 
   const current = result?.key === key ? result : null;
   if (!current)

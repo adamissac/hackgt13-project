@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import GraphCanvas from "./GraphCanvas";
 import type { ColorBy } from "./ConnectionGraph";
 import { fetchExpand, fetchGraph, type Source } from "@/lib/api";
-import { postToApp, useEmbeddedToken } from "@/lib/auth";
+import { postToApp, useEmbeddedAuth } from "@/lib/auth";
 import { mergeGraph } from "@/lib/privacy";
 import { FACET_GLYPH, clusterColor, usePalette } from "@/lib/theme";
 import { FACETS, type Facet, type GraphMode, type GraphPayload, type PersonNode, type TopicNode } from "@/lib/types";
@@ -77,7 +77,7 @@ function filterGraph(g: GraphPayload, f: ViewFilter): GraphPayload {
 }
 
 export default function GraphView({ eventId = 1, initialMode = "matches" }: { eventId?: number; initialMode?: GraphMode }) {
-  const token = useEmbeddedToken();
+  const { token, api, ready } = useEmbeddedAuth();
   const palette = usePalette();
   const [mode, setMode] = useState<GraphMode>(initialMode);
   const [depth, setDepth] = useState<1 | 2>(1);
@@ -98,8 +98,9 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // One server fetch per mode / depth / Rebuild. Sliders filter that result client-side.
-  const key = `${mode}|${eventId}|${depth}|${token ?? ""}|${reload}`;
+  const key = `${mode}|${eventId}|${depth}|${token ?? ""}|${api ?? ""}|${ready ? 1 : 0}|${reload}`;
   useEffect(() => {
+    if (!ready) return;
     const ac = new AbortController();
     fetchGraph(
       {

@@ -3,26 +3,27 @@
 import { useEffect, useState } from "react";
 import { Bars, Sparkline } from "./charts";
 import { fetchFeedInsights, type Source } from "@/lib/api";
-import { useEmbeddedToken } from "@/lib/auth";
+import { useEmbeddedAuth } from "@/lib/auth";
 import type { FeedInsights as Data } from "@/lib/types";
 
 type Result = { key: string; data: Data; source: Source } | { key: string; error: string };
 
 /** AR7 feed insights: trending topics and activity across your connections (aggregate, private to you). */
 export default function FeedInsights() {
-  const token = useEmbeddedToken();
+  const { token, api, ready } = useEmbeddedAuth();
   const [days, setDays] = useState(7);
   const [reload, setReload] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
-  const key = `${token ?? ""}|${days}|${reload}`;
+  const key = `${token ?? ""}|${days}|${api ?? ""}|${ready ? 1 : 0}|${reload}`;
 
   useEffect(() => {
+    if (!ready) return;
     const ac = new AbortController();
     fetchFeedInsights(token, days, ac.signal)
       .then(({ data, source }) => setResult({ key, data, source }))
       .catch((e: unknown) => !ac.signal.aborted && setResult({ key, error: e instanceof Error ? e.message : "Couldn't load" }));
     return () => ac.abort();
-  }, [key, token, days]);
+  }, [key, token, days, ready]);
 
   const current = result?.key === key ? result : null;
   const d = current && "data" in current ? current.data : null;

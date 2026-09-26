@@ -9,7 +9,17 @@ import {
   type GraphPayload,
 } from "./types";
 
-const API = process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ?? "";
+const BUILD_API = process.env.NEXT_PUBLIC_ML_API_URL?.replace(/\/$/, "") ?? "";
+let runtimeApi: string | null = null;
+
+/** The app (WebView) tells us which ML server it uses; that wins over the build-time default. */
+export function setApiBase(api: string | null) {
+  runtimeApi = api;
+}
+
+function apiBase() {
+  return runtimeApi ?? BUILD_API;
+}
 
 export type Source = "live" | "mock";
 
@@ -40,7 +50,7 @@ async function getJson(url: string, token: string | null, signal?: AbortSignal):
 }
 
 function isLive(token: string | null) {
-  return Boolean(API && token);
+  return Boolean(apiBase() && token);
 }
 
 /** Live GET /graph when there's an API URL and a token; otherwise the committed mocks (docs/mocks). */
@@ -58,7 +68,7 @@ export async function fetchGraph(
     min_score: String(q.minScore),
     facet: q.facet,
   });
-  const body = await getJson(live ? `${API}/graph?${params}` : `/mocks/graph_${q.mode}.json`, live ? token : null, signal);
+  const body = await getJson(live ? `${apiBase()}/graph?${params}` : `/mocks/graph_${q.mode}.json`, live ? token : null, signal);
   if (!isGraphPayload(body)) throw new Error("Unexpected /graph response");
   return { data: enforceGraphPrivacy({ ...body, mode: body.mode ?? q.mode }), source: live ? "live" : "mock" };
 }
@@ -79,15 +89,15 @@ export async function fetchExpand(
     return matches ? body : { nodes: [], edges: [] };
   }
   const params = new URLSearchParams({ node_id: nodeId, mode: q.mode, event_id: String(q.eventId) });
-  const body = await getJson(`${API}/graph/expand?${params}`, token);
+  const body = await getJson(`${apiBase()}/graph/expand?${params}`, token);
   if (!isGraphPayload(body)) throw new Error("Unexpected /graph/expand response");
   return body;
 }
 
 /** GET /dashboard/{event_id} (organizer map). Mock when no API URL is configured. */
 export async function fetchEventMap(eventId: number, signal?: AbortSignal): Promise<{ data: EventMap; source: Source }> {
-  const live = Boolean(API);
-  const body = await getJson(live ? `${API}/dashboard/${eventId}` : "/mocks/dashboard_event.json", null, signal);
+  const live = Boolean(apiBase());
+  const body = await getJson(live ? `${apiBase()}/dashboard/${eventId}` : "/mocks/dashboard_event.json", null, signal);
   if (!isEventMap(body)) throw new Error("Unexpected /dashboard response");
   return { data: anonymizeMap(body), source: live ? "live" : "mock" };
 }
@@ -106,7 +116,7 @@ export function anonymizeMap(m: EventMap): EventMap {
 async function authed<T>(path: string, mock: string, token: string | null, check: (v: unknown) => v is T,
   signal?: AbortSignal): Promise<{ data: T; source: Source }> {
   const live = isLive(token);
-  const body = await getJson(live ? `${API}${path}` : mock, live ? token : null, signal);
+  const body = await getJson(live ? `${apiBase()}${path}` : mock, live ? token : null, signal);
   if (!check(body)) throw new Error(`Unexpected ${path.split("?")[0]} response`);
   return { data: body, source: live ? "live" : "mock" };
 }
