@@ -78,7 +78,10 @@ export function useProximity(enabled: boolean): ProximityState {
       return;
     }
     let cancelled = false;
-    const load = () =>
+    let inFlight = false; // never stack polls on a slow server
+    const load = () => {
+      if (inFlight) return;
+      inFlight = true;
       api
         .matches(HACKGT_EVENT_ID)
         .then((r) => {
@@ -86,7 +89,11 @@ export function useProximity(enabled: boolean): ProximityState {
           setPeers(toPeers(r.matches));
           setFetchError(null);
         })
-        .catch((e: unknown) => !cancelled && setFetchError(e instanceof Error ? e.message : String(e)));
+        .catch((e: unknown) => !cancelled && setFetchError(e instanceof Error ? e.message : String(e)))
+        .finally(() => {
+          inFlight = false;
+        });
+    };
     load();
     const t = setInterval(load, POLL_MS);
     return () => {

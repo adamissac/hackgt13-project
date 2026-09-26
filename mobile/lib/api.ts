@@ -305,6 +305,8 @@ export class ApiError extends Error {
   }
 }
 
+const REQUEST_TIMEOUT_MS = 30_000;
+
 async function request<T>(method: string, path: string, body?: unknown | FormData): Promise<T> {
   const { data } = await supabase.auth.getSession();
   const headers: Record<string, string> = {};
@@ -312,11 +314,22 @@ async function request<T>(method: string, path: string, body?: unknown | FormDat
   const isForm = typeof FormData !== 'undefined' && body instanceof FormData;
   if (body !== undefined && !isForm) headers['Content-Type'] = 'application/json';
 
-  const res = await fetch(`${env.apiBaseUrl}${path}`, {
-    method,
-    headers,
-    body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
-  });
+  // Never hang forever on a stuck server: fail with a readable message after 30 s.
+  const abort = new AbortController();
+  const timer = setTimeout(() => abort.abort(), REQUEST_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(`${env.apiBaseUrl}${path}`, {
+      method,
+      headers,
+      body: body === undefined ? undefined : isForm ? (body as FormData) : JSON.stringify(body),
+      signal: abort.signal,
+    });
+  } catch (e) {
+    throw new ApiError(0, abort.signal.aborted ? 'The server took too long to answer. Try again.' : `Network error: ${String(e)}`);
+  } finally {
+    clearTimeout(timer);
+  }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) throw new ApiError(res.status, (json as { error?: string }).error ?? `HTTP ${res.status}`);
   return json as T;

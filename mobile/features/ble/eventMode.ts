@@ -10,7 +10,7 @@ import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 
 import EventModeNative from '../../modules/event-mode/src/EventModeModule';
-import { startEngine, stopEngine } from './engine';
+import { getSnapshot, startEngine, stopEngine } from './engine';
 import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from './native';
 
 const KEY = 'eventMode.on';
@@ -59,6 +59,13 @@ export async function enableEventMode(): Promise<void> {
   // Being in Event Mode means "I'm at the event": check in so matches and suggestions include me.
   api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
   await startEngine({ eventId: HACKGT_EVENT_ID, owner: OWNER });
+  const engine = getSnapshot();
+  if (!engine.running) {
+    // e.g. the server couldn't issue Bluetooth tokens. Say why instead of "Starting Bluetooth..." forever.
+    stopEngine(OWNER);
+    set({ on: false, error: `Bluetooth couldn't start: ${engine.error ?? 'unknown error'}. Try again.` });
+    return;
+  }
   await activateKeepAwakeAsync(TAG);
   let service: EventModeStatus['backgroundService'] = 'unavailable';
   try {
