@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "sync-mocks": "cp ../docs/mocks/graph_*.json ../docs/mocks/dashboard_event.json public/mocks/",
+    "sync-mocks": "cp ../docs/mocks/graph_*.json ../docs/mocks/dashboard_event.json ../docs/mocks/me_dashboard.json ../docs/mocks/feed_insights.json public/mocks/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
