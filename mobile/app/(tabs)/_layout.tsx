@@ -4,16 +4,16 @@ import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import { View, type ColorValue } from 'react-native';
 import { HeaderActions } from '@/components/HeaderActions';
-import { Brand, ChatMark } from '@/components/Brand';
+import { Brand } from '@/components/Brand';
 import Colors from '@/constants/Colors';
 import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { env } from '@/lib/env';
 
-function icon(name: SymbolViewProps['name'], ai = false) {
+function icon(name: SymbolViewProps['name']) {
  return function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
   return <View style={{ width: 52, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? Colors.light.tintSoft : 'transparent' }}>
-   {ai ? <ChatMark color={focused ? Colors.light.tint : Colors.light.tabIconDefault}/> : <SymbolView name={name} tintColor={color} size={23}/>}
+   <SymbolView name={name} tintColor={color} size={23}/>
   </View>;
  };
 }
@@ -45,13 +45,13 @@ export default function TabLayout() {
   headerTitleStyle: { fontWeight: '700' }, headerRight: () => <HeaderActions />,
  }}>
   <Tabs.Screen name="index" options={{title:'Feed', headerTitle:()=> <Brand/>, tabBarIcon:icon({ios:'house.fill',android:'home',web:'home'})}}/>
-  <Tabs.Screen name="discover" options={{title:'Discover',headerShown:false,tabBarIcon:icon({ios:'point.3.connected.trianglepath.dotted',android:'hub',web:'hub'})}}/>
-  <Tabs.Screen name="ai" options={{title:'AI Chat',tabBarIcon:icon({ios:'bubble.left',android:'chat',web:'chat'},true)}}/>
+  <Tabs.Screen name="graph" options={{title:'Constellation',tabBarLabelStyle:{fontSize:10,fontWeight:'700',marginTop:3},tabBarIcon:icon({ios:'point.3.connected.trianglepath.dotted',android:'hub',web:'hub'})}}/>
+  <Tabs.Screen name="nearby" options={{title:'Nearby',tabBarIcon:icon({ios:'dot.radiowaves.left.and.right',android:'wifi_tethering',web:'wifi_tethering'})}}/>
   <Tabs.Screen name="events" options={{title:'Events',tabBarIcon:icon({ios:'calendar',android:'event',web:'event'})}}/>
   <Tabs.Screen name="me" options={{title:'Profile',tabBarIcon:icon({ios:'person.crop.circle',android:'account_circle',web:'account_circle'})}}/>
   <Tabs.Screen name="feed" options={{href:null,title:'Feed'}}/>
-  <Tabs.Screen name="graph" options={{href:null,title:'Your constellation'}}/>
-  <Tabs.Screen name="nearby" options={{href:null,title:'Nearby'}}/>
+  <Tabs.Screen name="discover" options={{href:null,title:'Meeting activity',headerShown:false}}/>
+  <Tabs.Screen name="ai" options={{href:null}}/>
   <Tabs.Screen name="chats" options={{href:null,title:'Messages'}}/>
  </Tabs>;
 }

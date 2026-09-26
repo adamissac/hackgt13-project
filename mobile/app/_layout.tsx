@@ -1,3 +1,5 @@
+import { View } from 'react-native';
+import { AiFab } from '@/components/AiFab';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
@@ -71,6 +73,7 @@ function RootLayoutNav() {
 
   return (
     <ThemeProvider value={navTheme(colorScheme)}>
+      <View style={{ flex: 1 }}>
       <Stack
         screenOptions={{
           animation: 'ios_from_right',
@@ -113,6 +116,8 @@ function RootLayoutNav() {
         {/* Invite links must open signed out too; the screen handles sign-in itself. */}
         <Stack.Screen name="invite/[token]" options={{ title: 'Invite', headerBackTitle: 'Back' }} />
       </Stack>
+      {signedIn && !needsOnboarding && <AiFab />}
+      </View>
     </ThemeProvider>
   );
 }

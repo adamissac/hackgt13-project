@@ -69,7 +69,7 @@ a new connection.</Text>
  </>;
 }
 const styles=StyleSheet.create({
- container:{padding:20,gap:18,paddingBottom:32,maxWidth:640,width:'100%',alignSelf:'center'},
+ container:{padding:20,gap:18,paddingBottom:100,maxWidth:640,width:'100%',alignSelf:'center'},
  hero:{borderRadius:26,padding:26,gap:14},eyebrow:{color:'#B6C9FA',fontSize:10,fontWeight:'700',letterSpacing:2},
  heroTitle:{color:'#FFFFFF',fontSize:31,lineHeight:37,fontWeight:'700',letterSpacing:-1},heroBody:{color:'#D3DEF2',fontSize:15,lineHeight:23},
  title:{fontSize:20,fontWeight:'700',letterSpacing:-0.4},body:{fontSize:15,lineHeight:23},small:{fontSize:12,lineHeight:18,flexShrink:1},

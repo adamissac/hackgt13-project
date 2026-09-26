@@ -46,17 +46,11 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
-          <Text style={[styles.title, { color: c.text }]}>Find your orbit</Text>
+          <Text style={[styles.title, { color: c.text }]}>Meeting activity</Text>
         </View>
         <HeaderActions />
       </View>
 
-      <Card highlight>
-        <Text style={[styles.cardTitle, { color: c.text }]}>Every connection has a story.</Text>
-        <Text style={[styles.body, { color: c.muted }]}>Explore the interests that bring your people together.</Text>
-        <Button label="Explore your constellation" onPress={() => router.push('/graph')} />
-        <Button label="People nearby" variant="secondary" onPress={() => router.push('/nearby')} />
-      </Card>
       <FinishProfileBanner />
 
       <OpenToMeetCard presence={presence} />

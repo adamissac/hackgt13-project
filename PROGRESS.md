@@ -1,3 +1,16 @@
+## 2026-09-26 06:27 | arjun | Codex
+**Task:** AR6 / AD11 — simplify navigation and restore floating AI
+**Status:** done
+**What I did:**
+- Per user request, replaced the AI tab with a bottom-left floating message button containing the constellation logo. Mounted it at the signed-in root so secondary stack screens also have access; hidden in the assistant itself and while typing.
+- Promoted Constellation and Nearby to direct primary tabs, alongside Feed, Events and Profile. Removed the redundant Discover launcher card. Kept original Home functions under Nearby's Meeting activity & Open to Meet action.
+- Kept old AI route as a redirect and existing assistant query links intact. Added bottom scroll space on Feed, Events and Profile and protected the launcher from SVG pointer interception.
+- Mobile owner files changed under explicit user authorization; no backend or dependency changes.
+**How to run/test it:** `cd mobile && npm run typecheck && npm run lint`; `npx expo export --platform ios --output-dir /tmp/constellation-nav-ios`. Passed. Existing browser preview verified direct Constellation/Nearby destinations and assistant modal keyboard activation.
+**Next step for whoever continues:** Reload Expo from this clone. Validate floating launcher taps and native modal stacking on an iPhone; desktop browser pointer automation was unreliable, so keyboard navigation was used for interaction checks.
+**Known issues / blockers:** No physical iPhone test performed. Existing sample-event and installed-app release limitations remain unchanged.
+**Contract changes:** none
+
 ## 2026-09-26 06:14 | arjun | Codex
 **Task:** AR6 / AD11 — user-requested Constellation mobile redesign
 **Status:** done

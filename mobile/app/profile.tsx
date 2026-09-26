@@ -308,7 +308,7 @@ function SourceRow({ icon, title, detail, ok, divider }: { icon: string; title: 
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 14, paddingBottom: 48, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  container: { padding: 20, gap: 14, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   warning: { borderRadius: 12, padding: 12 },
   headerCard: { alignItems: 'center', gap: 14, paddingVertical: 22 },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },

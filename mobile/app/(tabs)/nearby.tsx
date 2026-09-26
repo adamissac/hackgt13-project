@@ -20,6 +20,7 @@ export default function NearbyScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
+      <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
       <Card>
         <View style={styles.toggleRow}>
           <View style={{ flex: 1 }}>

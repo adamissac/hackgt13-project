@@ -163,7 +163,7 @@ function FeedCard({ item }: { item: FeedEntry }) {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 20, gap: 18, paddingBottom: 32, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  container: { padding: 20, gap: 18, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   lead: { fontSize: 15, lineHeight: 21 },
   kinds: { flexDirection: 'row', gap: 8 },
   kind: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
