@@ -19,6 +19,8 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        animation: 'shift',
+        sceneStyle: { backgroundColor: Colors[colorScheme].background },
         tabBarActiveTintColor: Colors[colorScheme].tint,
         tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
         tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },

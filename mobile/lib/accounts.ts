@@ -6,6 +6,7 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 
 import { api, type JobStatus } from './api';
+import { demo } from './demo';
 import { env } from './env';
 
 export const githubReturnUrl = Linking.createURL('connect/github');
@@ -26,7 +27,11 @@ export function parseGithubReturn(url: string): ConnectResult {
 }
 
 export async function connectGithub(): Promise<ConnectResult> {
-  if (env.useMocks) return 'connected';
+  if (env.useMocks) {
+    await new Promise((r) => setTimeout(r, 1200));
+    demo.addSource('github');
+    return 'connected';
+  }
   const { url } = await api.githubStart();
   const result = await WebBrowser.openAuthSessionAsync(url, githubReturnUrl);
   if (result.type !== 'success') return 'cancelled';
@@ -39,12 +44,18 @@ export async function uploadResume(): Promise<string | null> {
   if (picked.canceled) return null;
   const file = picked.assets[0];
   if (file.size != null && file.size > 10 * 1024 * 1024) throw new Error('That PDF is over 10 MB.');
+  if (env.useMocks) {
+    await new Promise((r) => setTimeout(r, 1500));
+    demo.addSource('resume');
+    return 'demo-job';
+  }
   const { job_id } = await api.ingestResume({ uri: file.uri, name: file.name, type: file.mimeType ?? 'application/pdf' });
   return job_id;
 }
 
 /** Poll GET /profile/status until the job finishes. Extraction usually takes 5-20 s. */
 export async function waitForJob(jobId: string, timeoutMs = 90_000): Promise<Exclude<JobStatus, 'queued' | 'running'>> {
+  if (env.useMocks) return 'done';
   const until = Date.now() + timeoutMs;
   while (Date.now() < until) {
     const s = await api.profileStatus(jobId);

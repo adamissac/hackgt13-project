@@ -45,7 +45,11 @@ interface Rel {
   sharing_since: number | null;
 }
 
+export type OnboardingStatus = 'pending' | 'partial' | 'complete';
+
 interface State {
+  onboarding: OnboardingStatus;
+  sources: { github: boolean; resume: boolean };
   openToMeet: boolean;
   checkedIn: boolean;
   rel: Record<string, Rel>;
@@ -60,6 +64,8 @@ interface State {
 }
 
 const fresh = (): State => ({
+  onboarding: 'pending',
+  sources: { github: false, resume: false },
   openToMeet: false,
   checkedIn: false,
   rel: {},
@@ -134,6 +140,25 @@ function need(userId: string): DemoPerson {
 function later(ms: number, fn: () => void) {
   if (ms <= 0) fn();
   else setTimeout(fn, ms);
+}
+
+// ---------- onboarding ----------
+export function onboarding() {
+  return { status: state.onboarding, sources: state.sources };
+}
+export function setOnboarding(status: OnboardingStatus) {
+  if (state.onboarding !== 'complete') state.onboarding = status;
+  save();
+  emitChange('profile');
+  return onboarding();
+}
+/** Adding a source runs the (simulated) profile builder; the first success completes onboarding. */
+export function addSource(source: 'github' | 'resume') {
+  state.sources[source] = true;
+  state.onboarding = 'complete';
+  save();
+  emitChange('profile');
+  return { interests: DEMO_MY_INTERESTS.filter((i) => source === 'github' ? i.source === 'github' : i.source !== 'github').length };
 }
 
 // ---------- me ----------

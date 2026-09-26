@@ -532,6 +532,35 @@ export const api = {
           return r;
         }),
     ),
+  /** Onboarding status on my profile (profiles.onboarding_status; the server sets 'complete'). */
+  onboardingStatus: () =>
+    call(
+      () => demo.onboarding().status,
+      async () => {
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth.user) return 'pending' as const;
+        const { data, error } = await supabase.from('profiles').select('onboarding_status').eq('id', auth.user.id).maybeSingle();
+        if (error) throw new Error(error.message);
+        return ((data as { onboarding_status?: string } | null)?.onboarding_status ?? 'pending') as 'pending' | 'partial' | 'complete';
+      },
+    ),
+  /** Leaving onboarding without a finished profile marks it 'partial' (never downgrades 'complete'). */
+  finishOnboarding: () =>
+    call(
+      () => demo.setOnboarding('partial').status,
+      async () => {
+        const { data: auth } = await supabase.auth.getUser();
+        if (!auth.user) return 'pending' as const;
+        const { error } = await supabase
+          .from('profiles')
+          .update({ onboarding_status: 'partial' })
+          .eq('id', auth.user.id)
+          .eq('onboarding_status', 'pending');
+        if (error) throw new Error(error.message);
+        emitChange('profile');
+        return 'partial' as const;
+      },
+    ),
   /** Demo only: stand in for Bluetooth verifying an in-person conversation. */
   simulateConversation: (userId: string) =>
     call(
