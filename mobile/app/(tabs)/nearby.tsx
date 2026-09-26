@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Switch } from 'react-native';
 import { Empty, ErrorState, Loading } from '@/components/States';
 import { Text, View } from '@/components/Themed';
 import { useProximity } from '@/features/ble';
+import { EventModeCard } from '@/features/ble/EventModeCard';
 import { Radar } from '@/features/ble/Radar';
 
 // Nearby matches over Bluetooth (MASTER_SPEC 3.4). The radar and the real scanning are
@@ -19,6 +20,8 @@ export default function NearbyScreen() {
         <Text style={styles.title}>Scan for people nearby</Text>
         <Switch value={scan} onValueChange={setScan} accessibilityLabel="Scan for people nearby" />
       </View>
+      {/* AK8 (Akshar): Event Mode keeps scanning going at the event. */}
+      <EventModeCard />
       {/* AK3 (Akshar): QR verification fallback, always available. */}
       <Link href="/verify" style={styles.verifyLink}>
         Just talked with someone? Verify with QR

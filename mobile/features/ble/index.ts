@@ -62,10 +62,10 @@ export function useProximity(enabled: boolean): ProximityState {
   useEffect(() => {
     if (!enabled) return;
     const unsub = subscribe(setEngine);
-    if (bleAvailable()) startEngine({ eventId: HACKGT_EVENT_ID });
+    if (bleAvailable()) startEngine({ eventId: HACKGT_EVENT_ID, owner: 'nearby' });
     return () => {
       unsub();
-      stopEngine();
+      stopEngine('nearby');
       setEngine(null);
     };
   }, [enabled]);
@@ -105,8 +105,8 @@ export function useProximity(enabled: boolean): ProximityState {
   };
 }
 
-/** Start/stop advertising and scanning outside the Nearby screen (e.g. Event Mode, AK8). */
+/** Start/stop advertising and scanning outside the Nearby screen. Event Mode (AK8) uses features/ble/eventMode. */
 export async function setAdvertising(on: boolean): Promise<void> {
-  if (on) await startEngine({ eventId: HACKGT_EVENT_ID });
-  else stopEngine();
+  if (on) await startEngine({ eventId: HACKGT_EVENT_ID, owner: 'app' });
+  else stopEngine('app');
 }

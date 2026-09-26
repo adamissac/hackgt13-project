@@ -38,6 +38,8 @@ let appStateSub: { remove: () => void } | null = null;
 let foreground = AppState.currentState === 'active';
 let eventId: number | null = null;
 let starting: Promise<void> | null = null;
+// Several features can need the radio at once (Nearby tab, Event Mode). It runs while any owner holds it.
+const owners = new Set<string>();
 
 function publish(patch: Partial<EngineSnapshot>) {
   snapshot = { ...snapshot, ...patch };
@@ -87,8 +89,9 @@ export function getSnapshot(): EngineSnapshot {
   return snapshot;
 }
 
-export async function startEngine(opts: { eventId: number | null }): Promise<void> {
+export async function startEngine(opts: { eventId: number | null; owner?: string }): Promise<void> {
   eventId = opts.eventId;
+  owners.add(opts.owner ?? 'default');
   if (snapshot.running) return;
   if (starting) return starting;
   starting = (async () => {
@@ -108,7 +111,7 @@ export async function startEngine(opts: { eventId: number | null }): Promise<voi
       ];
       publish({ running: true, error: null });
     } catch (e) {
-      stopEngine();
+      shutdown();
       publish({ error: e instanceof Error ? e.message : String(e) });
     } finally {
       starting = null;
@@ -117,7 +120,14 @@ export async function startEngine(opts: { eventId: number | null }): Promise<voi
   return starting;
 }
 
-export function stopEngine(): void {
+/** Releases `owner`'s hold; the radio stops when nobody needs it any more. */
+export function stopEngine(owner = 'default'): void {
+  owners.delete(owner);
+  if (owners.size === 0) shutdown();
+}
+
+function shutdown(): void {
+  owners.clear();
   stopScan();
   endAdvertising();
   timers.forEach(clearInterval);

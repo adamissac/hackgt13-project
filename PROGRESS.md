@@ -2,6 +2,27 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 12:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** AK8 Event Mode
+
+**Status:** in progress (code done and bundles for iOS + Android; Kotlin not compiled here: no Android SDK on this Mac)
+
+**What I did:**
+- `mobile/modules/event-mode/` (local Expo module, Android only, autolinked): `EventModeService` is a foreground service with `foregroundServiceType="connectedDevice"`, the `FOREGROUND_SERVICE` + `FOREGROUND_SERVICE_CONNECTED_DEVICE` + `POST_NOTIFICATIONS` permissions, a low-importance persistent "Event Mode is on" notification (tap opens the app) and `START_NOT_STICKY`. It catches the Android 14 SecurityException / background-start refusal and reports `lastError()` instead of crashing. JS binding via `requireOptionalNativeModule` (null on iOS / Expo Go).
+- `features/ble/eventMode.ts`: enable = Bluetooth permissions + engine → `expo-keep-awake` → (Android 13+ notification permission) → foreground service; disable reverses it. Remembers the choice and offers "Resume" (never auto-starts).
+- The engine is now reference-counted by owner (`nearby`, `event-mode`, `app`), so leaving the Nearby tab no longer kills Event Mode's scan.
+- `features/ble/EventModeCard.tsx` at the top of the Nearby tab: switch + honest status (screen stays on; Android: scanning when locked, or "keep the app open" if the service failed; iOS: "keep the app open") + phones heard.
+- Checked with `expo prebuild --platform android`: the merged app manifest has all BLE, camera, location, FGS and notification permissions (generated folder deleted afterwards).
+
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo export --platform android`. On an Android phone (dev build, rebuilt): Nearby → Event Mode ON → the notification appears → lock the phone for 2 minutes → the other phone's Nearby should keep seeing it, and `sightings` rows keep arriving. iPhone: Event Mode ON → the screen doesn't dim.
+
+**Next step for whoever continues:** First Android dev build: `npx expo run:android --device` (needs Android Studio / JDK 17) or `npx eas-cli build --profile development --platform android`. If Gradle fails in `modules/event-mode`, the code is in `android/src/main/java/expo/modules/eventmode/`. Then run the locked-phone test above and log it in the test matrix.
+
+**Known issues / blockers:** Kotlin never compiled locally. iOS can't scan in the background (platform limit, spec 7.2), so the pitch line is "at least one phone foregrounded". Cross-folder: Adam's `app/(tabs)/nearby.tsx` (card added).
+
+**Contract changes:** none
+
 ## 2026-09-26 11:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK7 Meetup location sharing
