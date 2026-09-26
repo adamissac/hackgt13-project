@@ -1,45 +1,57 @@
-"""Convert AK6 recording files (from the app's Record session screen) into encounter sessions.
+"""Convert AK6 recordings (the app's Record session screen, one JSON per phone per recording) into the
+labeled CSVs Alan's encounter trainer reads (app/encounters.py load_labeled):
 
-Each recording is one phone's view; every other phone it heard becomes one session in the shape
-ml/encounter.py expects: {"t": [seconds from start], "rssi": [...], "label": 0|1, ...}.
+    ml/datasets/ble_labeled/<recording>.csv   columns: session_id,label,observer,observed,ts,rssi
 
-Usage: python scripts/ak6_to_sessions.py recordings/*.json > data/ak6_sessions.json
+One session per (observer phone, heard phone). `ts` is unix seconds. Then retrain:
+    python scripts/train_encounter.py
+
+Usage: python scripts/ak6_to_sessions.py ~/Downloads/ak6_*.json [--out datasets/ble_labeled]
 """
+import argparse
+import csv
 import json
-import sys
 from collections import defaultdict
+from pathlib import Path
+
+OUT_DIR = Path(__file__).resolve().parents[1] / "datasets" / "ble_labeled"
+FIELDS = ["session_id", "label", "observer", "observed", "ts", "rssi"]
 
 
-def recording_to_sessions(rec):
+def recording_to_rows(rec):
     by_peer = defaultdict(list)
     for s in rec["sightings"]:
-        by_peer[s["peer"]].append((s["ts"], s["rssi"]))
-    sessions = []
+        by_peer[s["peer"]].append((s["ts"] / 1000.0, s["rssi"]))
+    rows = []
     for peer, pts in sorted(by_peer.items()):
-        pts.sort()
-        t0 = pts[0][0]
-        sessions.append({
-            "t": [(ts - t0) / 1000.0 for ts, _ in pts],
-            "rssi": [r for _, r in pts],
-            "label": int(bool(rec["conversation"])),
-            "situation": rec["label"],
-            "observer": rec["self_name"],
-            "peer": peer,
-            "device_model": rec.get("device_model"),
-            "platform": rec.get("platform"),
-            "distance_note": rec.get("distance_note", ""),
-        })
-    return sessions
+        for ts, rssi in sorted(pts):
+            rows.append({"session_id": f"{rec['self_name']}>{peer}", "label": rec["label"],
+                         "observer": rec["self_name"], "observed": peer, "ts": f"{ts:.3f}", "rssi": rssi})
+    return rows
 
 
-def main(paths):
-    sessions = []
-    for p in paths:
+def write_csv(rec, out_dir: Path) -> Path:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    stamp = rec["started_at"].replace(":", "-").replace(".", "-")
+    path = out_dir / f"{rec['label']}_{rec['self_name']}_{stamp}.csv"
+    with open(path, "w", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w.writeheader()
+        w.writerows(recording_to_rows(rec))
+    return path
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("files", nargs="+")
+    ap.add_argument("--out", type=Path, default=OUT_DIR)
+    args = ap.parse_args()
+    for p in args.files:
         with open(p) as f:
-            sessions.extend(recording_to_sessions(json.load(f)))
-    json.dump(sessions, sys.stdout)
-    print(f"{len(sessions)} sessions from {len(paths)} recordings", file=sys.stderr)
+            rec = json.load(f)
+        out = write_csv(rec, args.out)
+        print(f"{p} -> {out} ({len(rec['sightings'])} readings, label {rec['label']})")
 
 
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
