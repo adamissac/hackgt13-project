@@ -23,3 +23,7 @@ ml/data/*
 .DS_Store
 .vscode/
 .idea/
+.claude/owner.local
+.claude/settings.local.json
+CLAUDE.local.md
+ml/data/external/
