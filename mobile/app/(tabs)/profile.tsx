@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import type { Session } from '@supabase/supabase-js';
 
 import { Empty, ErrorState, Loading } from '@/components/States';
@@ -32,6 +32,11 @@ export default function ProfileScreen() {
         {session ? `Signed in as ${session.user.email ?? session.user.id}` : 'Not signed in'}
         {env.useMocks ? ' · mock data' : ''}
       </Text>
+      {session && (
+        <Pressable onPress={() => supabase.auth.signOut()} style={styles.signOut} accessibilityRole="button">
+          <Text style={styles.signOutText}>Sign out</Text>
+        </Pressable>
+      )}
 
       <Text style={styles.section}>Your interests</Text>
       {state.status === 'loading' && <Loading label="Loading your interests…" />}
@@ -64,4 +69,6 @@ const styles = StyleSheet.create({
   row: { borderWidth: 1, borderColor: '#8884', borderRadius: 12, padding: 14, gap: 4 },
   name: { fontSize: 17, fontWeight: '600' },
   muted: { fontSize: 14, opacity: 0.65 },
+  signOut: { minHeight: 48, justifyContent: 'center' },
+  signOutText: { fontSize: 16, color: '#d33', fontWeight: '600' },
 });
