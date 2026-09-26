@@ -2,14 +2,118 @@
   "event_id": 1,
   "model": "v1",
   "matches": [
-    { "user_id": "00000000-0000-0000-0000-000000000101", "name": "Maya R.", "photo_url": null, "role": "student",
-      "score": 0.74, "rank": 1, "highlight": true,
-      "why": ["reinforcement learning", "time series analysis", "rock climbing"], "proximity": "near" },
-    { "user_id": "00000000-0000-0000-0000-000000000102", "name": "Jordan K.", "photo_url": null, "role": "recruiter",
-      "score": 0.66, "rank": 2, "highlight": false,
-      "why": ["quantitative finance", "reinforcement learning"], "proximity": "far" },
-    { "user_id": "00000000-0000-0000-0000-000000000103", "name": "Priya S.", "photo_url": null, "role": "student",
-      "score": 0.58, "rank": 3, "highlight": false,
-      "why": ["time series analysis", "film photography"], "proximity": null }
+    {
+      "user_id": "00000000-0000-0000-0000-000000000101",
+      "name": "Maya R.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.74,
+      "rank": 1,
+      "highlight": true,
+      "why": [
+        "reinforcement learning",
+        "time series analysis",
+        "rock climbing"
+      ],
+      "proximity": "near"
+    },
+    {
+      "user_id": "00000000-0000-0000-0000-000000000102",
+      "name": "Jordan K.",
+      "photo_url": null,
+      "role": "recruiter",
+      "score": 0.66,
+      "rank": 2,
+      "highlight": false,
+      "why": [
+        "quantitative finance",
+        "reinforcement learning"
+      ],
+      "proximity": "far"
+    },
+    {
+      "user_id": "00000000-0000-0000-0000-000000000103",
+      "name": "Priya S.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.58,
+      "rank": 3,
+      "highlight": false,
+      "why": [
+        "time series analysis",
+        "film photography"
+      ],
+      "proximity": null
+    },
+    {
+      "user_id": "00000000-0000-4000-8000-000000000010",
+      "name": "Priya S.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.71,
+      "rank": 4,
+      "highlight": true,
+      "why": [
+        "reinforcement learning",
+        "stochastic calculus"
+      ],
+      "proximity": "immediate"
+    },
+    {
+      "user_id": "00000000-0000-4000-8000-000000000011",
+      "name": "Kai M.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.63,
+      "rank": 5,
+      "highlight": true,
+      "why": [
+        "robot learning",
+        "rock climbing"
+      ],
+      "proximity": "immediate"
+    },
+    {
+      "user_id": "00000000-0000-4000-8000-000000000012",
+      "name": "Zara K.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.58,
+      "rank": 6,
+      "highlight": false,
+      "why": [
+        "offline rl",
+        "film photography"
+      ],
+      "proximity": "near"
+    },
+    {
+      "user_id": "00000000-0000-4000-8000-000000000013",
+      "name": "Diego A.",
+      "photo_url": null,
+      "role": "student",
+      "score": 0.52,
+      "rank": 7,
+      "highlight": false,
+      "why": [
+        "game theory",
+        "poker"
+      ],
+      "proximity": "near"
+    },
+    {
+      "user_id": "00000000-0000-4000-8000-000000000014",
+      "name": "Leo T.",
+      "photo_url": null,
+      "role": "recruiter",
+      "score": 0.49,
+      "rank": 8,
+      "highlight": false,
+      "why": [
+        "machine learning",
+        "ai research"
+      ],
+      "proximity": "far"
+    }
   ]
 }
