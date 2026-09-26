@@ -11,13 +11,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from . import db, errors, workers
+from . import db, errors, tasks, workers  # noqa: F401  (tasks registers background jobs)
 from .settings import get_settings
 
 log = logging.getLogger("app")
 
 # One module per area in app/routers/. Order does not matter.
-ROUTERS = ["health", "profile"]
+ROUTERS = ["health", "profile", "events"]
 
 
 @asynccontextmanager

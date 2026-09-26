@@ -105,3 +105,27 @@ def add_user(db, name="Test User", role="student", **cols) -> str:
     db.execute(f"insert into profiles ({keys}) values ({', '.join(['%s'] * len(fields))})",
                list(fields.values()))
     return uid
+
+
+def seed_person(db, name, interests, *, role="student", seeking="", offering="", event_id=None,
+                source="manual", summary=None) -> str:
+    """A user with extracted interests stored through the real pipeline (no LLM).
+    interests: [(name, facet, strength)]"""
+    from app import profile_store
+    from ml.extraction import ExtractResult, ExtractedInterest
+    uid = add_user(db, name=name, role=role, seeking=seeking, offering=offering)
+    result = ExtractResult(
+        interests=[ExtractedInterest(name=n, facet=f, strength=s, evidence=f"{name}: {n}") for n, f, s in interests],
+        seeking=seeking, offering=offering, summary=summary or {})
+    with db.conn() as c:
+        doc_id = profile_store.save_document(c, uid, source, "seeded", {"synthetic": True})
+    profile_store.store_extraction(uid, doc_id, source, result)
+    if event_id is not None:
+        db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (event_id, uid))
+        from app import population
+        population.invalidate()
+    return uid
+
+
+def add_event(db, name="HackGT 13") -> int:
+    return db.fetchone("insert into events (name) values (%s) returning id", (name,))["id"]

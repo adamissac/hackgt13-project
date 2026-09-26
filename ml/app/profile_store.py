@@ -20,7 +20,7 @@ from ml.config import MERGE_THRESHOLD, LLM_TIEBREAK_BAND
 from ml.profiles import interest_weight
 from ml import extraction
 
-from . import db
+from . import db, population
 
 log = logging.getLogger("profile_store")
 
@@ -100,6 +100,7 @@ def store_extraction(user_id: str, doc_id: int, source: str, result: extraction.
                   "offering = case when coalesce(offering, '') = '' then %s else offering end where id = %s",
                   (result.seeking, result.offering, user_id))
         rebuild_user_interests(c, user_id)
+    population.invalidate()
     return payload
 
 
@@ -180,6 +181,7 @@ def patch_interests(user_id: str, confirm: list[int], hide: list[int], add: list
             c.execute("update user_interests set confirmed = true, hidden = false "
                       "where user_id = %s and interest_id = any(%s)", (user_id, new_ids))
             rebuild_user_interests(c, user_id)
+    population.invalidate()
     return get_interests(user_id)
 
 
