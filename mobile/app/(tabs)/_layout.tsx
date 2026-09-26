@@ -19,13 +19,16 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme].tint,
+        tabBarInactiveTintColor: Colors[colorScheme].tabIconDefault,
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
+        headerTitleStyle: { fontWeight: '700' },
         // Disable the static render of the header on web
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Home', tabBarIcon: icon({ ios: 'house.fill', android: 'home', web: 'home' }) }}
+        options={{ title: 'Home', headerShown: false, tabBarIcon: icon({ ios: 'house.fill', android: 'home', web: 'home' }) }}
       />
       <Tabs.Screen
         name="nearby"

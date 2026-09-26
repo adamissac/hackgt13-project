@@ -4,6 +4,8 @@ HackGT 13 · Team: Adam, Alan, Arjun, Akshar · Tracks: AI/ML + Data Visualizati
 
 `MASTER_SPEC.md` is the single source of truth. If anything here disagrees with it, the spec wins. Shared contracts: `docs/schema.sql` and `docs/api.md`, plus example payloads in `docs/mocks/`.
 
+`REQUESTS.md` holds asks between owners: do the open (`- [ ]`) items in your owner's section (the session hook lists them) and add your asks for others there.
+
 ## Start of every session
 1. `git pull --rebase`
 2. If you have not read `MASTER_SPEC.md` in this session, read all of it before writing code. Then read `PROGRESS.md` (newest entry first), `docs/schema.sql`, and `docs/api.md`.
@@ -68,5 +70,15 @@ Every push updates it. Newest entry at the top. Exactly this template:
 Each owner adds their area's commands here in the same commit that first makes them work, and keeps them current.
 - supabase (Adam): from repo root. New migration: `npx supabase migration new <name>`. Apply to our project (ref mwfzgkikbmnghueolfnw): `npx supabase db push --linked`. Inspect: `npx supabase db query --linked "<sql>"`. DB types: `npx supabase gen types typescript --linked > mobile/lib/database.types.ts`. RLS isolation test: `SUPABASE_URL=... SUPABASE_ANON_KEY=... SUPABASE_SERVICE_KEY=... node scripts/rls-isolation-test.mjs` (keys: `npx supabase projects api-keys --project-ref mwfzgkikbmnghueolfnw`). First time on a laptop: `npx supabase login`, then `npx supabase link --project-ref mwfzgkikbmnghueolfnw`.
 - mobile (Adam, Akshar): `cd mobile && npm install && cp .env.example .env` (fill in; `EXPO_PUBLIC_USE_MOCKS=1` serves docs/mocks). Typecheck: `npx tsc --noEmit`. Bundle check: `npx expo export --platform ios`. Dev build on a phone: `npx expo run:ios --device` (needs Xcode) / `npx expo run:android --device`, or `npx eas-cli build --profile development`. Then `npx expo start --dev-client`.
-- ml (Alan, Arjun, Akshar): `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`. Tests: `.venv/bin/python -m pytest tests -q` (invites: `tests/test_invites.py`).
+- ml (Alan, Arjun, Akshar): `cd ml && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt && .venv/bin/python -m pytest -q tests`
 - dashboard (Arjun): not set yet
+
+## Run and test: `ml/` (FastAPI service)
+```
+cd ml && python3 -m venv .venv && . .venv/bin/activate && pip install -r requirements.txt
+cp ../.env.example ../.env   # fill DATABASE_URL, SUPABASE_URL, SUPABASE_JWT_SECRET (if legacy HS256), QR_SIGNING_KEY, ANTHROPIC_API_KEY
+uvicorn app.main:app --host 0.0.0.0 --port 8000        # GET /health is public; everything else needs the Supabase JWT
+cloudflared tunnel --url http://localhost:8000          # separate terminal: public URL for phones; share it as ML_API_URL
+TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests   # DB tests need an EMPTY throwaway Postgres+pgvector (it is wiped)
+python scripts/train_ranker.py --source auto      # AL9: retrain ranker; report says 'simulated' or 'real outcomes'
+```

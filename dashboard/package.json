@@ -1,0 +1,30 @@
+{
+  "name": "dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "sync-mocks": "cp ../docs/mocks/graph_*.json ../docs/mocks/dashboard_event.json ../docs/mocks/me_dashboard.json ../docs/mocks/feed_insights.json public/mocks/",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "d3-force-3d": "^3.0.6",
+    "next": "16.3.6",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "react-force-graph-2d": "^1.29.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.6",
+    "typescript": "^5",
+    "vitest": "^4.1.11"
+  }
+}

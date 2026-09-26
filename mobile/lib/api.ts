@@ -67,6 +67,36 @@ export interface Connection {
 }
 export interface ConnectionsResponse { connections: Connection[] }
 
+export interface SharedTopic { interest_id: number; name: string; facet: Facet; strength: number; evidence: string }
+export interface QuickProfile {
+  user_id: string;
+  name: string;
+  photo_url: string | null;
+  role: 'student' | 'recruiter';
+  headline: string;
+  seeking: string;
+  offering: string;
+  connected: boolean;
+  score: number;
+  shared_topics: SharedTopic[];
+  facet_overlap: Record<Facet, number>;
+  complementarity: number;
+}
+
+export interface Suggestion {
+  suggestion_id: number;
+  context: 'event' | 'public' | 'reconnect';
+  event_id: number | null;
+  building_id: string | null;
+  expires_at: string;
+  other: Person & { role: 'student' | 'recruiter'; headline: string };
+  score: number;
+  shared_topics: string[];
+}
+export interface SuggestionsResponse { suggestions: Suggestion[] }
+// "waiting" covers every outcome except a mutual yes, whatever the other person did.
+export type SuggestionRespondResponse = { status: 'waiting' } | { status: 'matched'; chat_id: number };
+
 // Bluetooth (section 12). Tokens rotate every 10 minutes; only the server maps them to users.
 export interface BleToken { token: string; valid_from: string; valid_to: string }
 export interface BleSighting { token: string; rssi: number; ts: string; zone_id: number | null }
@@ -77,7 +107,7 @@ export interface BleSightingsRequest {
   sightings: BleSighting[];
 }
 
-// Private invites (section 15). The token appears only inside `url`, returned once.
+// Private invites (section 35). The token appears only inside `url`, returned once.
 export type InviteChannel = 'link' | 'qr' | 'contact';
 export type InviteStatus = 'active' | 'accepted' | 'revoked' | 'expired';
 export interface CreateInviteRequest { channel?: InviteChannel; recipient_hint?: string; note?: string }
@@ -116,6 +146,10 @@ const mocks = {
   handshake: () => require('../../docs/mocks/handshake.json') as HandshakeResponse,
   feedback: () => require('../../docs/mocks/feedback.json') as FeedbackResponse,
   connections: () => require('../../docs/mocks/connections.json') as ConnectionsResponse,
+  quickProfile: () => require('../../docs/mocks/match_quick_profile.json') as QuickProfile,
+  suggestions: () => require('../../docs/mocks/suggestions.json') as SuggestionsResponse,
+  suggestionRespond: () => require('../../docs/mocks/suggestion_respond.json') as SuggestionRespondResponse,
+  openToMeet: () => require('../../docs/mocks/me_open_to_meet.json') as { open_to_meet: boolean },
   bleTokens: () => require('../../docs/mocks/ble_tokens.json') as { tokens: BleToken[] },
   bleSightings: () => require('../../docs/mocks/ble_sightings.json') as { accepted: number; dropped: number },
   inviteCreate: () => require('../../docs/mocks/invites_create.json') as CreateInviteResponse,
@@ -195,5 +229,27 @@ export const api = {
     call(
       () => (response === 'accept' ? mocks.inviteRespond() : ({ status: 'ok' } as const)),
       () => request<InviteRespondResponse>('POST', `/invites/${encodeURIComponent(token)}/respond`, { response }),
+    ),
+  quickProfile: (otherUserId: string) =>
+    call(mocks.quickProfile, () => request<QuickProfile>('GET', `/matches/${otherUserId}/quick-profile`)),
+  setOpenToMeet: (open: boolean) =>
+    call(
+      () => ({ open_to_meet: open }),
+      () => request<{ open_to_meet: boolean }>('PATCH', '/me/open-to-meet', { open }),
+    ),
+  suggestions: () => call(mocks.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
+  respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
+    call(
+      () => ({ status: 'waiting' }) as SuggestionRespondResponse,
+      () => request<SuggestionRespondResponse>('POST', `/suggestions/${suggestionId}/respond`, { response }),
+    ),
+  deleteMe: () =>
+    call(
+      () => ({ deleted: true, storage_objects_deleted: 0, auth_user_deleted: true, errors: [] as string[] }),
+      () =>
+        request<{ deleted: boolean; storage_objects_deleted: number | null; auth_user_deleted: boolean | null; errors: string[] }>(
+          'DELETE',
+          '/me',
+        ),
     ),
 };
