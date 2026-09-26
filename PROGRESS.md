@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 02:37 | adam | Cursor (Grok 4.7)
+**Task:** AD11 Feed screen and post composer, plus the assistant screen
+**Status:** done in mock mode
+**What I did:**
+- `mobile/app/(tabs)/feed.tsx`: ranked feed, update/post composer, AI summary cards, editable reply draft from `POST /feed/{item_id}/reply-suggestion`.
+- `mobile/app/assistant.tsx`: Profile → Ask. Sends the full thread to `POST /assistant/chat` with event id 1. The model stays on the ML server.
+- `mobile/lib/api.ts`: `feed`, `createPost`, `replySuggestion`, `assistantChat`. Demo mode uses `docs/mocks/feed.json`, `feed_reply_suggestion.json`, and `assistant_chat.json`.
+**How to run/test it:** `cd mobile && EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web` → Explore the demo → Feed (share an update, Suggest a reply) and Profile → Ask.
+**Next step for whoever continues:** Put `ANTHROPIC_API_KEY` in the gitignored root `.env` (never in `mobile/` or `dashboard/`) and run `./scripts/start-ml.sh`, then set `EXPO_PUBLIC_USE_MOCKS=0` and `EXPO_PUBLIC_ML_API_URL` so `api.assistantChat` in `mobile/lib/api.ts` and `api.replySuggestion` hit the live endpoints.
+**Known issues / blockers:** Demo replies are the canned mocks. There is no comments endpoint, so a reply draft stays in the text field for the user to edit. Live Claude returns 503 until `ANTHROPIC_API_KEY` is set on the ML server.
+**Contract changes:** none
+
 ## 2026-09-26 14:00 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 synthetic attendees, modeled on HackGT 12 (MLH) winners
 **Status:** done in code + tested on a local Postgres; NOT yet run against the live Supabase (needs DATABASE_URL)

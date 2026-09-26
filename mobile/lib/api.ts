@@ -190,6 +190,38 @@ export interface FeedInsights {
   activity: { date: string; count: number }[];
   by_kind: { github: number; post: number; update: number };
 }
+export interface FeedAuthor { user_id: string; name: string; photo_url: string | null }
+export type FeedEntry =
+  | {
+      type: 'item';
+      item_id: number;
+      author: FeedAuthor;
+      kind: 'github' | 'post' | 'update';
+      title: string | null;
+      body: string | null;
+      url: string | null;
+      created_at: string;
+      score: number;
+      talked_about: string[];
+    }
+  | {
+      type: 'summary';
+      author: FeedAuthor;
+      summary: string;
+      item_ids: number[];
+      created_at: string;
+      score: number;
+    };
+export interface FeedResponse { items: FeedEntry[]; next_cursor: string | null }
+export interface FeedPostResponse {
+  item_id: number;
+  kind: 'post' | 'update';
+  title: string | null;
+  body: string;
+  url: string | null;
+  created_at: string;
+}
+export interface AssistantMessage { role: 'user' | 'assistant'; content: string }
 
 // ---------- account connections (api.md 33, 39-41) ----------
 export type SignInProvider = 'linkedin' | 'email' | string | null;
@@ -258,6 +290,9 @@ const mocks = {
   graphExpand: () => require('../../docs/mocks/graph_expand.json') as GraphResponse & { node_id: string },
   meDashboard: () => require('../../docs/mocks/me_dashboard.json') as MeDashboard,
   feedInsights: () => require('../../docs/mocks/feed_insights.json') as FeedInsights,
+  feed: () => require('../../docs/mocks/feed.json') as FeedResponse,
+  feedReply: () => require('../../docs/mocks/feed_reply_suggestion.json') as { reply: string },
+  assistantChat: () => require('../../docs/mocks/assistant_chat.json') as { reply: string },
   accounts: () => require('../../docs/mocks/me_accounts.json') as AccountsResponse,
   manual: () => require('../../docs/mocks/profile_manual.json') as ManualResponse,
 };
@@ -402,6 +437,27 @@ export const api = {
     ),
   meDashboard: (days = 30) => call(mocks.meDashboard, () => request<MeDashboard>('GET', `/me/dashboard?days=${days}`)),
   feedInsights: (days = 7) => call(mocks.feedInsights, () => request<FeedInsights>('GET', `/feed/insights?days=${days}`)),
+  feed: (cursor?: string) =>
+    call(mocks.feed, () => request<FeedResponse>('GET', `/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)),
+  createPost: (body: { kind: 'post' | 'update'; body: string; title?: string | null; url?: string | null }) =>
+    call(
+      () =>
+        ({
+          item_id: Date.now(),
+          kind: body.kind,
+          title: body.title ?? null,
+          body: body.body,
+          url: body.url ?? null,
+          created_at: new Date().toISOString(),
+        }) as FeedPostResponse,
+      () => request<FeedPostResponse>('POST', '/feed/posts', body),
+    ),
+  replySuggestion: (itemId: number) =>
+    call(mocks.feedReply, () => request<{ reply: string }>('POST', `/feed/${itemId}/reply-suggestion`, {})),
+  assistantChat: (messages: AssistantMessage[], eventId?: number) =>
+    call(mocks.assistantChat, () =>
+      request<{ reply: string }>('POST', '/assistant/chat', { messages, event_id: eventId ?? null }),
+    ),
   suggestions: () => call(mocks.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
   respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
     call(
