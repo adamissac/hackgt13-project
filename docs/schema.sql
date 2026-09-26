@@ -388,3 +388,8 @@ create table push_tokens (
   updated_at timestamptz not null default now(),
   primary key (user_id, token)
 );
+
+-- ========== Onboarding (supabase/migrations/20260926190000_onboarding_status.sql) ==========
+alter table profiles add column onboarding_status text not null default 'pending'
+  check (onboarding_status in ('pending', 'partial', 'complete'));
+-- trigger on user_interests insert sets 'complete' (first successful profile build)
