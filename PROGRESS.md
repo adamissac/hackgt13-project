@@ -2,6 +2,25 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 09:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Fix crash after tap verify on the iPhones ("Cannot read property 'split' of null")
+
+**Status:** done (data fix live now; code fix ships with the next Release rebuild)
+
+**What I did:**
+- Cause: both phone accounts came from email sign-in, so `profiles.name` was null. The verify screen's Avatar (and ~15 other places) called `name.split(...)`. The tap verification itself had succeeded on the server.
+- Code: `firstName()` helper + null-safe `Avatar` in `mobile/components/ui.tsx`; patched every `name.split` in app/ and features/ (connections, match, Home, meetup, MeetupBanner, graph model + Atom, NearbyMap, ChecklistForm, verify).
+- Data: set `profiles.name = split_part(email,'@',1)` for the only 2 of 84 profiles with no name (Akshar approved), then refreshed the live event cache. The live matches list now has 0 nameless people.
+
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. Phones: force-quit, reopen → Tap phones → the checklist shows the other person's name.
+
+**Next step for whoever continues:** Rebuild the Release app on both iPhones (also needed for `expo-clipboard`, a new native module on main): `cd mobile && npm install && npx expo run:ios --device --configuration Release`.
+
+**Known issues / blockers:** New email sign-ups still get no name until onboarding asks for one (REQUESTS → Adam).
+
+**Contract changes:** none
+
 ## 2026-09-26 09:10 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Verify the HTTP 500 fix on the live server after Adam's Railway redeploy
