@@ -47,6 +47,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Contract changes:** `docs/api.md` section 12 rewritten additively: token format (8 lowercase base32), idempotent batch, optional `device_model`/`foreground` on sightings, sightings response `{accepted, dropped}`, drop rules. New mocks `ble_tokens.json`, `ble_sightings.json`.
 
+## 2026-09-26 06:10 | arjun | Claude Code (Claude Opus 5.5)
+**Task:** AR4 deploy + AD9 embed (Arjun)
+**Status:** done (dashboard live; app wired)
+**What I did:**
+- Deployed `dashboard/` to Vercel production: https://formal-connection-dashboard.vercel.app (/graph, /me, /insights, /map), public, HTTPS. Vercel team `hackgt13`, project `formal-connection-dashboard`.
+- `mobile/lib/env.ts` default `DEFAULT_DASHBOARD_URL` already points there, so the Graph tab and Profile -> Your network / Feed insights load it in Expo Go with no extra env.
+**How to run/test it:** `cd mobile && npm install && npx expo start` -> Expo Go -> Graph tab. Redeploy dashboard: `cd dashboard && npx vercel@latest deploy --prod --yes`.
+**Next step for whoever continues:** Pages show preview (mock) data until the app points at a live ML server (EXPO_PUBLIC_API_BASE_URL + EXPO_PUBLIC_USE_MOCKS=0); then they call /graph, /me/dashboard, /feed/insights with the user's token. Vercel auto-deploy on git push is NOT connected (needs the repo owner, Adam, to install the Vercel GitHub app): until then, redeploy manually after dashboard changes.
+**Known issues / blockers:** Supabase keys + GitHub OAuth app still needed for real data (see older entries).
+**Contract changes:** none
+
 ## 2026-09-26 05:40 | akshar | Claude Code (Opus 5.5)
 
 **Task:** AK6 Labeled Bluetooth recordings
