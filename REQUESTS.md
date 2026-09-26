@@ -3,6 +3,7 @@
 Asks between owners. The session hook shows each agent the open (`- [ ]`) items in its owner's section at
 session start. When you finish one, change `- [ ]` to `- [x]` and mention it in your PROGRESS.md entry.
 Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item actionable in one line or two.
+These are notes between equals, not approval requests: nobody (Adam included) signs off on anyone's work.
 
 ## adam
 - [ ] (from akshar) No screen calls `api.checkin` yet. I made Event Mode ON check in to event 1 so phone tests work, but a visible "Check in to HackGT" button on Home (or an events screen) would be clearer for the demo.

@@ -15,5 +15,5 @@ allowed-tools: Bash(python3 ${CLAUDE_PROJECT_DIR}/.claude/hooks/session_context.
 3. Choose, in this order: the owner's newest PROGRESS.md "Next step" if that task isn't done; otherwise the first unfinished task for the owner in Section 13's phase order. Before the Saturday noon gate, Must items (Section 12.2) come first.
 4. If a dependency hasn't landed, don't wait: build against `docs/mocks/` payloads that match `docs/api.md` and note the swap-to-live step for PROGRESS.md.
 5. Write a plan of at most 10 lines: the done-when (Section 13 or 14), files to touch, contract touchpoints, external APIs to verify with `docs-researcher`, how you will test it, and where the first commit lands (within 30 minutes).
-6. Start immediately. Ask the human only if the plan needs a secret, an account, a physical phone action, or a contract change that affects another owner.
+6. Start immediately. Ask your owner's own human only if the plan needs a secret, an account, or a physical phone action. Never ask Adam (or anyone) for approval; a contract change that affects another owner goes through `/contract-change` without waiting for anyone.
 7. Offer the autopilot line the human can type: `/goal <task id> meets its done-when from MASTER_SPEC Section 13, shown in the transcript, committed and pushed with a PROGRESS.md entry, or stop after 30 turns`

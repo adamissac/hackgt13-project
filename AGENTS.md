@@ -2,6 +2,8 @@
 
 HackGT 13 · Team: Adam, Alan, Arjun, Akshar · Tracks: AI/ML + Data Visualization
 
+There is no team lead. Nobody needs Adam's (or anyone's) approval; decide within your area, push to main, and write it in PROGRESS.md.
+
 `MASTER_SPEC.md` is the single source of truth. If anything here disagrees with it, the spec wins. Shared contracts: `docs/schema.sql` and `docs/api.md`, plus example payloads in `docs/mocks/`.
 
 `REQUESTS.md` holds asks between owners: do the open (`- [ ]`) items in your owner's section (the session hook lists them) and add your asks for others there.
@@ -13,9 +15,9 @@ HackGT 13 · Team: Adam, Alan, Arjun, Akshar · Tracks: AI/ML + Data Visualizati
 4. If the newest PROGRESS.md entry for your task has a "Next step for whoever continues", do that first.
 
 ## Commit and push protocol (mandatory)
-- Push straight to `main`. No pull requests, no waiting for review or approval from Adam.
+- Push straight to `main`. No pull requests, no waiting for review or approval from Adam or anyone else.
 - If your tool puts you on its own branch (Claude Code cloud sessions, Cursor cloud agents), still land on `main` yourself: `git fetch origin && git rebase origin/main` (or merge), resolve conflicts, run your area tests, then `git push origin HEAD:main`. Don't leave work sitting in a PR.
-- Conflicts in PROGRESS.md, REQUESTS.md, or docs/api.md: keep both sides (PROGRESS.md stays newest-first). If two people take the same api.md section number, the later one renumbers.
+- Merge conflicts: whoever hits the conflict resolves it. In PROGRESS.md, REQUESTS.md, or docs/api.md, keep both sides (PROGRESS.md stays newest-first). If two people take the same api.md section number, the later one renumbers.
 - Commit and push after every working increment: an endpoint that returns data, a screen that renders, a script that produces output, a passing test.
 - Never go more than 30 minutes without a commit and push. If it doesn't work yet, commit anyway with a `WIP:` prefix and describe the exact state in PROGRESS.md.
 - Near the end of your context or credits: stop, commit, push, and update PROGRESS.md immediately. Unpushed work is lost work.
@@ -41,7 +43,7 @@ Every push updates it. Newest entry at the top. Exactly this template:
 
 ## Engineering rules
 - Stay inside your task's folder. Editing another owner's folder requires a note in PROGRESS.md.
-- Contract changes are the smallest possible, additive, and land in the same commit as the doc update (`docs/schema.sql`, `docs/api.md`, `docs/mocks/`), recorded under "Contract changes".
+- Contract changes are the smallest possible, additive, and land in the same commit as the doc update (`docs/schema.sql`, `docs/api.md`, `docs/mocks/`), recorded under "Contract changes". No one on the team is a lead or approver: don't ask Adam (or anyone) for permission to commit, merge, or make decisions in your own area. For a contract change that affects another owner, make the smallest additive change yourself, record it in PROGRESS.md under Contract changes, and add a note in that owner's `REQUESTS.md` section.
 - When a dependency hasn't landed, build against mock JSON that matches `docs/api.md`, then swap to live.
 - Secrets come only from environment variables listed in `.env.example`. New variable: add it there with no value. `SUPABASE_SERVICE_KEY`, OAuth client secrets, `ANTHROPIC_API_KEY`, `TOKEN_ENCRYPTION_KEY`, and signing keys never appear in `mobile/` or `dashboard/`. Client code only reads `EXPO_PUBLIC_*` or `NEXT_PUBLIC_*` values that are safe to publish.
 - APIs change often (Expo, react-native-ble-plx, Supabase, GitHub, LinkedIn, Claude API). If unsure of a current API, look it up or say so. Never guess signatures, config keys, or permission strings.
@@ -64,7 +66,7 @@ Every push updates it. Newest entry at the top. Exactly this template:
 ## Owners and folders
 | Owner | Role | Folders | Tasks |
 | --- | --- | --- | --- |
-| Adam | lead full-stack, architect | `supabase/`, `mobile/` (shell, auth, profile, chat, feed, invites UI), `docs/` stewardship | AD1 to AD12 |
+| Adam | full-stack | `supabase/`, `mobile/` (shell, auth, profile, chat, feed, invites UI), `docs/` stewardship | AD1 to AD12 |
 | Alan | ML and algorithms | `ml/` FastAPI service and ML package | AL1 to AL11 |
 | Arjun | research, data, visualization | `dashboard/`, ingestion and synthetic data in `ml/` | AR1 to AR10 |
 | Akshar | Bluetooth, automation, integrations, pitch | `mobile/` BLE, radar, QR, Open to Meet, location; invites and BLE endpoints | AK1 to AK10 |

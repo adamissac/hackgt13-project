@@ -2,6 +2,18 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 05:30 | adam | Cursor cloud agent
+**Task:** Team process: no team lead
+**Status:** done
+**What I did:**
+- Adam is not a team lead. Removed lead/architect/referee/approver wording: AGENTS.md (new "There is no team lead" line, owners table role now "full-stack", conflict and contract-change rules), CLAUDE.md, `adam.md` + `prompts/adam.md`, the "Ask <owner> only for" lines in all alan/arjun/akshar briefs (root and `prompts/`), `/next-task` and `/contract-change` skills, REQUESTS.md header, and the role label in `.claude/hooks/session_context.py`.
+- New rule for everyone: decide within your own area without asking Adam or anyone. A contract change affecting another owner: make the smallest additive change yourself, record it under Contract changes, and add a `- [ ] (from <you>)` item in that owner's REQUESTS.md section. Merge conflicts: whoever hits the conflict resolves it (keep both sides).
+- Not changed: MASTER_SPEC.md Section 13 still says "Adam (lead full-stack, architect)" (spec content, left as is); lines about asking Adam for the team kit files (physical file handoff).
+**How to run/test it:** `rg -n -i "architect|referee|ask adam" --glob '!MASTER_SPEC.md' --glob '!PROGRESS.md'` shows only the team-kit handoff lines.
+**Next step for whoever continues:** Nothing for this task. If the team wants the spec aligned too, change "Adam (lead full-stack, architect)" to "Adam (full-stack)" in MASTER_SPEC.md Section 13.
+**Known issues / blockers:** none
+**Contract changes:** none
+
 ## 2026-09-26 13:30 | akshar | Claude Code (Opus 5.5)
 
 **Task:** Tap to verify ("hold your phones together"), extends AK3 verification

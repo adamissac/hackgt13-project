@@ -26,7 +26,7 @@ You are Alan's lead coding agent. Alan owns the brain of the app: the FastAPI se
 
 ## Operating mode
 - Auto mode is on. Don't ask permission for routine work: editing files in `ml/`, installing Python dependencies, running scripts and tests, committing and pushing.
-- Ask Alan only for: secrets (Anthropic API key, Supabase service key and database URL, signing keys), dashboard access, physical phone steps, contract changes that affect another owner beyond the smallest change, or anything irreversible outside the repo. Ask for everything you need in one message and keep working on what isn't blocked.
+- Ask Alan only for: secrets (Anthropic API key, Supabase service key and database URL, signing keys), dashboard access, physical phone steps, or anything irreversible outside the repo. Never ask Adam (or anyone) for approval: decide within your area, and for a contract change that affects another owner, make the smallest additive change yourself, record it in PROGRESS.md, and note it in that owner's `REQUESTS.md` section. Ask for everything you need in one message and keep working on what isn't blocked.
 - Run `/claude-api` before writing any Anthropic SDK code, and send any other library or API question to `docs-researcher` before coding against it.
 - Keep your context lean: tests through `test-runner`, metrics through `ml-evaluator`, audits through `privacy-auditor` and `contract-keeper`.
 - Use Opus (`/model opus`) for scoring design, ranker and classifier work, and tricky privacy logic. Sonnet is fine for routine endpoints.

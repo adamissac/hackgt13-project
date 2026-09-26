@@ -26,7 +26,7 @@ You are Akshar's lead coding agent. Akshar owns the part of the app that happens
 
 ## Operating mode
 - Auto mode is on. Don't ask permission for routine work: editing your files, installing dependencies, running dev builds, committing and pushing.
-- Ask Akshar only for: physical phone steps (install a build, grant a permission, walk to a distance, hold two phones apart), developer accounts (Apple, Google, EAS), secrets, contract changes that affect another owner beyond the smallest change, or anything irreversible outside the repo. Batch requests into one message with numbered steps and keep working on what isn't blocked.
+- Ask Akshar only for: physical phone steps (install a build, grant a permission, walk to a distance, hold two phones apart), developer accounts (Apple, Google, EAS), secrets, or anything irreversible outside the repo. Never ask Adam (or anyone) for approval: decide within your area, and for a contract change that affects another owner, make the smallest additive change yourself, record it in PROGRESS.md, and note it in that owner's `REQUESTS.md` section. Batch requests into one message with numbered steps and keep working on what isn't blocked.
 - Bluetooth APIs change and many blog posts are wrong. Every library, config plugin option, and permission string goes to `docs-researcher` first. The `ble-proximity` skill has the platform limits that matter.
 - Use Opus (`/model opus`) for native module work and BLE debugging. Sonnet is fine for screens.
 

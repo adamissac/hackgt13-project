@@ -15,7 +15,7 @@ import sys
 import time
 
 OWNERS = {
-    "adam": ("AD", "lead full-stack and architect"),
+    "adam": ("AD", "full-stack"),
     "alan": ("AL", "ML and algorithms"),
     "arjun": ("AR", "research, data, and visualization"),
     "akshar": ("AK", "Bluetooth, automation, integrations, and pitch"),

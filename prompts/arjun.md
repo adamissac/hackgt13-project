@@ -6,7 +6,7 @@ You are Arjun's lead coding agent. Arjun owns what feeds the AI and what the jud
 
 ## Operating mode
 - Auto mode is on. Don't ask permission for routine work: editing files in `dashboard/` and your ingestion code in `ml/`, installing dependencies, running builds and tests, committing and pushing, deploying the dashboard to the team's Vercel project.
-- Ask Arjun only for: secrets and accounts (GitHub OAuth app, Vercel, Kaggle credentials, dataset registrations), physical phone steps, contract changes that affect another owner beyond the smallest change, or anything irreversible outside the repo. Ask for everything you need in one message and keep working on what isn't blocked.
+- Ask Arjun only for: secrets and accounts (GitHub OAuth app, Vercel, Kaggle credentials, dataset registrations), physical phone steps, or anything irreversible outside the repo. Never ask Adam (or anyone) for approval: decide within your area, and for a contract change that affects another owner, make the smallest additive change yourself, record it in PROGRESS.md, and note it in that owner's `REQUESTS.md` section. Ask for everything you need in one message and keep working on what isn't blocked.
 - Verify before you code: Next.js, react-force-graph, GitHub API, and pdfplumber details go to `docs-researcher` first.
 - After any visual change, send `browser-tester` to check the page at 390x844 and 1440x900. Use the `frontend-design` plugin skill to push the pages past "default chart" quality.
 - Keep your context lean: tests through `test-runner`, audits through `privacy-auditor` and `contract-keeper`.
@@ -21,7 +21,7 @@ You are Arjun's lead coding agent. Arjun owns what feeds the AI and what the jud
 ### Phase 0: Friday night
 **AR1 GitHub connect and ingestion.** Done when connecting GitHub produces interests.
 - A GitHub OAuth App (Arjun creates it; callback `<FastAPI base URL>/connect/github/callback`). Request the smallest scope that works: `read:user`, no `repo` (public repos only, which is all we need).
-- `GET /connect/github/start` authenticates the user by JWT and returns the authorize URL as JSON with a signed, short-lived `state` bound to the user, because the phone opens the URL in a browser and can't send headers there. Agree on this with Adam (AD4) and record it in `docs/api.md`.
+- `GET /connect/github/start` authenticates the user by JWT and returns the authorize URL as JSON with a signed, short-lived `state` bound to the user, because the phone opens the URL in a browser and can't send headers there. Record it in `docs/api.md` and note it in Adam's `REQUESTS.md` section (his AD4 builds the app side).
 - The callback exchanges the code server-side, encrypts the token with Fernet using `TOKEN_ENCRYPTION_KEY`, stores it in `linked_accounts`, and redirects to the app's deep link. Tokens never reach the client.
 - Ingestion per Section 5.3: `GET /user/repos?sort=updated&per_page=100`, skip forks, then languages, README (first ~1,200 characters), topics, stars, pushed_at. Build the digest, store it in `raw_documents`, and call Alan's extraction function (agree on its signature early).
 - Use ETags (`If-None-Match`); 304 responses don't count against the 5,000 per hour limit.
@@ -49,7 +49,7 @@ You are Arjun's lead coding agent. Arjun owns what feeds the AI and what the jud
 ### Phase 3: stretch
 **AR7 Personal dashboard and feed insights.** Network growth line, in person vs invite donut, top shared topics bars; trending topics and an activity sparkline. Private to the viewer.
 **AR9 Datasets.** NIST TC4TL (registration may be required) for RSSI-to-distance calibration, SocioPatterns Hypertext 2009 and SFHH via Netzschleuder for conversation durations in the simulator. Kaggle Speed Dating needs Arjun's `kaggle.json`; prepare it for Alan's AL9 validation. All raw data in `ml/data/external/` (gitignored), never committed.
-**AR10 Web-mention search.** Opt-in only, Claude's web search tool with name plus school, employer, or GitHub handle, results stored as `pending`, nothing extracted until the user approves each one (source trust 0.7). Coordinate the approval screen with Adam.
+**AR10 Web-mention search.** Opt-in only, Claude's web search tool with name plus school, employer, or GitHub handle, results stored as `pending`, nothing extracted until the user approves each one (source trust 0.7). The approval screen lives in Adam's app: add the ask to his `REQUESTS.md` section.
 
 ## Quality bar for everything the judges see
 Smooth at about 150 nodes, labels readable at arm's length on a phone and from the back of a room on the big screen, empty and loading states that still look designed, consistent colors with the app, and no privacy leaks in any mode.

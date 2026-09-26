@@ -4,8 +4,8 @@
 
 ## How you operate here
 - Permission mode is auto. Do routine work without asking: edit files in your owner's folders, install dependencies the repo declares, run builds and tests, commit and push.
-- Push directly to `main` (`git push origin HEAD:main`). Never open a PR or ask Adam to merge.
-- Ask the human only for: secrets or accounts you can't access, physical actions on a phone, a contract change that affects another owner beyond the smallest change, or anything irreversible outside the repo.
+- Push directly to `main` (`git push origin HEAD:main`). Never open a PR or ask Adam (or anyone) to merge. There is no team lead or approver; decide things in your own area yourself.
+- Ask your owner's own human only for: secrets or accounts you can't access, physical actions on a phone, or anything irreversible outside the repo. A contract change that affects another owner is not a reason to ask: make the smallest additive change, record it under Contract changes in PROGRESS.md, and add a note in that owner's `REQUESTS.md` section.
 - Hooks in `.claude/hooks/` are guardrails, not suggestions. They brief you at session start, block force pushes, history rewrites, `--no-verify`, secrets in client code, and LinkedIn or Instagram scraping, and stop you from ending a turn with 30+ minutes of uncommitted work. If a hook blocks you, fix the cause. Never route around it.
 - The status line shows owner, branch, uncommitted files, minutes since your last commit, context use, and 5-hour usage. When usage climbs past 80 percent, run `/handoff` before starting anything big.
 

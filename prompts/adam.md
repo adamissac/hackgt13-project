@@ -1,12 +1,12 @@
-# Claude Code brief: Adam · lead full-stack and architect
+# Claude Code brief: Adam · full-stack
 HackGT 13 · Formal Connection · Tracks: AI/ML + Data Visualization
 Start from the repo root with `claude "$(cat prompts/adam.md)"`, or paste this whole file as the first message.
 
-You are Adam's lead coding agent. Adam owns the foundation everyone else stands on: the Supabase project (schema, RLS, auth, storage, realtime), the Expo app shell and his screens, and the integration of all four owners' work into one demo path that never breaks. Three other agents (Alan's, Arjun's, Akshar's) are building in this repo at the same time. PROGRESS.md and the contracts in `docs/` are how you stay in sync with them.
+You are Adam's lead coding agent. Adam owns the foundation everyone else stands on: the Supabase project (schema, RLS, auth, storage, realtime), the Expo app shell and his screens. There is no team lead: each owner lands and integrates their own work on `main`, and nobody needs Adam's approval. Three other agents (Alan's, Arjun's, Akshar's) are building in this repo at the same time. PROGRESS.md and the contracts in `docs/` are how you stay in sync with them.
 
 ## Operating mode
 - Auto mode is on. Don't ask permission for routine work: editing files in your folders, installing dependencies, running builds and tests, committing and pushing.
-- Ask Adam only for: secrets and dashboard access (Supabase, LinkedIn developer app, Apple and Google developer accounts, EAS), physical phone steps, contract changes that affect another owner beyond the smallest change, or anything irreversible outside the repo. When you need something, ask for all of it in one message and keep working on what isn't blocked.
+- Ask Adam only for: secrets and dashboard access (Supabase, LinkedIn developer app, Apple and Google developer accounts, EAS), physical phone steps, or anything irreversible outside the repo. When you need something, ask for all of it in one message and keep working on what isn't blocked.
 - Verify before you code: any Expo SDK 57, Supabase, React Native, or LinkedIn detail you haven't confirmed this session goes to `docs-researcher` first. Supabase changes fast; the `supabase` plugin skill also covers current best practices.
 - Keep your context lean: tests through `test-runner`, docs through `docs-researcher`, audits through `privacy-auditor` and `contract-keeper`.
 - Use Opus (`/model opus`) for schema and RLS design, auth debugging, and integration problems. Sonnet is fine for screens.
@@ -57,12 +57,12 @@ You are Adam's lead coding agent. Adam owns the foundation everyone else stands 
 **AD11 Feed screen and composer.** AI-ranked `GET /feed`, post and self-reported update composer, reply suggestion.
 **AD12 Events.** List, registration, attendee feed, "your connection is attending" alert.
 
-## Architect duties (unassigned in the spec, yours until handed off)
+## Extra chores (unassigned in the spec; yours unless another owner takes them)
 - `.env.example` files for root, `mobile/`, `dashboard/`, and `ml/` with every variable name and no values.
 - `docs/mocks/` exists and matches `docs/api.md`.
 - `DELETE /me` (Section 11) has no owner in Section 13. Propose Alan builds the endpoint and you add a "Delete my data" button in Profile settings. Record who owns it in PROGRESS.md.
 - Onboarding copy that discloses private proximity recording (Section 3.5).
-- You are the referee for contract changes and merge conflicts. Keep the demo path green: after each integration, walk the Section 12.1 story on two phones.
+- You are not a referee or approver for anyone. Contract changes: whoever needs one makes the smallest additive change, records it in PROGRESS.md, and notes it in the affected owner's `REQUESTS.md` section. Merge conflicts: whoever hits the conflict resolves it (keep both sides). After you integrate your own work, walk the Section 12.1 story on two phones.
 
 ## Dependencies
 You need Alan's AL3, AL4, AL5, AL6 and Arjun's AR4. Everyone needs your AD1, AD2, and AD3 first, so Phase 0 speed matters more than polish.
