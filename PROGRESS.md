@@ -45,6 +45,19 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** GitHub connect stays off on Railway until those vars are set. `GITHUB_CLIENT_SECRET` must not be committed.
 **Contract changes:** none
 
+## 2026-09-26 07:55 | alan | Claude Code (Opus 5)
+**Task:** AL1 finish — every server credential verified live on Alan's Mac; dashboard running against real data
+**Status:** done locally (`/health` = `{"ok":true,"db":true}`); GitHub connect on Railway still needs 4 env vars
+**What I did:**
+- Filled the root `.env` and verified each value rather than trusting it: `DATABASE_URL` (probed both `aws-0`/`aws-1-us-east-1` pooler hosts since both resolve — `aws-0` authenticates, PostgreSQL 17.6), `SUPABASE_SERVICE_KEY` (HTTP 200 on GoTrue admin + Storage REST), `ANTHROPIC_API_KEY` (real call; `claude-sonnet-5` and `claude-haiku-4-5-20251001` both served), GitHub OAuth (callback / `read:user` scope / state signing / Fernet round-trip).
+- `mobile/.env` was missing both Supabase values, so the phone could not sign in at all — filled and verified the anon key against `/auth/v1/settings`. That call also showed **only the `email` provider is enabled, no `linkedin_oidc`**, even though `mobile/app/sign-in.tsx` offers a LinkedIn button (noted for Adam in REQUESTS.md).
+- `dashboard/` had no `node_modules` and no `NEXT_PUBLIC_ML_API_URL`; installed deps and added a gitignored `.env.local`. It still would have rendered empty: the dev server runs on **3100** but `CORS_ORIGINS` only listed 3000/8081/19006, so the browser dropped every response (request returns 200, just no allow-origin header). Added 3100 to the default in `app/settings.py`. `/map` now shows 80 attendees, 6 communities, live gap analysis.
+- Toolchain on this Mac: `uv` + Python 3.12 (`ml/.venv`), `cloudflared`, Node 22, `gh` — all under `~/.local/bin`, no Homebrew, no sudo.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (69 passed, 108 skipped — DB tests need a throwaway Postgres). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`; dashboard: `npm --prefix dashboard run dev -- --port 3100`.
+**Next step for whoever continues:** Set four variables on the Railway `ml` service so GitHub connect works there: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ML_API_URL=https://ml-production-04c0.up.railway.app`, and `TOKEN_ENCRYPTION_KEY`. Then add `https://ml-production-04c0.up.railway.app/connect/github/callback` to the OAuth app's redirect URIs.
+**Known issues / blockers:** **`TOKEN_ENCRYPTION_KEY` must be byte-identical on Railway and any laptop server** — both write `linked_accounts.access_token_enc` to the same Supabase database, so a mismatch means whichever server didn't encrypt a token cannot decrypt it. Generating a fresh one for Railway silently breaks GitHub ingestion for anyone who connected via the other server. It also must never be rotated once tokens exist. Separately: two servers (laptop + Railway) now write to the same production database — be deliberate about which one the phone points at. `TEST_DATABASE_URL` must never point at Supabase; the DB test suite wipes its target.
+**Contract changes:** none (`app/settings.py` default CORS list gained `http://localhost:3100`; no env var added or renamed)
+
 ## 2026-09-26 15:10 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 follow-up: live server didn't see the 80 seeded attendees (edit in Alan's `ml/app/population.py`, flagged for Alan)
 **Status:** fixed in code; NEEDS A RAILWAY REDEPLOY to take effect

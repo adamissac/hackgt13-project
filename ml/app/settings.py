@@ -36,8 +36,11 @@ class Settings:
     # disabled automatically (see db.py).
     database_url: str = field(default_factory=lambda: os.getenv("DATABASE_URL", ""))
     qr_signing_key: str = field(default_factory=lambda: os.getenv("QR_SIGNING_KEY", ""))
+    # 3100 is the dashboard dev port in .claude/launch.json; without it the browser drops every
+    # dashboard->API response (the request still returns 200, just with no allow-origin header).
     cors_origins: list[str] = field(default_factory=lambda: _list(
-        "CORS_ORIGINS", "http://localhost:3000,http://localhost:8081,http://localhost:19006"))
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:3100,http://localhost:8081,http://localhost:19006"))
     # Set RUN_WORKERS=0 to disable background loops (tests, a second replica).
     run_workers: bool = field(default_factory=lambda: _env("RUN_WORKERS", "1") == "1")
     # Set LOAD_EMBEDDER=0 to skip loading bge-small at startup (tests; falls back lazily).
