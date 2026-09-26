@@ -5,7 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } fr
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
 import { buildView, whySentence, type Person } from '@/features/graph/model';
-import { SpokeGraph } from '@/features/graph/SpokeGraph';
+import { Globe3D, groupByTopic, SPACE } from '@/features/graph/Globe3D';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { useAsync } from '@/lib/useAsync';
@@ -13,17 +13,17 @@ import { useAsync } from '@/lib/useAsync';
 // Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun. One job: show the handful of people you
 // should talk to next and why. Everyone on the diagram is labeled; topics change who's shown.
 
-const FEATURED = 6;
+const FEATURED = 12;
 const LIST_PREVIEW = 5;
 
 const COPY: Record<GraphMode, { title: string; explain: string }> = {
   matches: {
-    title: 'Your next conversations',
-    explain: 'The 6 people here you’d click with most. Thicker line = stronger match. Tap anyone to see why.',
+    title: 'Your people at HackGT',
+    explain: 'Your 12 strongest matches, in 3D. Tap anyone to see why you’d click.',
   },
   network: {
     title: 'Who you’re closest to',
-    explain: 'The connections you have the most in common with. Tap anyone to see what you share.',
+    explain: 'The people you’ve connected with, in 3D. Tap anyone to see what you share.',
   },
 };
 
@@ -54,7 +54,8 @@ export default function GraphScreen() {
   const graph = state.status === 'ready' ? (extra?.mode === mode ? merge(state.data, extra.data) : state.data) : null;
   const view = useMemo(() => (graph ? buildView(graph) : null), [graph]);
   const pool = useMemo(() => (view ? view.people.filter((p) => !topic || p.shared.includes(topic)) : []), [view, topic]);
-  const featured = pool.slice(0, FEATURED);
+  const featured = useMemo(() => pool.slice(0, FEATURED), [pool]);
+  const { groups, colorOf } = useMemo(() => groupByTopic(featured), [featured]);
   const selected = view?.people.find((p) => p.id === selectedId) ?? null;
   const topicObj = view?.topics.find((t) => t.label === topic) ?? null;
 
@@ -152,8 +153,21 @@ export default function GraphScreen() {
             </ScrollView>
           )}
 
-          <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-            <SpokeGraph size={size} people={featured} selectedId={selectedId} onSelect={setSelectedId} showScore={mode === 'matches'} />
+          <View style={[styles.chartCard, { backgroundColor: SPACE.bg }]}>
+            <Globe3D size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} />
+            <View style={styles.howTo}>
+              <Text style={styles.howToText}>● Closer to you = stronger match   ● Color = what you share   ● Drag to spin</Text>
+            </View>
+            <View style={styles.legend}>
+              {groups.map((g) => (
+                <View key={g.label} style={styles.legendItem}>
+                  <View style={[styles.legendDot, { backgroundColor: g.color }]} />
+                  <Text style={styles.legendText} numberOfLines={1}>
+                    {g.label} <Text style={{ color: SPACE.muted }}>{g.count}</Text>
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
 
           {selected ? (
@@ -248,7 +262,13 @@ const styles = StyleSheet.create({
   chips: { gap: 8, paddingRight: 16 },
   topic: { borderRadius: 999, borderWidth: 1, paddingHorizontal: 14, minHeight: 38, justifyContent: 'center' },
   topicText: { fontSize: 14, fontWeight: '600' },
-  chartCard: { borderRadius: 18, borderWidth: 1, alignItems: 'center', paddingVertical: 4 },
+  chartCard: { borderRadius: 20, alignItems: 'center', overflow: 'hidden', paddingBottom: 14 },
+  howTo: { paddingHorizontal: 14, paddingTop: 10 },
+  howToText: { color: SPACE.muted, fontSize: 12, fontWeight: '600', textAlign: 'center' },
+  legend: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, paddingHorizontal: 12, paddingTop: 10 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.07)', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 5, maxWidth: '100%' },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendText: { color: SPACE.text, fontSize: 13, fontWeight: '700' },
   cardTitle: { fontSize: 19, fontWeight: '800' },
   body: { fontSize: 15, lineHeight: 21 },
   small: { fontSize: 13, lineHeight: 18 },
