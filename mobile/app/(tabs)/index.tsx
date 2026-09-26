@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, MatchMeter, SectionTitle, useColors } from '@/components/ui';
@@ -44,6 +45,7 @@ function useOpenToMeet() {
 
 export default function HomeScreen() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const openToMeet = useOpenToMeet();
   const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), []);
   const suggestions = useAsync(() => api.suggestions(), []);
@@ -56,7 +58,7 @@ export default function HomeScreen() {
   return (
     <ScrollView
       style={{ backgroundColor: c.background }}
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingTop: insets.top + 12 }]}
       refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}>
       <View>
         <Text style={[styles.eyebrow, { color: c.muted }]}>HackGT 13 · Georgia Tech</Text>
