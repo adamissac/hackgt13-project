@@ -10,7 +10,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 - [ ] (from alan) Mobile endpoints now live (docs/api.md 15-28, mocks in docs/mocks/): AD6 uses `GET /events/{id}/matches`, `GET /matches/{id}/quick-profile` (overlap radar = `facet_overlap`), `GET /matches/{id}/starters`, `GET /suggestions` + `POST /suggestions/{id}/respond`; AD8 uses `GET /conversations/pending`, `POST /conversations/{id}/feedback`, `GET /connections`, `POST /connections/{id}/followup-draft`. The old `/qr/token`, `/handshake`, `/feedback` names still work as aliases.
 - [x] (from alan) Home toggle: call `PATCH /me/open-to-meet {open}` instead of writing `profiles.open_to_meet` directly, so turning it OFF also ends live meetup location sharing (MASTER_SPEC 3.3).
 - [x] (from alan) Add a "Delete my account" button that calls `DELETE /me`, then signs out.
-- [ ] (from alan) AD10 push: there is no column for Expo push tokens yet. Please add one via /contract-change (e.g. `profiles.expo_push_token text`, owner-writable). The ML service already writes `notifications` rows (kinds: suggestion, connect_prompt, connected); I'll add the Expo push sender in FastAPI once the column exists.
+- [x] (from alan) AD10 push: there is no column for Expo push tokens yet. Please add one via /contract-change (e.g. `profiles.expo_push_token text`, owner-writable). The ML service already writes `notifications` rows (kinds: suggestion, connect_prompt, connected); I'll add the Expo push sender in FastAPI once the column exists. Done as a table, not a profiles column (any signed-in user can read profile rows): `push_tokens(user_id, token, platform, updated_at)`, PK (user_id, token), owner-only RLS, migration `20260926000009_push_tokens.sql`. Live once Adam runs `npx supabase db push --linked`.
 - [ ] (from alan) For the ML server `.env`: the Supabase session-pooler `DATABASE_URL`, and whether the project signs user JWTs with JWKS (new signing keys) or the legacy HS256 secret (then share `SUPABASE_JWT_SECRET`).
 
 ## arjun
@@ -31,6 +31,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 - [ ] (from alan) AK4 invites: on accept, create the connection (`how_met='invite'`, `invite_id`) and a chat with `app.social.ensure_chat(conn, a, b, "connection")` + `app.social.notify(conn, user, "connected", {...})`, and call `app.population.invalidate()`.
 
 ## alan
+- [ ] (from adam) AD10 push sender: tokens are in `push_tokens(user_id, token, platform, updated_at)` (one user can have several; migration 9). Read them with the service connection, send via Expo's push API, and delete a row when Expo reports `DeviceNotRegistered`. DELETE /me needs no change: the table cascades from `profiles(id)`.
 - [ ] Put server secrets in a local `.env` (never committed): DATABASE_URL, SUPABASE_URL=https://mwfzgkikbmnghueolfnw.supabase.co, SUPABASE_JWT_SECRET (only if legacy HS256), QR_SIGNING_KEY (any long random string), ANTHROPIC_API_KEY, SUPABASE_SERVICE_KEY (for DELETE /me).
 - [ ] Run `./scripts/start-ml.sh` (Adam's script: service + cloudflared tunnel) on a laptop and share the printed URL as ML_API_URL (finishes AL1).
 - [ ] Get the team's OK, then run the four real profiles through `/profile/ingest` and tune from the `canon merge` log lines (finishes AL2).
