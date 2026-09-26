@@ -2,6 +2,17 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 | adam | Codex
+**Task:** AD3 Expo app shell — shared local-preview synchronization instructions
+**Status:** done
+**What I did:**
+- Added mandatory 60-second GitHub freshness checks for agents actively supervising local previews, with clean-main fast-forward updates and dirty/diverged checkout safeguards.
+- Documented server/checkout identification, dependency updates, reload/restart/rebuild requirements, and URL/commit verification in AGENTS.md; linked the policy from CLAUDE.md and README.md.
+**How to run/test it:** `git diff --check`; read `AGENTS.md` → “Keep local previews current”. Teammates receive the policy with `git pull --rebase origin main` after safely committing their work.
+**Next step for whoever continues:** Follow the AGENTS.md local-preview policy in the checkout serving your app; record the URL and `git rev-parse --short HEAD` at handoff.
+**Known issues / blockers:** Documentation only; no persistent updater installed. Agents must remain active or configure a supported monitor to keep checking after startup.
+**Contract changes:** none
+
 ## 2026-09-26 02:11 | adam | Cursor (Grok 4.7)
 **Task:** AD7 Chat screen (Supabase Realtime), icebreaker as a suggested first message
 **Status:** in progress (mock path verified in Expo web; live Realtime still needs two signed-in phones)

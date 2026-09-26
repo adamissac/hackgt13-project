@@ -3,6 +3,7 @@
 # Claude Code specifics
 
 ## How you operate here
+- Follow `AGENTS.md` → “Keep local previews current”: check GitHub every 60 seconds while supervising a local server, safely update the actual serving checkout, and verify the refreshed preview. Hot reload alone does not fetch GitHub updates; never promise continued syncing without a running monitor.
 - Permission mode is auto. Do routine work without asking: edit files in your owner's folders, install dependencies the repo declares, run builds and tests, commit and push.
 - Push directly to `main` (`git push origin HEAD:main`). Never open a PR or ask Adam (or anyone) to merge. There is no team lead or approver; decide things in your own area yourself.
 - Ask your owner's own human only for: secrets or accounts you can't access, physical actions on a phone, or anything irreversible outside the repo. A contract change that affects another owner is not a reason to ask: make the smallest additive change, record it under Contract changes in PROGRESS.md, and add a note in that owner's `REQUESTS.md` section.
