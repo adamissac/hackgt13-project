@@ -2,6 +2,24 @@
 
 Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
+## 2026-09-26 10:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Tap works port-to-port; checklist shows common interests; QR error follow-up
+
+**Status:** in progress (code pushed; needs the Railway redeploy + a Release rebuild; waiting on the exact QR error text)
+
+**What I did:**
+- Tap: the app threshold is now -58 dBm (back-to-back reads about -30 to -45, port-to-port weaker). The server check is a looser floor of -65, set by the `TAP_RSSI_DBM` env var. The Tap screen shows the live signal ("Signal -52 dBm (touching counts at -58 or stronger)") so the team can calibrate by holding positions. Still mutual claims within 15 s, 2 s hold.
+- Checklist: verified live with two throwaway accounts: manual interests → AI extraction → QR verify → checklist `['reinforcement learning', 'rock climbing']`. The phone accounts (akshar.exe, arjunkattragadda) have 0 interests, so their checklist has nothing shared. Fix = data: Profile → Edit profile ("Your sources") → type interests or upload a resume → Save, on both phones.
+
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs` (5 pass); `cd ml && pytest tests/test_tap.py` (6 pass).
+
+**Next step for whoever continues:** Adam redeploys `ml` (REQUESTS). Rebuild both iPhones (`npx expo run:ios --device --configuration Release`). Both add interests with some overlap. Tap port-to-port and note the dBm shown; if port-to-port reads weaker than -58, lower `TAP_RSSI_DBM` in `mobile/features/ble/tap.ts`.
+
+**Known issues / blockers:** QR "error pulling up the code": need the exact text. It may have been the null-name crash (fixed by data + code).
+
+**Contract changes:** none
+
 ## 2026-09-26 21:40 | adam | Claude Code
 **Task:** Assistant quality + verify resume/GitHub profile building live
 **Status:** done (GitHub OAuth callback not exercised by a real login yet)
