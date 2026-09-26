@@ -112,17 +112,19 @@ def fetch_repos(token=None, username=None, cache=None, max_repos=MAX_REPOS):
 
 
 def _manifests(full, token, cache):
-    """Frameworks from dependency manifests in the repo root (package.json, requirements.txt, ...)."""
+    """Frameworks from dependency manifests at the repo root or one folder down (monorepos: mobile/, ml/, web/...).
+    One tree call per repo, then only the manifests that exist."""
     from .skill_taxonomy import MANIFESTS, frameworks_from_manifest
-    root = _get(f"/repos/{full}/contents/", token, cache) or []
-    names = {f.get("name") for f in root if isinstance(f, dict) and f.get("type") == "file"}
+    tree = _get(f"/repos/{full}/git/trees/HEAD?recursive=1", token, cache) or {}
+    paths = [t["path"] for t in tree.get("tree", []) if isinstance(t, dict) and t.get("type") == "blob"]
+    wanted = [p for p in paths
+              if p.rsplit("/", 1)[-1] in MANIFESTS and p.count("/") <= 1 and "node_modules" not in p][:8]
     found = []
-    for m in MANIFESTS:
-        if m in names:
-            text = _get(f"/repos/{full}/contents/{m}", token, cache, accept="application/vnd.github.raw+json") or ""
-            for fw in frameworks_from_manifest(m, text if isinstance(text, str) else ""):
-                if fw not in found:
-                    found.append(fw)
+    for path in wanted:
+        text = _get(f"/repos/{full}/contents/{path}", token, cache, accept="application/vnd.github.raw+json") or ""
+        for fw in frameworks_from_manifest(path, text if isinstance(text, str) else ""):
+            if fw not in found:
+                found.append(fw)
     return found
 
 

@@ -30,6 +30,7 @@ from . import db
 log = logging.getLogger("skill_profile")
 
 PROFILE_SOURCES = ("github", "resume", "manual")
+MARKUP_LANGUAGES = {"html", "css", "scss", "less", "jupyter notebook", "makefile", "dockerfile", "procfile", "tex"}
 TRIGGERS = ("github", "resume", "manual", "rebuild")
 MAX_SKILLS = 60
 
@@ -74,7 +75,11 @@ def compose_profile(user_id: str, *, extractions: dict, active_weights: dict, gi
     repos = (github_meta or {}).get("repos", [])
     for lang, share in (github_meta or {}).get("language_shares", {}).items():
         if share >= 0.02:
-            add(lang, min(0.95, 0.35 + 2 * float(share)), "github")
+            conf = min(0.95, 0.35 + 2 * float(share))
+            # Markup/style/config bytes are easy to accumulate and say little about skill.
+            if normalize_skill(lang) in MARKUP_LANGUAGES:
+                conf = min(conf, 0.45)
+            add(lang, conf, "github")
     fw_counts: dict[str, int] = {}
     for r in repos:
         for fw in r.get("frameworks", []) or []:

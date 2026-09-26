@@ -141,3 +141,10 @@ def test_matching_reads_active_profile_and_tolerates_none(db):
     bare = add_user(db, "No Profile Yet")
     people, *_ = population.load_people([uid, bare])
     assert len(people) == 2 and people[1]["interests"] == {}              # no profile: empty, no error
+
+
+def test_markup_languages_do_not_dominate():
+    p = compose_profile("u1", extractions={}, active_weights={}, github_meta={"language_shares": {"HTML": 0.6, "Python": 0.4}, "repos": []},
+                        resume=None, version=1)
+    conf = {s["name"]: s["confidence"] for s in p["skills"]}
+    assert conf["html"] <= 0.45 < conf["python"]
