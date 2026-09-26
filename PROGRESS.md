@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-09-26 04:15 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** Coordination: asks from Alan to Adam, Arjun, Akshar
+**Status:** done
+**What I did:**
+- Added `REQUESTS.md` with one section per owner; my asks for Adam (6), Arjun (7), Akshar (6) and Alan's human to-dos (3) are in it.
+- `.claude/hooks/session_context.py`: new `open_requests()`; the SessionStart brief now prints the owner's unchecked `- [ ]` items (additive; nothing else changed in the hook).
+- AGENTS.md / CLAUDE.md: one line telling agents to check and use REQUESTS.md.
+**How to run/test it:** `python3 .claude/hooks/session_context.py --brief` shows 'Open requests for <owner> in REQUESTS.md'.
+**Next step for whoever continues:** AL10 feed: `ml/app/routers/feed.py` (GET /feed, POST /feed/posts, POST /feed/{item_id}/reply-suggestion, GET /feed/insights) per MASTER_SPEC 6.11.
+**Known issues / blockers:** Teammates only see REQUESTS.md once the PR from `claude/quirky-euler-dnbsgt` is merged into main.
+**Contract changes:** none (edited Adam's kit hook additively; noted here per rule 0.4)
+
 ## 2026-09-26 04:09 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** DELETE /me (unassigned in Section 13; Alan's per his brief)
 **Status:** done (Storage/GoTrue admin calls unverified against the live project from this container)
