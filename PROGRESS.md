@@ -1,5 +1,17 @@
 # PROGRESS
 
+## 2026-09-26 04:09 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
+**Task:** DELETE /me (unassigned in Section 13; Alan's per his brief)
+**Status:** done (Storage/GoTrue admin calls unverified against the live project from this container)
+**What I did:**
+- `ml/app/account.py`: storage objects under resumes/<uid>/ (Storage REST list + remove), DB in one transaction (null invites.used_by and organizations.owner_id, delete others' sightings of the user's tokens, delete profile -> cascades), then the auth user (GoTrue admin DELETE); clears in-memory caches.
+- `DELETE /me` in `ml/app/routers/me.py`; docs/api.md 28.
+- Test scans EVERY uuid column of EVERY public table for the deleted id, so a future table that isn't covered fails the test. 71 tests pass.
+**How to run/test it:** `cd ml && . .venv/bin/activate && TEST_DATABASE_URL=postgresql://postgres@localhost:5433/fc_test python -m pytest -q tests/test_delete_me.py`
+**Next step for whoever continues:** AL10 feed: `ml/app/routers/feed.py` with GET /feed?cursor= (connections' feed_items + my own, filtered by each author's feed_prefs, ranked 0.6*cos(item embedding, my combined vector) + 0.3*exp(-hours/48) + 0.1*(mentions a topic we talked about); summaries when an author has >=3 items in 24h via Haiku; POST /feed/posts {kind: post|update, body} (embed on insert), POST /feed/{item_id}/reply-suggestion, GET /feed/insights. Before AL10 check PROGRESS.md for Adam/Akshar asks first.
+**Known issues / blockers:** Once someone has a Supabase service key handy, run DELETE /me once on a throwaway account to confirm the Storage list/remove and GoTrue admin endpoints (URLs in the account.py docstring).
+**Contract changes:** docs/api.md: new 28 DELETE /me. Affects Adam (the delete-account button).
+
 ## 2026-09-26 04:08 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** Organizer community map data (MASTER_SPEC 6.13; feeds Arjun's AR6)
 **Status:** done
