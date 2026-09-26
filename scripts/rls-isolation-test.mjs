@@ -70,6 +70,8 @@ try {
     ["feed_prefs", { user_id: b.id }, "user_id"],
     ["event_registrations", { event_id: 1, user_id: b.id }, "user_id"],
     ["presence", { user_id: b.id, building_id: "test", expires_at: expires }, "user_id"],
+    ["user_skill_profiles", { user_id: b.id, version: 1, is_active: true, trigger_source: "rebuild", input_hash: `h${stamp}`, profile: {}, skills: [] }, "user_id"],
+    ["resumes", { user_id: b.id, storage_path: `${b.id}/x.pdf`, filename: "x.pdf", mime_type: "application/pdf", size_bytes: 10 }, "user_id"],
   ];
 
   for (const [table, row, col] of seeds) {
