@@ -1,0 +1,20 @@
+{
+  "event_id": 1,
+  "model": "v1",
+  "matches": [
+    {
+      "user_id": "7f1c2a9e-0000-4000-8000-000000000002",
+      "name": "Sam Lee",
+      "photo_url": null,
+      "role": "recruiter",
+      "score": 0.62,
+      "rank": 1,
+      "highlight": true,
+      "why": [
+        "reinforcement learning",
+        "rock climbing"
+      ],
+      "proximity": null
+    }
+  ]
+}

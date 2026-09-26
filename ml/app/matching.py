@@ -71,3 +71,44 @@ def log_impressions(viewer: str, event_id: int | None, rows: list[dict], model: 
                 "insert into impressions (viewer_id, shown_id, event_id, rank, score, model) "
                 "values (%s, %s, %s, %s, %s, %s)",
                 [(viewer, r["id"], event_id, r["rank"] + 1, r["score"], model) for r in rows])  # 1-based, as shown
+
+
+def is_connected(a: str, b: str) -> bool:
+    lo, hi = sorted([a, b])
+    return db.fetchone("select 1 as ok from connections where user_a = %s and user_b = %s", (lo, hi)) is not None
+
+
+def shared_event(a: str, b: str) -> int | None:
+    """Most recent event both people are checked in to."""
+    r = db.fetchone(
+        "select x.event_id from attendance x join attendance y on y.event_id = x.event_id and y.user_id = %s "
+        "join events e on e.id = x.event_id where x.user_id = %s "
+        "order by greatest(x.checked_in_at, y.checked_in_at) desc limit 1", (b, a))
+    return r["event_id"] if r else None
+
+
+def relationship(viewer: str, other: str) -> dict | None:
+    """Why the viewer may see `other` at all, or None (MASTER_SPEC 11: no stranger discovery).
+
+    - connection: they are connected
+    - match: both checked in to the same event and `other` is in the viewer's candidate pool
+    - suggestion: an open suggestion between them (e.g. Open to Meet in a building)
+    """
+    if viewer == other:
+        return None
+    if is_connected(viewer, other):
+        return {"kind": "connection", "event_id": shared_event(viewer, other)}
+    banned = excluded_ids(viewer)
+    if other in banned:
+        return None
+    ev = shared_event(viewer, other)
+    if ev is not None:
+        return {"kind": "match", "event_id": ev}
+    if table_exists("suggestions"):
+        lo, hi = sorted([viewer, other])
+        s = db.fetchone(
+            "select id, event_id from suggestions where user_a = %s and user_b = %s and status in ('pending','matched') "
+            "and (expires_at is null or expires_at > now()) order by created_at desc limit 1", (lo, hi))
+        if s:
+            return {"kind": "suggestion", "event_id": s["event_id"]}
+    return None

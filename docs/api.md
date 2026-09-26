@@ -81,6 +81,8 @@ Only people checked in to the event.
 Request: `{}`   Response: `{ "ok": true }`
 
 ## 7. GET /matches/{other_user_id}/starters
+Same access rule as 15 (current match, open suggestion, or connection; otherwise `403 {"error": "this profile isn't available"}`).
+Grounded only in what both people see on each other's quick profile. Cached per pair; falls back to a template if the LLM is down.
 ```json
 { "why": "You both build trading models with reinforcement learning.",
   "openers": ["Ask how they backtest their RL agent.", "Compare notes on reward design for trading."] }
@@ -144,3 +146,24 @@ Only the caller's own connections. Never return counts of other users' connectio
 }
 ```
 No names in dashboard data.
+
+## 15. GET /matches/{other_user_id}/quick-profile
+Only for a current match (both checked in to the same event, not blocked/declined/connected-elsewhere), an open
+suggestion, or a connection. Anyone else: `403 {"error": "this profile isn't available"}` (same message for every reason).
+Only SHARED topics are returned, never the other person's full interest list.
+```json
+{
+  "user_id": "uuid", "name": "Sam Lee", "photo_url": "https://...", "role": "recruiter",
+  "headline": "ML recruiter at Acme", "seeking": "RL collaborators", "offering": "hiring quant interns",
+  "connected": false,
+  "score": 0.62,
+  "shared_topics": [
+    { "interest_id": 42, "name": "reinforcement learning", "facet": "technical", "strength": 0.71,
+      "evidence": "Built an RL trading agent (repo: rl-trader)" }
+  ],
+  "facet_overlap": { "technical": 0.82, "career": 0.31, "personal": 0.44, "academic": 0.0 },
+  "complementarity": 0.57
+}
+```
+`strength` = min of both people's weights on the topic (0-1). `evidence` is the other person's evidence line.
+`facet_overlap` = cosine similarity of the two people's facet vectors (0-1), for the overlap radar chart.

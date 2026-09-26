@@ -1,0 +1,34 @@
+{
+  "user_id": "7f1c2a9e-0000-4000-8000-000000000002",
+  "name": "Sam Lee",
+  "photo_url": null,
+  "role": "recruiter",
+  "headline": "ML recruiter at Acme",
+  "seeking": "RL collaborators",
+  "offering": "hiring quant interns",
+  "connected": false,
+  "score": 0.62,
+  "shared_topics": [
+    {
+      "interest_id": 42,
+      "name": "reinforcement learning",
+      "facet": "technical",
+      "strength": 0.71,
+      "evidence": "Built an RL trading agent (repo: rl-trader)"
+    },
+    {
+      "interest_id": 7,
+      "name": "rock climbing",
+      "facet": "personal",
+      "strength": 0.48,
+      "evidence": "Climbs at the CRC twice a week"
+    }
+  ],
+  "facet_overlap": {
+    "technical": 0.82,
+    "career": 0.31,
+    "personal": 0.44,
+    "academic": 0.0
+  },
+  "complementarity": 0.57
+}
