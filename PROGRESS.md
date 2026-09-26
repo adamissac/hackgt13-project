@@ -1,5 +1,16 @@
 # PROGRESS
 
+## 2026-09-26 05:30 | adam | Claude Code
+**Task:** AD4-AD6 UI redesign + Alan's requests
+**Status:** in progress
+**What I did:**
+- Merged PR #1 (Alan AL1-AL8). Root `.env` written on Adam's Mac (gitignored); only ANTHROPIC_API_KEY is empty. Project uses JWKS (ES256), so SUPABASE_JWT_SECRET stays empty. `scripts/start-ml.sh` runs uvicorn + cloudflared (installed at ~/.local/bin).
+- Mobile: design system (constants/Colors.ts tokens, components/ui.tsx), redesigned Home (Open to Meet via PATCH /me/open-to-meet, AI suggestions with silent yes/no, match cards), new `app/match/[id].tsx` (quick-profile + AI starters + facet overlap), redesigned Profile (AI interests by facet, confirm/hide, delete account). tsc clean.
+**How to run/test it:** `./scripts/start-ml.sh` (separate terminal), then put the printed URL in mobile/.env as EXPO_PUBLIC_API_BASE_URL with EXPO_PUBLIC_USE_MOCKS=0; `cd mobile && npx expo start --go --lan`.
+**Next step for whoever continues:** Add ANTHROPIC_API_KEY to root .env, run `./scripts/start-ml.sh`, switch mobile/.env to the tunnel URL, sign in by email on the phone (needs `npx supabase config push` first). Then redesign Nearby/Feed/Graph/sign-in with components/ui.tsx, and add `profiles.expo_push_token` via /contract-change (REQUESTS.md).
+**Known issues / blockers:** Supabase auth redirect URLs not pushed yet. Arjun and Akshar have no commits yet. Adam's DB password was shared in chat: rotate it after the hackathon.
+**Contract changes:** none
+
 ## 2026-09-26 04:27 UTC | alan | Claude Code (cloud session, branch `claude/quirky-euler-dnbsgt`)
 **Task:** AL8 Bluetooth verification
 **Status:** in progress (server side done and tested on simulated sightings; needs Akshar's AK2 real sightings and AK6 labeled recordings)
