@@ -5,6 +5,7 @@ import { FlatList, StyleSheet, Switch } from 'react-native';
 import { Empty, ErrorState, Loading } from '@/components/States';
 import { Text, View } from '@/components/Themed';
 import { useProximity } from '@/features/ble';
+import { Radar } from '@/features/ble/Radar';
 
 // Nearby matches over Bluetooth (MASTER_SPEC 3.4). The radar and the real scanning are
 // Akshar's (features/ble). Distances are bands only, never meters.
@@ -36,20 +37,24 @@ export default function NearbyScreen() {
         <ErrorState message={error} onRetry={() => setScan(true)} />
       ) : !scan ? (
         <Empty title="Scanning is off" body="Turn it on to see matches within Bluetooth range." />
-      ) : scanning && peers.length === 0 ? (
-        <Loading label="Looking for people nearby…" />
       ) : (
         <FlatList
           data={peers}
           keyExtractor={(p) => p.user_id}
           contentContainerStyle={styles.list}
+          // AK5 (Akshar): radar of the same people, bands only.
+          ListHeaderComponent={
+            <>
+              <Radar peers={peers} />
+              {scanning && peers.length === 0 ? <Loading label="Looking for people nearby…" /> : null}
+            </>
+          }
           renderItem={({ item }) => (
             <View style={styles.row}>
               <Text style={styles.name}>{item.name}</Text>
               <Text style={styles.band}>{item.band}</Text>
             </View>
           )}
-          ListEmptyComponent={<Empty title="No one nearby yet" />}
         />
       )}
     </View>
