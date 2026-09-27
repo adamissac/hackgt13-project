@@ -329,7 +329,7 @@ kept with the reference cleared), other people's raw Bluetooth sightings of thei
 `storage_objects_deleted` / `auth_user_deleted` are `null` if the server has no service key. The app should sign out after this.
 
 ## 29. GET /feed?cursor=&limit=20
-My own items plus my connections' items (only kinds each author allows in `feed_prefs`), ranked by
+My connections' items, excluding my own posts and activity (only kinds each author allows in `feed_prefs`), ranked by
 0.6 x relevance to my interests + 0.3 x recency (48 h decay) + 0.1 x "mentions a topic I checked as discussed with them".
 An author with 3+ items in 24 h appears as one `summary` entry instead.
 ```json

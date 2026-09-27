@@ -8,12 +8,14 @@ import { metLine } from '@/features/checklist/met';
 import { listChats } from '@/features/chat/store';
 import { api, type Connection } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 // AD8: the caller's own connections. How you met and what you talked about.
 // No one else's list or count is on this screen.
 export default function ConnectionsScreen() {
   const c = useColors();
-  const { state, reload } = useAsync(() => api.connections(), [], ['connections']);
+  const { state, reload, refresh } = useAsync(() => api.connections(), [], ['connections']);
+  useLiveRefresh(refresh, 5000);
   const [opening, setOpening] = useState<string | null>(null);
 
   const openChat = async (person: Connection) => {

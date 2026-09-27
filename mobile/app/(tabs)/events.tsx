@@ -12,6 +12,7 @@ import { RSVP_OPTIONS, dayKey, eventDays, eventsNear, isPlanned, milesLabel, nex
 import { useArea } from '@/features/events/useArea';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import { useAuth } from '@/lib/auth';
 import { useEventSession } from '@/lib/eventSession';
 
@@ -27,7 +28,8 @@ export default function EventsScreen() {
  const scope=session?.user.id ?? 'demo';
  const catalog=useAsync(async()=>({events:await eventCatalog.list(),rsvps:await eventCatalog.rsvps(scope)}),[scope]);
  const eventSession=useEventSession(); // refetch company events when you enter or leave one
- const live=useAsync(()=>api.listEvents().catch(()=>({events:[]})),[scope,eventSession?.eventId]);
+ const live=useAsync(()=>api.listEvents(),[scope,eventSession?.eventId]);
+ useLiveRefresh(live.refresh, 3000);
  const [section,setSection]=useState<Section>('all');
  const [areaWanted,setAreaWanted]=useState(false);
  const {area,retry}=useArea(areaWanted);

@@ -11,6 +11,7 @@ import { demo } from '@/lib/demo';
 import { env, missingEnv } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 const FACETS: { key: Facet; label: string }[] = [
   { key: 'technical', label: 'Technical' },
@@ -33,6 +34,9 @@ export default function ProfileScreen() {
   const interests = useAsync(() => api.getInterests(), [], ['profile']);
   const accounts = useAsync(() => api.accounts(), [], ['profile']);
   const skills = useAsync(() => api.skillProfile(), [], ['profile']);
+  useLiveRefresh(interests.refresh, 5000);
+  useLiveRefresh(accounts.refresh, 5000);
+  useLiveRefresh(skills.refresh, 5000);
   const [override, setOverride] = useState<InterestsResponse | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -51,6 +55,9 @@ export default function ProfileScreen() {
     } catch (e) {
       setOverride(data);
       Alert.alert('Couldn’t save', e instanceof Error ? e.message : String(e));
+    } finally {
+      await interests.refresh();
+      setOverride(null);
     }
   };
 

@@ -1,27 +1,10 @@
-import { useEffect, useState } from 'react';
-
 import { api } from '@/lib/api';
-import { onChange } from '@/lib/changes';
+import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
-/** Unread in-app notifications, for the bell badge. Refreshes on change and every 30 s. */
+/** Only the focused header polls; hidden tab headers don't keep making requests. */
 export function useUnreadCount(): number {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    let alive = true;
-    const load = () =>
-      api
-        .notifications()
-        .then((n) => alive && setCount(n.filter((x) => !x.read).length))
-        .catch(() => undefined);
-    const first = setTimeout(load, 0);
-    const t = setInterval(load, 30_000);
-    const off = onChange((topic) => topic === 'notifications' && load());
-    return () => {
-      alive = false;
-      clearTimeout(first);
-      clearInterval(t);
-      off();
-    };
-  }, []);
-  return count;
+  const { state, refresh } = useAsync(() => api.notifications(), [], ['notifications']);
+  useLiveRefresh(refresh, 5000);
+  return state.status === 'ready' ? state.data.filter(n => !n.read).length : 0;
 }

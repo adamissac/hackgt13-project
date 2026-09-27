@@ -11,6 +11,7 @@ import { confirmLeave } from '@/components/EventBar';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { enterEventSession, leaveEventSession, useEventSession } from '@/lib/eventSession';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 export default function EventScreen() {
   const c = useColors();
@@ -33,6 +34,9 @@ export default function EventScreen() {
       return null;
     }
   }, [id]);
+  useLiveRefresh(events.refresh, 3000);
+  useLiveRefresh(matches.refresh, 5000);
+  useLiveRefresh(updates.refresh, 5000);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const checkedIn = events.state.status === 'ready' && !!events.state.data.events.find((e) => e.id === id)?.checked_in;

@@ -4,11 +4,13 @@ import { ErrorState, Loading } from '@/components/States';
 import { Card, SectionTitle, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 // Your network (AR7, MASTER_SPEC 3.11): private to you. Says it in words first, then shows it.
 export default function NetworkScreen() {
   const c = useColors();
-  const { state, reload } = useAsync(() => api.meDashboard(30), []);
+  const { state, reload, refresh } = useAsync(() => api.meDashboard(30), []);
+  useLiveRefresh(refresh, 10000);
   if (state.status === 'loading') return <Loading label="Loading your network…" />;
   if (state.status === 'error') return <ErrorState message={state.message} onRetry={reload} />;
   const d = state.data;

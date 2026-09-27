@@ -8,13 +8,15 @@ import { listChats } from '@/features/chat/store';
 import { useAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 export default function ChatsScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const { session } = useAuth();
   const me = session?.user.id ?? '';
-  const { state, reload } = useAsync(() => listChats(me), [me, env.useMocks], ['chats', 'relationships']);
+  const { state, reload, refresh } = useAsync(() => listChats(me), [me, env.useMocks], ['chats', 'relationships']);
+  useLiveRefresh(refresh, 3000);
 
   return (
     <ScrollView

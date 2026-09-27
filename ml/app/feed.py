@@ -1,6 +1,6 @@
 """Connections feed (MASTER_SPEC 3.8, 6.11).
 
-Visibility: my own items plus items by my connections, and only kinds the author allows in feed_prefs
+Visibility: items by my connections, excluding my own, and only kinds the author allows in feed_prefs
 (github / post / update, default on). Nobody else's items, ever.
 
 score = 0.6 * cos(embed(item), my combined vector) + 0.3 * exp(-hours / 48) + 0.1 * (item mentions a topic I
@@ -164,7 +164,7 @@ def one_github_card_per_person(rows: list[dict]) -> list[dict]:
 
 def build_feed(viewer: str, now: datetime | None = None) -> list[dict]:
     now = now or datetime.now(timezone.utc)
-    rows = one_github_card_per_person(visible_items(viewer))
+    rows = one_github_card_per_person(visible_items(viewer, include_own=False))
     ensure_embeddings(rows)
     scored = score_items(viewer, rows, now)
     recent: dict[str, list[dict]] = {}

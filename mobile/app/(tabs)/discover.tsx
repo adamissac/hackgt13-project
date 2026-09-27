@@ -13,6 +13,7 @@ import { api, type Match, type Meetup, type PendingConversation, type Suggestion
 import { useEventSession } from '@/lib/eventSession';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 const BAND = { immediate: 'Very close', near: 'Nearby', far: 'Farther away' } as const;
 
@@ -36,6 +37,9 @@ export default function HomeScreen() {
     [presence.on],
     ['relationships', 'meetups', 'chats'],
   );
+
+  useLiveRefresh(matches.refresh, 5000);
+  useLiveRefresh(next.refresh, 3000);
 
   const refresh = () => {
     matches.reload();

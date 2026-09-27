@@ -11,6 +11,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 // Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun. One job: show the handful of people you
 // should talk to next and why. Everyone on the diagram is labeled; topics change who's shown.
@@ -47,7 +48,8 @@ export default function GraphScreen() {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<GraphMode>('matches');
   const eventId = useCurrentEventId(); // the event you're in (a company event after scanning in), else roaming
-  const { state, reload } = useAsync(() => api.graph(mode, eventId), [mode, eventId]);
+  const { state, reload, refresh } = useAsync(() => api.graph(mode, eventId), [mode, eventId]);
+  useLiveRefresh(refresh, 5000);
   const [extra, setExtra] = useState<{ mode: GraphMode; data: GraphResponse } | null>(null);
   const [topic, setTopic] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);

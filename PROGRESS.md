@@ -1466,3 +1466,15 @@
 **Next step for whoever continues:** On two signed-in devices, keep a company's event studio open; register on the attendee phone and scan its QR. Counts should change on the next poll (roughly 2 seconds plus network time), without a loading flash. Polling lives in `mobile/lib/useLiveRefresh.ts`.
 **Known issues / blockers:** This is near-live polling, not websocket push. A real two-account/two-phone scan was not performed; demo state remains local to each device. No backend deployment or schema change is required.
 **Contract changes:** none
+## 2026-09-27 01:20 | adam | Codex
+**Task:** AD9 / AD11 — automatic screen updates and others-only feed
+**Status:** done
+**What I did:**
+- Enabled focused foreground refresh for Events (3s), feed/graph (5s), Home matches/next actions, event registration/check-in/update views, profiles, connections, chats, notifications and Nearby meetup actions. Existing chat-message realtime and location sharing remain in place; company counts retain their 2s polling.
+- Notification badges now use focused polling instead of leaving 30s timers running on hidden headers. Removed the Events request's error-to-empty conversion so transient failures retain the last good list.
+- Removed own-post optimistic feed insertion and added explicit publishing confirmation. Filtered all own-author posts/activity/summaries in the client, including legacy server responses; updated server build_feed to exclude own rows before ranking.
+- Added feed visibility regression and updated server visibility expectations/API documentation. Cross-owner ML feed change is user-requested and noted for Alan in REQUESTS.md.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npm run lint && node --experimental-strip-types --test features/feed/visibility.test.mjs && npm run test:demo`; passed (19 demo checks). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed after final edits.
+**Next step for whoever continues:** On two live accounts, publish a company event while the attendee Events tab stays open; expect it within roughly 3s plus request time. Publish a connection's post with the viewer's Feed open; expect it within roughly 5s, while the author's own Feed excludes it. Deploy ML normally to also exclude own rows before server pagination.
+**Known issues / blockers:** Polling is near-live, not instantaneous websocket push; it intentionally pauses off-screen/background. ML pytest unavailable locally (`No module named pytest`), so the updated DB-backed feed test was not run. Client filtering already works against older deployed APIs; ML change is committed but not deployed here. No physical two-account test this increment.
+**Contract changes:** `docs/api.md` §29 now specifies connections' items only, excluding the viewer's own activity.

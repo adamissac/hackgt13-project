@@ -6,14 +6,21 @@ import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextI
 import { AppIcon } from '@/components/AppIcon';
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, firstName, useColors } from '@/components/ui';
-import { api, type FeedEntry, type FeedItemEntry, type FeedPostResponse } from '@/lib/api';
+import { api, type FeedEntry, type FeedItemEntry } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
+import { useAuth } from '@/lib/auth';
+import { DEMO_ME } from '@/lib/demo/people';
+import { otherPeopleFeed } from '@/features/feed/visibility';
 
 // AD11. Ranked feed from the ML server. Summaries and reply drafts are written there.
 export default function FeedScreen() {
   const c = useColors();
-  const feed = useAsync(() => api.feed(), []);
-  const [mine, setMine] = useState<FeedEntry[]>([]);
+  const { session, guest } = useAuth();
+  const viewer = guest ? DEMO_ME : session?.user.id;
+  const feed = useAsync(() => api.feed(), [viewer]);
+  useLiveRefresh(feed.refresh, 5000);
+  const [published, setPublished] = useState(false);
   const [kind, setKind] = useState<'post' | 'update'>('update');
   const [body, setBody] = useState('');
   const [posting, setPosting] = useState(false);
@@ -26,8 +33,8 @@ export default function FeedScreen() {
     setPosting(true);
     setPostError(null);
     try {
-      const created = await api.createPost({ kind, body: text });
-      setMine((prev) => [postedEntry(created), ...prev]);
+      await api.createPost({ kind, body: text });
+      setPublished(true);
       setBody('');
       setComposing(false);
     } catch (e) {
@@ -38,8 +45,7 @@ export default function FeedScreen() {
   };
 
   const remote = feed.state.status === 'ready' ? feed.state.data.items : [];
-  const remoteIds = new Set(remote.flatMap(item => item.type === 'item' ? [item.item_id] : item.item_ids));
-  const items = [...mine.filter(item => item.type !== 'item' || !remoteIds.has(item.item_id)), ...remote];
+  const items = otherPeopleFeed(remote, viewer);
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
@@ -52,6 +58,7 @@ export default function FeedScreen() {
         <Text style={styles.composeText}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
         <View style={styles.composePlus}><Text style={{ color: c.tint, fontSize: 20, fontWeight: '700', lineHeight: 22 }}>{composing ? '−' : '+'}</Text></View>
       </Pressable>
+      {published && <Text accessibilityLiveRegion="polite" style={{ color: c.muted, fontSize: 13 }}>Shared with your connections. Your feed shows other people’s updates.</Text>}
       {composing && <Card>
         <View style={styles.kinds}>
           {(['update', 'post'] as const).map((option) => (
@@ -93,22 +100,6 @@ export default function FeedScreen() {
       ))}
     </ScrollView>
   );
-}
-
-function postedEntry(created: FeedPostResponse): FeedEntry {
-  return {
-    type: 'item',
-    item_id: created.item_id,
-    author: { user_id: 'me', name: 'You', photo_url: null },
-    kind: created.kind,
-    title: created.title,
-    body: created.body,
-    url: created.url,
-    created_at: created.created_at,
-    score: 1,
-    talked_about: [],
-    details: null,
-  };
 }
 
 function FeedCard({ item }: { item: FeedEntry }) {

@@ -1,6 +1,6 @@
 import * as Clipboard from "expo-clipboard";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorState, Loading } from "@/components/States";
@@ -18,10 +18,10 @@ import { useOpenToMeet } from "@/features/presence/openToMeet";
 import { StageTracker } from "@/features/relationship/StageTracker";
 import { stageLabel, type Relationship } from "@/features/relationship/stage";
 import { api, type Facet, type QuickProfile } from "@/lib/api";
-import { emitChange } from "@/lib/changes";
 import { getCurrentEventId } from "@/lib/currentEvent";
 import { env } from "@/lib/env";
 import { useAsync } from "@/lib/useAsync";
+import { useLiveRefresh } from "@/lib/useLiveRefresh";
 
 const FACETS: { key: Facet; label: string }[] = [
   { key: "technical", label: "Technical" },
@@ -56,13 +56,9 @@ export default function MatchScreen() {
     [id],
     ["profile"],
   );
-  // While I'm waiting on their answer, check again every few seconds (demo attendees answer in seconds).
-  const stage = rel.state.status === "ready" ? rel.state.data.stage : null;
-  useEffect(() => {
-    if (stage !== "MEET_INTEREST_PENDING") return;
-    const t = setInterval(() => emitChange("relationships"), 4000);
-    return () => clearInterval(t);
-  }, [stage]);
+  useLiveRefresh(rel.refresh, 3000);
+  useLiveRefresh(profile.refresh, 10000);
+  useLiveRefresh(band.refresh, 5000);
 
   if (profile.state.status === "loading")
     return <Loading label="Loading profile…" />;

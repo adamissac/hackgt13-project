@@ -7,6 +7,7 @@ import { ErrorState, Loading } from '@/components/States';
 import { Card, useColors } from '@/components/ui';
 import { api, type AppNotification } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 const ICON: Record<string, string> = {
   suggestion: 'chat',
@@ -32,7 +33,8 @@ function ago(iso: string) {
 // In-app notification center: matches, mutual yeses, messages, verified conversations, connections.
 export default function NotificationsScreen() {
   const c = useColors();
-  const { state, reload } = useAsync(() => api.notifications(), [], ['notifications']);
+  const { state, reload, refresh } = useAsync(() => api.notifications(), [], ['notifications']);
+  useLiveRefresh(refresh, 3000);
 
   // Opening the list marks everything read (clears the bell badge).
   const hasUnread = state.status === 'ready' && state.data.some((n) => !n.read);

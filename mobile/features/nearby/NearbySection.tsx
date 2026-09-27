@@ -11,6 +11,7 @@ import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 // Nearby (MASTER_SPEC 3.4), as a section of Home (Home and Nearby were two tabs doing one job).
 // Bluetooth decides eligibility; this browse map never reveals a match's actual position.
@@ -44,6 +45,7 @@ export function NearbySection() {
     ? 'Bluetooth isn’t available in Expo Go, so people nearby can’t be detected here. The map still shows where you are. Just met someone? Verify with a QR code below.'
     : radioError;
   const meetups = useAsync(() => api.meetups(), []);
+  useLiveRefresh(meetups.refresh, 3000);
   const selected = peers.find((p) => p.user_id === selectedId) ?? null;
   const meetupByUser = new Map((meetups.state.status === 'ready' ? meetups.state.data.meetups : []).map((m) => [m.other.user_id, m]));
   const selectedMeetup = selected ? meetupByUser.get(selected.user_id) : undefined;

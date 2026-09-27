@@ -47,9 +47,10 @@ def test_visibility(dbclient, db, people):
     never = item(db, stranger, "stranger post about robotics")
     db.execute("insert into feed_prefs (user_id, show_github) values (%s, false)", (other,))
     ids = {i["item_id"] for i in feed_of(dbclient, me)["items"]}
-    assert ids == {mine, ok}
+    assert ids == {ok}
+    assert mine not in ids
     assert never not in ids and hidden_kind not in ids
-    assert {i["item_id"] for i in feed_of(dbclient, stranger)["items"]} == {never}
+    assert feed_of(dbclient, stranger)["items"] == []
 
 
 def test_ranking_relevance_recency_and_talked_topic(dbclient, db, people):
