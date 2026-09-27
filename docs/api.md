@@ -79,6 +79,8 @@ Only people checked in to the event.
 
 ## 6. POST /events/{event_id}/checkin
 Request: `{}`   Response: `{ "ok": true }`
+Only for events with no company (`org_id` null, e.g. the HackGT demo event). Company events check people in by QR
+(45, `POST /events/join`): `403 scan the event QR code to check in`.
 
 ## 7. GET /matches/{other_user_id}/starters
 Same access rule as 15 (current match, open suggestion, or connection; otherwise `403 {"error": "this profile isn't available"}`).
@@ -522,10 +524,12 @@ in character, and say yes to connecting. Suggestions never pair two demo attende
 `POST /events` ← `{ "name": "Fall fair", "location": "Klaus", "starts_at": null, "ends_at": null }` (org members only; else `403 create a company first`)
 → `{ "event": { ...same card as GET /events } }`
 
-`POST /events/{event_id}/register` → `{ "ok": true }` (also checks the person in so matches work)
+`POST /events/{event_id}/register` → `{ "ok": true }` (signs up only; does NOT check in. `checked_in` stays false)
 `GET /events/{event_id}/join-token` (organizers only) → `{ "payload", "signature", "expires_at", "event_id", "qr_payload" }` (7-day join QR)
 `POST /events/join` ← `{ "payload", "signature" }` → `{ "event_id": 3, "name": "Fall fair" }`
-Errors: `400 invalid_signature`, `400 expired`, `403 organizers only`, `404 event not found`.
+Checks in a person who already registered (the only way to check in to a company event). Registered but not
+scanned = not checked in = invisible to other attendees, and the app keeps Event Mode off.
+Errors: `400 invalid_signature`, `400 expired`, `403 organizers only` (join-token), `403 register for this event first` (join), `404 event not found`.
 Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory.
 
 Additive fields (no breaking changes):

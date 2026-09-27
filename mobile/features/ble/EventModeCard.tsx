@@ -1,4 +1,5 @@
 // AK8: Event Mode switch + honest status for the Nearby tab.
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform, StyleSheet, Switch, Text, View } from 'react-native';
 
@@ -71,7 +72,8 @@ export function EventModeCard() {
         <Button label="Resume Event Mode" variant="secondary" onPress={() => toggle(true)} loading={busy} />
       ) : null}
 
-      {status?.error ? <Text style={[styles.small, { color: c.danger }]}>{status.error}</Text> : null}
+      {status?.error ? <Text style={[styles.small, { color: status.needsCheckIn ? c.muted : c.danger }]}>{status.error}</Text> : null}
+      {status?.needsCheckIn ? <Button label="Scan event QR code" onPress={() => router.push('/join-event')} /> : null}
     </Card>
   );
 }

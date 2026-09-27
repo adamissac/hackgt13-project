@@ -30,7 +30,16 @@ export default function JoinEventScreen() {
       await setCurrentEventId(r.event_id);
       setDone(r.name);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(
+        /register/i.test(msg)
+          ? 'Register for this event first (Events tab), then scan again.'
+          : /expired/i.test(msg)
+            ? 'This QR code has expired. Ask the organizers for the current one.'
+            : /invalid/i.test(msg)
+              ? 'That isn’t an event check-in QR code.'
+              : msg,
+      );
     } finally {
       setBusy(false);
     }
@@ -39,18 +48,21 @@ export default function JoinEventScreen() {
   if (done) {
     return (
       <View style={styles.wrap}>
-        <Text style={[styles.title, { color: c.text }]}>You’re in {done}</Text>
-        <Text style={[styles.body, { color: c.muted }]}>Nearby and matches now use this event.</Text>
-        <Button label="See people here" onPress={() => router.replace('/nearby')} />
+        <Text style={[styles.title, { color: c.text }]}>You’re checked in to {done}</Text>
+        <Text style={[styles.body, { color: c.muted }]}>
+          Other checked-in attendees can now see you, and you can turn on Event Mode in Nearby.
+        </Text>
+        <Button label="Go to Nearby" onPress={() => router.replace('/nearby')} />
       </View>
     );
   }
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.title, { color: c.text }]}>Scan an event QR</Text>
+      <Text style={[styles.title, { color: c.text }]}>Check in to an event</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        This signs you into that company’s event. It does not connect you to a person.
+        Scan the QR code the organizers show at the entrance. You need to have registered for the event first. This
+        checks you in; it doesn’t connect you to anyone.
       </Text>
       {!permission?.granted ? (
         <Button label="Allow camera" onPress={() => void request()} />

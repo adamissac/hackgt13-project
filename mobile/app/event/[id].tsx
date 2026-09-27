@@ -13,10 +13,11 @@ export default function EventScreen() {
   const c = useColors();
   const id = Number(useLocalSearchParams<{ id: string }>().id);
   const events = useAsync(() => api.listEvents(), []);
+  // People here only after you check in by scanning the organizer's QR (registering alone isn't enough).
   const matches = useAsync(
     async () => {
-      await api.checkin(id).catch(() => undefined);
-      return api.matches(id);
+      const mine = (await api.listEvents()).events.find((e) => e.id === id);
+      return mine?.checked_in ? api.matches(id) : null;
     },
     [id],
     ['relationships'],
@@ -42,7 +43,6 @@ export default function EventScreen() {
     setError(null);
     try {
       await api.registerEvent(id);
-      await setCurrentEventId(id);
       events.reload();
       matches.reload();
     } catch (e) {
@@ -58,7 +58,16 @@ export default function EventScreen() {
       <Text style={[styles.body, { color: c.muted }]}>{event.host ? `Hosted by ${event.host}` : 'Company event'}</Text>
       <Text style={[styles.body, { color: c.muted }]}>{event.location || 'Location on site'}</Text>
       {!event.registered ? (
-        <Button label="Register and enter" onPress={enter} loading={busy} />
+        <Button label="Register" onPress={enter} loading={busy} />
+      ) : !event.checked_in ? (
+        <Card>
+          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>You’re registered</Text>
+          <Text style={[styles.body, { color: c.muted }]}>
+            At the event, scan the QR code from the organizers to check in. Until then, other attendees can’t see you and
+            Event Mode stays off.
+          </Text>
+          <Button label="Scan event QR code" onPress={() => router.push('/join-event')} />
+        </Card>
       ) : (
         <Button
           label="Use this event for Nearby"
@@ -72,7 +81,7 @@ export default function EventScreen() {
       {token.state.status === 'ready' && token.state.data ? (
         <Card>
           <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Event check-in QR</Text>
-          <Text style={[styles.body, { color: c.muted }]}>People scan this to join the event. They are not added as connections.</Text>
+          <Text style={[styles.body, { color: c.muted }]}>Show this at the entrance. Registered guests scan it to check in. Scanning doesn’t connect anyone.</Text>
           <View style={styles.qr}>
             <QRCode value={token.state.data.qr_payload} size={200} />
           </View>
@@ -80,18 +89,22 @@ export default function EventScreen() {
       ) : null}
       <Text style={[styles.section, { color: c.text }]}>People at this event</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Same as Nearby: people registered and present, ranked for you. Not a searchable list of every attendee.
+        Only people who checked in here with the event QR code, ranked for you. Not a searchable list of every attendee.
       </Text>
       {matches.state.status === 'loading' && <Loading label="Finding people…" />}
+      {matches.state.status === 'ready' && matches.state.data === null && (
+        <Card>
+          <Text style={[styles.body, { color: c.muted }]}>Check in with the event QR code to see who’s here.</Text>
+        </Card>
+      )}
       {matches.state.status === 'error' && (
         <ErrorState
           message={matches.state.message}
-          onRetry={() => {
-            void enter();
-          }}
+          onRetry={matches.reload}
         />
       )}
       {matches.state.status === 'ready' &&
+        matches.state.data !== null &&
         (matches.state.data.matches.length === 0 ? (
           <Card>
             <Text style={[styles.body, { color: c.text }]}>No one else is in this event yet.</Text>

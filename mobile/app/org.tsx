@@ -56,8 +56,8 @@ export default function OrgScreen() {
     <ScrollView contentContainerStyle={styles.wrap}>
       <Text style={[styles.title, { color: c.text }]}>{company ? company.name : 'Company account'}</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Companies create events. People register or scan the event QR, then see others at that event — same as Nearby,
-        without a public directory.
+        Create an event, then show its check-in QR code at the entrance. Guests register in the app ahead of time and
+        scan the code when they arrive. Only checked-in guests can see each other, and there’s no public attendee list.
       </Text>
       {!company ? (
         <Card>

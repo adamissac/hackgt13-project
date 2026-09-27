@@ -47,7 +47,16 @@ export default function NearbyScreen() {
       />
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
 
-      {fetchError && !radioError ? (
+      {fetchError && !radioError && /check in/i.test(fetchError) ? (
+        <Card>
+          <Text style={[styles.h2, { color: c.text }]}>Check in to see who’s here</Text>
+          <Text style={[styles.small, { color: c.muted }]}>
+            Only attendees who scanned the event’s QR code show up to each other. Register for the event, then scan the
+            organizers’ QR code at the entrance.
+          </Text>
+          <Button label="Scan event QR code" onPress={() => router.push('/join-event')} />
+        </Card>
+      ) : fetchError && !radioError ? (
         <ErrorState message={fetchError} onRetry={() => setScan(true)} />
       ) : scan ? (
         <>

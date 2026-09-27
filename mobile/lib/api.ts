@@ -330,8 +330,9 @@ export class ApiError extends Error {
 const REQUEST_TIMEOUT_MS = 30_000;
 
 // Event features (matches, graph, nearby, assistant search) need the user checked in to the event.
-// This is a one-event app, so instead of making people find a "check in" button, a "check in first"
-// answer checks them in and retries once. Idempotent on the server.
+// For events with no company (the HackGT demo event) a "check in first" answer checks them in and retries
+// once. Company events only check in by scanning the organizer's QR, so there the server refuses and the
+// original "check in first" error goes back to the screen, which offers the QR scanner.
 async function request<T>(method: string, path: string, body?: unknown | FormData): Promise<T> {
   try {
     return await rawRequest<T>(method, path, body);
@@ -339,7 +340,11 @@ async function request<T>(method: string, path: string, body?: unknown | FormDat
     const eventId = path.match(/\/events\/(\d+)/)?.[1] ?? path.match(/[?&]event_id=(\d+)/)?.[1];
     if (e instanceof ApiError && e.status === 403 && /check in/i.test(e.message) && eventId && !/checkin/.test(path)) {
       console.log('[api] not checked in; checking in to event', eventId, 'and retrying', path);
-      await rawRequest('POST', `/events/${eventId}/checkin`, {});
+      try {
+        await rawRequest('POST', `/events/${eventId}/checkin`, {});
+      } catch {
+        throw e;
+      }
       return rawRequest<T>(method, path, body);
     }
     throw e;
@@ -535,7 +540,7 @@ export const api = {
   registerEvent: (eventId: number) =>
     call(() => demo.registerEvent(eventId), () => request<{ ok: true }>('POST', `/events/${eventId}/register`, {})),
   eventJoinToken: (eventId: number) =>
-    call(demo.eventJoinToken, () => request<QrToken & { event_id: number; qr_payload: string }>('GET', `/events/${eventId}/join-token`)),
+    call(() => demo.eventJoinToken(eventId), () => request<QrToken & { event_id: number; qr_payload: string }>('GET', `/events/${eventId}/join-token`)),
   joinEvent: (body: { payload: string; signature: string }) =>
     call(() => demo.joinEvent(body), () => request<{ event_id: number; name: string }>('POST', '/events/join', body)),
   starters: (otherUserId: string) =>

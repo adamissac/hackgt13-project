@@ -22,6 +22,8 @@ export interface EventModeStatus {
   keepAwake: boolean;
   backgroundService: 'running' | 'unavailable' | 'failed' | 'off';
   error: string | null;
+  /** True when Event Mode was refused because this person hasn't checked in with the event's QR code. */
+  needsCheckIn?: boolean;
 }
 
 let status: EventModeStatus = { on: false, keepAwake: false, backgroundService: 'off', error: null };
@@ -51,13 +53,25 @@ async function startAndroidService(): Promise<EventModeStatus['backgroundService
 
 /** Turn Event Mode on. Bluetooth permissions are requested first (Android 14 needs them before the service). */
 export async function enableEventMode(): Promise<void> {
-  if (!bleAvailable()) {
-    set({ on: false, error: BLE_UNAVAILABLE_MESSAGE });
+  // Event Mode is only for people checked in at the venue. Company events check people in when a registered
+  // attendee scans the organizer's QR code (app/join-event), never from here.
+  const checkedIn = await api
+    .listEvents()
+    .then((r) => r.events.find((e) => e.id === getCurrentEventId())?.checked_in ?? false)
+    .catch(() => null);
+  if (checkedIn === null) {
+    set({ on: false, needsCheckIn: false, error: 'Could not confirm your event check-in. Check your connection and try again.' });
     return;
   }
-  set({ error: null });
-  // Being in Event Mode means "I'm at the event": check in so matches and suggestions include me.
-  api.checkin(getCurrentEventId()).catch(() => undefined);
+  if (!checkedIn) {
+    set({ on: false, needsCheckIn: true, error: 'Scan the event’s QR code at the entrance to check in, then turn on Event Mode.' });
+    return;
+  }
+  if (!bleAvailable()) {
+    set({ on: false, needsCheckIn: false, error: BLE_UNAVAILABLE_MESSAGE });
+    return;
+  }
+  set({ error: null, needsCheckIn: false });
   await startEngine({ eventId: getCurrentEventId(), owner: OWNER });
   const engine = getSnapshot();
   if (!engine.running) {

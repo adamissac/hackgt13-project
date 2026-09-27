@@ -1,6 +1,10 @@
 """AL3: event check-in and ranked matches (docs/api.md 5-6, MASTER_SPEC 6.6).
 
 Also company events: list, create (org owner), register, join-by-QR (docs/api.md 45).
+
+Company events check people in only by QR: register first (signs you up, you are not "at" the event yet),
+then scan the organizer's join QR at the venue. Only checked-in people (attendance) see or are shown to
+each other, so a registration alone never puts someone in front of other attendees.
 """
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel, Field
@@ -45,9 +49,16 @@ def _register(event_id: int, user_id: str) -> None:
     db.execute(
         "insert into event_registrations (event_id, user_id) values (%s, %s) on conflict do nothing",
         (event_id, user_id))
-    db.execute(
-        "insert into attendance (event_id, user_id) values (%s, %s) on conflict do nothing",
-        (event_id, user_id))
+
+
+def _is_registered(event_id: int, user_id: str) -> bool:
+    return db.fetchone(
+        "select 1 as ok from event_registrations where event_id = %s and user_id = %s", (event_id, user_id)) is not None
+
+
+def _check_in(event_id: int, user_id: str) -> None:
+    db.execute("insert into attendance (event_id, user_id) values (%s, %s) on conflict do nothing",
+               (event_id, user_id))
     population.invalidate()
 
 
@@ -125,7 +136,9 @@ def join_event(body: JoinBody, user: User = Depends(current_user)):
     ensure_profile(user.id)
     event_id = qr.verify_event(body.payload, body.signature)
     e = _event_or_404(event_id)
-    _register(event_id, user.id)
+    if not _is_registered(event_id, user.id):
+        raise ApiError(403, "register for this event first")
+    _check_in(event_id, user.id)
     return {"event_id": event_id, "name": e["name"]}
 
 
@@ -153,10 +166,13 @@ def join_token(event_id: int, user: User = Depends(current_user)):
 @router.post("/events/{event_id}/checkin")
 def checkin(event_id: int, user: User = Depends(current_user)):
     ensure_profile(user.id)
-    _event_or_404(event_id)
-    db.execute("insert into attendance (event_id, user_id) values (%s, %s) on conflict do nothing",
-               (event_id, user.id))
-    population.invalidate()
+    e = db.fetchone("select id, org_id from events where id = %s", (event_id,))
+    if not e:
+        raise ApiError(404, "event not found")
+    if e.get("org_id"):
+        # Company events: only the organizer's join QR checks people in (POST /events/join).
+        raise ApiError(403, "scan the event QR code to check in")
+    _check_in(event_id, user.id)
     return {"ok": True}
 
 

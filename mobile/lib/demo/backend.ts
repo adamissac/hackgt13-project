@@ -237,22 +237,24 @@ const DEMO_LIVE_EVENTS: LiveEvent[] = [
 export function listEvents() {
   return { events: DEMO_LIVE_EVENTS };
 }
+let demoOrg: { id: number; name: string } | null = null;
 export function myOrg() {
-  return { org: null as { id: number; name: string } | null };
+  return { org: demoOrg };
 }
 export function createOrg(name: string) {
-  return { org: { id: 1, name } };
+  demoOrg ??= { id: 1, name };
+  return { org: demoOrg };
 }
 export function createEvent(body: { name: string; location?: string }) {
   const event: LiveEvent = {
     id: 900 + DEMO_LIVE_EVENTS.length,
     name: body.name,
-    host: 'Your company',
+    host: demoOrg?.name ?? 'Your company',
     location: body.location ?? '',
     starts_at: null,
     ends_at: null,
-    registered: true,
-    checked_in: true,
+    registered: false,
+    checked_in: false,
     mine: true,
   };
   DEMO_LIVE_EVENTS.push(event);
@@ -260,23 +262,26 @@ export function createEvent(body: { name: string; location?: string }) {
 }
 export function registerEvent(eventId: number) {
   const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
-  if (e) {
-    e.registered = true;
-    e.checked_in = true;
-  }
+  // Registering is not checking in: that needs the organizer's QR at the venue (joinEvent).
+  if (e) e.registered = true;
   return { ok: true as const };
 }
-export function eventJoinToken() {
+export function eventJoinToken(eventId: number = DEMO_EVENT.id) {
   return {
-    payload: 'demo-event',
+    payload: `demo-event-${eventId}`,
     signature: 'demo',
     expires_at: new Date(Date.now() + 86400000).toISOString(),
-    event_id: DEMO_EVENT.id,
-    qr_payload: 'demo-event.demo',
+    event_id: eventId,
+    qr_payload: `demo-event-${eventId}.demo`,
   };
 }
-export function joinEvent(_body: { payload: string; signature: string }) {
-  return { event_id: DEMO_EVENT.id, name: DEMO_EVENT.name };
+export function joinEvent(body: { payload: string; signature: string }) {
+  const id = Number(body.payload.replace('demo-event-', ''));
+  const e = DEMO_LIVE_EVENTS.find((x) => x.id === id);
+  if (!e || body.signature !== 'demo') throw new Error('invalid_signature');
+  if (!e.registered) throw new Error('register for this event first');
+  e.checked_in = true;
+  return { event_id: e.id, name: e.name };
 }
 
 export function interests(): InterestsResponse {

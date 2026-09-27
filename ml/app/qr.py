@@ -45,7 +45,7 @@ EVENT_TTL_S = 7 * 24 * 3600
 
 
 def sign_event(event_id: int, now: float | None = None) -> dict:
-    """Long-lived join QR for a company event. Scanning it registers and checks the person in."""
+    """Long-lived join QR for a company event. Scanning it checks in a person who already registered."""
     exp = int((now or time.time()) + EVENT_TTL_S)
     payload = _b64(f"event|{int(event_id)}|{exp}".encode())
     sig = _b64(hmac.new(_key(), payload.encode(), hashlib.sha256).digest())
