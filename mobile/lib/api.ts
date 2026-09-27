@@ -741,18 +741,16 @@ export const api = {
       return request<FeedResponse>('GET', `/feed${q ? `?${q}` : ''}`);
     }),
   createPost: (body: { kind: 'post' | 'update'; body: string; title?: string | null; url?: string | null }) =>
-    call(
-      () =>
-        ({
-          item_id: Date.now(),
-          kind: body.kind,
-          title: body.title ?? null,
-          body: body.body,
-          url: body.url ?? null,
-          created_at: new Date().toISOString(),
-        }) as FeedPostResponse,
-      () => request<FeedPostResponse>('POST', '/feed/posts', body),
-    ),
+    call(() => demo.createPost(body), () => request<FeedPostResponse>('POST', '/feed/posts', body)),
+  /** Your own posts and updates (so you can edit or delete them). */
+  myPosts: () => call(demo.myPosts, () => request<{ items: FeedPostResponse[] }>('GET', '/feed/posts/mine')),
+  editPost: (itemId: number, body: { body: string; title?: string | null }) =>
+    call(() => demo.editPost(itemId, body), () => request<FeedPostResponse>('PATCH', `/feed/posts/${itemId}`, body)),
+  deletePost: (itemId: number) =>
+    call(() => demo.deletePost(itemId), () => request<{ ok: true }>('DELETE', `/feed/posts/${itemId}`)),
+  /** Remove a connection for both people. The other person gets no notification. */
+  removeConnection: (userId: string) =>
+    call(() => demo.removeConnection(userId), () => request<{ ok: true }>('DELETE', `/connections/${encodeURIComponent(userId)}`)),
   replySuggestion: (itemId: number) =>
     call(mocks.feedReply, () => request<{ reply: string }>('POST', `/feed/${itemId}/reply-suggestion`, {})),
   assistantChat: (messages: AssistantMessage[], eventId?: number) =>

@@ -264,6 +264,7 @@ Silent: a yes gets `waiting` until both say yes, even if the other said no. Only
 Mutual yes creates the `connections` row (`how_met = in_person`), a chat, and `connected` notifications for both.
 
 ## 24. GET /connections/{user_id}
+`DELETE /connections/{user_id}` → `{ "ok": true }` removes the connection for both people (`404 not a connection`). No notification or other signal to the other person; reconnecting needs a new verified conversation.
 My connection only (else `404 connection not found`): the 11 row plus `"shared_topics": ["reinforcement learning", ...]`.
 
 ## 25. POST /connections/{user_id}/followup-draft
@@ -366,6 +367,7 @@ GitHub milestone), never one per repo or push. `items` (additive) on a
 `summary` entry lists the collapsed items, newest first, in the feed-item shape, so the app can expand them.
 
 ## 30. POST /feed/posts
+Own posts: `GET /feed/posts/mine` → `{ "items": [ { "item_id", "kind", "title", "body", "url", "created_at" } ] }` (post/update only, newest first). `PATCH /feed/posts/{item_id}` ← `{ "body", "title?" }` → the same item shape. `DELETE /feed/posts/{item_id}` → `{ "ok": true }`. Someone else's item or a GitHub card: `404 post not found`.
 Request `{ "kind": "post" | "update", "body": "Started a new role at ...", "title": null, "url": null }`
 Response `201 { "item_id": 12, "kind": "update", "title": null, "body": "...", "url": null, "created_at": "..." }`
 (GitHub items come from the poller, AR8, not from this endpoint.)

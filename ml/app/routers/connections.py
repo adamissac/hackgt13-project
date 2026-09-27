@@ -52,6 +52,21 @@ def get_connection(user_id: str, user: User = Depends(current_user)):
     return {**_shape(r), "shared_topics": [s["name"] for s in shared]}
 
 
+@router.delete("/{user_id}")
+def remove_connection(user_id: str, user: User = Depends(current_user)):
+    """Remove a connection (it disappears for both of you). No notification or other signal goes to the other person
+    (MASTER_SPEC 11: a "no" is never revealed). You can connect again later after another verified conversation."""
+    if not matching.is_valid_uuid(user_id):
+        raise ApiError(404, "not a connection")
+    lo, hi = sorted([user.id, user_id])
+    with db.conn() as c:
+        gone = c.execute("delete from connections where user_a = %s and user_b = %s returning 1 as ok", (lo, hi)).fetchone()
+    if not gone:
+        raise ApiError(404, "not a connection")
+    population.invalidate()
+    return {"ok": True}
+
+
 @router.post("/{user_id}/followup-draft")
 def followup_draft(user_id: str, user: User = Depends(current_user)):
     from ml import generation, scoring

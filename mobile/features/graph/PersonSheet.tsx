@@ -2,10 +2,12 @@
 // who they are, what they're into, and, for connections, how you met and what you last talked about.
 // Data: GET /matches/{id}/quick-profile (api.md 15) and GET /connections/{id} (api.md 24).
 import { router } from 'expo-router';
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar, Button, Card, Chip, MatchMeter, useColors } from '@/components/ui';
 import { api, type GraphMode } from '@/lib/api';
+import { confirmAction } from '@/lib/confirm';
 import { useAsync } from '@/lib/useAsync';
 
 import { whySentence, type Person } from './model';
@@ -44,10 +46,25 @@ async function load(p: Person, mode: GraphMode): Promise<Detail> {
 
 const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' }) : '');
 
-export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; onClose: () => void }) {
+export function PersonSheet({ p, mode, onClose, onRemoved }: { p: Person; mode: GraphMode; onClose: () => void; onRemoved?: () => void }) {
   const c = useColors();
   const { state } = useAsync(() => load(p, mode), [p.id, mode]);
   const d = state.status === 'ready' ? state.data : null;
+  const [removing, setRemoving] = useState(false);
+  const [removeError, setRemoveError] = useState<string | null>(null);
+  // Private: they aren't notified. Connecting again needs another verified conversation.
+  const remove = async () => {
+    if (!(await confirmAction(`Remove ${p.first}?`, 'They won’t be notified. You can connect again after another conversation.', 'Remove'))) return;
+    setRemoving(true);
+    setRemoveError(null);
+    try {
+      await api.removeConnection(p.userId);
+      onRemoved?.();
+    } catch (e) {
+      setRemoveError(e instanceof Error ? e.message : String(e));
+      setRemoving(false);
+    }
+  };
 
   return (
     <Card>
@@ -138,6 +155,10 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
         variant={mode === 'matches' ? 'primary' : 'secondary'}
         onPress={() => { onClose(); router.push(`/match/${p.userId}`); }}
       />
+      {mode === 'network' && d?.connection ? (
+        <Button label="Remove connection" variant="ghost" onPress={() => void remove()} loading={removing} />
+      ) : null}
+      {removeError ? <Text style={[styles.small, { color: c.danger }]}>{removeError}</Text> : null}
     </Card>
   );
 }

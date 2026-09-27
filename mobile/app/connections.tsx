@@ -7,6 +7,7 @@ import { Avatar, Button, Card, Chip, firstName, useColors } from '@/components/u
 import { metLine } from '@/features/checklist/met';
 import { listChats } from '@/features/chat/store';
 import { api, type Connection } from '@/lib/api';
+import { confirmAction } from '@/lib/confirm';
 import { useAsync } from '@/lib/useAsync';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
@@ -17,6 +18,28 @@ export default function ConnectionsScreen() {
   const { state, reload, refresh } = useAsync(() => api.connections(), [], ['connections']);
   useLiveRefresh(refresh, 5000);
   const [opening, setOpening] = useState<string | null>(null);
+  const [removing, setRemoving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Removing is private: the other person isn't notified. You can connect again after another verified conversation.
+  const remove = async (person: Connection) => {
+    const ok = await confirmAction(
+      `Remove ${firstName(person.name)}?`,
+      'They won’t be notified. You can connect again after another conversation.',
+      'Remove',
+    );
+    if (!ok) return;
+    setRemoving(person.user_id);
+    setError(null);
+    try {
+      await api.removeConnection(person.user_id);
+      reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   const openChat = async (person: Connection) => {
     setOpening(person.user_id);
@@ -36,6 +59,7 @@ export default function ConnectionsScreen() {
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
       <Text style={[styles.lead, { color: c.muted }]}>Only you can see who you’ve connected with.</Text>
+      {error ? <Text style={{ color: c.danger }}>{error}</Text> : null}
       {state.status === 'loading' && <Loading label="Loading your connections…" />}
       {state.status === 'error' && <ErrorState message={state.message} onRetry={reload} />}
       {state.status === 'ready' && state.data.connections.length === 0 && (
@@ -85,6 +109,7 @@ export default function ConnectionsScreen() {
                 style={{ flex: 1 }}
               />
             </View>
+            <Button label="Remove connection" variant="ghost" onPress={() => void remove(person)} loading={removing === person.user_id} />
           </Card>
         ))}
     </ScrollView>

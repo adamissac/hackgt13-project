@@ -65,6 +65,8 @@ interface State {
   nextId: number;
   /** Registration / check-in per company event, kept across reloads (so a demo event session survives a restart). */
   liveEvents: Record<number, { registered: boolean; checked_in: boolean }>;
+  /** Your own posts and updates in demo mode (newest first). */
+  posts: import('../api').FeedPostResponse[];
 }
 
 const fresh = (): State => ({
@@ -94,6 +96,7 @@ const fresh = (): State => ({
   myPoint: null,
   nextId: 100,
   liveEvents: {},
+  posts: [],
 });
 
 let state: State = fresh();
@@ -737,6 +740,40 @@ export function followupDraft(userId: string) {
 }
 
 // ---------- connections ----------
+// Remove a connection: back to "not connected" (you can connect again later). No signal to the other person.
+export function removeConnection(userId: string) {
+  const r = rel(userId);
+  if (r.stage !== 'CONNECTED') throw new Error('not a connection');
+  r.stage = 'DISCOVERED';
+  delete state.connectedAt[userId];
+  save();
+  emitChange('connections', 'relationships');
+  return { ok: true as const };
+}
+
+export function createPost(body: { kind: 'post' | 'update'; body: string; title?: string | null; url?: string | null }) {
+  const post = { item_id: id(), kind: body.kind, title: body.title ?? null, body: body.body, url: body.url ?? null, created_at: now() };
+  state.posts = [post, ...(state.posts ?? [])];
+  save();
+  return post;
+}
+export function myPosts() {
+  return { items: state.posts ?? [] };
+}
+export function editPost(itemId: number, body: { body: string; title?: string | null }) {
+  const p = (state.posts ?? []).find((x) => x.item_id === itemId);
+  if (!p) throw new Error('post not found');
+  Object.assign(p, { body: body.body, title: body.title ?? p.title });
+  save();
+  return { ...p };
+}
+export function deletePost(itemId: number) {
+  if (!(state.posts ?? []).some((x) => x.item_id === itemId)) throw new Error('post not found');
+  state.posts = state.posts.filter((x) => x.item_id !== itemId);
+  save();
+  return { ok: true as const };
+}
+
 export function connections(): { connections: Connection[] } {
   return {
     connections: DEMO_PEOPLE.filter((p) => rel(p.user_id).stage === 'CONNECTED').map((p) => ({

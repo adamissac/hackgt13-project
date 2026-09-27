@@ -6,7 +6,8 @@ import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextI
 import { AppIcon } from '@/components/AppIcon';
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, firstName, useColors } from '@/components/ui';
-import { api, type FeedEntry, type FeedItemEntry } from '@/lib/api';
+import { api, type FeedEntry, type FeedItemEntry, type FeedPostResponse } from '@/lib/api';
+import { confirmAction } from '@/lib/confirm';
 import { useAsync } from '@/lib/useAsync';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import { useAuth } from '@/lib/auth';
@@ -21,6 +22,9 @@ export default function FeedScreen() {
   // The feed is always your connections' posts, in or out of an event.
   const feed = useAsync(() => api.feed(), [viewer]);
   useLiveRefresh(feed.refresh, 5000);
+  // Your own posts, so you can edit or delete them (the feed itself shows other people).
+  const mine = useAsync(() => api.myPosts(), [viewer]);
+  const [showMine, setShowMine] = useState(false);
   const [published, setPublished] = useState(false);
   const [kind, setKind] = useState<'post' | 'update'>('update');
   const [body, setBody] = useState('');
@@ -35,6 +39,7 @@ export default function FeedScreen() {
     setPostError(null);
     try {
       await api.createPost({ kind, body: text });
+      mine.reload();
       setPublished(true);
       setBody('');
       setComposing(false);
@@ -59,7 +64,17 @@ export default function FeedScreen() {
         <Text style={styles.composeText}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
         <View style={styles.composePlus}><Text style={{ color: c.tint, fontSize: 20, fontWeight: '700', lineHeight: 22 }}>{composing ? '−' : '+'}</Text></View>
       </Pressable>
-      {published && <Text accessibilityLiveRegion="polite" style={{ color: c.muted, fontSize: 13 }}>Shared with your connections. Your feed shows other people’s updates.</Text>}
+      {published && <Text accessibilityLiveRegion="polite" style={{ color: c.muted, fontSize: 13 }}>Shared with your connections. You can edit or delete it under Your posts.</Text>}
+      {mine.state.status === 'ready' && mine.state.data.items.length > 0 && (
+        <Card>
+          <Pressable onPress={() => setShowMine((v) => !v)} accessibilityRole="button" accessibilityState={{ expanded: showMine }}
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 36 }}>
+            <Text style={[styles.title, { color: c.text }]}>Your posts <Text style={{ color: c.muted, fontWeight: '400' }}>{mine.state.data.items.length}</Text></Text>
+            <Text style={{ color: c.tint, fontWeight: '700' }}>{showMine ? 'Hide' : 'Manage'}</Text>
+          </Pressable>
+          {showMine && mine.state.data.items.map((post) => <MyPost key={post.item_id} post={post} onChanged={mine.reload} />)}
+        </Card>
+      )}
       {composing && <Card>
         <View style={styles.kinds}>
           {(['update', 'post'] as const).map((option) => (
@@ -240,7 +255,72 @@ function ItemContent({ item }: { item: FeedItemEntry }) {
   );
 }
 
+// One of your own posts: edit it in place, or delete it (with a confirm).
+function MyPost({ post, onChanged }: { post: FeedPostResponse; onChanged: () => void }) {
+  const c = useColors();
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(post.body);
+  const [busy, setBusy] = useState<'save' | 'delete' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const save = async () => {
+    if (!text.trim() || busy) return;
+    setBusy('save');
+    setError(null);
+    try {
+      await api.editPost(post.item_id, { body: text.trim(), title: post.title });
+      setEditing(false);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+  const remove = async () => {
+    if (busy || !(await confirmAction('Delete this post?', 'It disappears from your connections’ feeds. This can’t be undone.', 'Delete'))) return;
+    setBusy('delete');
+    setError(null);
+    try {
+      await api.deletePost(post.item_id);
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setBusy(null);
+    }
+  };
+
+  return (
+    <View style={[styles.myPost, { borderTopColor: c.border }]}>
+      <Text style={[styles.meta, { color: c.muted }]}>
+        {post.kind === 'update' ? 'Update' : 'Post'} · {new Date(post.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+      </Text>
+      {editing ? (
+        <TextInput value={text} onChangeText={setText} multiline autoFocus accessibilityLabel="Edit post"
+          style={[styles.input, { color: c.text, backgroundColor: c.surfaceAlt }]} />
+      ) : (
+        <Text style={[styles.body, { color: c.text }]}>{post.body}</Text>
+      )}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {editing ? (
+          <>
+            <Button label="Save" onPress={() => void save()} loading={busy === 'save'} disabled={!text.trim() || text.trim() === post.body} style={{ flex: 1 }} />
+            <Button label="Cancel" variant="ghost" onPress={() => { setEditing(false); setText(post.body); }} style={{ flex: 1 }} />
+          </>
+        ) : (
+          <>
+            <Button label="Edit" variant="secondary" onPress={() => setEditing(true)} style={{ flex: 1 }} />
+            <Button label="Delete" variant="ghost" onPress={() => void remove()} loading={busy === 'delete'} style={{ flex: 1 }} />
+          </>
+        )}
+      </View>
+      {error ? <Text style={{ color: c.danger }}>{error}</Text> : null}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  myPost: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: 12, marginTop: 4, gap: 8 },
   container: { padding: 20, gap: 18, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   heading: { fontSize: 32, fontWeight: '700', letterSpacing: -1 },
   composePill: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderRadius: 28, paddingLeft: 22, paddingRight: 8 },

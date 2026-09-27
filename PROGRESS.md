@@ -14,6 +14,19 @@
 
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / remove a connection; edit and delete your own posts
+**Status:** done (live needs a Railway redeploy)
+**What I did:**
+- Server: `DELETE /connections/{user_id}` (`ml/app/routers/connections.py`) removes the connection for both people. No notification or signal (MASTER_SPEC 11); `404 not a connection`. `GET /feed/posts/mine`, `PATCH /feed/posts/{item_id}` (re-embeds), and `DELETE /feed/posts/{item_id}` (`ml/app/routers/feed.py`): only your own post/update, anything else is `404 post not found`. Tests: `ml/tests/test_remove_connection_and_posts.py` (DB, CI).
+- App: `lib/api.ts` `removeConnection`, `myPosts`, `editPost`, `deletePost`; demo backend stores your posts in its saved state and can remove a demo connection. New `lib/confirm.ts` (Alert on phones, `confirm` on web).
+- UI: "Remove connection" (with confirm) on each card in `app/connections.tsx` and in the Constellation profile sheet for connections (`features/graph/PersonSheet.tsx`, graph reloads after). Feed: a collapsible "Your posts" card under Share, with Edit (inline, Save/Cancel) and Delete (confirm) per post.
+- Browser-verified in demo: post, then edit, then delete.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_remove_connection_and_posts.py` (DB tests: CI). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`.
+**Next step for whoever continues:** Redeploy ml so live has these endpoints: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Known issues / blockers:** Removing a connection leaves past chats in place (not deleted).
+**Contract changes:** docs/api.md 24 (`DELETE /connections/{user_id}`) and 30 (`GET /feed/posts/mine`, `PATCH`/`DELETE /feed/posts/{item_id}`), all additive; mocks `get-feed-posts-mine.json`, `delete-connections-user.json`. Affects Adam (feed/connections UI owner), noted in REQUESTS.md.
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / Feed is always your connections; stale "inside an event" sessions clear themselves
 **Status:** done
 **What I did:**

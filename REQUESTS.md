@@ -6,6 +6,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 These are notes between equals, not approval requests: nobody (Adam included) signs off on anyone's work.
 
 ## adam
+- [ ] (from arjun) FYI added `DELETE /connections/{user_id}` (private, no signal) and own-post `GET /feed/posts/mine`, `PATCH`/`DELETE /feed/posts/{item_id}` (api.md 24, 30). UI: Remove connection on `app/connections.tsx` + Constellation sheet; Feed has a collapsible "Your posts" card with Edit/Delete. Needs the ml redeploy.
 - [ ] (from arjun) FYI `app/(tabs)/_layout.tsx` now wraps Tabs in a View with `EventBar` on top while the user is inside a company event (and passes top inset 0 to the tabs). Home (`discover.tsx`) shows the event name instead of HackGT 13 then. Leave event is top-left with a confirm.
 - [ ] (from arjun) FYI new `POST /events/{event_id}/unregister` in `ml/app/routers/events.py` (api.md 45): removes registration + check-in. The Events tab uses it when someone switches a company event from Attending to Interested / Not attending. Needs the ml redeploy.
 - [ ] (from arjun) Please redeploy ml (`cd ml && npx @railway/cli up --detach --path-as-root .`). On startup it now creates the shared "Demo test event" (Demo Company, all day Sep 27, join code DEMO-927; `ml/app/demo_event.py`). To get a company login that shows its QR, set `DEMO_COMPANY_EMAIL` and `DEMO_COMPANY_PASSWORD` in Railway first and share them with the team (never commit them).

@@ -59,6 +59,50 @@ def create_post(body: PostBody, user: User = Depends(current_user)):
             "created_at": r["created_at"].isoformat()}
 
 
+class EditBody(BaseModel):
+    body: str = Field(min_length=1, max_length=2000)
+    title: str | None = Field(default=None, max_length=200)
+
+
+def _own_post(item_id: int, user_id: str) -> dict:
+    """Your own post or update (GitHub cards are generated from your repos, so they aren't editable here)."""
+    row = db.fetchone("select id, author_id::text as author_id, kind from feed_items where id = %s", (item_id,))
+    if not row or row["author_id"] != user_id or row["kind"] not in ("post", "update"):
+        raise ApiError(404, "post not found")
+    return row
+
+
+def _post_out(r: dict) -> dict:
+    return {"item_id": r["id"], "kind": r["kind"], "title": r["title"], "body": r["body"], "url": r["url"],
+            "created_at": r["created_at"].isoformat()}
+
+
+@router.get("/posts/mine")
+def my_posts(user: User = Depends(current_user)):
+    """Your own posts and updates, newest first, so you can edit or delete them."""
+    rows = db.fetchall(
+        "select id, kind, title, body, url, created_at from feed_items where author_id = %s "
+        "and kind in ('post','update') order by created_at desc, id desc limit 50", (user.id,))
+    return {"items": [_post_out(r) for r in rows]}
+
+
+@router.patch("/posts/{item_id}")
+def edit_post(item_id: int, body: EditBody, user: User = Depends(current_user)):
+    _own_post(item_id, user.id)
+    text = " ".join(x for x in (body.title, body.body) if x)
+    r = db.fetchone(
+        "update feed_items set title = %s, body = %s, embedding = %s where id = %s "
+        "returning id, kind, title, body, url, created_at", (body.title, body.body, embed([text])[0], item_id))
+    return _post_out(r)
+
+
+@router.delete("/posts/{item_id}")
+def delete_post(item_id: int, user: User = Depends(current_user)):
+    _own_post(item_id, user.id)
+    db.execute("delete from feed_items where id = %s", (item_id,))
+    return {"ok": True}
+
+
 @router.post("/{item_id}/reply-suggestion")
 def reply_suggestion(item_id: int, user: User = Depends(current_user)):
     from ml import generation

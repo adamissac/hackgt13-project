@@ -265,7 +265,7 @@ export default function GraphScreen() {
               <Pressable style={StyleSheet.absoluteFill} accessibilityRole="button" accessibilityLabel="Close profile" onPress={() => setSelectedId(null)} />
               <View accessibilityViewIsModal style={[styles.sheet, { backgroundColor: c.background, paddingBottom: Math.max(insets.bottom, 16), maxHeight: '85%' }]}>
                 <ScrollView contentContainerStyle={{ padding: 16 }}>
-                  {selected && <PersonSheet key={selected.id} p={selected} mode={mode} onClose={() => setSelectedId(null)} />}
+                  {selected && <PersonSheet key={selected.id} p={selected} mode={mode} onClose={() => setSelectedId(null)} onRemoved={() => { setSelectedId(null); reload(); }} />}
                 </ScrollView>
               </View>
             </View>
