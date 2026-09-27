@@ -1,12 +1,14 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ChatMark } from '@/components/Brand';
 import { RichText } from '@/components/RichText';
 import { Button, useColors } from '@/components/ui';
 import { api, type AssistantMessage } from '@/lib/api';
 import { getCurrentEventId } from '@/lib/currentEvent';
+import { useKeyboardInset } from '@/lib/useKeyboardInset';
 
 const PROMPTS = [
   'Who should I meet first?',
@@ -64,11 +66,15 @@ export default function AssistantScreen() {
     void ask(lastUser.content, history);
   };
 
+  // The composer rides on top of the keyboard; with no keyboard it clears the home indicator.
+  const keyboard = useKeyboardInset();
+  const insets = useSafeAreaInsets();
+  useEffect(() => {
+    if (keyboard > 0) setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 50);
+  }, [keyboard]);
+
   return (
-    <KeyboardAvoidingView
-      style={[styles.screen, { backgroundColor: c.background }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}>
+    <View style={[styles.screen, { backgroundColor: c.background }]}>
       <ScrollView
         ref={scroll}
         contentContainerStyle={styles.list}
@@ -130,7 +136,7 @@ export default function AssistantScreen() {
         )}
       </ScrollView>
 
-      <View style={[styles.composer, { borderTopColor: c.border, backgroundColor: c.surface }]}>
+      <View style={[styles.composer, { borderTopColor: c.border, backgroundColor: c.surface, paddingBottom: 12 + (keyboard || insets.bottom) }]}>
         <TextInput
           value={draft}
           onChangeText={setDraft}
@@ -138,13 +144,13 @@ export default function AssistantScreen() {
           placeholderTextColor={c.muted}
           style={[styles.input, { color: c.text, backgroundColor: c.surfaceAlt }]}
           accessibilityLabel="Question for the assistant"
-          returnKeyType="send"
-          onSubmitEditing={() => ask(draft)}
+          multiline
+          scrollEnabled
           editable={!sending}
         />
         <Button label="Ask" onPress={() => ask(draft)} loading={sending} disabled={!draft.trim()} />
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -164,6 +170,7 @@ const styles = StyleSheet.create({
   body: { fontSize: 16, lineHeight: 22 },
   small: { fontSize: 14 },
   errorBox: { flexDirection: 'row', alignItems: 'center', gap: 8, borderWidth: 1, borderRadius: 12, paddingLeft: 12 },
-  composer: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, padding: 12 },
-  input: { flex: 1, minHeight: 48, borderRadius: 14, paddingHorizontal: 14, fontSize: 16 },
+  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 12, paddingTop: 12 },
+  // Grows with what you type (up to ~5 lines, then scrolls) so the whole message stays visible.
+  input: { flex: 1, minHeight: 48, maxHeight: 140, borderRadius: 14, paddingHorizontal: 14, paddingTop: 13, paddingBottom: 13, fontSize: 16, lineHeight: 21 },
 });

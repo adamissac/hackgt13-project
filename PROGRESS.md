@@ -14,6 +14,18 @@
 
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / AI chat: the keyboard covered the input
+**Status:** done
+**What I did:**
+- Cause: `app/assistant.tsx` is an iOS page-sheet modal. `KeyboardAvoidingView` with a fixed `keyboardVerticalOffset={90}` measures from the wrong origin inside a sheet, so the composer stayed under the keyboard.
+- New `mobile/lib/useKeyboardInset.ts`: the iOS keyboard height from `keyboardWillShow/Hide`, animated with `LayoutAnimation` (Types.keyboard) to match the keyboard. Android keeps adjustResize (0). The assistant composer pads by the keyboard height (or the home-indicator inset when it's closed), scrolls to the latest message when the keyboard opens, and the input is multiline and grows to about 5 lines (maxHeight 140) so the whole message stays visible.
+- The person-to-person chat (`app/chat/[id].tsx`) is a normal pushed screen where its KeyboardAvoidingView works; left unchanged.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then on an iPhone open the AI chat (floating button) and type.
+**Next step for whoever continues:** If another sheet-style screen gets a text input, use `useKeyboardInset()` rather than KeyboardAvoidingView.
+**Known issues / blockers:** Keyboards can't be tested in the browser preview; needs a phone.
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / remove a connection; edit and delete your own posts
 **Status:** done (live needs a Railway redeploy)
 **What I did:**
