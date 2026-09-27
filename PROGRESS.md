@@ -1440,3 +1440,14 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Reload Constellation and inspect varied star distances; layout parameters are in `mobile/features/graph/atomLayout.ts`.
 **Known issues / blockers:** No physical-device visual check this increment.
 **Contract changes:** none
+## 2026-09-26 22:30 | adam | Codex
+**Task:** AD2 — login visual polish
+**Status:** done
+**What I did:**
+- Added a restrained night-sky constellation illustration and a rounded white sign-in card, clearer field labels, softer input styling, and a primary email action.
+- Made the email-code form appear after a successful link request or an explicit Already have a code action. Kept OAuth, company login, demo access and the privacy disclosure.
+- Added safe-area spacing, disabled email autocorrect, and live announcements for form feedback.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx && npm run test:demo`; passed (17 demo checks). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed before final placeholder/footer copy placement cleanup.
+**Next step for whoever continues:** Open `/sign-in` to inspect the form; email-link/code handling and visual styles live in `mobile/app/sign-in.tsx`.
+**Known issues / blockers:** No real authentication email sent or physical-device visual check in this increment.
+**Contract changes:** none

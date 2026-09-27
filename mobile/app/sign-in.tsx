@@ -24,6 +24,8 @@ import {
 import { router } from "expo-router";
 
 import { Brand } from '@/components/Brand';
+import Svg, { Circle, Path } from 'react-native-svg';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type SignInKind = "linkedin" | "github" | "google" | "email" | "code";
 
@@ -34,6 +36,8 @@ export default function SignInScreen() {
   const muted = useThemeColor({}, "muted");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
+  const [showCode, setShowCode] = useState(false);
+  const insets = useSafeAreaInsets();
   const [busy, setBusy] = useState<SignInKind | null>(null);
   const [message, setMessage] = useState<{
     kind: "error" | "info";
@@ -54,6 +58,7 @@ export default function SignInScreen() {
     setMessage(null);
     try {
       await fn();
+      if (kind === "email") setShowCode(true);
       if (success) setMessage({ kind: "info", text: success });
     } catch (e) {
       setMessage({
@@ -74,18 +79,31 @@ export default function SignInScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={styles.scroll}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
           <Brand />
+          <View style={styles.sky} accessible={false} pointerEvents="none">
+            <Svg width="100%" height={88} viewBox="0 0 360 88">
+              <Path d="M 44 57 L 119 29 L 195 55 L 271 20 L 322 43" stroke="#7F98C1" strokeWidth={0.8} opacity={0.5} fill="none" />
+              {[ [44,57], [119,29], [195,55], [271,20], [322,43] ].map(([x,y], i) => (
+                <Circle key={`halo${i}`} cx={x} cy={y} r={i === 2 ? 12 : 7} fill="#AFC8F5" opacity={0.09} />
+              ))}
+              {[ [44,57], [119,29], [195,55], [271,20], [322,43], [80,18], [238,69], [301,72], [157,12] ].map(([x,y], i) => (
+                <Circle key={i} cx={x} cy={y} r={i === 2 ? 2.7 : i < 5 ? 1.8 : 0.7} fill="#E3ECFF" opacity={i < 5 ? 1 : 0.45} />
+              ))}
+            </Svg>
+          </View>
           <Text style={styles.title}>
             Less networking.{"\n"}More connection.
           </Text>
           <Text style={[styles.subtitle, { color: muted }]}>
             Find your people at HackGT 13. Start with something you share.
           </Text>
-          <InstallHint />
+          <View style={styles.form}>
+          <Text style={styles.formTitle}>Welcome to Constellation</Text>
+          <Text style={[styles.formSubtitle, { color: muted }]}>Sign in or create your account.</Text>
 
           {providers.linkedin_oidc && (
             <Pressable
@@ -138,14 +156,14 @@ export default function SignInScreen() {
             </Pressable>
           )}
 
-          <Text style={[styles.or, { color: muted }]}>
-            or continue with email
-          </Text>
+          {(providers.linkedin_oidc || providers.github) && <Text style={[styles.or, { color: muted }]}>or continue with email</Text>}
+          <Text style={styles.label}>Email address</Text>
           <TextInput
-            style={[styles.input, { color: text, borderColor: "#8886" }]}
+            style={[styles.input, { color: text, borderColor: "#DDE2EA" }]}
             placeholder="you@gatech.edu"
             placeholderTextColor="#888"
             autoCapitalize="none"
+            autoCorrect={false}
             autoComplete="email"
             keyboardType="email-address"
             accessibilityLabel="Email address"
@@ -155,8 +173,7 @@ export default function SignInScreen() {
           <Pressable
             style={[
               styles.button,
-              styles.outline,
-              { borderColor: tint, opacity: validEmail ? 1 : 0.5 },
+              { backgroundColor: tint, opacity: validEmail ? 1 : 0.5 },
             ]}
             onPress={() =>
               run(
@@ -169,16 +186,22 @@ export default function SignInScreen() {
             accessibilityRole="button"
           >
             {busy === "email" ? (
-              <ActivityIndicator />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={[styles.buttonText, { color: tint }]}>
-                Email me a link
+              <Text style={styles.buttonTextLight}>
+                {showCode ? 'Send a new sign-in link' : 'Continue with email'}
               </Text>
             )}
           </Pressable>
+          <Text style={[styles.emailHint, { color: muted }]}>No password to remember. We’ll email you a secure link.</Text>
+          {!showCode && <Pressable onPress={() => setShowCode(true)} accessibilityRole="button" style={styles.codeToggle}>
+            <Text style={{ color: tint, fontSize: 13, fontWeight: '600' }}>Already have a sign-in code?</Text>
+          </Pressable>}
+          {showCode && <>
+          <Text style={styles.label}>Code from your email</Text>
           <TextInput
-            style={[styles.input, { color: text, borderColor: "#8886" }]}
-            placeholder="Code from the email"
+            style={[styles.input, { color: text, borderColor: "#DDE2EA", letterSpacing: 3 }]}
+            placeholder="6–10 digit code"
             placeholderTextColor="#888"
             autoCapitalize="none"
             autoComplete="one-time-code"
@@ -205,14 +228,17 @@ export default function SignInScreen() {
               </Text>
             )}
           </Pressable>
+          </>}
 
           {message && (
             <Text
+              accessibilityLiveRegion="polite"
               style={[styles.message, message.kind === "error" && styles.error]}
             >
               {message.text}
             </Text>
           )}
+          </View>
 
           <Pressable
             onPress={() => router.push("/company-sign-in")}
@@ -234,6 +260,8 @@ export default function SignInScreen() {
             </Text>
           </Pressable>
 
+          <InstallHint />
+
           <Text style={styles.disclosure}>
             We build your interest profile from what you share (resume, GitHub,
             what you type). To verify in-person conversations, the app privately
@@ -247,11 +275,11 @@ export default function SignInScreen() {
 }
 
 const styles = StyleSheet.create({
-  scroll: { flexGrow: 1, justifyContent: "center" },
+  scroll: { flexGrow: 1, justifyContent: "center", backgroundColor: '#F8F7F5' },
   container: {
     justifyContent: "center",
-    padding: 28,
-    paddingVertical: 56,
+    padding: 22,
+    paddingVertical: 12,
     gap: 16,
     width: "100%",
     maxWidth: 480,
@@ -264,12 +292,19 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   title: {
-    fontSize: 38,
-    lineHeight: 44,
+    fontSize: 34,
+    lineHeight: 40,
     fontWeight: "500",
     letterSpacing: -1.5,
   },
-  subtitle: { fontSize: 16, lineHeight: 24, marginBottom: 20 },
+  subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 4 },
+  sky: { backgroundColor: '#0C1425', borderRadius: 20, overflow: 'hidden', marginTop: 8, marginBottom: 4 },
+  form: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7ED', borderRadius: 24, padding: 20, gap: 12 },
+  formTitle: { fontSize: 19, fontWeight: '600', letterSpacing: -0.4 },
+  formSubtitle: { fontSize: 13, lineHeight: 19, marginTop: -6, marginBottom: 6 },
+  label: { fontSize: 12, fontWeight: '600', marginTop: 4 },
+  emailHint: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
+  codeToggle: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   button: {
     minHeight: 56,
     borderRadius: 14,
@@ -277,15 +312,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   outline: { borderWidth: 1 },
-  buttonText: { fontSize: 18, fontWeight: "600" },
-  buttonTextLight: { fontSize: 18, fontWeight: "600", color: "#fff" },
+  buttonText: { fontSize: 15, fontWeight: "600" },
+  buttonTextLight: { fontSize: 15, fontWeight: "600", color: "#fff" },
   or: { textAlign: "center", marginTop: 8, fontSize: 13 },
   input: {
     minHeight: 56,
     borderWidth: 1,
     borderRadius: 14,
     paddingHorizontal: 16,
-    fontSize: 18,
+    fontSize: 16,
+    backgroundColor: '#FAFBFD',
   },
   message: { textAlign: "center", fontSize: 15 },
   error: { color: "#d33" },
