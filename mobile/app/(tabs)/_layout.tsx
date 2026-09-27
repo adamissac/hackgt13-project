@@ -7,7 +7,7 @@ import { HeaderActions } from '@/components/HeaderActions';
 import { Brand } from '@/components/Brand';
 import Colors from '@/constants/Colors';
 import { api } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId, loadCurrentEvent } from '@/lib/currentEvent';
 import { useAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
 
@@ -27,7 +27,7 @@ function useAutoCheckin() {
   useEffect(() => {
     if (!userId || env.useMocks || checkedIn.has(userId)) return;
     checkedIn.add(userId);
-    api.checkin(HACKGT_EVENT_ID).catch((e) => {
+    loadCurrentEvent().then((eventId) => api.checkin(eventId || getCurrentEventId())).catch((e) => {
       checkedIn.delete(userId);
       console.warn("[api] auto check-in failed:", e instanceof Error ? e.message : e);
     });

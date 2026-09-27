@@ -104,6 +104,9 @@ function RootLayoutNav() {
           <Stack.Screen name="meetup/[id]" options={{ title: 'Find each other', headerBackTitle: 'Back' }} />
           <Stack.Screen name="verify" options={{ title: 'Verify a conversation', headerBackTitle: 'Back' }} />
           <Stack.Screen name="invites" options={{ title: 'Invite someone', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="org" options={{ title: 'Company events', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="event/[id]" options={{ title: 'Event', headerBackTitle: 'Back' }} />
+          <Stack.Screen name="join-event" options={{ title: 'Join an event', headerBackTitle: 'Back' }} />
           <Stack.Screen name="network" options={{ title: 'Your network', headerBackTitle: 'Back' }} />
           <Stack.Screen name="insights" options={{ title: 'Feed insights', headerBackTitle: 'Back' }} />
           <Stack.Screen name="accounts" options={{ title: 'Your sources', headerBackTitle: 'Back' }} />

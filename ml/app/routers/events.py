@@ -1,12 +1,16 @@
-"""AL3: event check-in and ranked matches (docs/api.md 5-6, MASTER_SPEC 6.6)."""
-from fastapi import APIRouter, Depends, Query
+"""AL3: event check-in and ranked matches (docs/api.md 5-6, MASTER_SPEC 6.6).
 
-from .. import db, matching, population
+Also company events: list, create (org owner), register, join-by-QR (docs/api.md 45).
+"""
+from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
+
+from .. import db, matching, population, qr
 from ..auth import User, current_user
 from ..errors import ApiError
 from ..users import ensure_profile
 
-router = APIRouter(prefix="/events")
+router = APIRouter()
 
 
 def _event_or_404(event_id: int) -> dict:
@@ -16,7 +20,137 @@ def _event_or_404(event_id: int) -> dict:
     return e
 
 
-@router.post("/{event_id}/checkin")
+def _event_card(row: dict, user_id: str) -> dict:
+    eid = row["id"]
+    registered = bool(db.fetchone(
+        "select 1 as ok from event_registrations where event_id = %s and user_id = %s", (eid, user_id)))
+    checked_in = bool(db.fetchone(
+        "select 1 as ok from attendance where event_id = %s and user_id = %s", (eid, user_id)))
+    mine = bool(row.get("org_id") and db.fetchone(
+        "select 1 as ok from org_members where org_id = %s and user_id = %s", (row["org_id"], user_id)))
+    return {
+        "id": eid,
+        "name": row["name"],
+        "host": row.get("host") or "",
+        "location": row.get("location_text") or row.get("venue") or "",
+        "starts_at": row.get("starts_at"),
+        "ends_at": row.get("ends_at"),
+        "registered": registered,
+        "checked_in": checked_in,
+        "mine": mine,
+    }
+
+
+def _register(event_id: int, user_id: str) -> None:
+    db.execute(
+        "insert into event_registrations (event_id, user_id) values (%s, %s) on conflict do nothing",
+        (event_id, user_id))
+    db.execute(
+        "insert into attendance (event_id, user_id) values (%s, %s) on conflict do nothing",
+        (event_id, user_id))
+    population.invalidate()
+
+
+class OrgBody(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
+class CreateEventBody(BaseModel):
+    name: str = Field(min_length=1, max_length=200)
+    location: str = Field(default="", max_length=200)
+    starts_at: str | None = None
+    ends_at: str | None = None
+
+
+class JoinBody(BaseModel):
+    payload: str = Field(max_length=500)
+    signature: str = Field(max_length=200)
+
+
+@router.get("/me/org")
+def my_org(user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    row = db.fetchone(
+        "select o.id, o.name from organizations o join org_members m on m.org_id = o.id "
+        "where m.user_id = %s order by o.id limit 1", (user.id,))
+    return {"org": {"id": row["id"], "name": row["name"]} if row else None}
+
+
+@router.post("/orgs")
+def create_org(body: OrgBody, user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    existing = db.fetchone(
+        "select o.id, o.name from organizations o join org_members m on m.org_id = o.id "
+        "where m.user_id = %s order by o.id limit 1", (user.id,))
+    if existing:
+        return {"org": {"id": existing["id"], "name": existing["name"]}}
+    with db.conn() as c:
+        org = c.execute(
+            "insert into organizations (name, owner_id) values (%s, %s) returning id, name",
+            (body.name.strip(), user.id)).fetchone()
+        c.execute("insert into org_members (org_id, user_id, role) values (%s, %s, 'admin')",
+                  (org["id"], user.id))
+    return {"org": {"id": org["id"], "name": org["name"]}}
+
+
+@router.get("/events")
+def list_events(user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    rows = db.fetchall(
+        "select e.id, e.name, e.venue, e.location_text, e.starts_at, e.ends_at, e.org_id, o.name as host "
+        "from events e left join organizations o on o.id = e.org_id "
+        "order by e.starts_at desc nulls last, e.id")
+    return {"events": [_event_card(r, user.id) for r in rows]}
+
+
+@router.post("/events")
+def create_event(body: CreateEventBody, user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    org = db.fetchone(
+        "select o.id from organizations o join org_members m on m.org_id = o.id "
+        "where m.user_id = %s order by o.id limit 1", (user.id,))
+    if not org:
+        raise ApiError(403, "create a company first")
+    row = db.fetchone(
+        "insert into events (name, venue, location_text, starts_at, ends_at, org_id) "
+        "values (%s, %s, %s, %s, %s, %s) returning id, name, venue, location_text, starts_at, ends_at, org_id",
+        (body.name.strip(), body.location.strip(), body.location.strip(), body.starts_at, body.ends_at, org["id"]))
+    card = _event_card({**row, "host": None}, user.id)
+    card["host"] = ""
+    return {"event": card}
+
+
+@router.post("/events/join")
+def join_event(body: JoinBody, user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    event_id = qr.verify_event(body.payload, body.signature)
+    e = _event_or_404(event_id)
+    _register(event_id, user.id)
+    return {"event_id": event_id, "name": e["name"]}
+
+
+@router.post("/events/{event_id}/register")
+def register(event_id: int, user: User = Depends(current_user)):
+    ensure_profile(user.id)
+    _event_or_404(event_id)
+    _register(event_id, user.id)
+    return {"ok": True}
+
+
+@router.get("/events/{event_id}/join-token")
+def join_token(event_id: int, user: User = Depends(current_user)):
+    e = db.fetchone(
+        "select e.id, e.org_id from events e where e.id = %s", (event_id,))
+    if not e:
+        raise ApiError(404, "event not found")
+    if not e.get("org_id") or not db.fetchone(
+            "select 1 as ok from org_members where org_id = %s and user_id = %s", (e["org_id"], user.id)):
+        raise ApiError(403, "organizers only")
+    token = qr.sign_event(event_id)
+    return {**token, "event_id": event_id, "qr_payload": f"{token['payload']}.{token['signature']}"}
+
+
+@router.post("/events/{event_id}/checkin")
 def checkin(event_id: int, user: User = Depends(current_user)):
     ensure_profile(user.id)
     _event_or_404(event_id)
@@ -26,7 +160,7 @@ def checkin(event_id: int, user: User = Depends(current_user)):
     return {"ok": True}
 
 
-@router.get("/{event_id}/matches")
+@router.get("/events/{event_id}/matches")
 def matches(event_id: int, limit: int = Query(20, ge=1, le=100), user: User = Depends(current_user)):
     _event_or_404(event_id)
     if not matching.is_checked_in(user.id, event_id):

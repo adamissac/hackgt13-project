@@ -24,7 +24,13 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "name": "Constellation",
+      "shortName": "Constellation",
+      "themeColor": "#343A46",
+      "backgroundColor": "#F8F7F5",
+      "display": "standalone",
+      "lang": "en"
     },
     "plugins": [
       "expo-router",

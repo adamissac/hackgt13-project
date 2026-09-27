@@ -1,0 +1,15 @@
+{
+  "events": [
+    {
+      "id": 1,
+      "name": "HackGT 13",
+      "host": "HackGT",
+      "location": "Klaus Advanced Computing Building",
+      "starts_at": null,
+      "ends_at": null,
+      "registered": true,
+      "checked_in": true,
+      "mine": false
+    }
+  ]
+}

@@ -513,6 +513,21 @@ Response: the same shape as one item of `GET /conversations/pending` (conversati
 Demo attendees also answer on their own (ml/app/synthetic.py): they say yes after the real person does, reply in chat
 in character, and say yes to connecting. Suggestions never pair two demo attendees.
 
+## 45. Company events   owner: Adam (web + company check-in)
+`GET /events` → `{ "events": [ { "id": 1, "name": "HackGT 13", "host": "", "location": "", "starts_at": null, "ends_at": null, "registered": true, "checked_in": true, "mine": false } ] }`
+
+`GET /me/org` → `{ "org": { "id": 3, "name": "Acme" } | null }`
+`POST /orgs` ← `{ "name": "Acme" }` → `{ "org": { "id": 3, "name": "Acme" } }` (returns the existing org if the caller already has one)
+
+`POST /events` ← `{ "name": "Fall fair", "location": "Klaus", "starts_at": null, "ends_at": null }` (org members only; else `403 create a company first`)
+→ `{ "event": { ...same card as GET /events } }`
+
+`POST /events/{event_id}/register` → `{ "ok": true }` (also checks the person in so matches work)
+`GET /events/{event_id}/join-token` (organizers only) → `{ "payload", "signature", "expires_at", "event_id", "qr_payload" }` (7-day join QR)
+`POST /events/join` ← `{ "payload", "signature" }` → `{ "event_id": 3, "name": "Fall fair" }`
+Errors: `400 invalid_signature`, `400 expired`, `403 organizers only`, `404 event not found`.
+Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory.
+
 Additive fields (no breaking changes):
 - `GET /matches/{id}/quick-profile` (15): `"demo_attendee": true|false`.
 - `GET /me/accounts` (40): `sources.github.repo_count` = public repos read by the last import (`0` = connected but nothing

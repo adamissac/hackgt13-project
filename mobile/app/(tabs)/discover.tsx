@@ -9,7 +9,7 @@ import { AiBadge, Avatar, Button, Card, Chip, firstName, SectionTitle, useColors
 import { listChats } from '@/features/chat/store';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
 
 const BAND = { immediate: 'Very close', near: 'Nearby', far: 'Farther away' } as const;
@@ -19,7 +19,8 @@ export default function HomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const presence = useOpenToMeet();
-  const matches = useAsync(() => api.matches(HACKGT_EVENT_ID), [], ['relationships', 'profile']);
+  const eventId = useCurrentEventId();
+  const matches = useAsync(() => api.matches(eventId), [eventId], ['relationships', 'profile']);
   const next = useAsync(
     async () => {
       const [pending, meetups, suggestions] = await Promise.all([

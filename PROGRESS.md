@@ -1,3 +1,15 @@
+## 2026-09-26 21:15 | adam | Adam
+**Task:** Web home-screen app + extra add-people paths + company events
+**Status:** in progress
+**What I did:**
+- Expo web is now a home-screen PWA (`mobile/app/+html.tsx`, `mobile/public/manifest.webmanifest`). Bluetooth still needs the native app; QR verify, invites, and event join work on the site.
+- Invites screen is the "already know them" path: conversation QR, connect QR, contact name + share. Post-talk checkboxes were already `ChecklistForm`.
+- Company events: `GET/POST /events`, `/orgs`, `/me/org`, register, join-token, `/events/join`. Nearby uses the event you entered (`lib/currentEvent.ts`).
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py`. Redeploy ML, then web: `cd mobile && npx expo start --web`.
+**Next step for whoever continues:** Redeploy Railway `ml` so the new event endpoints are live. On a phone, Safari → Share → Add to Home Screen.
+**Known issues / blockers:** Event list needs `events.org_id` / `location_text` (already in schema). Scanning a person QR still does not auto-connect; both must say yes.
+**Contract changes:** docs/api.md 45 (company events); docs/mocks/get-events.json. Alan: new routes live in `ml/app/routers/events.py`.
+
 ## 2026-09-26 21:10 | adam | Codex
 **Task:** AD9 / AK5 — Nearby cleanup and reciprocal Maps navigation
 **Status:** done in code; backend test environment unavailable locally

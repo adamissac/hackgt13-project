@@ -23,6 +23,7 @@ const NETWORK: { title: string; detail: string; icon: string; route: Href }[] = 
   { title: 'Your connections', detail: 'Who you met and what you talked about', icon: 'people', route: '/connections' },
   { title: 'Your network', detail: 'How your network has grown', icon: 'chart', route: '/network' },
   { title: 'My connect QR & invites', detail: 'Connect with someone you already know', icon: 'qr', route: '/invites' },
+  { title: 'Company events', detail: 'Create an event and a check-in QR', icon: 'event', route: '/org' },
 ];
 
 // Profile: who you are to the matcher. Header → about → AI skills by area → sources → network → account.

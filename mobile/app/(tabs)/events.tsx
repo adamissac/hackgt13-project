@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -9,6 +10,7 @@ import { Calendar, RsvpPicker } from '@/features/events/Calendar';
 import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
 import { RSVP_OPTIONS, dayKey, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
 import { useArea } from '@/features/events/useArea';
+import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useAuth } from '@/lib/auth';
 
@@ -23,6 +25,7 @@ export default function EventsScreen() {
  const c=useColors(); const insets=useSafeAreaInsets(); const {session}=useAuth();
  const scope=session?.user.id ?? 'demo';
  const catalog=useAsync(async()=>({events:await eventCatalog.list(),rsvps:await eventCatalog.rsvps(scope)}),[scope]);
+ const live=useAsync(()=>api.listEvents().catch(()=>({events:[]})),[scope]);
  const [section,setSection]=useState<Section>('all');
  const [areaWanted,setAreaWanted]=useState(false);
  const {area,retry}=useArea(areaWanted);
@@ -79,6 +82,15 @@ a new connection.</Text>
     </Pressable>)}
    </View>
    <Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>
+   {live.state.status==='ready'&&live.state.data.events.length>0&&<Card>
+    <Text style={[styles.title,{color:c.text}]}>Live company events</Text>
+    <Text style={[styles.body,{color:c.muted}]}>Register or scan a check-in QR. Nearby then shows people at that event.</Text>
+    {live.state.data.events.slice(0,6).map(e=><Pressable key={e.id} onPress={()=>router.push({pathname:'/event/[id]',params:{id:String(e.id)}})} accessibilityRole="button" style={{paddingVertical:8}}>
+     <Text style={{color:c.text,fontWeight:'700'}}>{e.name}</Text>
+     <Text style={[styles.small,{color:c.muted}]}>{e.host||'Event'}{e.registered?' · You’re in':''}</Text>
+    </Pressable>)}
+    <View style={styles.row}><Button label="Scan event QR" variant="secondary" onPress={()=>router.push('/join-event')}/><Button label="Company account" variant="ghost" onPress={()=>router.push('/org')}/></View>
+   </Card>}
    {catalog.state.status==='loading'&&<Loading label="Finding events…"/>}
    {catalog.state.status==='error'&&<ErrorState message={catalog.state.message} onRetry={catalog.reload}/>}
 

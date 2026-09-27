@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, Share, StyleSheet, TextInput } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -14,16 +15,21 @@ export default function InvitesScreen() {
   const tint = useThemeColor({}, 'tint');
   const textColor = useThemeColor({}, 'text');
   const [note, setNote] = useState('');
+  const [contact, setContact] = useState('');
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreateInviteResponse | null>(null);
   const { state, reload } = useAsync(() => api.myInvites(), []);
 
-  const create = async () => {
+  const create = async (channel: 'link' | 'qr' | 'contact') => {
     setCreating(true);
     setCreateError(null);
     try {
-      const inv = await api.createInvite({ channel: 'link', note: note.trim() || undefined });
+      const inv = await api.createInvite({
+        channel,
+        note: note.trim() || undefined,
+        recipient_hint: contact.trim() || undefined,
+      });
       setCreated(inv);
       setNote('');
       reload();
@@ -47,11 +53,17 @@ export default function InvitesScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Invite someone you know</Text>
+      <Text style={styles.title}>Add someone you already know</Text>
       <Text style={styles.muted}>
-        For people you have already talked to. The link works once, expires in 7 days, and you can revoke it. If they
-        don&apos;t accept, you won&apos;t be told.
+        This is not Nearby. Show your QR, share a link, or send it to a contact. They confirm you talked and that they
+        want to connect. A no is silent.
       </Text>
+      <Pressable
+        onPress={() => router.push('/verify')}
+        style={[styles.secondary, { borderColor: tint }]}
+        accessibilityRole="button">
+        <Text style={[styles.secondaryText, { color: tint }]}>Just talked? Verify with QR</Text>
+      </Pressable>
 
       <TextInput
         value={note}
@@ -62,12 +74,21 @@ export default function InvitesScreen() {
         style={[styles.input, { color: textColor }]}
         accessibilityLabel="Note for the person you are inviting"
       />
+      <TextInput
+        value={contact}
+        onChangeText={setContact}
+        placeholder="Their name (optional), for a contact invite"
+        placeholderTextColor="#8889"
+        maxLength={80}
+        style={[styles.input, { color: textColor }]}
+        accessibilityLabel="Contact name"
+      />
       <Pressable
-        onPress={create}
+        onPress={() => create(contact.trim() ? 'contact' : 'qr')}
         disabled={creating}
         style={[styles.primary, { backgroundColor: tint, opacity: creating ? 0.6 : 1 }]}
         accessibilityRole="button">
-        <Text style={styles.primaryText}>{creating ? 'Creating…' : 'Create invite link'}</Text>
+        <Text style={styles.primaryText}>{creating ? 'Creating…' : 'Show my connect QR'}</Text>
       </Pressable>
       {createError ? <Text style={styles.error}>{createError}</Text> : null}
 

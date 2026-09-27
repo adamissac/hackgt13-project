@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 
 import { api } from '@/lib/api';
 import { onChange } from '@/lib/changes';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId } from '@/lib/currentEvent';
 
 type Status = 'loading' | 'on' | 'off' | 'saving';
 let current: boolean | null = null;
@@ -44,7 +44,7 @@ export function useOpenToMeet() {
     setSaving(true);
     setError(null);
     try {
-      if (next) await api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
+      if (next) await api.checkin(getCurrentEventId()).catch(() => undefined);
       set((await api.setOpenToMeet(next)).open_to_meet);
     } catch (e) {
       set(prev);

@@ -7,7 +7,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { PermissionsAndroid, Platform } from 'react-native';
 
 import { api } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId } from '@/lib/currentEvent';
 
 import EventModeNative from '../../modules/event-mode/src/EventModeModule';
 import { getSnapshot, startEngine, stopEngine } from './engine';
@@ -57,8 +57,8 @@ export async function enableEventMode(): Promise<void> {
   }
   set({ error: null });
   // Being in Event Mode means "I'm at the event": check in so matches and suggestions include me.
-  api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
-  await startEngine({ eventId: HACKGT_EVENT_ID, owner: OWNER });
+  api.checkin(getCurrentEventId()).catch(() => undefined);
+  await startEngine({ eventId: getCurrentEventId(), owner: OWNER });
   const engine = getSnapshot();
   if (!engine.running) {
     // e.g. the server couldn't issue Bluetooth tokens. Say why instead of "Starting Bluetooth..." forever.

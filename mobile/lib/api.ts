@@ -45,6 +45,17 @@ export interface Match {
   proximity: Proximity;
 }
 export interface MatchesResponse { event_id: number; model: string; matches: Match[] }
+export interface LiveEvent {
+  id: number;
+  name: string;
+  host: string;
+  location: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  registered: boolean;
+  checked_in: boolean;
+  mine: boolean;
+}
 export interface StartersResponse { why: string; openers: string[] }
 
 export interface QrToken { payload: string; signature: string; expires_at: string }
@@ -515,6 +526,18 @@ export const api = {
   matches: (eventId: number, limit = 20) =>
     call(demo.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
   checkin: (eventId: number) => call(demo.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
+  listEvents: () => call(demo.listEvents, () => request<{ events: LiveEvent[] }>('GET', '/events')),
+  myOrg: () => call(demo.myOrg, () => request<{ org: { id: number; name: string } | null }>('GET', '/me/org')),
+  createOrg: (name: string) =>
+    call(() => demo.createOrg(name), () => request<{ org: { id: number; name: string } }>('POST', '/orgs', { name })),
+  createEvent: (body: { name: string; location?: string; starts_at?: string; ends_at?: string }) =>
+    call(() => demo.createEvent(body), () => request<{ event: LiveEvent }>('POST', '/events', body)),
+  registerEvent: (eventId: number) =>
+    call(() => demo.registerEvent(eventId), () => request<{ ok: true }>('POST', `/events/${eventId}/register`, {})),
+  eventJoinToken: (eventId: number) =>
+    call(demo.eventJoinToken, () => request<QrToken & { event_id: number; qr_payload: string }>('GET', `/events/${eventId}/join-token`)),
+  joinEvent: (body: { payload: string; signature: string }) =>
+    call(() => demo.joinEvent(body), () => request<{ event_id: number; name: string }>('POST', '/events/join', body)),
   starters: (otherUserId: string) =>
     call(() => demo.starters(otherUserId), () => request<StartersResponse>('GET', `/matches/${otherUserId}/starters`)),
   qrToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/token')),

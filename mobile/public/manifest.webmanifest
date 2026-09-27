@@ -1,0 +1,19 @@
+{
+  "name": "Constellation",
+  "short_name": "Constellation",
+  "description": "Meet people who share your interests. Talk in person. Connect only if you both say yes.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F8F7F5",
+  "theme_color": "#343A46",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

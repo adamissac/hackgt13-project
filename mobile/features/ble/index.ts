@@ -6,7 +6,7 @@
 import { useEffect, useState } from 'react';
 
 import { api, type Match } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId } from '@/lib/currentEvent';
 import { env } from '@/lib/env';
 
 import { startEngine, stopEngine, subscribe, type EngineSnapshot } from './engine';
@@ -68,7 +68,7 @@ export function useProximity(enabled: boolean): ProximityState {
   useEffect(() => {
     if (!enabled) return;
     const unsub = subscribe(setEngine);
-    if (bleAvailable()) startEngine({ eventId: HACKGT_EVENT_ID, owner: 'nearby' });
+    if (bleAvailable()) startEngine({ eventId: getCurrentEventId(), owner: 'nearby' });
     return () => {
       unsub();
       stopEngine('nearby');
@@ -85,7 +85,7 @@ export function useProximity(enabled: boolean): ProximityState {
       if (inFlight) return;
       inFlight = true;
       api
-        .matches(HACKGT_EVENT_ID)
+        .matches(getCurrentEventId())
         .then((r) => {
           if (cancelled) return;
           setPeers(toPeers(r.matches));
@@ -121,6 +121,6 @@ export function useProximity(enabled: boolean): ProximityState {
 
 /** Start/stop advertising and scanning outside the Nearby screen. Event Mode (AK8) uses features/ble/eventMode. */
 export async function setAdvertising(on: boolean): Promise<void> {
-  if (on) await startEngine({ eventId: HACKGT_EVENT_ID, owner: 'app' });
+  if (on) await startEngine({ eventId: getCurrentEventId(), owner: 'app' });
   else stopEngine('app');
 }

@@ -11,6 +11,7 @@ import type {
   GraphResponse,
   InterestsPatch,
   InterestsResponse,
+  LiveEvent,
   LocationShareState,
   Match,
   Meetup,
@@ -205,6 +206,65 @@ export function checkin() {
   state.checkedIn = true;
   save();
   return { ok: true as const };
+}
+
+const DEMO_LIVE_EVENTS: LiveEvent[] = [
+  {
+    id: DEMO_EVENT.id,
+    name: DEMO_EVENT.name,
+    host: 'HackGT',
+    location: 'Klaus Advanced Computing Building',
+    starts_at: null,
+    ends_at: null,
+    registered: true,
+    checked_in: true,
+    mine: false,
+  },
+];
+
+export function listEvents() {
+  return { events: DEMO_LIVE_EVENTS };
+}
+export function myOrg() {
+  return { org: null as { id: number; name: string } | null };
+}
+export function createOrg(name: string) {
+  return { org: { id: 1, name } };
+}
+export function createEvent(body: { name: string; location?: string }) {
+  const event: LiveEvent = {
+    id: 900 + DEMO_LIVE_EVENTS.length,
+    name: body.name,
+    host: 'Your company',
+    location: body.location ?? '',
+    starts_at: null,
+    ends_at: null,
+    registered: true,
+    checked_in: true,
+    mine: true,
+  };
+  DEMO_LIVE_EVENTS.push(event);
+  return { event };
+}
+export function registerEvent(eventId: number) {
+  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
+  if (e) {
+    e.registered = true;
+    e.checked_in = true;
+  }
+  return { ok: true as const };
+}
+export function eventJoinToken() {
+  return {
+    payload: 'demo-event',
+    signature: 'demo',
+    expires_at: new Date(Date.now() + 86400000).toISOString(),
+    event_id: DEMO_EVENT.id,
+    qr_payload: 'demo-event.demo',
+  };
+}
+export function joinEvent(_body: { payload: string; signature: string }) {
+  return { event_id: DEMO_EVENT.id, name: DEMO_EVENT.name };
 }
 
 export function interests(): InterestsResponse {

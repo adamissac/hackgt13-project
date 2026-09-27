@@ -41,6 +41,34 @@ def sign(user_id: str, now: float | None = None) -> dict:
             "expires_at": datetime.fromtimestamp(exp, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
 
 
+EVENT_TTL_S = 7 * 24 * 3600
+
+
+def sign_event(event_id: int, now: float | None = None) -> dict:
+    """Long-lived join QR for a company event. Scanning it registers and checks the person in."""
+    exp = int((now or time.time()) + EVENT_TTL_S)
+    payload = _b64(f"event|{int(event_id)}|{exp}".encode())
+    sig = _b64(hmac.new(_key(), payload.encode(), hashlib.sha256).digest())
+    return {"payload": payload, "signature": sig,
+            "expires_at": datetime.fromtimestamp(exp, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+
+def verify_event(payload: str, signature: str, now: float | None = None) -> int:
+    expected = hmac.new(_key(), payload.encode(), hashlib.sha256).digest()
+    try:
+        ok = hmac.compare_digest(expected, _unb64(signature))
+        kind, event_id, exp = _unb64(payload).decode().split("|")
+        event_id = int(event_id)
+        exp = int(exp)
+    except Exception:
+        raise ApiError(400, "invalid_signature")
+    if not ok or kind != "event":
+        raise ApiError(400, "invalid_signature")
+    if (now or time.time()) > exp:
+        raise ApiError(400, "expired")
+    return event_id
+
+
 def verify(payload: str, signature: str, now: float | None = None) -> tuple[str, str]:
     """Returns (user_id, nonce) or raises ApiError with a docs/api.md error code."""
     expected = hmac.new(_key(), payload.encode(), hashlib.sha256).digest()

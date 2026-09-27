@@ -9,6 +9,7 @@ import {
   TextInput,
 } from "react-native";
 
+import { InstallHint } from "@/components/InstallHint";
 import { Text, View, useThemeColor } from "@/components/Themed";
 import {
   enabledProviders,
@@ -81,6 +82,7 @@ export default function SignInScreen() {
           <Text style={[styles.subtitle, { color: muted }]}>
             Find your people at HackGT 13. Start with something you share.
           </Text>
+          <InstallHint />
 
           {providers.linkedin_oidc && (
             <Pressable
