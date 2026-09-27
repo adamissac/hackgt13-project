@@ -108,6 +108,34 @@ echo "PHONE_URL=${PHONE_URL}"
 echo "QR_FILE=${QR_FILE}"
 echo "Scan that QR with Expo Go. It loads the app from this laptop."
 echo "Leave this terminal open and keep the laptop awake."
+echo "This server checks GitHub every 60 s and hot-reloads the latest main, so every phone on it stays current."
 echo ""
+
+# Keep the served code current (AGENTS.md "Keep local previews current"): fast-forward a clean main only,
+# never over uncommitted work or local commits. New dependencies are installed; a restart is needed for them.
+sync_loop() {
+  while kill -0 "$EXPO_PID" 2>/dev/null; do
+    sleep 60
+    if ! git -C "$ROOT" fetch -q origin main 2>/dev/null; then
+      echo "[sync] could not reach GitHub; the app may be behind." ; continue
+    fi
+    if [ -n "$(git -C "$ROOT" status --porcelain --untracked-files=no)" ] || [ "$(git -C "$ROOT" branch --show-current)" != "main" ]; then
+      continue
+    fi
+    counts="$(git -C "$ROOT" rev-list --left-right --count HEAD...origin/main)"
+    ahead="${counts%%[[:space:]]*}"; behind="${counts##*[[:space:]]}"
+    if [ "$ahead" = "0" ] && [ "$behind" != "0" ]; then
+      before="$(git -C "$ROOT" rev-parse HEAD)"
+      if git -C "$ROOT" merge --ff-only -q origin/main; then
+        echo "[sync] updated to $(git -C "$ROOT" log --oneline -1)"
+        if ! git -C "$ROOT" diff --quiet "$before" HEAD -- mobile/package.json mobile/package-lock.json; then
+          echo "[sync] dependencies changed: installing. Restart this script if the app shows a missing module."
+          (cd "$ROOT/mobile" && npm install --silent) || true
+        fi
+      fi
+    fi
+  done
+}
+sync_loop &
 
 wait "$EXPO_PID"

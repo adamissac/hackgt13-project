@@ -31,6 +31,12 @@ if [ ! -f mobile/package.json ]; then
   exit 1
 fi
 
+if [ -z "$(git status --porcelain --untracked-files=no)" ] && [ "$(git branch --show-current)" = "main" ]; then
+  git pull --ff-only origin main || echo "Pull failed. Starting the code already on disk."
+else
+  echo "Not pulling: this checkout is not a clean main. Starting the code already on disk."
+fi
+
 cd mobile
 
 if [ ! -f .env ]; then
