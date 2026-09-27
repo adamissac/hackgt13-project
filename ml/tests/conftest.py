@@ -28,6 +28,7 @@ os.environ.update({
     "LOAD_EMBEDDER": "0",
     "QR_SIGNING_KEY": "test-qr-signing-key",
     "DATABASE_URL": "",
+    "DEMO_EVENT": "0",      # the startup demo event would pollute every DB test; test_demo_event enables it
 })
 TEST_DB = os.getenv("TEST_DATABASE_URL", "")
 

@@ -29,6 +29,12 @@ async def lifespan(app: FastAPI):
             db.open_pool()
         except Exception:
             log.exception("could not open the database pool; DB endpoints will return 503")
+    if db.is_open():
+        try:
+            from . import demo_event
+            demo_event.ensure()   # shared "Demo test event" every user sees (DEMO_EVENT=0 turns it off)
+        except Exception:
+            log.exception("demo event setup failed; the app works without it")
     if s.load_embedder:
         from ml.embed import embed
         embed(["warm up"])  # loads bge-small once (or the hashed fallback)

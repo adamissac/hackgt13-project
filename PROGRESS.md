@@ -1,106 +1,4 @@
-## 2026-09-27 02:57 | adam | coding agent
-**Task:** Company events: isolated event session + leave event
-**Status:** done
-**What I did:**
-- Checked what exists (company QR + join code, register, scan in, event page listing only checked-in people). Added `POST /events/{id}/leave` (attendance removed, pending suggestions from it expire, registration kept) and a "Leave event" button in the session on `app/attend/[id].tsx` (turns off Event Mode, switches back to roaming = HackGT event).
-- Constellation graph, match screen, assistant and QR/tap verification now use the current event (`lib/currentEvent`) instead of the hardcoded HackGT id, so after scanning into a company event everything shows only that event's people.
-- Startup falls back to roaming if the remembered company event no longer has me checked in.
-**How to run/test it:** `cd ml && pytest -q tests/test_events.py`; mobile `npx tsc --noEmit && npm run test:demo`. Live: company creates event → shows QR; attendee registers, scans, sees only that event in Constellation/Nearby; Leave event → back to everyone.
-**Next step for whoever continues:** Walk through it on two phones (company + attendee).
-**Known issues / blockers:** none known.
-**Contract changes:** `docs/api.md` 45a `POST /events/{event_id}/leave` (new).
 
-## 2026-09-27 03:05 | akshar | Claude Code (Opus 5.5)
-**Task:** Mobile dark mode: finish what Alan started (7fea3f6 palette + store, 66876c7 picker)
-**Status:** done in JS; "System" following the phone needs a native rebuild (app.json change)
-**What I did:**
-- Tab bars (`app/(tabs)/_layout.tsx`, `app/(company)/_layout.tsx`) used `Colors.light` directly; now `useColors()`.
-- `AppIcon`, `ConstellationMark`, `ChatMark` defaulted to fixed navy (invisible on dark); default is now the theme's `tabIconSelected`.
-- Sign-in and company sign-in: background, form divider, inputs, placeholders and chips from the theme (were fixed light hexes).
-- `app.json` `userInterfaceStyle: automatic` (was `light`, which pins iOS to light, so "System" could never go dark and native controls stayed light).
-- Left intentionally fixed: white text on tinted buttons, white QR backgrounds (scanners need contrast), the graph's dark space card, dark hero cards, resume "paper" preview.
-- Verified in the web build in dark and light: sign-in, onboarding, Home, Feed, Constellation, Nearby, Events, Profile, Your sources (picker), match page. Light/dark switch is instant.
-**How to run/test it:** Profile -> Edit profile -> Appearance -> Light / Dark / System. `cd mobile && npx tsc --noEmit && npx eslint .`
-**Next step for whoever continues:** Rebuild the dev/Release app once so "System" follows the iPhone's dark mode (light/dark choices already work without a rebuild).
-**Known issues / blockers:** Light/Dark picks work immediately; System needs the rebuild. The web Nearby map is a placeholder; native Apple Maps follows the system appearance.
-**Contract changes:** none
-
-## 2026-09-27 02:16 | akshar | Claude Code (Opus 5.5)
-**Task:** AK3/AK2 phone testing fixes: tap-to-verify feedback, "nothing was sent" after connecting
-**Status:** done (server fix goes live with the Railway auto-deploy of this push)
-**What I did:**
-- Tap screen (`mobile/app/verify.tsx`, `features/ble/tap.ts`): shows what the server answered (too far / not recognized / waiting on them) instead of a silent "Waiting for their phone"; if the server says too_far, the app raises its own threshold to match; "Use QR instead" after 10 s. 6 tap tests.
-- Connect feedback (`ml/app/conversations.py`): re-verifying the same pair within the dedupe window reuses the conversation, and the first answer used to be locked in, so a later "yes" was ignored and showed "Nothing was sent". Now your latest answer counts; already-connected pairs see "connected" (notified once). Still only a mutual yes connects. +3 tests; full suite 265 passed on a local Postgres+pgvector.
-**How to run/test it:** `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5444/fc_test .venv/bin/python -m pytest -q tests/test_verification.py`; `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs`.
-**Next step for whoever continues:** After Railway redeploys, two real accounts: Verify → Tap phones (or QR) → both "Yes, connect" → both see "You're connected". One "No thanks" → the other only ever sees "waiting".
-**Known issues / blockers:** iOS 27 phones (Adam's) crash at launch without a UIScene adoption; a config-plugin fix exists on Akshar's machine (`akshar/backup-before-force-push`, `mobile/plugins/withIOSSceneLifecycle.js`) and still needs to land. Note: team `main` was force-pushed earlier today; check nothing was lost.
-**Contract changes:** none
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AR6 / calendar: events on the right days and sections
-**Status:** done
-**What I did:**
-- New `eventDays(start, end, tz)` in `mobile/features/events/plan.ts` (+test): every day an event covers. Multi-day events (e.g. Veeva Sep 20 - Oct 20) mark each day on the calendar and list under any selected day in range. An end at exactly midnight doesn't spill into the next day.
-- `app/(tabs)/events.tsx` My calendar: the selected day shows "Today ·" when it's today. "Coming up" now only has events that START after today (the all-day Sep 27 demo event was wrongly listed there). A "Today" block appears when another day is selected. Events with no date get a "Date not set yet" section.
-- Browser-checked in demo: Demo test event under "Today · Sunday, September 27" with a dot on the 27th; HackGT 13 (no date) under "Date not set yet".
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
-**Next step for whoever continues:** none for this.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AR6 / only registered + scanned attendees meet at an event; all-day Sep 27 demo event
-**Status:** done
-**What I did:**
-- `POST /events/enter` (join code, `ml/app/routers/orgs.py`, Adam's; noted): now requires a prior app registration, like the QR (`403 register for this event first`). It no longer auto-registers. This closes the REQUESTS.md item Arjun confirmed.
-- New `matching.conversation_event(a, b, claimed)`: `/qr/verify` and `/tap/claim` file a conversation under the client's `event_id` only if BOTH people are checked in (registered + scanned) to it. Otherwise it uses a shared attended event, else none. Who you see in a session (matches, Nearby bands, suggestions) was already limited to that event's `attendance`.
-- Demo "Demo test event" (id 777) now runs all day on Sep 27 (00:00-23:59 ET); check-in has no time window. Company events 23h or longer show "All day · Sep 27".
-- Tests: `ml/tests/test_event_checkin_qr.py` gains join code needs registration, and conversation filed under event only if both checked in (DB tests; run in CI).
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_checkin_qr.py` (DB tests need TEST_DATABASE_URL; CI runs them). `cd mobile && npx tsc --noEmit && npx expo lint`.
-**Next step for whoever continues:** Redeploy ml to Railway so the live server enforces the join-code and conversation rules: `cd ml && npx @railway/cli up --detach --path-as-root .`
-**Known issues / blockers:** This laptop isn't logged in to Railway.
-**Contract changes:** docs/api.md 20 (/qr/verify `event_id` used only if both are checked in), 38 (/tap/claim same), 44/46 `POST /events/enter` (requires registration, new `403 register for this event first`). Response shapes unchanged. Affects Adam (join code), Akshar (tap/verify). REQUESTS.md notes added.
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AR6 / test event starting now, Attending then Scan company QR, Bluetooth connect inside the session
-**Status:** done
-**What I did:**
-- Demo backend: "Demo test event" (id 777, Demo Company) always starts at app load and runs 3 hours, so the full flow can be tried without accounts. `/join-event?event=<id>` shows "Simulate scanning the QR (demo)" in demo mode only.
-- Company new-event form (`app/(company)/new.tsx`, Adam's; noted): start defaults to now, end to +3h, and times are sent as ISO with the phone's offset (before, "2026-09-27 18:00" would have been read as UTC).
-- Events list: company events use the Attending / Interested / Not attending picker. Attending = `POST /events/{id}/register` (on your calendar), and then a "Scan company QR code" button appears under the picker. Once checked in, "Enter session". Event page: "I'm attending", then "Scan company QR code", then the session.
-- New `mobile/features/ble/EventConnect.tsx` in the session: "Connect with people here" with Event Mode (Akshar's `EventModeCard`), the checked-in attendees your phone hears (bands only), and "Just talked with someone? Verify to connect" (`/verify`). The scan screen puts the camera first, the join code below, and scrolls.
-- Browser-tested in demo: Events, Demo test event, Attending, "Scan company QR code", simulated scan, `/attend/777` session with the connect section.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. Demo mode: Events, "Demo test event", Attending, Scan company QR code, Simulate scanning.
-**Next step for whoever continues:** Live test on two phones: a company account creates an event (defaults to now) and shows its QR; an attendee marks Attending, scans, and both turn on Event Mode in the session.
-**Known issues / blockers:** I did not create a live test event. Creating a company account on the live server needs a person to sign up (Profile, Company? Separate login, or /company-sign-in); the event form now defaults to now.
-**Contract changes:** none
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AR6 / event sessions: register, scan the company QR on the event page, then Event Mode inside the session
-**Status:** done
-**What I did:**
-- Per Arjun: Event Mode is no longer on Nearby. Company events (`GET /events`) now appear in the Events list and My calendar via `fromLiveEvent()` in `features/events/catalog.ts` (category "Company event"; dateless ones show "TBA" and stay off the calendar). Cards show Register (then the event is on your calendar), then "Scan QR code", then "Enter session".
-- Event page moved from `app/event/[id].tsx` to `app/attend/[id].tsx`. Adam's `app/(company)/event/[id].tsx` resolved to the same URL, so `router.push('/event/[id]')` silently did nothing for attendees. States: Register card; after registering, a navy "At the event? Scan in." card with a Scan QR code button (`/join-event?event=<id>`); after scanning, "You're in the session" with `EventModeCard` (Akshar's, moved here) and "People in this session" (only registered + scanned attendees, via `/events/{id}/matches`). It sets the current event when checked in.
-- `app/join-event.tsx`: a successful scan or join code goes straight to `/attend/<id>`. QR errors are mapped to plain messages. Demo backend: only the owning company gets the check-in QR (like the server).
-- Event cards no longer nest buttons inside a pressable (web warning); only the details area opens the event.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo` (18 passed). In demo: Events, HackGT 13, "Enter session" opens /attend/1 with the session card and Event Mode.
-**Next step for whoever continues:** Test on phones with a real company event: company creates it, attendee registers (it shows on My calendar), attendee scans the QR at `/attend/<id>`, then Event Mode shows the other scanned-in attendees.
-**Known issues / blockers:** The camera scan is not testable in the browser. `POST /events/enter` (join code) still registers and checks in without prior registration (REQUESTS.md, Adam).
-**Contract changes:** none
-
-## 2026-09-27 02:08 | adam | coding agent
-**Task:** Demo loop with synthetic attendees, onboarding step, speed, smarter GitHub feed
-**Status:** done
-**What I did:**
-- Demo attendees (`profiles.is_synthetic`): `POST /suggestions/demo` lets a real person say "Want to meet" now instead of waiting until both are around. Most answer yes 3-8 s later (normal match + chat); ~1 in 5 never answer (silent). On a matched meetup, once the real person shares location, the demo attendee shares a made-up point ~150 m away that walks toward them (`synthetic.share_locations`, every 5 s tick). Real-people flows unchanged.
-- Match screen: "Want to meet" for demo attendees; the app remembers who I said yes to (it used to fall back to "when you're both around") and re-checks every 4 s while waiting.
-- Onboarding: once shown it stays open until Continue / Skip (connecting GitHub used to mark the profile complete and jump past the resume step); it also opens after sign-in when resume or GitHub is missing (`mobile/lib/useOnboarding.ts`).
-- Speed: resume section parse and interest extraction run in parallel (`app/resumes.py`); assistant uses low effort (`ASSISTANT_EFFORT`, default low) and gets the user's top 5 matches up front, so "who should I meet" needs no tool round trip.
-- Feed: replaced per-repo briefs with ONE "working on" item per person across their public repos pushed in the last 7 days (up to 3), rewritten when the active set changes or at most every 6 h; the feed shows one GitHub card per person (`feed.one_github_card_per_person`).
-**How to run/test it:** `cd ml && TEST_DATABASE_URL=... .venv/bin/python -m pytest -q tests` (268 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`.
-**Next step for whoever continues:** Live: check in, turn on Open to Meet, open a demo attendee from Constellation, tap Want to meet, then Find them and share location.
-**Known issues / blockers:** The "said yes, waiting" memory for real suggestions is per app session (server never reveals the other side).
-**Contract changes:** `docs/api.md` 18a `POST /suggestions/demo` (new, demo attendees only) + `docs/mocks/suggestions_demo.json`; 29: GitHub items are one "working on" brief per person. `.env.example`: `ASSISTANT_EFFORT`. No schema change (demo requests are marked `suggestions.building_id = 'demo-request'`).
 
 ## 2026-09-27 10:05 | alan | Claude Code (Opus 5)
 **Task:** Dark mode toggle for the dashboard — **edits in Arjun's folder**
@@ -117,241 +15,6 @@
 **Known issues / blockers:** `dashboard/` is Arjun's folder (`app/globals.css`, `app/layout.tsx`, `lib/theme.ts`, new `components/ThemeToggle.tsx`) — Arjun, revert freely. `usePalette()`'s server snapshot returns dark unconditionally (pre-existing); harmless today because the graph is client-only, but it would mismatch if that ever server-renders.
 **Contract changes:** none
 
-## 2026-09-27 01:17 | adam | coding agent
-**Task:** AD11 + AR8 feed: GitHub updates say what they actually built
-**Status:** done
-**What I did:**
-- Every GitHub feed item gets a brief in `payload.details`: 1-2 sentences on what they built, up to 4 concrete highlights, one question to ask them next time, and stack chips. Written by LLM_SMART from the repo's public data only (description, topics, languages, manifest frameworks, their recent commit subjects, release notes, README). Any number not in those facts is dropped; the facts-only `template_brief` is used when the model is unavailable. No gendered pronouns.
-- The AR8 poller (`ml/app/github_activity.py` `refresh_briefs`) writes up to 4 briefs per user per 10-minute cycle, which also backfills existing items. A brief is rewritten when the repo gets new pushes: right away if the first one was thin (empty new repo), else at most every 6 h. Private, forked, or deleted repos get no brief.
-- `GET /feed` items carry `details`; burst `summary` entries carry their `items` so the app can expand them. Reply suggestions and the assistant's `get_connections_activity` use the brief too.
-- Mobile feed card shows the brief (summary, bullets, stack chips, "Ask <name> next time"); bursts expand into the individual updates. The demo feed mock has a quant-finance example (Daniel) and an expandable burst (Sara).
-- Edited Arjun's `ml/app/github_activity.py` (AR8) and Alan's `ml/app/feed.py` (AL10), additively, with their tests extended.
-**How to run/test it:** `cd ml && TEST_DATABASE_URL=<empty pgvector db> .venv/bin/python -m pytest -q tests` (263 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`. Demo: Try the demo, then Feed. Live: a connection links GitHub; within 10 minutes their recent GitHub items show a brief.
-**Next step for whoever continues:** After the next live poll, open Feed on an account connected to someone with GitHub linked and read one brief; `railway logs` shows `github briefs: N written for <user>`.
-**Known issues / blockers:** Briefs cover GitHub items from the last 14 days (LOOKBACK). Only public repos are read.
-**Contract changes:** `docs/api.md` 29 (additive): feed items gain `details` `{summary, highlights, ask, stack, ai}` (null for posts, updates, and not-yet-briefed items); `summary` entries gain `items`. `docs/mocks/feed.json` updated. No schema change (`feed_items.payload` jsonb). Affects the mobile feed (updated here); the dashboard does not read `/feed`.
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AD2 support / sign-in layout reverted
-**Status:** done
-**What I did:**
-- Per Arjun, restored `mobile/app/sign-in.tsx` to its state before 31b16d1: LinkedIn/GitHub/Google first (LinkedIn filled navy, GitHub/Google navy outline), then "or continue with email" and the email form. No logic change.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`, then open the sign-in screen.
-**Next step for whoever continues:** Keep this order; Arjun prefers providers on top.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-27 | arjun | Claude Code
-**Task:** AD2 support / sign-in layout: email first, providers below
-**Status:** done
-**What I did:**
-- `mobile/app/sign-in.tsx` (Adam's screen, noted): the usual order. Email address, "Continue with email" (the one filled navy button), the sign-in code option, then an "or" divider, then Continue with LinkedIn / GitHub / Google as outlined buttons. Company login, demo, and disclosure are unchanged below. Sign-in logic is untouched.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then sign out (or open the sign-in screen) and check the order.
-**Next step for whoever continues:** none for this.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-27 01:11 | adam | Cursor Grok 4.7
-**Task:** Nearby map restore (user request)
-**Status:** done
-**What I did:**
-- Nearby shows a street map as soon as the tab opens, in `mobile/app/(tabs)/nearby.tsx` (`NearbyScreen`).
-- Phone map (`mobile/features/nearby/NearbyMap.tsx`) is Apple/Google Maps again, with the 3/8/16 m rings. Match pins still appear only after Scan.
-- Website map (`mobile/features/nearby/NearbyMap.web.tsx`) is an OpenStreetMap embed centered on you, or Georgia Tech if location is off.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`. Web: open `/nearby` (verified at http://127.0.0.1:8081/nearby, map of campus). Phone: Expo Go on this Mac’s tunnel, Nearby tab.
-**Next step for whoever continues:** On a phone, open Nearby in Expo Go and confirm the Apple Maps blue dot and distance rings. Scan, then tap a pin and confirm it selects that person in the list.
-**Known issues / blockers:** The website map cannot draw match pins (no MapView on web). Pins stay on the phone map only, and they are browse slots, not real positions.
-**Contract changes:** none
-
-## 2026-09-26 22:22 | adam | Cursor Grok 4.6
-**Task:** Company tools verification
-**Status:** done
-**What I did:**
-- Live API checklist 25/25: signup, duplicate 409, login, patch, create event, studio QR, promote, rotate (old code 404), attendee enter, updates, matches, organizer counts only.
-- Browser: company home, event studio, mint code, save profile, sign out, existing-account login.
-- Company scroll views now pad above the tab bar so Sign out / Create event aren’t covered.
-**How to run/test it:** Company? Separate login → create or sign in → New event → Make a code. Attendee: Events → Enter join code.
-**Next step for whoever continues:** On a second attendee phone, enter a join code and confirm Nearby uses that event.
-**Known issues / blockers:** Work email is not verified (demo). Printed join code is shown once until you tap Make a code / New code.
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 + matching / match scores spread out (everyone was ~50%), common skills in Constellation list
-**Status:** done (needs Railway redeploy to go live)
-**What I did:**
-- Cause: bge-small cosine similarity is compressed. On the 80-person HackGT population (SYNTHETIC data), raw facet similarities sat at p10 0.67-0.77 and p90 0.85-0.90 for everyone, while real shared interests (`idf_overlap`, median 0.03) had only 20% weight. So 80% of V1 scores fell between 0.50 and 0.60.
-- `ml/ml/config.py` + `ml/ml/scoring.py` (Alan's area, noted): features are calibrated before weighting. Facet sims are rescaled from `SIM_RANGE` (0.60, 0.95) to 0..1, complementarity from `COMPLEMENT_RANGE` (0.45, 0.85), and `idf_overlap / OVERLAP_FULL` (0.20), capped at 1. V1 weights now favor shared niche interests (0.30).
-- Evaluation on SYNTHETIC data (80 people, teammates as ground truth): teammate hit@5 0.994 before and after; teammate-vs-rest AUC 0.998 before, 0.992 after; score std 0.047 before, 0.113 after; range 0.35-0.79 before, 0.16-0.84 after (median 0.37). Ranking quality is unchanged, and the percentages are now meaningful.
-- Suggestions use per-user percentile cutoffs, so they're unaffected. A trained `ranker_lr.pkl` (only if `MATCH_MODEL=lr`) was trained on the old uncalibrated features: retrain with `python scripts/train_ranker.py --source auto` before serving it.
-- `mobile/app/(tabs)/graph.tsx`: rows in "More people you could meet" show up to 4 common skills as light-blue chips plus the "why you matched" sentence (`explanation.summary` from the graph edge).
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (130 passed; the ranker_job test needs libomp locally, see AGENTS.md). Redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`
-**Next step for whoever continues:** Redeploy ml to Railway (this laptop isn't logged in to Railway). Then check that /graph scores for a real account vary.
-**Known issues / blockers:** Accounts with very few interests will still score low and flat against everyone (nothing to match on). The fix there is a richer profile (GitHub/resume), not the formula.
-**Contract changes:** none (score stays 0..1; values are distributed differently)
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Events: My calendar opens as its own page
-**Status:** done
-**What I did:**
-- `mobile/app/(tabs)/events.tsx`: on My calendar, the navy banner, the Handshake note, and the Live company events card are hidden, so the month grid sits directly under the section switcher. Switching sections scrolls back to the top (`scroller.scrollTo`). The Live company events card now only shows on All events.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. In the app: Events, then My calendar; the calendar is visible without scrolling.
-**Next step for whoever continues:** none for this.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR2 / preview of the uploaded resume or LinkedIn PDF
-**Status:** done
-**What I did:**
-- New `mobile/features/resume/ResumePreview.tsx`, shown inside the "Resume or LinkedIn PDF" card on `app/accounts.tsx` once a file is added. It reads the newest `resumes` row and signs a 10-minute URL for the object in the private `resumes` bucket, straight from Supabase with the user's session (both are owner-read under RLS; no server change). On iOS a non-scrolling WebView renders the first page of the PDF/DOCX inline. Android and web show a PDF/DOC tile with the filename. Tapping the preview or "View full file" opens it in the in-app browser with a fresh signed URL. States: loading, error, "couldn't be saved for viewing" (row has storage error), and a demo-mode note.
-- Added `react-native-webview` 13.16.1 via `npx expo install` (bundled in Expo Go SDK 57). `npx expo export --platform ios` builds.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. On a signed-in phone: Profile, Edit profile, upload a PDF; the preview appears in the card, and tapping it opens the full file.
-**Next step for whoever continues:** Resume and LinkedIn PDF share one slot (the newest upload replaces the old). Separate slots need a `kind` on `resumes` plus ingest support (contract change, Adam/Alan).
-**Known issues / blockers:** Not tested on a signed-in phone (the demo has no stored file). The new `POST /events/enter` join-code path (Adam, f944c24) registers AND checks in without a prior registration, which bypasses Arjun's "registered + scanned" rule. Flagged to Arjun and noted in REQUESTS.md for Adam.
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR2 / profile sources: remove typed About you, keep one optional box
-**Status:** done
-**What I did:**
-- Per Arjun, profiles come from connected sources (GitHub, resume or LinkedIn PDF, linked accounts), not typed forms. In `mobile/app/accounts.tsx` (Adam's screen, noted), removed the "About you" card (headline, experience, interests, looking for, can offer). Replaced it with one "Additional information (Optional)" multiline box. It saves via the existing `PATCH /profile/manual` as `interests_text` only, so the server extracts it like any other source. No contract change; previously saved fields stay in the DB untouched.
-- The LinkedIn note now points to uploading the LinkedIn PDF (LinkedIn is sign-in only per the product rules).
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. In the app: Profile, Edit profile, then scroll to "Additional information".
-**Next step for whoever continues:** Headline, seeking, and offering are now only as good as the resume/GitHub extraction. If headlines come out empty, have extraction fill `profiles.headline` (Alan).
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / navigation: Open to Meet is Home again, Feed is its own tab
-**Status:** done
-**What I did:**
-- Per Arjun: `app/(tabs)/index.tsx` now re-exports `./discover` (the Open to Meet home: presence toggle, up next, best matches), and the Home tab has `headerShown:false` because discover draws its own header. Feed (`app/(tabs)/feed.tsx`) is a visible tab with a newspaper / dynamic_feed icon. Tabs: Home, Feed, Constellation, Nearby, Events, Profile. Nearby is unchanged.
-- Edited Adam's `app/(tabs)/_layout.tsx` (navigation only), noted here. `/discover` still works for the Nearby "Meeting activity & Open to Meet" button.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo` (17 passed), then reload Expo Go.
-**Next step for whoever continues:** With six tabs the Constellation label truncates on small phones; shorten it to "Graph" if that matters.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 22:00 | adam | Cursor Grok 4.6
-**Task:** Company separate login + organizer studio (events, join codes, promote)
-**Status:** done
-**What I did:**
-- Companies have a separate sign-in (`mobile/app/company-sign-in.tsx`): company name, contact, work email, password, industry, size, city, about. Demo does not verify email (`POST /orgs/signup` creates a confirmed Auth user).
-- Company accounts skip student onboarding and land on `(company)` tabs: event list, create event, studio (join code + QR + share + promote), company profile.
-- People join with a typed code (`POST /events/enter`) or the event QR. Organizers see counts only. Promote writes `event_posts`, updates `events.promo`, and notifies registrants.
-- Live migration `20260926220000_company_accounts.sql` applied to project `mwfzgkikbmnghueolfnw`.
-**How to run/test it:** Sign-in → Company? Separate login → create company → New event → share code. Attendee: Events → Enter join code. `cd mobile && npx tsc --noEmit`. Live API: `/orgs/signup`, `/orgs/events`, `/events/enter` are on Railway.
-**Next step for whoever continues:** On a second attendee phone, enter a printed join code on Events → Enter join code and confirm Nearby uses that event. If Expo web is stale, reload `http://localhost:8081`.
-**Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
-**Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / tabs without top blocks: blue mixed into each page
-**Status:** done
-**What I did:**
-- Per Arjun, no banner or block at the top of any tab except Events. The blue now lives in different elements. Feed: plain heading with a navy word, a solid navy "Share something" pill, AI summary cards tinted light blue, blue topic chips. Constellation: the first stat tile is solid navy (others light blue). Nearby: a round navy SCAN/ON button with radar rings replaces the card and switch (`accessibilityRole="switch"`). Profile: a navy ring around the avatar, a solid navy "Edit profile", and a navy accent stripe on "About you".
-- Styling only (Adam's feed/profile files noted). Checked every tab in the browser at phone size.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
-**Next step for whoever continues:** Keep tabs visually different from each other; Events alone keeps `TabHero`.
-**Known issues / blockers:** On web, typing /me in the address bar lands on Feed; tapping the Profile tab works. Pre-existing, not from this change.
-**Contract changes:** none
-
-## 2026-09-26 | alan | Codex
-**Task:** Finish Claude's match explanations and make extraction less opaque
-**Status:** done (code); live deployment / phone smoke test pending
-**What I did:**
-- Continued a74fe37/e7a1dfa after syncing team commits through 647e3f5. Graph UI now consumes actual summary/factors/basis and identifies AI rewording versus numeric scoring. Fixed graph builder losing learned-ranker attribution (it previously mislabeled every explanation V1).
-- Quick-profile returns an additive explanation derived from its exact V1 features. Full profile shows all signed score contributions; graph shows top positive shares with denominator and approximation caveats. Removed misleading percent-match/profile-overlap labels from the touched profile surfaces and shared MatchMeter.
-- Extraction review now explains source weighting, confirmation, diminishing returns, evidence limitations, and weight versus confidence/proficiency. Each topic shows confirmation and matching weight; no evidence is fabricated when absent.
-- Cross-owner mobile edits explicitly requested by Alan; docs, current/legacy mocks, regression tests and REQUESTS updated. Privacy/contract review completed; no privacy blockers.
-**How to run/test it:** Mobile `tsc --noEmit` and `eslint .` pass; `pnpm dlx tsx scripts/demo-flow.test.ts`: 17 pass. ML `pytest -q tests/test_quick_profile_explanation.py tests/test_explain.py`: 21 pass using bundled Python and temporary dependency targets (hashed embedder, no model download). `git diff --check` passes.
-**Next step for whoever continues:** Deploy ML when safe, reload app, smoke-test graph → person → full profile and Profile → Review on phone. Git pushes do not deploy ML.
-**Known issues / blockers:** No live DB or device verification in this session. Extraction explanation describes actual existing rules, not a new per-document provenance ledger. Learned graph scores and quick-profile V1 scores can differ; UI labels the scoring basis.
-**Contract changes:** Optional quick-profile `explanation`; docs/api.md 15 and new explained fixture. Existing graph shape unchanged; client now types/consumes it. No schema/migration or secret changes.
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / a different blue design on each tab
-**Status:** done
-**What I did:**
-- Per Arjun, each tab uses the navy in its own way (Events keeps `TabHero`, and only Events uses it now). Feed: an edge-to-edge navy band with rounded bottom, and the composer card overlapping it. Constellation: a large navy headline plus three light-blue stat tiles (people, shared topics, best match %). Nearby: a light-blue "radar" card with navy concentric rings (react-native-svg) and the scan switch. Profile: a navy cover strip with a faint constellation mark and the avatar overlapping it, in a white card.
-- Styling only, in `app/(tabs)/feed.tsx` and `app/profile.tsx` (Adam's; noted), plus `app/(tabs)/graph.tsx` and `app/(tabs)/nearby.tsx`. Checked each tab in the browser at phone size.
-- The local Expo server had crashed (Abort trap in phone-qr.sh). Restarted it with the same URL, exp://hshigw0-arjunk91-8081.exp.direct.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
-**Next step for whoever continues:** Keep the tabs visually distinct. Don't add `TabHero` to them.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / company events: check in only by QR, Event Mode gated on check-in
-**Status:** done
-**What I did:**
-- Product rule from Arjun: for a company event, a person is "at" the event only after registering in the app AND scanning the organizer's check-in QR (which our app generates for the company). Only checked-in people appear to each other (matches, Nearby, event page), and Event Mode stays off until then.
-- Server (`ml/app/routers/events.py`, Adam/Alan's file, noted): `register` only inserts `event_registrations`; `POST /events/join` verifies the QR, requires registration (`403 register for this event first`), then inserts `attendance`; `POST /events/{id}/checkin` returns `403 scan the event QR code to check in` for events with `org_id`. Events without a company (HackGT 13 demo, id 1) keep open check-in, so the demo and the 80 seeded attendees still work. New `ml/tests/test_event_checkin_qr.py` (4 DB tests: register is not check-in, QR needs registration, plain check-in blocked, a registered-but-unscanned person is hidden and gets 403 on matches).
-- App: `features/ble/eventMode.ts` (Akshar's) checks `checked_in` from `GET /events` before starting, with a "Scan event QR code" button on `EventModeCard`. `app/event/[id].tsx` shows Register, then "You're registered, scan the QR", with no auto check-in. The Nearby "check in first" state offers the QR scanner. `lib/api.ts`' auto check-in retry returns the original error when the server refuses. The demo backend mirrors the rules and demo companies now persist. The contract-keeper check found one drift (the api.ts retry), now fixed.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py tests/test_event_checkin_qr.py` (the DB tests need TEST_DATABASE_URL; CI runs them). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. In the app: Profile, Company events, create a company, create an event (its page shows the check-in QR), Register, "You're registered" card, then scan the QR on a second phone.
-**Next step for whoever continues:** Redeploy ml to Railway (`cd ml && npx @railway/cli up --detach --path-as-root .`). GitHub pushes don't deploy it, and until then the live server still checks people in on register.
-**Known issues / blockers:** Not verified on a live DB locally (no Postgres on this laptop); CI covers it. The camera scan wasn't tested in the browser. The join QR is a 7-day static code, so a shared screenshot works, but only for people who registered.
-**Contract changes:** docs/api.md 6 (checkin 403 for company events) and 45 (register does not check in; join requires registration, new 403). Response shapes unchanged; mocks unchanged. Affects Adam (company event UI, updated), Akshar (Event Mode, updated), Alan (events router). REQUESTS.md notes added.
-
-## 2026-09-26 21:15 | adam | Adam
-**Task:** Web home-screen app + extra add-people paths + company events
-**Status:** in progress
-**What I did:**
-- Expo web is now a home-screen PWA (`mobile/app/+html.tsx`, `mobile/public/manifest.webmanifest`). Bluetooth still needs the native app; QR verify, invites, and event join work on the site.
-- Invites screen is the "already know them" path: conversation QR, connect QR, contact name + share. Post-talk checkboxes were already `ChecklistForm`.
-- Company events: `GET/POST /events`, `/orgs`, `/me/org`, register, join-token, `/events/join`. Nearby uses the event you entered (`lib/currentEvent.ts`).
-**How to run/test it:** `cd mobile && npx tsc --noEmit`. `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py`. Redeploy ML, then web: `cd mobile && npx expo start --web`.
-**Next step for whoever continues:** Redeploy Railway `ml` so the new event endpoints are live. On a phone, Safari → Share → Add to Home Screen.
-**Known issues / blockers:** Event list needs `events.org_id` / `location_text` (already in schema). Scanning a person QR still does not auto-connect; both must say yes.
-**Contract changes:** docs/api.md 45 (company events); docs/mocks/get-events.json. Alan: new routes live in `ml/app/routers/events.py`.
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / a different blue design on each tab
-**Status:** done
-**What I did:**
-- Per Arjun, each tab uses the navy in its own way (Events keeps `TabHero`, and only Events uses it now). Feed: an edge-to-edge navy band with rounded bottom, and the composer card overlapping it. Constellation: a large navy headline plus three light-blue stat tiles (people, shared topics, best match %). Nearby: a light-blue "radar" card with navy concentric rings (react-native-svg) and the scan switch. Profile: a navy cover strip with a faint constellation mark and the avatar overlapping it, in a white card.
-- Styling only, in `app/(tabs)/feed.tsx` and `app/profile.tsx` (Adam's; noted), plus `app/(tabs)/graph.tsx` and `app/(tabs)/nearby.tsx`. Checked each tab in the browser at phone size.
-- The local Expo server had crashed (Abort trap in phone-qr.sh). Restarted it with the same URL, exp://hshigw0-arjunk91-8081.exp.direct.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
-**Next step for whoever continues:** Keep the tabs visually distinct. Don't add `TabHero` to them.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / company events: check in only by QR, Event Mode gated on check-in
-**Status:** done
-**What I did:**
-- Product rule from Arjun: for a company event, a person is "at" the event only after registering in the app AND scanning the organizer's check-in QR (which our app generates for the company). Only checked-in people appear to each other (matches, Nearby, event page), and Event Mode stays off until then.
-- Server (`ml/app/routers/events.py`, Adam/Alan's file, noted): `register` only inserts `event_registrations`; `POST /events/join` verifies the QR, requires registration (`403 register for this event first`), then inserts `attendance`; `POST /events/{id}/checkin` returns `403 scan the event QR code to check in` for events with `org_id`. Events without a company (HackGT 13 demo, id 1) keep open check-in, so the demo and the 80 seeded attendees still work. New `ml/tests/test_event_checkin_qr.py` (4 DB tests: register is not check-in, QR needs registration, plain check-in blocked, a registered-but-unscanned person is hidden and gets 403 on matches).
-- App: `features/ble/eventMode.ts` (Akshar's) checks `checked_in` from `GET /events` before starting, with a "Scan event QR code" button on `EventModeCard`. `app/event/[id].tsx` shows Register, then "You're registered, scan the QR", with no auto check-in. The Nearby "check in first" state offers the QR scanner. `lib/api.ts`' auto check-in retry returns the original error when the server refuses. The demo backend mirrors the rules and demo companies now persist. The contract-keeper check found one drift (the api.ts retry), now fixed.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py tests/test_event_checkin_qr.py` (the DB tests need TEST_DATABASE_URL; CI runs them). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. In the app: Profile, Company events, create a company, create an event (its page shows the check-in QR), Register, "You're registered" card, then scan the QR on a second phone.
-**Next step for whoever continues:** Redeploy ml to Railway (`cd ml && npx @railway/cli up --detach --path-as-root .`). GitHub pushes don't deploy it, and until then the live server still checks people in on register.
-**Known issues / blockers:** Not verified on a live DB locally (no Postgres on this laptop); CI covers it. The camera scan wasn't tested in the browser. The join QR is a 7-day static code, so a shared screenshot works, but only for people who registered.
-**Contract changes:** docs/api.md 6 (checkin 403 for company events) and 45 (register does not check in; join requires registration, new 403). Response shapes unchanged; mocks unchanged. Affects Adam (company event UI, updated), Akshar (Event Mode, updated), Alan (events router). REQUESTS.md notes added.
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / navy brand color on every tab
-**Status:** done
-**What I did:**
-- New `mobile/components/TabHero.tsx`: the navy banner from Events, now used at the top of Feed, Constellation, Nearby (the scan switch sits in the banner), and Events. The Profile header card is navy too.
-- `components/ui.tsx` Button `secondary`: light blue (`tintSoft`) with navy text instead of warm gray, so secondary actions across the app carry the brand color.
-- Edited Adam's `app/(tabs)/feed.tsx`, `app/profile.tsx`, and `components/ui.tsx` (styling only, no logic), noted here.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`, then reload Expo Go and check each tab.
-**Next step for whoever continues:** New main tabs should start with `<TabHero eyebrow=... title=... body=... />` to match.
-**Known issues / blockers:** none
-**Contract changes:** none
-
-## 2026-09-26 21:10 | adam | Codex
-**Task:** AD9 / AK5 — Nearby cleanup and reciprocal Maps navigation
-**Status:** done in code; backend test environment unavailable locally
-**What I did:**
-- Removed the nearby proximity rings and band filters. The map/list now show all eligible nearby matches in one organized surface; decorative pin positions never represent a person’s real direction or location.
-- Added a Find action only for a mutual match. It enters the existing 30-minute meetup flow rather than exposing coordinates from Nearby.
-- Added an external walking-navigation button only after the viewer and the other matched person have both started temporary location sharing. The API now withholds `their_location` until both shares exist.
-- Added a pure navigation-URL test and updated the location API test and contract documentation for reciprocal sharing.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/nearby.tsx' 'app/meetup/[id].tsx' features/nearby/NearbyMap.tsx features/nearby/NearbyMap.web.tsx features/location/navigation.ts && node --experimental-strip-types --test features/location/navigation.test.mjs features/nearby/mapLayout.test.mjs`; mobile checks pass. Backend: `cd ml && .venv/bin/python -m pytest -q tests/test_location.py` when the ML virtualenv is installed.
-**Next step for whoever continues:** On two physical phones, both accept the same suggestion, both press Find → Share my location, then confirm Navigate to opens walking Maps; confirm it is absent if either person has not shared.
-**Known issues / blockers:** This checkout lacks `ml/.venv` and system Python lacks pytest, so the new backend test could not run locally. Expo preview process is local only; native Maps/Bluetooth needs devices.
-**Contract changes:** `docs/api.md` §37: `their_location` is now explicitly reciprocal; external navigation is allowed only in the reciprocal share window.
 ## 2026-09-27 09:15 | alan | Claude Code (Opus 5)
 **Task:** Render "why you matched" in the Connection Graph side panel — **edits in Arjun's folder**
 **Status:** done — dashboard typecheck, lint, 11 tests and build all pass; verified in a real browser at desktop and 375px
@@ -367,246 +30,108 @@
 **Known issues / blockers:** `dashboard/` is Arjun's folder — Arjun, revert freely if this cuts across your panel work; the API contract is unchanged either way. Mock explanations are generated, not captured from a live run, so the numbers are plausible rather than real; live mode shows the ranker's actual values.
 **Contract changes:** none (consumes the `explanation` field added yesterday in docs/api.md §26).
 
-## 2026-09-26 20:49 | adam | Codex
-**Task:** AD9 / AR5 — user-requested lightweight 3D atom constellation
+## 2026-09-27 03:05 | akshar | Claude Code (Opus 5.5)
+**Task:** Mobile dark mode: finish what Alan started (7fea3f6 palette + store, 66876c7 picker)
+**Status:** done in JS; "System" following the phone needs a native rebuild (app.json change)
+**What I did:**
+- Tab bars (`app/(tabs)/_layout.tsx`, `app/(company)/_layout.tsx`) used `Colors.light` directly; now `useColors()`.
+- `AppIcon`, `ConstellationMark`, `ChatMark` defaulted to fixed navy (invisible on dark); default is now the theme's `tabIconSelected`.
+- Sign-in and company sign-in: background, form divider, inputs, placeholders and chips from the theme (were fixed light hexes).
+- `app.json` `userInterfaceStyle: automatic` (was `light`, which pins iOS to light, so "System" could never go dark and native controls stayed light).
+- Left intentionally fixed: white text on tinted buttons, white QR backgrounds (scanners need contrast), the graph's dark space card, dark hero cards, resume "paper" preview.
+- Verified in the web build in dark and light: sign-in, onboarding, Home, Feed, Constellation, Nearby, Events, Profile, Your sources (picker), match page. Light/dark switch is instant.
+**How to run/test it:** Profile -> Edit profile -> Appearance -> Light / Dark / System. `cd mobile && npx tsc --noEmit && npx eslint .`
+**Next step for whoever continues:** Rebuild the dev/Release app once so "System" follows the iPhone's dark mode (light/dark choices already work without a rebuild).
+**Known issues / blockers:** Light/Dark picks work immediately; System needs the rebuild. The web Nearby map is a placeholder; native Apple Maps follows the system appearance.
+**Contract changes:** none
+
+## 2026-09-27 02:57 | adam | coding agent
+**Task:** Company events: isolated event session + leave event
 **Status:** done
 **What I did:**
-- Replaced flat rotating initials with shaded spheres around a central nucleus, three tilted orbital paths and three moving particles; kept the current palette and facet meanings.
-- Projected a tilted 3D ring with depth-based size/opacity and curved self-only connections. Precomputed 73 motion samples; native transform/opacity interpolation avoids per-frame React state, physics, WebGL and new dependencies.
-- Kept upright labels, six-node limit, profile selection, pause/resume and reduced-motion/background/focus cleanup. Moved Pause to the chart header for easy access on phones.
-- Added full-orbit bounds/label-separation tests across phone/tablet widths and 1–6 people, plus depth and seamless-wrap checks.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`. Passed before integration: 25 unit tests, 15 demo checks, all three exports. Browser at 390x844 verified rendering, animation, pause and person-sheet opening. 120-frame desktop sample: median/p95 16.7ms, zero intervals over 50ms (not a phone benchmark).
-**Next step for whoever continues:** Reload Expo Go and open Constellation; check orbit smoothness, tap targets and system Reduce Motion on a physical iPhone/Android. Pure projection lives in `mobile/features/graph/atomLayout.ts`; renderer in `Atom.tsx`.
-**Known issues / blockers:** Physical-phone performance not measured. This is lightweight projected 3D, not an interactive WebGL scene. Changes to Arjun's graph area explicitly requested by the user; contracts unchanged.
+- Checked what exists (company QR + join code, register, scan in, event page listing only checked-in people). Added `POST /events/{id}/leave` (attendance removed, pending suggestions from it expire, registration kept) and a "Leave event" button in the session on `app/attend/[id].tsx` (turns off Event Mode, switches back to roaming = HackGT event).
+- Constellation graph, match screen, assistant and QR/tap verification now use the current event (`lib/currentEvent`) instead of the hardcoded HackGT id, so after scanning into a company event everything shows only that event's people.
+- Startup falls back to roaming if the remembered company event no longer has me checked in.
+**How to run/test it:** `cd ml && pytest -q tests/test_events.py`; mobile `npx tsc --noEmit && npm run test:demo`. Live: company creates event → shows QR; attendee registers, scans, sees only that event in Constellation/Nearby; Leave event → back to everyone.
+**Next step for whoever continues:** Walk through it on two phones (company + attendee).
+**Known issues / blockers:** none known.
+**Contract changes:** `docs/api.md` 45a `POST /events/{event_id}/leave` (new).
+
+## 2026-09-27 02:16 | akshar | Claude Code (Opus 5.5)
+**Task:** AK3/AK2 phone testing fixes: tap-to-verify feedback, "nothing was sent" after connecting
+**Status:** done (server fix goes live with the Railway auto-deploy of this push)
+**What I did:**
+- Tap screen (`mobile/app/verify.tsx`, `features/ble/tap.ts`): shows what the server answered (too far / not recognized / waiting on them) instead of a silent "Waiting for their phone"; if the server says too_far, the app raises its own threshold to match; "Use QR instead" after 10 s. 6 tap tests.
+- Connect feedback (`ml/app/conversations.py`): re-verifying the same pair within the dedupe window reuses the conversation, and the first answer used to be locked in, so a later "yes" was ignored and showed "Nothing was sent". Now your latest answer counts; already-connected pairs see "connected" (notified once). Still only a mutual yes connects. +3 tests; full suite 265 passed on a local Postgres+pgvector.
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5444/fc_test .venv/bin/python -m pytest -q tests/test_verification.py`; `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs`.
+**Next step for whoever continues:** After Railway redeploys, two real accounts: Verify → Tap phones (or QR) → both "Yes, connect" → both see "You're connected". One "No thanks" → the other only ever sees "waiting".
+**Known issues / blockers:** iOS 27 phones (Adam's) crash at launch without a UIScene adoption; a config-plugin fix exists on Akshar's machine (`akshar/backup-before-force-push`, `mobile/plugins/withIOSSceneLifecycle.js`) and still needs to land. Note: team `main` was force-pushed earlier today; check nothing was lost.
 **Contract changes:** none
 
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / app palette: navy accent instead of slate gray
+## 2026-09-27 02:08 | adam | coding agent
+**Task:** Demo loop with synthetic attendees, onboarding step, speed, smarter GitHub feed
 **Status:** done
 **What I did:**
-- `mobile/constants/Colors.ts` (shared UI file, noted here): changed the accent from slate gray #343A46 to navy #1E3A8A. That covers tint, the selected tab icon, and buttons. tintSoft is now #E6ECF8, ai #475A8C, aiSoft #EDF1F9, and unselected tab icons #7C89AA (blue-gray). No hard-coded copies of the old colors existed, so every screen follows.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`, then reload Expo Go.
-**Next step for whoever continues:** If anyone wants a different shade, change `tint` and `tabIconSelected` in `mobile/constants/Colors.ts` only.
-**Known issues / blockers:** none
-**Contract changes:** none
+- Demo attendees (`profiles.is_synthetic`): `POST /suggestions/demo` lets a real person say "Want to meet" now instead of waiting until both are around. Most answer yes 3-8 s later (normal match + chat); ~1 in 5 never answer (silent). On a matched meetup, once the real person shares location, the demo attendee shares a made-up point ~150 m away that walks toward them (`synthetic.share_locations`, every 5 s tick). Real-people flows unchanged.
+- Match screen: "Want to meet" for demo attendees; the app remembers who I said yes to (it used to fall back to "when you're both around") and re-checks every 4 s while waiting.
+- Onboarding: once shown it stays open until Continue / Skip (connecting GitHub used to mark the profile complete and jump past the resume step); it also opens after sign-in when resume or GitHub is missing (`mobile/lib/useOnboarding.ts`).
+- Speed: resume section parse and interest extraction run in parallel (`app/resumes.py`); assistant uses low effort (`ASSISTANT_EFFORT`, default low) and gets the user's top 5 matches up front, so "who should I meet" needs no tool round trip.
+- Feed: replaced per-repo briefs with ONE "working on" item per person across their public repos pushed in the last 7 days (up to 3), rewritten when the active set changes or at most every 6 h; the feed shows one GitHub card per person (`feed.one_github_card_per_person`).
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=... .venv/bin/python -m pytest -q tests` (268 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`.
+**Next step for whoever continues:** Live: check in, turn on Open to Meet, open a demo attendee from Constellation, tap Want to meet, then Find them and share location.
+**Known issues / blockers:** The "said yes, waiting" memory for real suggestions is per app session (server never reveals the other side).
+**Contract changes:** `docs/api.md` 18a `POST /suggestions/demo` (new, demo attendees only) + `docs/mocks/suggestions_demo.json`; 29: GitHub items are one "working on" brief per person. `.env.example`: `ASSISTANT_EFFORT`. No schema change (demo requests are marked `suggestions.building_id = 'demo-request'`).
 
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Nearby: keep the map when Bluetooth is unavailable
+## 2026-09-27 01:17 | adam | coding agent
+**Task:** AD11 + AR8 feed: GitHub updates say what they actually built
 **Status:** done
 **What I did:**
-- In live mode on Expo Go, `useProximity` reports `BLE_UNAVAILABLE_MESSAGE`, and `mobile/app/(tabs)/nearby.tsx` replaced the whole map with "Something went wrong". Now the map stays, with a "Bluetooth is off" card explaining Expo Go and pointing to QR verification. No people are pinned without the radio, because nearness can't be known. Only server fetch errors show the error state now.
-- Screen layout is mine; `features/ble` (Akshar) is unchanged.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. On a phone in Expo Go, signed in, go to Nearby and turn on scan: the map shows your location plus the note.
-**Next step for whoever continues:** Real proximity needs the dev build: `cd mobile && npx expo run:ios --device` or `npx eas-cli build --profile development`.
-**Known issues / blockers:** Bluetooth never works in Expo Go; that is expected.
-**Contract changes:** none
-## 2026-09-26 13:45 | alan | Claude Code (Opus 5)
-**Task:** AL3 follow-up — Haiku rewrites the why-you-matched sentences so a screenful of matches does not read identically
-**Status:** done — 121 passed, 118 skipped (6 new). On by default; `EXPLAIN_VARY=0` turns it off.
-**What I did:**
-- The template summaries were correct but repetitive: across 8 real matches only **2 of 8** had a distinct opening, which looks robotic when a judge scrolls. `generation.vary_why()` rewrites them with Haiku (`LLM_FAST`), reusing the existing `messages.parse` + pydantic + one-retry pattern already in that module. Measured on the synthetic population: **2/8 distinct openings -> 6/8**, all 8 grounded.
-- **The rewrite can only change words, never numbers.** It receives the shared topics, the factor labels and the template, and only `explanation.summary` is replaced — `factors`/`contribution`/`share` are untouched, so the bars a judge sees are still the ranker's. A test asserts that.
-- **Grounding is enforced, not hoped for.** `_grounded()` rejects any rewrite naming a canonical interest the pair does not share (checked against the whole population vocabulary, which catches the failure that matters: attributing someone else's interest). Rejected rows silently keep their template. A test feeds a hallucinated row through and asserts it is dropped.
-- **Never a hard dependency.** No API key, no network, API error, refusal, `max_tokens`, unparseable output — every path returns `{}` and the caller keeps the deterministic template. Tested.
-- Cost and latency bounded: **one batched call per graph request**, capped at the `MAX_VARIED = 10` strongest edges (a graph holds 150 people; nobody reads 150 summaries), plus an in-process cache keyed by (person, template). Measured: first build 3547 ms, second build **0 ms**.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_explain.py` (18 passed, all offline — no test makes a real API call). To see real output, build a graph with `EXPLAIN_VARY=1` and `ANTHROPIC_API_KEY` set.
-**Next step for whoever continues:** If the graph feels slow on first load during the demo, drop `MAX_VARIED` or set `EXPLAIN_VARY=0` — templates alone are still correct and instant.
-**Known issues / blockers:** First uncached graph build pays ~3.5 s for the Haiku call; repeat loads are free. `_varied_cache` is per-process and unbounded — fine for a hackathon, but it would need a TTL or size cap to run for days. The grounding check cannot catch every possible fabrication (it catches named interests, not invented employers), which is exactly why the template remains the fallback rather than the LLM becoming the source of truth.
-**Contract changes:** `docs/api.md` §26 — `explanation` may now carry `"varied": true` when a summary was rewritten; behaviour and the `EXPLAIN_VARY` switch documented. `.env.example` gains `EXPLAIN_VARY` (optional, defaults on). Additive; nothing renamed.
+- Every GitHub feed item gets a brief in `payload.details`: 1-2 sentences on what they built, up to 4 concrete highlights, one question to ask them next time, and stack chips. Written by LLM_SMART from the repo's public data only (description, topics, languages, manifest frameworks, their recent commit subjects, release notes, README). Any number not in those facts is dropped; the facts-only `template_brief` is used when the model is unavailable. No gendered pronouns.
+- The AR8 poller (`ml/app/github_activity.py` `refresh_briefs`) writes up to 4 briefs per user per 10-minute cycle, which also backfills existing items. A brief is rewritten when the repo gets new pushes: right away if the first one was thin (empty new repo), else at most every 6 h. Private, forked, or deleted repos get no brief.
+- `GET /feed` items carry `details`; burst `summary` entries carry their `items` so the app can expand them. Reply suggestions and the assistant's `get_connections_activity` use the brief too.
+- Mobile feed card shows the brief (summary, bullets, stack chips, "Ask <name> next time"); bursts expand into the individual updates. The demo feed mock has a quant-finance example (Daniel) and an expandable burst (Sara).
+- Edited Arjun's `ml/app/github_activity.py` (AR8) and Alan's `ml/app/feed.py` (AL10), additively, with their tests extended.
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=<empty pgvector db> .venv/bin/python -m pytest -q tests` (263 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`. Demo: Try the demo, then Feed. Live: a connection links GitHub; within 10 minutes their recent GitHub items show a brief.
+**Next step for whoever continues:** After the next live poll, open Feed on an account connected to someone with GitHub linked and read one brief; `railway logs` shows `github briefs: N written for <user>`.
+**Known issues / blockers:** Briefs cover GitHub items from the last 14 days (LOOKBACK). Only public repos are read.
+**Contract changes:** `docs/api.md` 29 (additive): feed items gain `details` `{summary, highlights, ask, stack, ai}` (null for posts, updates, and not-yet-briefed items); `summary` entries gain `items`. `docs/mocks/feed.json` updated. No schema change (`feed_items.payload` jsonb). Affects the mobile feed (updated here); the dashboard does not read `/feed`.
 
-## 2026-09-26 13:10 | alan | Claude Code (Opus 5)
-**Task:** AL3 "why you matched" (MASTER_SPEC 6.9) — decompose the match score into the features that produced it
-**Status:** done — 110 passed, 118 skipped (12 new). Wired into `rank_candidates` and the Connection Graph.
-**What I did:**
-- **No refactor was needed.** `scoring.pair_features()` already returns all 9 features and `v1_score` is a pure linear sum, so contributions are exact rather than reverse-engineered. `Builder.person()` in `app/graph.py` already received `features`. Checked this before writing anything, since the alternative would have been a much bigger change.
-- `scoring.score_contributions(f, model)` splits the score the pair actually got. **v1**: `weight x value`, exact — a test asserts the parts sum back to `v1_score` to 1e-12. **lr**: LogisticRegression on standardised features is linear in the logit, so `coef * (value - mean) / scale` is honest. **Tree rankers (LGBMRanker) are not linearly decomposable** — rather than invent per-feature numbers a tree never produced, it falls back to v1 weights and reports `basis: "v1_proxy"` so the UI can label those bars approximate.
-- `scoring.explain_match(a, b, index, features=..., model=...)` returns `summary`, `factors` (top 3 by contribution, each with `label`/`value`/`contribution`/`share`), `all_factors`, `shared_topics` (with both evidence lines) and `basis`. Callers pass the features they already scored with, so the explanation always describes the ranking the user saw.
-- **The bars rank by contribution; the sentence deliberately does not.** `bridge` (0.05) and `role_pair` (0.0) carry tiny weights so they never top the bars, yet they are the most interesting thing about a pair. Without this a cross-community match read identically to an obvious one — I saw that in the first output and fixed it. The verb also comes from the topic's facet, so a personal interest reads "you are both into formula 1", not "work on".
-- Graph: `match`/`connection` edges carry a trimmed `explanation` (summary, top factors, topic names — 536 bytes/edge, ~80KB at the 150-node cap). Topic edges stay lean; evidence lines are not duplicated since they are already on quick-profile and `expand()`.
-- 12 tests in `ml/tests/test_explain.py`, pure in-memory, no DB. They cover the things that would silently rot: contributions summing to the score, every feature having a label, zeroing a weight removing it from the breakdown, never naming an unshared interest, the bridge sentence appearing only for cross-community pairs, and `lr` vs `v1_proxy` basis.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_explain.py` (12 passed).
-**Next step for whoever continues:** Frontend can render either half — `explanation.summary` as a sentence, or `explanation.factors` as a bar per factor using `share`. If a tree ranker is ever served (`MATCH_MODEL=lgbm`), check `basis == "v1_proxy"` and caption the bars as approximate.
-**Known issues / blockers:** The summary is template-built, not an LLM call — deliberate, so it is deterministic, free, offline, and cannot invent facts. MASTER_SPEC 6.9's LLM icebreaker path is separate and untouched. `role_pair` has weight 0.0 in `V1_WEIGHTS`, so a student/recruiter pair scores nothing extra for it; the sentence still calls it out, which is the right behaviour but worth knowing if anyone tunes the weights.
-**Contract changes:** `docs/api.md` §26 — `match` and `connection` edges in the Connection Graph gain an `explanation` object (`summary`, `basis`, `factors[]`, `shared_topics[]`); `docs/mocks/graph.json` updated to match. Additive, nothing renamed, existing fields untouched. Affects Arjun (graph rendering) and Adam (mobile graph WebView).
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Events tab: real Georgia Tech Handshake events
+## 2026-09-27 01:11 | adam | Cursor Grok 4.7
+**Task:** Nearby map restore (user request)
 **Status:** done
 **What I did:**
-- Replaced the made-up sample events with 29 real GT events Arjun pasted from Handshake on 2026-09-26: employer info sessions, networking, workshops, and club meetings. Left out one non-career listing (an anime club meeting).
-- `mobile/features/events/catalog.ts`: new shape with `host`, `tags` (Hiring, Employer info, and so on), `format`, optional `endsAt`/`lat`/`lng`, `allDay`, and a Handshake `url`. `whenLabel()` formats times. Only fields Handshake showed are used; there are no made-up rooms, end times, or descriptions.
-- Event sheet: tags, "Open in Handshake" (opens the event page), and the Attending/Interested/Not attending picker. Near you skips the virtual event; All events filters are Info session, Networking, Workshop, and Club meeting.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
-**Next step for whoever continues:** To refresh, paste the GT Handshake events page into chat and regenerate `rows` in `mobile/features/events/catalog.ts` (id, host, title, category, tags, start). There is no Handshake API for students, and we don't scrape it.
-**Known issues / blockers:** A snapshot, not live. Every in-person event is pinned to the GT campus center, because Handshake's list view doesn't show rooms. Non-GT users see GT events.
+- Nearby shows a street map as soon as the tab opens, in `mobile/app/(tabs)/nearby.tsx` (`NearbyScreen`).
+- Phone map (`mobile/features/nearby/NearbyMap.tsx`) is Apple/Google Maps again, with the 3/8/16 m rings. Match pins still appear only after Scan.
+- Website map (`mobile/features/nearby/NearbyMap.web.tsx`) is an OpenStreetMap embed centered on you, or Georgia Tech if location is off.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. Web: open `/nearby` (verified at http://127.0.0.1:8081/nearby, map of campus). Phone: Expo Go on this Mac’s tunnel, Nearby tab.
+**Next step for whoever continues:** On a phone, open Nearby in Expo Go and confirm the Apple Maps blue dot and distance rings. Scan, then tap a pin and confirm it selects that person in the list.
+**Known issues / blockers:** The website map cannot draw match pins (no MapView on web). Pins stay on the phone map only, and they are browse slots, not real positions.
 **Contract changes:** none
 
-## 2026-09-26 15:40 | adam | Codex
-**Task:** AD9 / AD11 / AR5 / AK5 — user-requested Home, Nearby and graph polish (cross-owner presentation changes)
+## 2026-09-27 00:20 | adam | Codex
+**Task:** AD2 / AD9 / AR5 / AK5 — login icons, score-sized stars, Nearby navigation
 **Status:** done
 **What I did:**
-- Integrated with the team's latest navigation and facet-based graph; preserved Feed as Home and meeting activity under Nearby. Replayed only this increment after the remote history rewrite.
-- Warm-white/charcoal theme, quieter avatars/cards, compact Home composer with draft preservation, and a neutral Open to Meet card instead of a large colored panel.
-- Full-screen Nearby map with band filters and a match selector. Preview shows at most three per band; every eligible match stays in the list and selecting one includes them on the map. Selected-only native pin labels and evenly spaced decorative positions reduce crowding. Fixed asynchronous location-watcher cleanup on expansion/close.
-- Slow 90-second graph rotation with upright names, pause/resume, selected-profile pause, reduced-motion support and focus/background cleanup. Added rotating-layout bounds and dense-map regression tests.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo && EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform web`. Passed: 24 unit checks, 15 demo-flow checks, touched-file ESLint, iOS/web exports. Browser at 390x844 verified Home, Nearby expand/close/filter/select, graph movement/pause and profile opening.
-**Next step for whoever continues:** Pull main, run `./scripts/start-app.sh`, then on a physical phone test Nearby → scan → Expand map → select/filter → Done, and Constellation → pause/resume → select a person. Native street maps/Bluetooth cannot be verified by the browser radar fallback.
-**Known issues / blockers:** No physical-phone verification claimed. Existing Node module-type and Expo color-environment warnings persist. Dependency installation reports 16 moderate advisories; dependency upgrades are outside this UI increment. Local mock web preview is on port 8086, not continuously monitored after handoff.
+- Added vector Google, GitHub, LinkedIn, email and code icons to sign-in actions; removed the dark rectangular banner so the constellation artwork sits directly on the page.
+- Added brighter blue/pink/mint/gold category colors and score-based star diameters (16–44 pixels) inside unchanged tap targets; updated the legend and added a score-size regression test.
+- Removed reintroduced native-map proximity circles. Queued expanded-map navigation until iOS modal dismissal, with a post-close effect on other platforms.
+- Changes to the graph/Nearby areas are explicitly user-requested.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx 'app/(tabs)/nearby.tsx' 'app/(tabs)/graph.tsx' components/SignInIcon.tsx features/graph/Atom.tsx features/graph/starStyle.ts features/nearby/NearbyMap.tsx && node --experimental-strip-types --test features/graph/*.test.mjs && npm run test:demo`; passed (18 demo flows, 4 graph tests). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed. Browser verified expanded Nearby → select Maya → View profile opens Maya's matching user ID and profile.
+**Next step for whoever continues:** On iPhone, open Nearby → expand → choose a match → View profile; confirm native dismissal completes and the correct profile opens. Logic lives in `mobile/app/(tabs)/nearby.tsx` (`openFromMap`, `finishDismiss`).
+**Known issues / blockers:** Native modal behavior and Apple Maps appearance were not exercised on a physical iPhone; browser flow and all platform bundles passed. No live OAuth attempt was made.
 **Contract changes:** none
 
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Events tab: career-connection event types only
-**Status:** done
+## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / shared live "Demo test event" (all day Sep 27) + calendar "Coming up" follows the selected day
+**Status:** done (live needs a Railway redeploy)
 **What I did:**
-- Per Arjun, events are strictly for career connections. Added club meetings (ACM, consulting, SWE, product management), expos (capstone design, startup, and Dallas technology expos), mixers (alumni, recruiter; the climate founder event is now a mixer), and a campus career fair. There are 25 sample events total.
-- New filter chips: Career fair, Club meeting, Expo, Mixer. Made the casual agenda wording more formal.
-- Checked that the served bundle contains no concert or market events. If a phone still shows them, it is running a stale bundle: reload Expo Go.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
-**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real professional events source (an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (tz, lat, lng).
-**Known issues / blockers:** Sample events only.
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Events tab: professional-only events, near you and all events
-**Status:** done
-**What I did:**
-- Product direction from Arjun: the app is for formal, career-building connections, so every event is professional. Removed the community events (market, trivia, concerts) and the `kind` field.
-- Sections are now My calendar, Near you, and All events (the default). Near you shows professional events within 25 miles of the device location. All events lists every upcoming event, including other cities, sorted by date, with distance once location is known.
-- `mobile/features/events/catalog.ts`: 15 professional sample events: 8 in Atlanta, plus Charlotte, Nashville, Austin, New York, Chicago, San Francisco, and Seattle. New `tz` field; times show in the event's own zone (ET/CT/PT) via `zoneLabel`. `plan.dayKey` takes a zone, so the calendar puts events on their local day (+test).
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
-**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real professional events source (an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (tz, lat, lng).
-**Known issues / blockers:** Sample events only. The browser preview has no geolocation, so Near you shows the "Location is off" card there.
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 / Events tab: calendar, RSVP statuses, near-you and professional sections
-**Status:** done
-**What I did:**
-- `mobile/app/(tabs)/events.tsx`: three sections, My calendar, Near you, and Professional (the default). Every event card and the detail sheet have an Attending / Interested / Not attending picker; tapping the current choice clears it.
-- `features/events/Calendar.tsx`: a month grid. A filled green dot means attending, a ring means interested. Tapping a day lists that day's plans, followed by a "Coming up" list.
-- `features/events/useArea.ts`: the user's area comes from expo-location (coarse accuracy, 1 km updates, only while the Events tab uses it) plus reverse geocoding for the city name. Coordinates stay on the device and are never uploaded. It has denied, error, and empty states.
-- `features/events/catalog.ts`: events now have `kind` (professional or local) and coordinates. Added 2 professional and 6 local sample events around Atlanta. RSVPs moved to a v2 status map in AsyncStorage; old v1 id lists migrate to "attending". Pure logic lives in `features/events/plan.ts`, with tests in `plan.test.mjs`.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`. In the app: Events tab, mark events, then open My calendar.
-**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real events source (e.g. an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (kind, lat, lng).
-**Known issues / blockers:** Sample events only, all in Atlanta. Outside Atlanta, Near you shows its empty state. Browser preview has no geolocation, so it shows the "Location is off" card.
-**Contract changes:** none
-
-## 2026-09-26 12:20 | alan | Claude Code (Opus 5)
-**Task:** Chase the Railway-vs-laptop clustering split; make both silent ML fallbacks visible
-**Status:** done — 96 passed, 118 skipped. Clustering split diagnosed as numerical instability, not a broken deploy.
-**What I did:**
-- Tested two hypotheses for Railway `[65,14,1]` vs laptop `[20,20,12,15,8,5]` on the same 80 people. **Both were wrong, and I checked before reporting them.** (a) umap missing on Railway: reproduced on 78 planted clusters — the `Z = X` fallback in `ml/ml/viz.py` labels **every point noise (0 clusters)**, it does not make one blob. (b) hashed fallback embedder: it yields *more* clusters (5, largest 20%) than the real model (3, largest 48%), not fewer.
-- **Actual cause: the pipeline is numerically unstable across environments.** Direct evidence from earlier tonight — switching this laptop's embedder MPS -> CPU changed local clustering from `[18,15,13,15,9,6]` to `[20,20,12,15,8,5]` on identical data. Tiny float differences feed UMAP, which is chaotic, and HDBSCAN amplifies the result. Each server is internally deterministic (3 identical requests each) but they disagree. Neither is "broken"; the community structure is simply not reproducible across machines.
-- **The bug worth fixing was the silence.** `ml/ml/embed.py` and `ml/ml/viz.py` both degrade without anyone noticing: a server with a failed `sentence-transformers` or `umap` import still returns 200 and still serves a dashboard, just with different vectors or an empty map. Both now log at ERROR, and `/health` reports `embedder` (`model`/`device`/`fallback`) and `umap`. Comparing two deployments took an hour; it is now one curl.
-**How to run/test it:** `curl -s localhost:8000/health` -> `{"ok":true,"db":true,"embedder":{"model":"BAAI/bge-small-en-v1.5","device":"cpu","fallback":false},"umap":true}`. `cd ml && .venv/bin/python -m pytest -q tests`.
-**Next step for whoever continues:** After the next Railway deploy, `curl -s https://ml-production-04c0.up.railway.app/health` and compare the `embedder`/`umap` block with a laptop. If both read `fallback:false` and `umap:true`, the clustering difference is confirmed as environment noise and can be left alone.
-**Known issues / blockers:** Community structure is not reproducible across machines, so demo the organizer map from whichever server you rehearsed on — the cluster count and labels will differ elsewhere. The deeper fix (pin the numerics, or cache the layout per event instead of recomputing) is out of scope tonight.
-**Contract changes:** `/health` response gains `embedder` and `umap` keys. Additive; existing `ok`/`db` unchanged, so nothing that reads it today breaks. docs/api.md does not document `/health`.
-
-## 2026-09-26 11:45 | alan | Claude Code (Opus 5)
-**Task:** Google and X become link-only (Adam's `linkIdentity` path), so they can never create a duplicate account
-**Status:** done (`tsc --noEmit` clean; only pre-existing eslint error in `AuthProvider` remains). Providers still need enabling in Supabase.
-**What I did:**
-- Alan's call after weighing the trade-off: no duplicate accounts. Adam had already built the right mechanism — `connectLoginProvider()` + `components/LoginConnections.tsx` use `supabase.auth.linkIdentity()` to attach a provider to the **current** user. It was already mounted on the accounts screen; it just wasn't the only path in.
-- Removed the Google and X buttons from `mobile/app/sign-in.tsx`, and deleted `signInWithGoogle()` / `signInWithX()` from `mobile/lib/auth.tsx`. They were unused after the button removal, and leaving them exported is a trap: calling either reintroduces exactly the duplicate-account bug this change exists to prevent. Left a comment at the deletion site saying so. Sign-in is now LinkedIn, GitHub, or email; Google and X attach afterwards under Profile -> Sign-in accounts.
-- **Fixed the same X slug bug in `LoginConnections`** that I had just fixed on the sign-in screen: it gated on `enabled['x']`, which is permanently `undefined` here, so the button read "X not available yet" forever. It now resolves via `xProviderSlug()` (prefers `x`, falls back to legacy `twitter`) and builds its provider list from what the server actually reports, with an explicit empty state when nothing is on.
-- Added `LinkableProvider = 'google' | XSlug` so the link path and the component agree on one type.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`. On a phone: sign in with LinkedIn or GitHub, then Profile -> Sign-in accounts -> Connect Google; signing out and back in with Google should land on the *same* profile, not a new one.
-**Next step for whoever continues:** Enable the providers, neither is on yet. **Google:** OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth. **X:** our instance only exposes legacy `twitter` (OAuth 1.0a), so the X developer app must have OAuth 1.0a enabled, same callback. Both surface automatically afterwards.
-**Known issues / blockers:** `mobile/` is Adam's folder (`app/sign-in.tsx`, `lib/auth.tsx`, `components/LoginConnections.tsx`) — Adam, I deleted two of your exported functions; say the word and I'll restore them behind a comment instead. **The cost of this design:** Google and X cannot create an account, only add a login to an existing one. Someone whose only identity is Google has to start with email magic link, then link Google. That is the price of no duplicates and it is the right trade here, but it is a real UX constraint worth saying out loud in the demo if a judge asks.
-**Contract changes:** none
-
-## 2026-09-26 11:20 | alan | Claude Code (Opus 5)
-**Task:** Google + X sign-in — Adam had already written them; fixed a slug that made the X button unreachable
-**Status:** done in code (`tsc --noEmit` clean). **Neither provider is enabled in Supabase yet**, so neither button renders.
-**What I did:**
-- Asked to add Google and Twitter sign-in, pulled first, and found Adam had already landed `signInWithGoogle()`, `signInWithX()`, `connectLoginProvider()` and the gated buttons. Did not duplicate any of it.
-- **Found a bug.** `signInWithX()` passed `'x'`, and the button was gated on `providers.x`. Current Supabase docs do say `'x'` is right for X OAuth 2.0 — but this project's `/auth/v1/settings` has **no `x` key at all**: it lists `twitter` (legacy OAuth 1.0a, disabled) alongside `google`, `github`, `linkedin_oidc`. Our GoTrue predates the `x` provider, so `providers.x` is permanently `undefined` and the X button could never render. Fails safe, but it was dead code.
-- Added `xProviderSlug(providers)` in `mobile/lib/auth.tsx`: prefers `'x'`, falls back to legacy `'twitter'`, returns `null` when neither is on. `signInWithX(slug)` takes it; `mobile/app/sign-in.tsx` gates on the resolved slug. Works whether or not the project is later upgraded — no follow-up edit needed.
-- Confirmed the one eslint error in `lib/auth.tsx` (`set-state-in-effect` in `AuthProvider`) is pre-existing, by stashing and re-running: same error at line 217 before my change, 225 after.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`. Check what the server actually supports: `curl -s -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/settings | python3 -c "import json,sys;print((json.load(sys.stdin).get('external') or {}))"`.
-**Next step for whoever continues:** Enable the providers — neither is on. **Google:** create an OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth with that client id/secret. **X:** our instance only offers the legacy `twitter` provider, which needs an X developer app with OAuth 1.0a enabled and the same callback. Both then appear automatically — no code change, `enabledProviders()` picks them up.
-**Known issues / blockers:** `mobile/` is Adam's folder (`lib/auth.tsx`, `app/sign-in.tsx`). Two product notes: this is a further step away from MASTER_SPEC 65/174, which name LinkedIn as *the* sign-in identity; and the more login providers there are, the more likely one person ends up with duplicate accounts when a provider does not return a verified email that matches an existing one. Adam's `connectLoginProvider()` (links an identity to the current user) is the mitigation — worth using rather than adding more standalone sign-in paths.
-**Contract changes:** none
-
-## 2026-09-26 06:27 | arjun | Codex
-**Task:** AR6 / AD11 — simplify navigation and restore floating AI
-**Status:** done
-**What I did:**
-- Per user request, replaced the AI tab with a bottom-left floating message button containing the constellation logo. Mounted it at the signed-in root so secondary stack screens also have access; hidden in the assistant itself and while typing.
-- Promoted Constellation and Nearby to direct primary tabs, alongside Feed, Events and Profile. Removed the redundant Discover launcher card. Kept original Home functions under Nearby's Meeting activity & Open to Meet action.
-- Kept old AI route as a redirect and existing assistant query links intact. Added bottom scroll space on Feed, Events and Profile and protected the launcher from SVG pointer interception.
-- Mobile owner files changed under explicit user authorization; no backend or dependency changes.
-**How to run/test it:** `cd mobile && npm run typecheck && npm run lint`; `npx expo export --platform ios --output-dir /tmp/constellation-nav-ios`. Passed. Existing browser preview verified direct Constellation/Nearby destinations and assistant modal keyboard activation.
-**Next step for whoever continues:** Reload Expo from this clone. Validate floating launcher taps and native modal stacking on an iPhone; desktop browser pointer automation was unreliable, so keyboard navigation was used for interaction checks.
-**Known issues / blockers:** No physical iPhone test performed. Existing sample-event and installed-app release limitations remain unchanged.
-**Contract changes:** none
-
-## 2026-09-26 | arjun | Claude Code
-**Task:** AR6 support: live attendees after LinkedIn sign-in
-**Status:** done
-**What I did:**
-- Bug: a remembered "Try the demo" choice (AsyncStorage `fc.demo-guest`) kept demo mode on after a real LinkedIn sign-in. The user then saw the 5 demo people (Maya, Priya...) instead of the 80 seeded attendees, and Profile hid "Exit demo" once a session existed.
-- Fix in `mobile/lib/auth.tsx` (Adam's folder, noted here): whenever a Supabase session exists, clear the guest flag, `setDemo(false)`, and remove the stored demo key.
-**How to run/test it:** `cd mobile && npx tsc --noEmit`. On a phone: tap "Try the demo", sign out, then sign in with LinkedIn. Who to meet and Graph should show live attendees.
-**Next step for whoever continues:** If a signed-in user still sees 0% scores, their profile has no interests. Add some in onboarding or Profile, then reload.
-**Known issues / blockers:** none new.
-**Contract changes:** none
-
-## 2026-09-26 06:14 | arjun | Codex
-**Task:** AR6 / AD11 — user-requested Constellation mobile redesign
-**Status:** done
-**What I did:**
-- Updated the existing mobile app (Adam/Akshar-owned mobile files at the user's explicit request): shared navy/white light-only theme, constellation vector branding, vector icons, photo avatars with initials fallback, and branded loading states. No new site or dependencies.
-- Made Feed the default route; preserved old Home as Discover. Five primary tabs: Feed, Discover, AI Chat, Events, Profile. Graph, Nearby, Messages, profile editing, verification and invites remain reachable; existing route aliases remain intact.
-- Graph colors now follow actual shared-interest facets consistently. Line opacity/weight represents existing score; straight star connections replace orbital ellipses. Person sheets retain server-backed interests, meeting context and recorded conversation topics, with clearly labeled profile-overlap strength.
-- Added sample event catalog adapter, category filters, event details, and per-account local RSVP/cancellation persistence. Sample status is explicit; RSVP never creates real attendance or contacts organizers. Backend contracts unchanged.
-- Verified main screens in the existing Expo web preview at phone width; fixed clipped tab labels and SVG web warnings. Verified event RSVP persists across reload; feed refresh deduplicates new posts.
-**How to run/test it:** `cd mobile && npm run typecheck && npm run lint && npm run test:demo`; `npx -y tsx --test features/graph/atomLayout.test.mjs`; `npx expo export --platform ios --output-dir /tmp/constellation-ios-final`. Typecheck/lint, 15 demo checks, 2 layout tests and iOS export pass. Existing preview: http://localhost:8081 (this clone); demo checked manually through Feed, Discover, graph/person sheet, AI Chat, Events/RSVP, Profile and Messages.
-**Next step for whoever continues:** Reload the existing Expo app to see this commit. Physical-device validation is still needed; rebuild the native client to apply app display-name/light-appearance configuration. To add live event registration later, replace `mobile/features/events/catalog.ts` only after a listings/RSVP API exists.
-**Known issues / blockers:** Events are explicitly sample/local, not live registrations. No EAS project/update pipeline is configured, so GitHub push does not distribute an installed-app release. iOS bundle validated; no physical-device test claimed. No teammate servers restarted.
-**Contract changes:** none
-
-# Progress log
-
-## 2026-09-26 | alan | Codex
-**Task:** AD2 Google/X extension validation and hosted setup handoff
-**Status:** blocked
-**What I did:**
-- Pushed the implementation in a8fbf24. TypeScript, full mobile ESLint, and the iOS Expo export pass.
-- Ran the five static onboarding enforcement checks: all pass. Seven database-backed provider cases were deselected because this checkout has no disposable test database.
-- Inspected the live Supabase dashboard: Google and X OAuth 2.0 are disabled, and Allow manual linking is off. GitHub and LinkedIn are enabled. No hosted settings changed.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint . && npx expo export --platform ios`; `cd ml && python -m pytest --noconftest tests/test_onboarding_enforcement.py -q -k 'not every_provider'` (5 passed).
-**Next step for whoever continues:** Get the team's Google Cloud and X developer app identities from Alan; follow docs/google-x-auth.md to save provider credentials, enable manual linking, and perform real sign-in/linking on a phone using this commit.
-**Known issues / blockers:** Hosted OAuth apps/credentials are still needed. No successful Google/X OAuth claimed. Connect means a login identity, not Google/X data ingestion. Existing checkout environment values on teammates' laptops are unchanged.
-**Contract changes:** none
-
-## 2026-09-26 | alan | Codex
-**Task:** AD2 extension requested by Alan: Google and X sign-in / account linking
-**Status:** in progress
-**What I did:**
-- Alan explicitly prioritized this over AL2 and confirmed Supabase instead of Firebase. Edited mobile auth/screens (Adam's area) for this requested extension.
-- Added Google and X OAuth 2.0 sign-in, gated by live enabled providers, and a Sign-in accounts card using manual identity linking with server-verified identities.
-- Existing Supabase account-creation trigger/onboarding stays in use; added `x` to onboarding enforcement coverage. Identity only, no new data ingestion.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .` both pass. See `docs/google-x-auth.md` for setup and physical-phone checks.
-**Next step for whoever continues:** Configure Google and X OAuth apps and credentials in Supabase; enable Allow manual linking; complete the phone checks in docs/google-x-auth.md. Run onboarding guard and bundle checks before final handoff.
-**Known issues / blockers:** Provider credentials/developer apps not yet supplied; no end-to-end Google/X sign-in claimed. Firebase was not added (Alan chose Supabase).
-**Contract changes:** none
-
-Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
-
-## 2026-09-26 19:55 | adam | Claude Code
-**Task:** Fix the intermittent live stall (matches / graph / quick profile / dashboard hang), final verification
-**Status:** done, verified live
-**What I did:**
-- Found live: /dashboard/1 hung 936 s and /events/1/matches timed out while /health stayed fast. Every event-model request waited on one per-event build lock, so any slow rebuild stalled everyone; UMAP (numba, not thread-safe) could run in several threads at once; PyTorch/numba used one thread per reported CPU.
-- Fix (ml/app/population.py, __init__.py, tasks.py, ranker_job.py, routers/dashboard.py): serve the cached model while another thread rebuilds (only the first build waits), HEAVY_LOCK so one UMAP/HDBSCAN/global-embed job runs at a time, native math threads capped at 2 (override with Railway vars / ML_THREADS), global vectors skip users deleted mid-run. +2 tests; 216/216 with Postgres.
-- Live after deploy: `ml/scripts/load_check.py` 6 min across the heavy-job cycle: matches median 2.5 s (max 6.7 s cold), graph 1.9 s, dashboard 1.5 s, zero errors. Smoke 36/36. Core loop e2e passes.
-- Removed 2 leftover "Sam Smoke" test accounts (a killed smoke run had skipped cleanup and they appeared as matches). Scripts now clean up on SIGTERM/SIGHUP; `ml/scripts/cleanup_test_accounts.py` finds strays.
-**How to run/test it:** `cd ml/scripts && npx @railway/cli run ../.venv/bin/python -u load_check.py 6`
-**Next step for whoever continues:** Keep one deployer, from up-to-date main. Adam: `gh auth refresh -h github.com -s workflow`, then commit .github/workflows/ci.yml.
-**Known issues / blockers:** Matches ~2.5 s per call is acceptable but could be cached per viewer if it matters for the demo.
-**Contract changes:** none
+- New `ml/app/demo_event.py`, run at server startup (`app/main.py` lifespan): creates or refreshes "Demo Company" and "Demo test event", Sep 27 12:00 AM to 11:59 PM ET (`DEMO_EVENT_DATE`), join code `DEMO-927` (`DEMO_EVENT_JOIN_CODE`), in the real DB. Every user sees the same event in `GET /events`. Idempotent. `DEMO_EVENT=0` disables it. Optional company login to show the QR: only if the team sets `DEMO_COMPANY_EMAIL` + `DEMO_COMPANY_PASSWORD` in Railway (created confirmed, like /orgs/signup; I didn't invent credentials). Check-in rules are unchanged: register first, then QR or code, any time.
+- Tests: `ml/tests/test_demo_event.py` (created once, 00:00-23:59 ET, visible to every user, join code needs registration). `tests/conftest.py` sets `DEMO_EVENT=0` so other DB tests stay clean.
+- Calendar: "Coming up after <selected day>" lists plans that start after the tapped day (and haven't ended). Tapping the 27th shows the 28th event as coming up; tapping the 28th shows it under that day. Same-day events show start and end ("Sun, Sep 27 · 12:00 AM – 11:59 PM ET"). Demo-mode event 777 matches the live one.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_demo_event.py` (DB tests: TEST_DATABASE_URL / CI). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`.
+**Next step for whoever continues:** In Railway (service `ml`), optionally set `DEMO_COMPANY_EMAIL` / `DEMO_COMPANY_PASSWORD`, then redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`. Test: two attendee phones mark "Demo test event" Attending, then scan the QR from the company login (or type DEMO-927), then enter the session and turn on Event Mode (dev build for Bluetooth).
+**Known issues / blockers:** Bluetooth needs the dev build (not Expo Go). This laptop isn't logged in to Railway.
+**Contract changes:** `.env.example` adds DEMO_EVENT, DEMO_EVENT_DATE, DEMO_EVENT_JOIN_CODE, DEMO_COMPANY_EMAIL, DEMO_COMPANY_PASSWORD (names only). No schema/API shape change.
 
 ## 2026-09-26 23:30 | adam | Claude Code
 **Task:** Full pre-demo audit (repo, server, app, database, live API, dashboard)
@@ -622,6 +147,17 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Root .env on Adam's Mac has empty values for keys that were wiped (use `npx @railway/cli run` for local server runs). /assistant/demo is unauthenticated by design (rate-limited, api.md 43). Matches endpoint takes ~7 s cold.
 **Contract changes:** api.md 44 (simulate + additive fields)
 
+## 2026-09-26 22:45 | adam | Codex
+**Task:** AD2 — flatten login layout
+**Status:** done
+**What I did:**
+- Removed the enclosing rounded white sign-in card and replaced it with spacing and a subtle top divider.
+- Reduced corner rounding on the constellation illustration, fields and buttons so the login no longer stacks bubble-shaped containers.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx`.
+**Next step for whoever continues:** Reload `/sign-in` to inspect the flatter styling in `mobile/app/sign-in.tsx`.
+**Known issues / blockers:** Styling-only change; no physical-device visual check.
+**Contract changes:** none
+
 ## 2026-09-26 22:40 | adam | Claude Code
 **Task:** Live app loop broken (matches/graph 403, no suggestions, demo attendees inert) + milestone-only feed
 **Status:** done, verified live
@@ -636,22 +172,65 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Feed is empty until someone hits a real milestone (synthetic attendees have no feed items). Two people deploying Railway from different checkouts caused regressions; deploy only from up-to-date main.
 **Contract changes:** POST /conversations/simulate, quick-profile `demo_attendee` (additive), /me/accounts github.repo_count (additive)
 
-## 2026-09-26 10:00 | akshar | Claude Code (Opus 5.5)
-
-**Task:** Tap works port-to-port; checklist shows common interests; QR error follow-up
-
-**Status:** in progress (code pushed; needs the Railway redeploy + a Release rebuild; waiting on the exact QR error text)
-
+## 2026-09-26 22:30 | adam | Codex
+**Task:** AD2 — login visual polish
+**Status:** done
 **What I did:**
-- Tap: the app threshold is now -58 dBm (back-to-back reads about -30 to -45, port-to-port weaker). The server check is a looser floor of -65, set by the `TAP_RSSI_DBM` env var. The Tap screen shows the live signal ("Signal -52 dBm (touching counts at -58 or stronger)") so the team can calibrate by holding positions. Still mutual claims within 15 s, 2 s hold.
-- Checklist: verified live with two throwaway accounts: manual interests → AI extraction → QR verify → checklist `['reinforcement learning', 'rock climbing']`. The phone accounts (akshar.exe, arjunkattragadda) have 0 interests, so their checklist has nothing shared. Fix = data: Profile → Edit profile ("Your sources") → type interests or upload a resume → Save, on both phones.
+- Added a restrained night-sky constellation illustration and a rounded white sign-in card, clearer field labels, softer input styling, and a primary email action.
+- Made the email-code form appear after a successful link request or an explicit Already have a code action. Kept OAuth, company login, demo access and the privacy disclosure.
+- Added safe-area spacing, disabled email autocorrect, and live announcements for form feedback.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx && npm run test:demo`; passed (17 demo checks). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed before final placeholder/footer copy placement cleanup.
+**Next step for whoever continues:** Open `/sign-in` to inspect the form; email-link/code handling and visual styles live in `mobile/app/sign-in.tsx`.
+**Known issues / blockers:** No real authentication email sent or physical-device visual check in this increment.
+**Contract changes:** none
 
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs` (5 pass); `cd ml && pytest tests/test_tap.py` (6 pass).
+## 2026-09-26 22:22 | adam | Cursor Grok 4.6
+**Task:** Company tools verification
+**Status:** done
+**What I did:**
+- Live API checklist 25/25: signup, duplicate 409, login, patch, create event, studio QR, promote, rotate (old code 404), attendee enter, updates, matches, organizer counts only.
+- Browser: company home, event studio, mint code, save profile, sign out, existing-account login.
+- Company scroll views now pad above the tab bar so Sign out / Create event aren’t covered.
+**How to run/test it:** Company? Separate login → create or sign in → New event → Make a code. Attendee: Events → Enter join code.
+**Next step for whoever continues:** On a second attendee phone, enter a join code and confirm Nearby uses that event.
+**Known issues / blockers:** Work email is not verified (demo). Printed join code is shown once until you tap Make a code / New code.
+**Contract changes:** none
 
-**Next step for whoever continues:** Adam redeploys `ml` (REQUESTS). Rebuild both iPhones (`npx expo run:ios --device --configuration Release`). Both add interests with some overlap. Tap port-to-port and note the dBm shown; if port-to-port reads weaker than -58, lower `TAP_RSSI_DBM` in `mobile/features/ble/tap.ts`.
+## 2026-09-26 22:15 | adam | Codex
+**Task:** AD9 / AR5 — irregular constellation spacing
+**Status:** done
+**What I did:**
+- Gave each featured star a different radius and a small angular offset so the constellation no longer forms an evenly spaced ring.
+- Reduced the projection tilt to preserve name separation on small phones throughout the animation. Kept deterministic positions and existing motion performance.
+- User requested this refinement in Arjun's graph area.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit && npx eslint features/graph/atomLayout.ts`; passed, including full-orbit bounds and label separation at widths 286–440 for 1–6 stars.
+**Next step for whoever continues:** Reload Constellation and inspect varied star distances; layout parameters are in `mobile/features/graph/atomLayout.ts`.
+**Known issues / blockers:** No physical-device visual check this increment.
+**Contract changes:** none
 
-**Known issues / blockers:** QR "error pulling up the code": need the exact text. It may have been the null-name crash (fixed by data + code).
+## 2026-09-26 22:00 | adam | Cursor Grok 4.6
+**Task:** Company separate login + organizer studio (events, join codes, promote)
+**Status:** done
+**What I did:**
+- Companies have a separate sign-in (`mobile/app/company-sign-in.tsx`): company name, contact, work email, password, industry, size, city, about. Demo does not verify email (`POST /orgs/signup` creates a confirmed Auth user).
+- Company accounts skip student onboarding and land on `(company)` tabs: event list, create event, studio (join code + QR + share + promote), company profile.
+- People join with a typed code (`POST /events/enter`) or the event QR. Organizers see counts only. Promote writes `event_posts`, updates `events.promo`, and notifies registrants.
+- Live migration `20260926220000_company_accounts.sql` applied to project `mwfzgkikbmnghueolfnw`.
+**How to run/test it:** Sign-in → Company? Separate login → create company → New event → share code. Attendee: Events → Enter join code. `cd mobile && npx tsc --noEmit`. Live API: `/orgs/signup`, `/orgs/events`, `/events/enter` are on Railway.
+**Next step for whoever continues:** On a second attendee phone, enter a printed join code on Events → Enter join code and confirm Nearby uses that event. If Expo web is stale, reload `http://localhost:8081`.
+**Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
+**Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
 
+## 2026-09-26 22:00 | adam | Codex
+**Task:** AD9 / AR5 — space constellation visual refinement
+**Status:** done
+**What I did:**
+- Restyled the constellation as a near-black night sky with a deterministic starfield, soft blue haze, glowing stellar cores, and thin straight connection lines.
+- Replaced the atom spheres and orbital rings with stars; retained subtle facet colors, upright names, profile selection, pause, and reduced-motion handling.
+- Kept native-driven animation and static SVG lighting with no new dependencies. User requested changes to Arjun's visualization area.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint features/graph/Atom.tsx 'app/(tabs)/graph.tsx' && node --experimental-strip-types --test features/graph/atomLayout.test.mjs`; all passed. Expo export: `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`.
+**Next step for whoever continues:** Reload the app and open Constellation; check the starfield and tap a named star on a physical phone. Rendering lives in `mobile/features/graph/Atom.tsx`.
+**Known issues / blockers:** Physical-device visual/performance verification remains unmeasured.
 **Contract changes:** none
 
 ## 2026-09-26 21:40 | adam | Claude Code
@@ -666,133 +245,55 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Assistant replies 3-15 s. GitHub sign-in needs its own GitHub OAuth app enabled in Supabase Auth. CI workflow file needs `gh auth refresh -s workflow`.
 **Contract changes:** api.md 43 POST /assistant/demo
 
-## 2026-09-26 09:30 | akshar | Claude Code (Opus 5.5)
-
-**Task:** Fix crash after tap verify on the iPhones ("Cannot read property 'split' of null")
-
-**Status:** done (data fix live now; code fix ships with the next Release rebuild)
-
+## 2026-09-26 21:15 | adam | Adam
+**Task:** Web home-screen app + extra add-people paths + company events
+**Status:** in progress
 **What I did:**
-- Cause: both phone accounts came from email sign-in, so `profiles.name` was null. The verify screen's Avatar (and ~15 other places) called `name.split(...)`. The tap verification itself had succeeded on the server.
-- Code: `firstName()` helper + null-safe `Avatar` in `mobile/components/ui.tsx`; patched every `name.split` in app/ and features/ (connections, match, Home, meetup, MeetupBanner, graph model + Atom, NearbyMap, ChecklistForm, verify).
-- Data: set `profiles.name = split_part(email,'@',1)` for the only 2 of 84 profiles with no name (Akshar approved), then refreshed the live event cache. The live matches list now has 0 nameless people.
+- Expo web is now a home-screen PWA (`mobile/app/+html.tsx`, `mobile/public/manifest.webmanifest`). Bluetooth still needs the native app; QR verify, invites, and event join work on the site.
+- Invites screen is the "already know them" path: conversation QR, connect QR, contact name + share. Post-talk checkboxes were already `ChecklistForm`.
+- Company events: `GET/POST /events`, `/orgs`, `/me/org`, register, join-token, `/events/join`. Nearby uses the event you entered (`lib/currentEvent.ts`).
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py`. Redeploy ML, then web: `cd mobile && npx expo start --web`.
+**Next step for whoever continues:** Redeploy Railway `ml` so the new event endpoints are live. On a phone, Safari → Share → Add to Home Screen.
+**Known issues / blockers:** Event list needs `events.org_id` / `location_text` (already in schema). Scanning a person QR still does not auto-connect; both must say yes.
+**Contract changes:** docs/api.md 45 (company events); docs/mocks/get-events.json. Alan: new routes live in `ml/app/routers/events.py`.
 
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. Phones: force-quit, reopen → Tap phones → the checklist shows the other person's name.
-
-**Next step for whoever continues:** Rebuild the Release app on both iPhones (also needed for `expo-clipboard`, a new native module on main): `cd mobile && npm install && npx expo run:ios --device --configuration Release`.
-
-**Known issues / blockers:** New email sign-ups still get no name until onboarding asks for one (REQUESTS → Adam).
-
-**Contract changes:** none
-
-## 2026-09-26 10:50 | alan | Claude Code (Opus 5)
-**Task:** Signing in with GitHub should not make the user authorize GitHub a second time
-**Status:** done (92 passed, 117 skipped; mobile `tsc --noEmit` + `eslint` clean). Still needs the Supabase GitHub provider enabled before it can run.
+## 2026-09-26 21:10 | adam | Codex
+**Task:** AD9 / AK5 — Nearby cleanup and reciprocal Maps navigation
+**Status:** done in code; backend test environment unavailable locally
 **What I did:**
-- The gap: "Continue with GitHub" created a Supabase identity but left `linked_accounts` empty, so Manage sources still showed GitHub as unconnected and the user authorized GitHub twice — which reads as broken.
-- Verified against Supabase's reference docs first: `session.provider_token` **is** returned after `signInWithOAuth`, is **not** persisted across refreshes, and extra scopes go through `options.scopes`. So the token has to be captured at sign-in or it is gone.
-- Server (`ml/app/routers/github.py`): new `POST /connect/github/session` (JWT). Takes `{provider_token, scopes?}`, **validates it against GitHub before trusting it** (`github_ingest.get_user`), stores it Fernet-encrypted via a `_store_token()` helper now shared with the OAuth callback, and runs the same background ingestion. The token never goes back to the client.
-- Client (`mobile/lib/auth.tsx`, `mobile/lib/api.ts`): `completeAuthFromUrl` now returns the session; `signInWithGitHub()` requests `read:user`, grabs `provider_token`, and posts it. Deliberately best-effort — on failure it warns and the normal Connect GitHub button still works, so sign-in is never blocked by it.
-- 4 tests in `ml/tests/test_github_connect.py`: 401 unauthenticated, 200 stores-encrypted-and-ingests (asserts the raw token appears nowhere in the row), 400 when GitHub rejects the token (asserts nothing is written), 422 on an empty token.
-- `contract-keeper` confirmed docs, mock, client types, tests and route all agree; no schema change needed (`linked_accounts` already has every column) and no new env var.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_github_connect.py` (10 passed). Mobile: `npx tsc --noEmit && npx eslint .`.
-**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on the `Ov23liFFJ8BwrDTDqrUW` OAuth app. Then sign in with GitHub on a phone and confirm Manage sources already shows GitHub connected, with no second authorization.
-**Known issues / blockers:** `mobile/` is Adam's folder — this touches `lib/auth.tsx`, `lib/api.ts`, `app/sign-in.tsx`. Also a **spec deviation worth a decision**: MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as *the* sign-in identity; GitHub sign-in is not in the spec. Alan asked for it knowing that. Supabase's GitHub provider may issue a token with broader scopes than `read:user` depending on how the provider is configured — the server stores whatever scopes are reported, so keep the provider's scope list tight.
-**Contract changes:** `docs/api.md` section 33 gains `POST /connect/github/session` (request `{provider_token, scopes?}`, response `{connected, login}`, error `400 github rejected that token`); new `docs/mocks/connect_github_session.json`. Additive only — no schema change, no env var, nothing renamed. Affects Adam (mobile sign-in) and Arjun (AR1 GitHub ingestion now has a second entry point).
+- Removed the nearby proximity rings and band filters. The map/list now show all eligible nearby matches in one organized surface; decorative pin positions never represent a person’s real direction or location.
+- Added a Find action only for a mutual match. It enters the existing 30-minute meetup flow rather than exposing coordinates from Nearby.
+- Added an external walking-navigation button only after the viewer and the other matched person have both started temporary location sharing. The API now withholds `their_location` until both shares exist.
+- Added a pure navigation-URL test and updated the location API test and contract documentation for reciprocal sharing.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/nearby.tsx' 'app/meetup/[id].tsx' features/nearby/NearbyMap.tsx features/nearby/NearbyMap.web.tsx features/location/navigation.ts && node --experimental-strip-types --test features/location/navigation.test.mjs features/nearby/mapLayout.test.mjs`; mobile checks pass. Backend: `cd ml && .venv/bin/python -m pytest -q tests/test_location.py` when the ML virtualenv is installed.
+**Next step for whoever continues:** On two physical phones, both accept the same suggestion, both press Find → Share my location, then confirm Navigate to opens walking Maps; confirm it is absent if either person has not shared.
+**Known issues / blockers:** This checkout lacks `ml/.venv` and system Python lacks pytest, so the new backend test could not run locally. Expo preview process is local only; native Maps/Bluetooth needs devices.
+**Contract changes:** `docs/api.md` §37: `their_location` is now explicitly reciprocal; external navigation is allowed only in the reciprocal share window.
 
-## 2026-09-26 09:10 | akshar | Claude Code (Opus 5.5)
-
-**Task:** Verify the HTTP 500 fix on the live server after Adam's Railway redeploy
-
-**Status:** done (live API healthy; phones should now work; one intermittent stall left for Adam to check in the Railway logs)
-
-**What I did:**
-- Live replay with two throwaway accounts (created and deleted with the admin key, never printed): check-in 0.9 s, Open to Meet 0.8 s, suggestions 0.4 s, matches 3.7 s (was 96 s), `/ble/tokens` 1.0 s (was 41 s), tap claim → verified ~2 s, QR verify ~1.8 s. 5 runs over 6 minutes.
-- Intermittent: 3 single requests hung ~60 s in the first ~12 minutes after the deploy. A 9-minute probe afterwards showed no hangs, only `/health` at 3-7 s a few times while a no-DB 404 stayed instant (so the process isn't frozen; it's waiting on the DB pool or threads). I tested and discarded a "move UMAP to a subprocess" change: locally UMAP doesn't block other threads, so it wasn't the cause.
-
-**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`; phone sequence in the entry below.
-
-**Next step for whoever continues:** Phones: force-quit and reopen the app → Nearby → Event Mode ON on both → Tap phones. Rebuild the Release app when convenient to pick up the mobile hardening (30 s timeout, no stacked polls, Event Mode error text), which keeps a brief server stall from snowballing.
-
-**Known issues / blockers:** The ~60 s stall cause is unconfirmed without the Railway logs (asked Adam in REQUESTS). Don't redeploy right before or during the demo.
-
-## 2026-09-26 10:25 | alan | Claude Code (Opus 5)
-**Task:** Add "Continue with GitHub" to the sign-in screen (Alan's request) — **edits in Adam's folder**
-**Status:** code done, typecheck + lint clean; **dead until the Supabase GitHub provider is enabled**
-**What I did:**
-- `mobile/lib/auth.tsx`: pulled the OAuth handshake into `signInWithProvider(provider)` (LinkedIn and GitHub were otherwise identical) and added `signInWithGitHub()`.
-- `mobile/app/sign-in.tsx`: "Continue with GitHub" as an outline button under LinkedIn; extracted the `SignInKind` union so `busy` covers the new state.
-- `mobile/lib/accounts.ts`: `signInLabel('github') -> 'GitHub'` so Manage sources doesn't render a raw provider string.
-- Ran `npm install` first — `expo-clipboard` had landed in `package.json` after my earlier install and was failing typecheck for an unrelated reason.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .` (both clean). On a phone the button 400s until the provider below is enabled.
-**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers, and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on a GitHub OAuth app (the existing `Ov23liFFJ8BwrDTDqrUW` app can carry it alongside the Railway callback). Until then the button fails.
-**Known issues / blockers:** Two things Adam should weigh, since this is his area and his call. (1) **Spec deviation** — MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as the sign-in identity; GitHub sign-in is not in the spec. (2) **Double authorization** — signing in with GitHub creates a Supabase identity but does **not** write `linked_accounts`, which is what `/connect/github` populates. A user who signs in with GitHub will still see "Connect GitHub" as unconnected and authorize GitHub a second time. Worth either wiring sign-in to seed `linked_accounts`, or relabelling the connect step so the repeat isn't confusing. Adam was pushing to `mobile/` while I wrote this — conflict risk is real; revert freely if it cuts across his onboarding work.
-**Contract changes:** none
-
-## 2026-09-26 10:05 | alan | Claude Code (Opus 5)
-**Task:** Verify Adam's Railway redeploy; record two findings that were only living in a chat window
-**Status:** redeploy confirmed good; one open question on Railway, one gap in push
-**What I did:**
-- **Railway redeploy verified.** `/health` `{"ok":true,"db":true}`; cold `/dashboard/1` **6.0 s** then 0.4 s warm (Akshar measured 96 s before `2ce6860`), 80 attendees present. Route parity with local on `/me/accounts`, `/connect/github/start`, `/assistant/chat`, `/suggestions`, `/conversations/pending` (401/405 on both), so the deployed build is current. Akshar's demo-blocker is cleared.
-- **Open question — Railway and a laptop cluster the same 80 people differently.** local `[20,20,12,15,8,5]` (6 clusters) vs Railway `[65,14,1]` (3, one 65-person blob). Both deterministic over 3 requests each, so not randomness. Ruled out: clustering params are not env-tunable (only `EMBED_MODEL`/`EMBED_DEVICE`/LLM ids are), `ml/Dockerfile` bakes bge-small in with `HF_HUB_OFFLINE=1`, and route parity rules out a stale build. **Two diagnostics for whoever has Railway access:** grep the deploy logs for `[embed] sentence-transformers unavailable` (that fallback is the hashed n-gram embedder — `ml/ml/embed.py` calls it "fine for testing plumbing, NOT for demo", and it would explain the blob), and confirm `EMBED_MODEL` is not overridden in Railway variables. If both are clean, the likely remainder is float differences between torch builds amplified by UMAP/HDBSCAN. Matters because the organizer map is a headline demo visual.
-- **Push notifications are half-built and will not work in the demo.** Server side is done (`ml/app/push.py` worker every 5 s, `push_tokens` migrated), but the client never registers: `expo-notifications` is absent from `mobile/package.json` and nothing under `mobile/app|lib|features` calls `getExpoPushTokenAsync`, so the worker has no tokens to send to. Finishing it is client work plus a dev-client rebuild, and Android standalone builds would additionally need Firebase/FCM credentials in EAS (`eas.json` builds Android APKs). Firebase is not used anywhere else and is not needed for GitHub connect.
-**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Compare clustering across hosts: `curl -s <host>/dashboard/1 | python3 -c "import json,sys;d=json.load(sys.stdin);print([c['size'] for c in d['clusters']])"`.
-**Next step for whoever continues:** Complete one GitHub connect on a phone against Railway (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Still the only unproven path; failures come back on the deep link as `reason=oauth` (state/exchange) or `reason=denied`.
-**Known issues / blockers:** The clustering divergence above. `dashboard/.env.local` points at `localhost:8000`, which is what produces the nicer 6-cluster map — decide deliberately whether to demo the dashboard off the laptop (better visual, laptop dependency) or off Railway. GitHub client secret and the Supabase DB password were pasted into a chat transcript; rotate after the hackathon, coordinating the DB one with Adam since Railway's `DATABASE_URL` embeds it.
-**Contract changes:** none
-
-## 2026-09-26 09:20 | alan | Claude Code (Opus 5)
-**Task:** AL1 stability — server aborted mid-session on an Apple GPU assertion; LinkedIn + GitHub config verified
-**Status:** done (local, Railway and tunnel all `{"ok":true,"db":true}`; 71 passed, 108 skipped)
-**What I did:**
-- The local uvicorn died with SIGABRT: `failed assertion _status < MTLCommandBufferStatusCommitted at -[IOGPUMetalCommandBuffer setCurrentCommandEncoder:]`. `SentenceTransformer(EMBED_MODEL)` took no `device`, so on an M-series Mac it auto-selected the **MPS** backend, and bge-small on MPS aborts the whole process once the background workers call it concurrently. Added `EMBED_DEVICE` (default `cpu`) in `ml/ml/config.py` and passed it in `ml/ml/embed.py`. Verified 384-dim unit-normalized output, then 30 s of polling with workers running and zero Metal errors. macOS-only — Railway has no GPU — and pinning CPU also keeps laptop vectors identical to Railway's, which writes the same pgvector column.
-- **LinkedIn OIDC verified live**: `GET /auth/v1/settings` now returns `external: {email, linkedin_oidc}` (OIDC, not the legacy `linkedin`, matching `signInWithOAuth({provider:'linkedin_oidc'})`). Real people signed in.
-- **Proved the `TOKEN_ENCRYPTION_KEY` mismatch and fixed it.** Railway's key differed from this laptop's. Without knowing Railway's value: sign an OAuth `state` with the laptop key, send it to Railway's callback with a junk `code`, and time the redirect — a rejected signature returns immediately, an accepted one first round-trips to GitHub. Before: +0 ms (differ). After Alan copied Railway's value into `.env`: +207 ms (match).
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests`. Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`.
-**Next step for whoever continues:** Complete one GitHub connect on a phone (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Every piece is verified but the end-to-end flow has never run to completion; on failure the deep link carries `reason=oauth` (state/exchange) or `reason=denied` (user cancelled).
-**Known issues / blockers:** `mobile/.env` still points at Alan's trycloudflare tunnel — switch `EXPO_PUBLIC_API_BASE_URL` to `https://ml-production-04c0.up.railway.app` before demo day so the demo doesn't depend on a laptop staying awake. The dashboard's "Should be talking, aren't" panel reads `0 made` on every row until someone completes a verified conversation. GitHub client secret and the Supabase DB password were both pasted into a chat transcript — rotate after the hackathon (the DB one needs coordinating with Adam, since Railway's `DATABASE_URL` embeds it).
-**Contract changes:** `.env.example` gains `EMBED_DEVICE` (optional, defaults to `cpu`). Additive; nothing renamed or removed.
-
-## 2026-09-26 04:55 | adam | Adam
-**Task:** Each laptop runs the app and makes its own Expo QR
+## 2026-09-26 20:49 | adam | Codex
+**Task:** AD9 / AR5 — user-requested lightweight 3D atom constellation
 **Status:** done
 **What I did:**
-- Added `scripts/phone-qr.sh`. On a clean `main` it pulls, starts Expo through a tunnel, writes `~/Desktop/formal-connection-expo.png`, and prints `PHONE_URL`.
-- Asked Alan, Arjun, and Akshar in REQUESTS.md to run that script instead of scanning someone else's QR.
-**How to run/test it:** `bash -n scripts/phone-qr.sh`. On a laptop: `./scripts/phone-qr.sh`, then scan the Desktop PNG with Expo Go.
-**Next step for whoever continues:** Alan, Arjun, Akshar: run `./scripts/phone-qr.sh` and leave it open.
-**Known issues / blockers:** The QR only works while that laptop stays awake. Campus Wi-Fi still cannot use the LAN script `scripts/start-app.sh`.
+- Replaced flat rotating initials with shaded spheres around a central nucleus, three tilted orbital paths and three moving particles; kept the current palette and facet meanings.
+- Projected a tilted 3D ring with depth-based size/opacity and curved self-only connections. Precomputed 73 motion samples; native transform/opacity interpolation avoids per-frame React state, physics, WebGL and new dependencies.
+- Kept upright labels, six-node limit, profile selection, pause/resume and reduced-motion/background/focus cleanup. Moved Pause to the chart header for easy access on phones.
+- Added full-orbit bounds/label-separation tests across phone/tablet widths and 1–6 people, plus depth and seamless-wrap checks.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`. Passed before integration: 25 unit tests, 15 demo checks, all three exports. Browser at 390x844 verified rendering, animation, pause and person-sheet opening. 120-frame desktop sample: median/p95 16.7ms, zero intervals over 50ms (not a phone benchmark).
+**Next step for whoever continues:** Reload Expo Go and open Constellation; check orbit smoothness, tap targets and system Reduce Motion on a physical iPhone/Android. Pure projection lives in `mobile/features/graph/atomLayout.ts`; renderer in `Atom.tsx`.
+**Known issues / blockers:** Physical-phone performance not measured. This is lightweight projected 3D, not an interactive WebGL scene. Changes to Arjun's graph area explicitly requested by the user; contracts unchanged.
 **Contract changes:** none
 
-## 2026-09-26 09:00 | akshar | Claude Code (Opus 5.5)
-
-**Task:** Diagnose HTTP 500s on the two-iPhone Release build (Nearby, Home check-in / Open to Meet, Event Mode, Tap, QR)
-
-**Status:** fixed in code; NEEDS A RAILWAY REDEPLOY of the `ml` service to take effect
-
+## 2026-09-26 19:55 | adam | Claude Code
+**Task:** Fix the intermittent live stall (matches / graph / quick profile / dashboard hang), final verification
+**Status:** done, verified live
 **What I did:**
-- Root cause: two slow endpoints on the live server. `POST /ble/tokens` took **41 s** (my per-row queries: ~290 round trips at ~150 ms Railway→Supabase) and a cold `GET /events/1/matches` took **96 s** (~500 one-sentence embedding calls for ~80 attendees after every restart, with concurrent requests each starting their own build). The phones poll matches every 15 s, so requests piled up, the 10-connection pool / thread pool starved, and every endpoint failed with a plain 500 (no JSON body → the app shows "HTTP 500"); `/health` itself hung for minutes.
-- Verified it was not auth or config: `mobile/.env` points at Railway with the publishable key and mocks off; both phones were signed in as different users (profiles exist, not checked in, zero BLE tokens ever issued); bad or missing tokens correctly return 401 JSON; all 9 migrations are applied; DB connections were healthy. With throwaway accounts (created with the admin key and deleted afterwards), the full flow worked on the live server, just slowly.
-- Fixes: `ml/app/routers/ble.py` issues tokens and ingests sightings in constant round trips (3 statements, verified with statement logging). `ml/app/population.py` does one build per event at a time and batch-embeds all texts first (6× faster locally, same vectors); `tests/test_event_model_singleflight.py`. Mobile: 30 s API timeout with a readable error, no stacked matches polls, Event Mode reports why Bluetooth failed instead of "Starting Bluetooth..." forever.
-- Deploy: GitHub pushes don't deploy the live `ml` service (all 26 GitHub-triggered deploys belong to a misconfigured `hackgt13-project` service and failed). REQUESTS.md asks Adam to run `cd ml && npx @railway/cli up --detach --path-as-root .`.
-
-**How to run/test it:** Backend: 177 tests pass (`TEST_DATABASE_URL=... pytest -q tests`, minus the 2 libomp LightGBM tests). After the redeploy, a new account's `POST /ble/tokens` should take about 1 s, not 41 s.
-
-**Next step for whoever continues:** Adam redeploys `ml` → phones: sign in → Nearby → Event Mode ON on both → Tap phones. A mobile rebuild is optional (the fixes above are UX hardening); the server fix alone unblocks the existing Release builds.
-
-**Known issues / blockers:** No Railway access from Akshar's Mac. The first matches request after each redeploy still does one cold build (now ~6× faster), and the background clusters job starts it at boot.
-
-**Contract changes:** none
-
-## 2026-09-26 04:40 | adam | Adam
-**Task:** AD2 sign-in for every phone, not only a filled-in mobile/.env
-**Status:** done
-**What I did:**
-- The publishable Supabase URL, anon key, and Railway API address are now the defaults in `mobile/lib/env.ts` and `mobile/.env.example`. A blank `mobile/.env` still signs into the team project.
-- Sign-in accepts the email code in the app (`verifyEmailCode`) when the phone's mail app will not open the magic link.
-**How to run/test it:** Reload Expo Go on `exp://bej2jrm-adamissac-8081.exp.direct`. LinkedIn opens LinkedIn and returns through `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`. Email: send a link, then open it on that phone or type the code.
-**Next step for whoever continues:** If LinkedIn still rejects a teammate, add that LinkedIn account on the developer app (client id `78lllikuxa9uve`, app id `266531181`). The Supabase provider is already enabled.
-**Known issues / blockers:** none in the app. LinkedIn may still limit sign-in to people listed on that developer app.
+- Found live: /dashboard/1 hung 936 s and /events/1/matches timed out while /health stayed fast. Every event-model request waited on one per-event build lock, so any slow rebuild stalled everyone; UMAP (numba, not thread-safe) could run in several threads at once; PyTorch/numba used one thread per reported CPU.
+- Fix (ml/app/population.py, __init__.py, tasks.py, ranker_job.py, routers/dashboard.py): serve the cached model while another thread rebuilds (only the first build waits), HEAVY_LOCK so one UMAP/HDBSCAN/global-embed job runs at a time, native math threads capped at 2 (override with Railway vars / ML_THREADS), global vectors skip users deleted mid-run. +2 tests; 216/216 with Postgres.
+- Live after deploy: `ml/scripts/load_check.py` 6 min across the heavy-job cycle: matches median 2.5 s (max 6.7 s cold), graph 1.9 s, dashboard 1.5 s, zero errors. Smoke 36/36. Core loop e2e passes.
+- Removed 2 leftover "Sam Smoke" test accounts (a killed smoke run had skipped cleanup and they appeared as matches). Scripts now clean up on SIGTERM/SIGHUP; `ml/scripts/cleanup_test_accounts.py` finds strays.
+**How to run/test it:** `cd ml/scripts && npx @railway/cli run ../.venv/bin/python -u load_check.py 6`
+**Next step for whoever continues:** Keep one deployer, from up-to-date main. Adam: `gh auth refresh -h github.com -s workflow`, then commit .github/workflows/ci.yml.
+**Known issues / blockers:** Matches ~2.5 s per call is acceptable but could be cached per viewer if it matters for the demo.
 **Contract changes:** none
 
 ## 2026-09-26 16:00 | arjun | Claude Code (Claude Opus 5.5)
@@ -806,50 +307,18 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Rotate the Supabase secret key and the Anthropic key (both were pasted in chat).
 **Contract changes:** none
 
-## 2026-09-26 03:32 | adam | Adam
-**Task:** Document where every API key comes from for Alan / Arjun / Railway
+## 2026-09-26 15:40 | adam | Codex
+**Task:** AD9 / AD11 / AR5 / AK5 — user-requested Home, Nearby and graph polish (cross-owner presentation changes)
 **Status:** done
 **What I did:**
-- Added `docs/secrets-setup.md`: click-by-click for Supabase URL/anon/service/DATABASE_URL, Anthropic, GitHub OAuth, signing keys, Railway variables, and `mobile/.env`. No secret values in the file.
-- Linked it from `docs/deploy.md` and pointed Alan’s open ask at §4 / §8.
-**How to run/test it:** Open `docs/secrets-setup.md`. Teammates fill a local `.env` from it; never commit the values.
-**Next step for whoever continues:** Alan: do the open `(from adam)` ask (callback + AirDrop three values). Adam: when they arrive, set them on Railway `ml`.
-**Known issues / blockers:** none for the doc itself.
+- Integrated with the team's latest navigation and facet-based graph; preserved Feed as Home and meeting activity under Nearby. Replayed only this increment after the remote history rewrite.
+- Warm-white/charcoal theme, quieter avatars/cards, compact Home composer with draft preservation, and a neutral Open to Meet card instead of a large colored panel.
+- Full-screen Nearby map with band filters and a match selector. Preview shows at most three per band; every eligible match stays in the list and selecting one includes them on the map. Selected-only native pin labels and evenly spaced decorative positions reduce crowding. Fixed asynchronous location-watcher cleanup on expansion/close.
+- Slow 90-second graph rotation with upright names, pause/resume, selected-profile pause, reduced-motion support and focus/background cleanup. Added rotating-layout bounds and dense-map regression tests.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo && EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform web`. Passed: 24 unit checks, 15 demo-flow checks, touched-file ESLint, iOS/web exports. Browser at 390x844 verified Home, Nearby expand/close/filter/select, graph movement/pause and profile opening.
+**Next step for whoever continues:** Pull main, run `./scripts/start-app.sh`, then on a physical phone test Nearby → scan → Expand map → select/filter → Done, and Constellation → pause/resume → select a person. Native street maps/Bluetooth cannot be verified by the browser radar fallback.
+**Known issues / blockers:** No physical-phone verification claimed. Existing Node module-type and Expo color-environment warnings persist. Dependency installation reports 16 moderate advisories; dependency upgrades are outside this UI increment. Local mock web preview is on port 8086, not continuously monitored after handoff.
 **Contract changes:** none
-
-## 2026-09-26 03:26 | adam | Adam
-**Task:** Fix the Alan GitHub/Railway ask (Alan has no Railway access)
-**Status:** done
-**What I did:**
-- Rewrote Alan's open ask: he only adds the Railway callback on the GitHub OAuth app and privately sends `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `TOKEN_ENCRYPTION_KEY` to Adam. Adam sets them on Railway.
-- Added a matching open item under Adam's `REQUESTS.md` section for when those values arrive.
-**How to run/test it:** After Adam sets the vars, Profile → Manage sources → Connect GitHub on a phone against `https://ml-production-04c0.up.railway.app`.
-**Next step for whoever continues:** Alan: do the open `(from adam)` item (callback + private send). Adam: when the three values arrive, run `cd ml && npx @railway/cli variable set NAME --stdin` for each.
-**Known issues / blockers:** Do not put the client secret in git or chat.
-**Contract changes:** none
-
-## 2026-09-26 03:25 | adam | Adam
-**Task:** Ask Alan to finish GitHub connect on Railway
-**Status:** superseded (Alan has no Railway login; see 03:26 entry)
-**What I did:**
-- Added an open ask in Alan's `REQUESTS.md` section: add the Railway callback on the GitHub OAuth app, then set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (and confirm `ML_API_URL` + `TOKEN_ENCRYPTION_KEY`) on the Railway `ml` service. Secret stays out of git and chat.
-**How to run/test it:** After Alan marks it done, on a phone open Profile → Manage sources → Connect GitHub against `https://ml-production-04c0.up.railway.app`.
-**Next step for whoever continues:** See the 03:26 entry. Alan does not set Railway vars.
-**Known issues / blockers:** GitHub connect stays off on Railway until those vars are set. `GITHUB_CLIENT_SECRET` must not be committed.
-**Contract changes:** none
-
-## 2026-09-26 07:55 | alan | Claude Code (Opus 5)
-**Task:** AL1 finish — every server credential verified live on Alan's Mac; dashboard running against real data
-**Status:** done locally (`/health` = `{"ok":true,"db":true}`); GitHub connect on Railway still needs 4 env vars
-**What I did:**
-- Filled the root `.env` and verified each value rather than trusting it: `DATABASE_URL` (probed both `aws-0`/`aws-1-us-east-1` pooler hosts since both resolve — `aws-0` authenticates, PostgreSQL 17.6), `SUPABASE_SERVICE_KEY` (HTTP 200 on GoTrue admin + Storage REST), `ANTHROPIC_API_KEY` (real call; `claude-sonnet-5` and `claude-haiku-4-5-20251001` both served), GitHub OAuth (callback / `read:user` scope / state signing / Fernet round-trip).
-- `mobile/.env` was missing both Supabase values, so the phone could not sign in at all — filled and verified the anon key against `/auth/v1/settings`. That call also showed **only the `email` provider is enabled, no `linkedin_oidc`**, even though `mobile/app/sign-in.tsx` offers a LinkedIn button (noted for Adam in REQUESTS.md).
-- `dashboard/` had no `node_modules` and no `NEXT_PUBLIC_ML_API_URL`; installed deps and added a gitignored `.env.local`. It still would have rendered empty: the dev server runs on **3100** but `CORS_ORIGINS` only listed 3000/8081/19006, so the browser dropped every response (request returns 200, just no allow-origin header). Added 3100 to the default in `app/settings.py`. `/map` now shows 80 attendees, 6 communities, live gap analysis.
-- Toolchain on this Mac: `uv` + Python 3.12 (`ml/.venv`), `cloudflared`, Node 22, `gh` — all under `~/.local/bin`, no Homebrew, no sudo.
-**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (69 passed, 108 skipped — DB tests need a throwaway Postgres). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`; dashboard: `npm --prefix dashboard run dev -- --port 3100`.
-**Next step for whoever continues:** Set four variables on the Railway `ml` service so GitHub connect works there: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ML_API_URL=https://ml-production-04c0.up.railway.app`, and `TOKEN_ENCRYPTION_KEY`. Then add `https://ml-production-04c0.up.railway.app/connect/github/callback` to the OAuth app's redirect URIs.
-**Known issues / blockers:** **`TOKEN_ENCRYPTION_KEY` must be byte-identical on Railway and any laptop server** — both write `linked_accounts.access_token_enc` to the same Supabase database, so a mismatch means whichever server didn't encrypt a token cannot decrypt it. Generating a fresh one for Railway silently breaks GitHub ingestion for anyone who connected via the other server. It also must never be rotated once tokens exist. Separately: two servers (laptop + Railway) now write to the same production database — be deliberate about which one the phone points at. `TEST_DATABASE_URL` must never point at Supabase; the DB test suite wipes its target.
-**Contract changes:** none (`app/settings.py` default CORS list gained `http://localhost:3100`; no env var added or renamed)
 
 ## 2026-09-26 15:10 | arjun | Claude Code (Claude Opus 5.5)
 **Task:** AR3 follow-up: live server didn't see the 80 seeded attendees (edit in Alan's `ml/app/population.py`, flagged for Alan)
@@ -889,6 +358,20 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Live DB credentials not on Arjun's Mac. Old `ml/scripts/seed_synthetic.py` (PostgREST version) is superseded by this one.
 **Contract changes:** none
 
+## 2026-09-26 13:45 | alan | Claude Code (Opus 5)
+**Task:** AL3 follow-up — Haiku rewrites the why-you-matched sentences so a screenful of matches does not read identically
+**Status:** done — 121 passed, 118 skipped (6 new). On by default; `EXPLAIN_VARY=0` turns it off.
+**What I did:**
+- The template summaries were correct but repetitive: across 8 real matches only **2 of 8** had a distinct opening, which looks robotic when a judge scrolls. `generation.vary_why()` rewrites them with Haiku (`LLM_FAST`), reusing the existing `messages.parse` + pydantic + one-retry pattern already in that module. Measured on the synthetic population: **2/8 distinct openings -> 6/8**, all 8 grounded.
+- **The rewrite can only change words, never numbers.** It receives the shared topics, the factor labels and the template, and only `explanation.summary` is replaced — `factors`/`contribution`/`share` are untouched, so the bars a judge sees are still the ranker's. A test asserts that.
+- **Grounding is enforced, not hoped for.** `_grounded()` rejects any rewrite naming a canonical interest the pair does not share (checked against the whole population vocabulary, which catches the failure that matters: attributing someone else's interest). Rejected rows silently keep their template. A test feeds a hallucinated row through and asserts it is dropped.
+- **Never a hard dependency.** No API key, no network, API error, refusal, `max_tokens`, unparseable output — every path returns `{}` and the caller keeps the deterministic template. Tested.
+- Cost and latency bounded: **one batched call per graph request**, capped at the `MAX_VARIED = 10` strongest edges (a graph holds 150 people; nobody reads 150 summaries), plus an in-process cache keyed by (person, template). Measured: first build 3547 ms, second build **0 ms**.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_explain.py` (18 passed, all offline — no test makes a real API call). To see real output, build a graph with `EXPLAIN_VARY=1` and `ANTHROPIC_API_KEY` set.
+**Next step for whoever continues:** If the graph feels slow on first load during the demo, drop `MAX_VARIED` or set `EXPLAIN_VARY=0` — templates alone are still correct and instant.
+**Known issues / blockers:** First uncached graph build pays ~3.5 s for the Haiku call; repeat loads are free. `_varied_cache` is per-process and unbounded — fine for a hackathon, but it would need a TTL or size cap to run for days. The grounding check cannot catch every possible fabrication (it catches named interests, not invented employers), which is exactly why the template remains the fallback rather than the LLM becoming the source of truth.
+**Contract changes:** `docs/api.md` §26 — `explanation` may now carry `"varied": true` when a summary was rewritten; behaviour and the `EXPLAIN_VARY` switch documented. `.env.example` gains `EXPLAIN_VARY` (optional, defaults on). Additive; nothing renamed.
+
 ## 2026-09-26 13:30 | akshar | Akshar
 
 **Task:** Tap to verify ("hold your phones together"), extends AK3 verification
@@ -907,6 +390,21 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Pending claims are held in process memory (fine with one uvicorn process; with several workers use a table). iPhone ↔ iPhone needs both apps open (iOS foreground-only scanning), which the tap flow already assumes.
 
 **Contract changes:** `docs/api.md` section 38 (new endpoint), mock `tap_claim.json`. No schema change.
+
+## 2026-09-26 13:10 | alan | Claude Code (Opus 5)
+**Task:** AL3 "why you matched" (MASTER_SPEC 6.9) — decompose the match score into the features that produced it
+**Status:** done — 110 passed, 118 skipped (12 new). Wired into `rank_candidates` and the Connection Graph.
+**What I did:**
+- **No refactor was needed.** `scoring.pair_features()` already returns all 9 features and `v1_score` is a pure linear sum, so contributions are exact rather than reverse-engineered. `Builder.person()` in `app/graph.py` already received `features`. Checked this before writing anything, since the alternative would have been a much bigger change.
+- `scoring.score_contributions(f, model)` splits the score the pair actually got. **v1**: `weight x value`, exact — a test asserts the parts sum back to `v1_score` to 1e-12. **lr**: LogisticRegression on standardised features is linear in the logit, so `coef * (value - mean) / scale` is honest. **Tree rankers (LGBMRanker) are not linearly decomposable** — rather than invent per-feature numbers a tree never produced, it falls back to v1 weights and reports `basis: "v1_proxy"` so the UI can label those bars approximate.
+- `scoring.explain_match(a, b, index, features=..., model=...)` returns `summary`, `factors` (top 3 by contribution, each with `label`/`value`/`contribution`/`share`), `all_factors`, `shared_topics` (with both evidence lines) and `basis`. Callers pass the features they already scored with, so the explanation always describes the ranking the user saw.
+- **The bars rank by contribution; the sentence deliberately does not.** `bridge` (0.05) and `role_pair` (0.0) carry tiny weights so they never top the bars, yet they are the most interesting thing about a pair. Without this a cross-community match read identically to an obvious one — I saw that in the first output and fixed it. The verb also comes from the topic's facet, so a personal interest reads "you are both into formula 1", not "work on".
+- Graph: `match`/`connection` edges carry a trimmed `explanation` (summary, top factors, topic names — 536 bytes/edge, ~80KB at the 150-node cap). Topic edges stay lean; evidence lines are not duplicated since they are already on quick-profile and `expand()`.
+- 12 tests in `ml/tests/test_explain.py`, pure in-memory, no DB. They cover the things that would silently rot: contributions summing to the score, every feature having a label, zeroing a weight removing it from the breakdown, never naming an unshared interest, the bridge sentence appearing only for cross-community pairs, and `lr` vs `v1_proxy` basis.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_explain.py` (12 passed).
+**Next step for whoever continues:** Frontend can render either half — `explanation.summary` as a sentence, or `explanation.factors` as a bar per factor using `share`. If a tree ranker is ever served (`MATCH_MODEL=lgbm`), check `basis == "v1_proxy"` and caption the bars as approximate.
+**Known issues / blockers:** The summary is template-built, not an LLM call — deliberate, so it is deterministic, free, offline, and cannot invent facts. MASTER_SPEC 6.9's LLM icebreaker path is separate and untouched. `role_pair` has weight 0.0 in `V1_WEIGHTS`, so a student/recruiter pair scores nothing extra for it; the sentence still calls it out, which is the right behaviour but worth knowing if anyone tunes the weights.
+**Contract changes:** `docs/api.md` §26 — `match` and `connection` edges in the Connection Graph gain an `explanation` object (`summary`, `basis`, `factors[]`, `shared_topics[]`); `docs/mocks/graph.json` updated to match. Additive, nothing renamed, existing fields untouched. Affects Arjun (graph rendering) and Adam (mobile graph WebView).
 
 ## 2026-09-26 13:00 | arjun | Arjun
 **Task:** Graph = "atom" data viz (Arjun's direction)
@@ -940,6 +438,18 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Contract changes:** none
 
+## 2026-09-26 12:20 | alan | Claude Code (Opus 5)
+**Task:** Chase the Railway-vs-laptop clustering split; make both silent ML fallbacks visible
+**Status:** done — 96 passed, 118 skipped. Clustering split diagnosed as numerical instability, not a broken deploy.
+**What I did:**
+- Tested two hypotheses for Railway `[65,14,1]` vs laptop `[20,20,12,15,8,5]` on the same 80 people. **Both were wrong, and I checked before reporting them.** (a) umap missing on Railway: reproduced on 78 planted clusters — the `Z = X` fallback in `ml/ml/viz.py` labels **every point noise (0 clusters)**, it does not make one blob. (b) hashed fallback embedder: it yields *more* clusters (5, largest 20%) than the real model (3, largest 48%), not fewer.
+- **Actual cause: the pipeline is numerically unstable across environments.** Direct evidence from earlier tonight — switching this laptop's embedder MPS -> CPU changed local clustering from `[18,15,13,15,9,6]` to `[20,20,12,15,8,5]` on identical data. Tiny float differences feed UMAP, which is chaotic, and HDBSCAN amplifies the result. Each server is internally deterministic (3 identical requests each) but they disagree. Neither is "broken"; the community structure is simply not reproducible across machines.
+- **The bug worth fixing was the silence.** `ml/ml/embed.py` and `ml/ml/viz.py` both degrade without anyone noticing: a server with a failed `sentence-transformers` or `umap` import still returns 200 and still serves a dashboard, just with different vectors or an empty map. Both now log at ERROR, and `/health` reports `embedder` (`model`/`device`/`fallback`) and `umap`. Comparing two deployments took an hour; it is now one curl.
+**How to run/test it:** `curl -s localhost:8000/health` -> `{"ok":true,"db":true,"embedder":{"model":"BAAI/bge-small-en-v1.5","device":"cpu","fallback":false},"umap":true}`. `cd ml && .venv/bin/python -m pytest -q tests`.
+**Next step for whoever continues:** After the next Railway deploy, `curl -s https://ml-production-04c0.up.railway.app/health` and compare the `embedder`/`umap` block with a laptop. If both read `fallback:false` and `umap:true`, the clustering difference is confirmed as environment noise and can be left alone.
+**Known issues / blockers:** Community structure is not reproducible across machines, so demo the organizer map from whichever server you rehearsed on — the cluster count and labels will differ elsewhere. The deeper fix (pin the numerics, or cache the layout per event instead of recomputing) is out of scope tonight.
+**Contract changes:** `/health` response gains `embedder` and `umap` keys. Additive; existing `ok`/`db` unchanged, so nothing that reads it today breaks. docs/api.md does not document `/health`.
+
 ## 2026-09-26 12:10 | arjun | Arjun
 **Task:** Nearby map + Graph clarity (Arjun's request; Nearby tab is Akshar's, BLE logic untouched)
 **Status:** done (graph verified in Expo web; iOS bundle builds; map needs a phone to see)
@@ -951,6 +461,19 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Akshar: check the Nearby map with real BLE bands on a dev build. Replace mock data with the live ML server when it's up.
 **Known issues / blockers:** none new.
 **Contract changes:** none (mock additions only)
+
+## 2026-09-26 11:45 | alan | Claude Code (Opus 5)
+**Task:** Google and X become link-only (Adam's `linkIdentity` path), so they can never create a duplicate account
+**Status:** done (`tsc --noEmit` clean; only pre-existing eslint error in `AuthProvider` remains). Providers still need enabling in Supabase.
+**What I did:**
+- Alan's call after weighing the trade-off: no duplicate accounts. Adam had already built the right mechanism — `connectLoginProvider()` + `components/LoginConnections.tsx` use `supabase.auth.linkIdentity()` to attach a provider to the **current** user. It was already mounted on the accounts screen; it just wasn't the only path in.
+- Removed the Google and X buttons from `mobile/app/sign-in.tsx`, and deleted `signInWithGoogle()` / `signInWithX()` from `mobile/lib/auth.tsx`. They were unused after the button removal, and leaving them exported is a trap: calling either reintroduces exactly the duplicate-account bug this change exists to prevent. Left a comment at the deletion site saying so. Sign-in is now LinkedIn, GitHub, or email; Google and X attach afterwards under Profile -> Sign-in accounts.
+- **Fixed the same X slug bug in `LoginConnections`** that I had just fixed on the sign-in screen: it gated on `enabled['x']`, which is permanently `undefined` here, so the button read "X not available yet" forever. It now resolves via `xProviderSlug()` (prefers `x`, falls back to legacy `twitter`) and builds its provider list from what the server actually reports, with an explicit empty state when nothing is on.
+- Added `LinkableProvider = 'google' | XSlug` so the link path and the component agree on one type.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. On a phone: sign in with LinkedIn or GitHub, then Profile -> Sign-in accounts -> Connect Google; signing out and back in with Google should land on the *same* profile, not a new one.
+**Next step for whoever continues:** Enable the providers, neither is on yet. **Google:** OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth. **X:** our instance only exposes legacy `twitter` (OAuth 1.0a), so the X developer app must have OAuth 1.0a enabled, same callback. Both surface automatically afterwards.
+**Known issues / blockers:** `mobile/` is Adam's folder (`app/sign-in.tsx`, `lib/auth.tsx`, `components/LoginConnections.tsx`) — Adam, I deleted two of your exported functions; say the word and I'll restore them behind a comment instead. **The cost of this design:** Google and X cannot create an account, only add a login to an existing one. Someone whose only identity is Google has to start with email magic link, then link Google. That is the price of no duplicates and it is the right trade here, but it is a real UX constraint worth saying out loud in the demo if a judge asks.
+**Contract changes:** none
 
 ## 2026-09-26 11:30 | arjun | Arjun
 **Task:** AR4/AR5/AR7 moved native into the app (Arjun's call: no WebView), clarity pass
@@ -984,6 +507,34 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 
 **Contract changes:** `docs/api.md` section 37 (new endpoints), mocks `location_share.json`, `location_meetups.json`. No schema change.
 
+## 2026-09-26 11:20 | alan | Claude Code (Opus 5)
+**Task:** Google + X sign-in — Adam had already written them; fixed a slug that made the X button unreachable
+**Status:** done in code (`tsc --noEmit` clean). **Neither provider is enabled in Supabase yet**, so neither button renders.
+**What I did:**
+- Asked to add Google and Twitter sign-in, pulled first, and found Adam had already landed `signInWithGoogle()`, `signInWithX()`, `connectLoginProvider()` and the gated buttons. Did not duplicate any of it.
+- **Found a bug.** `signInWithX()` passed `'x'`, and the button was gated on `providers.x`. Current Supabase docs do say `'x'` is right for X OAuth 2.0 — but this project's `/auth/v1/settings` has **no `x` key at all**: it lists `twitter` (legacy OAuth 1.0a, disabled) alongside `google`, `github`, `linkedin_oidc`. Our GoTrue predates the `x` provider, so `providers.x` is permanently `undefined` and the X button could never render. Fails safe, but it was dead code.
+- Added `xProviderSlug(providers)` in `mobile/lib/auth.tsx`: prefers `'x'`, falls back to legacy `'twitter'`, returns `null` when neither is on. `signInWithX(slug)` takes it; `mobile/app/sign-in.tsx` gates on the resolved slug. Works whether or not the project is later upgraded — no follow-up edit needed.
+- Confirmed the one eslint error in `lib/auth.tsx` (`set-state-in-effect` in `AuthProvider`) is pre-existing, by stashing and re-running: same error at line 217 before my change, 225 after.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. Check what the server actually supports: `curl -s -H "apikey: $EXPO_PUBLIC_SUPABASE_ANON_KEY" https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/settings | python3 -c "import json,sys;print((json.load(sys.stdin).get('external') or {}))"`.
+**Next step for whoever continues:** Enable the providers — neither is on. **Google:** create an OAuth client in Google Cloud Console, authorised redirect `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`, then enable Google in Supabase Auth with that client id/secret. **X:** our instance only offers the legacy `twitter` provider, which needs an X developer app with OAuth 1.0a enabled and the same callback. Both then appear automatically — no code change, `enabledProviders()` picks them up.
+**Known issues / blockers:** `mobile/` is Adam's folder (`lib/auth.tsx`, `app/sign-in.tsx`). Two product notes: this is a further step away from MASTER_SPEC 65/174, which name LinkedIn as *the* sign-in identity; and the more login providers there are, the more likely one person ends up with duplicate accounts when a provider does not return a verified email that matches an existing one. Adam's `connectLoginProvider()` (links an identity to the current user) is the mitigation — worth using rather than adding more standalone sign-in paths.
+**Contract changes:** none
+
+## 2026-09-26 10:50 | alan | Claude Code (Opus 5)
+**Task:** Signing in with GitHub should not make the user authorize GitHub a second time
+**Status:** done (92 passed, 117 skipped; mobile `tsc --noEmit` + `eslint` clean). Still needs the Supabase GitHub provider enabled before it can run.
+**What I did:**
+- The gap: "Continue with GitHub" created a Supabase identity but left `linked_accounts` empty, so Manage sources still showed GitHub as unconnected and the user authorized GitHub twice — which reads as broken.
+- Verified against Supabase's reference docs first: `session.provider_token` **is** returned after `signInWithOAuth`, is **not** persisted across refreshes, and extra scopes go through `options.scopes`. So the token has to be captured at sign-in or it is gone.
+- Server (`ml/app/routers/github.py`): new `POST /connect/github/session` (JWT). Takes `{provider_token, scopes?}`, **validates it against GitHub before trusting it** (`github_ingest.get_user`), stores it Fernet-encrypted via a `_store_token()` helper now shared with the OAuth callback, and runs the same background ingestion. The token never goes back to the client.
+- Client (`mobile/lib/auth.tsx`, `mobile/lib/api.ts`): `completeAuthFromUrl` now returns the session; `signInWithGitHub()` requests `read:user`, grabs `provider_token`, and posts it. Deliberately best-effort — on failure it warns and the normal Connect GitHub button still works, so sign-in is never blocked by it.
+- 4 tests in `ml/tests/test_github_connect.py`: 401 unauthenticated, 200 stores-encrypted-and-ingests (asserts the raw token appears nowhere in the row), 400 when GitHub rejects the token (asserts nothing is written), 422 on an empty token.
+- `contract-keeper` confirmed docs, mock, client types, tests and route all agree; no schema change needed (`linked_accounts` already has every column) and no new env var.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_github_connect.py` (10 passed). Mobile: `npx tsc --noEmit && npx eslint .`.
+**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on the `Ov23liFFJ8BwrDTDqrUW` OAuth app. Then sign in with GitHub on a phone and confirm Manage sources already shows GitHub connected, with no second authorization.
+**Known issues / blockers:** `mobile/` is Adam's folder — this touches `lib/auth.tsx`, `lib/api.ts`, `app/sign-in.tsx`. Also a **spec deviation worth a decision**: MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as *the* sign-in identity; GitHub sign-in is not in the spec. Alan asked for it knowing that. Supabase's GitHub provider may issue a token with broader scopes than `read:user` depending on how the provider is configured — the server stores whatever scopes are reported, so keep the provider's scope list tight.
+**Contract changes:** `docs/api.md` section 33 gains `POST /connect/github/session` (request `{provider_token, scopes?}`, response `{connected, login}`, error `400 github rejected that token`); new `docs/mocks/connect_github_session.json`. Additive only — no schema change, no env var, nothing renamed. Affects Adam (mobile sign-in) and Arjun (AR1 GitHub ingestion now has a second entry point).
+
 ## 2026-09-26 10:30 | akshar | Akshar
 
 **Task:** AK2 / AK3 / AK4 / AK6 live on Alan's service + team merge
@@ -1008,6 +559,129 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** No hardware test yet. `sightings` drops `event_id`/`device_model`/`foreground` (no columns; asked Alan in REQUESTS). No `stationary` signal. The QR checklist lives inside `verify.tsx` until Adam's AD8 screen exists. The invite https redirect page on the dashboard doesn't exist yet (links are `formalconnect://invite/...`).
 
 **Contract changes:** api.md invites renumbered to 36 (content unchanged). New client calls only; no schema change.
+
+## 2026-09-26 10:25 | alan | Claude Code (Opus 5)
+**Task:** Add "Continue with GitHub" to the sign-in screen (Alan's request) — **edits in Adam's folder**
+**Status:** code done, typecheck + lint clean; **dead until the Supabase GitHub provider is enabled**
+**What I did:**
+- `mobile/lib/auth.tsx`: pulled the OAuth handshake into `signInWithProvider(provider)` (LinkedIn and GitHub were otherwise identical) and added `signInWithGitHub()`.
+- `mobile/app/sign-in.tsx`: "Continue with GitHub" as an outline button under LinkedIn; extracted the `SignInKind` union so `busy` covers the new state.
+- `mobile/lib/accounts.ts`: `signInLabel('github') -> 'GitHub'` so Manage sources doesn't render a raw provider string.
+- Ran `npm install` first — `expo-clipboard` had landed in `package.json` after my earlier install and was failing typecheck for an unrelated reason.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .` (both clean). On a phone the button 400s until the provider below is enabled.
+**Next step for whoever continues:** Enable **GitHub** under Supabase Auth -> Sign In / Providers, and add `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback` as a redirect URI on a GitHub OAuth app (the existing `Ov23liFFJ8BwrDTDqrUW` app can carry it alongside the Railway callback). Until then the button fails.
+**Known issues / blockers:** Two things Adam should weigh, since this is his area and his call. (1) **Spec deviation** — MASTER_SPEC 65 and 174 define GitHub as a data connection and LinkedIn as the sign-in identity; GitHub sign-in is not in the spec. (2) **Double authorization** — signing in with GitHub creates a Supabase identity but does **not** write `linked_accounts`, which is what `/connect/github` populates. A user who signs in with GitHub will still see "Connect GitHub" as unconnected and authorize GitHub a second time. Worth either wiring sign-in to seed `linked_accounts`, or relabelling the connect step so the repeat isn't confusing. Adam was pushing to `mobile/` while I wrote this — conflict risk is real; revert freely if it cuts across his onboarding work.
+**Contract changes:** none
+
+## 2026-09-26 10:05 | alan | Claude Code (Opus 5)
+**Task:** Verify Adam's Railway redeploy; record two findings that were only living in a chat window
+**Status:** redeploy confirmed good; one open question on Railway, one gap in push
+**What I did:**
+- **Railway redeploy verified.** `/health` `{"ok":true,"db":true}`; cold `/dashboard/1` **6.0 s** then 0.4 s warm (Akshar measured 96 s before `2ce6860`), 80 attendees present. Route parity with local on `/me/accounts`, `/connect/github/start`, `/assistant/chat`, `/suggestions`, `/conversations/pending` (401/405 on both), so the deployed build is current. Akshar's demo-blocker is cleared.
+- **Open question — Railway and a laptop cluster the same 80 people differently.** local `[20,20,12,15,8,5]` (6 clusters) vs Railway `[65,14,1]` (3, one 65-person blob). Both deterministic over 3 requests each, so not randomness. Ruled out: clustering params are not env-tunable (only `EMBED_MODEL`/`EMBED_DEVICE`/LLM ids are), `ml/Dockerfile` bakes bge-small in with `HF_HUB_OFFLINE=1`, and route parity rules out a stale build. **Two diagnostics for whoever has Railway access:** grep the deploy logs for `[embed] sentence-transformers unavailable` (that fallback is the hashed n-gram embedder — `ml/ml/embed.py` calls it "fine for testing plumbing, NOT for demo", and it would explain the blob), and confirm `EMBED_MODEL` is not overridden in Railway variables. If both are clean, the likely remainder is float differences between torch builds amplified by UMAP/HDBSCAN. Matters because the organizer map is a headline demo visual.
+- **Push notifications are half-built and will not work in the demo.** Server side is done (`ml/app/push.py` worker every 5 s, `push_tokens` migrated), but the client never registers: `expo-notifications` is absent from `mobile/package.json` and nothing under `mobile/app|lib|features` calls `getExpoPushTokenAsync`, so the worker has no tokens to send to. Finishing it is client work plus a dev-client rebuild, and Android standalone builds would additionally need Firebase/FCM credentials in EAS (`eas.json` builds Android APKs). Firebase is not used anywhere else and is not needed for GitHub connect.
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`. Compare clustering across hosts: `curl -s <host>/dashboard/1 | python3 -c "import json,sys;d=json.load(sys.stdin);print([c['size'] for c in d['clusters']])"`.
+**Next step for whoever continues:** Complete one GitHub connect on a phone against Railway (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Still the only unproven path; failures come back on the deep link as `reason=oauth` (state/exchange) or `reason=denied`.
+**Known issues / blockers:** The clustering divergence above. `dashboard/.env.local` points at `localhost:8000`, which is what produces the nicer 6-cluster map — decide deliberately whether to demo the dashboard off the laptop (better visual, laptop dependency) or off Railway. GitHub client secret and the Supabase DB password were pasted into a chat transcript; rotate after the hackathon, coordinating the DB one with Adam since Railway's `DATABASE_URL` embeds it.
+**Contract changes:** none
+
+## 2026-09-26 10:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Tap works port-to-port; checklist shows common interests; QR error follow-up
+
+**Status:** in progress (code pushed; needs the Railway redeploy + a Release rebuild; waiting on the exact QR error text)
+
+**What I did:**
+- Tap: the app threshold is now -58 dBm (back-to-back reads about -30 to -45, port-to-port weaker). The server check is a looser floor of -65, set by the `TAP_RSSI_DBM` env var. The Tap screen shows the live signal ("Signal -52 dBm (touching counts at -58 or stronger)") so the team can calibrate by holding positions. Still mutual claims within 15 s, 2 s hold.
+- Checklist: verified live with two throwaway accounts: manual interests → AI extraction → QR verify → checklist `['reinforcement learning', 'rock climbing']`. The phone accounts (akshar.exe, arjunkattragadda) have 0 interests, so their checklist has nothing shared. Fix = data: Profile → Edit profile ("Your sources") → type interests or upload a resume → Save, on both phones.
+
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs` (5 pass); `cd ml && pytest tests/test_tap.py` (6 pass).
+
+**Next step for whoever continues:** Adam redeploys `ml` (REQUESTS). Rebuild both iPhones (`npx expo run:ios --device --configuration Release`). Both add interests with some overlap. Tap port-to-port and note the dBm shown; if port-to-port reads weaker than -58, lower `TAP_RSSI_DBM` in `mobile/features/ble/tap.ts`.
+
+**Known issues / blockers:** QR "error pulling up the code": need the exact text. It may have been the null-name crash (fixed by data + code).
+
+**Contract changes:** none
+
+## 2026-09-26 09:30 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Fix crash after tap verify on the iPhones ("Cannot read property 'split' of null")
+
+**Status:** done (data fix live now; code fix ships with the next Release rebuild)
+
+**What I did:**
+- Cause: both phone accounts came from email sign-in, so `profiles.name` was null. The verify screen's Avatar (and ~15 other places) called `name.split(...)`. The tap verification itself had succeeded on the server.
+- Code: `firstName()` helper + null-safe `Avatar` in `mobile/components/ui.tsx`; patched every `name.split` in app/ and features/ (connections, match, Home, meetup, MeetupBanner, graph model + Atom, NearbyMap, ChecklistForm, verify).
+- Data: set `profiles.name = split_part(email,'@',1)` for the only 2 of 84 profiles with no name (Akshar approved), then refreshed the live event cache. The live matches list now has 0 nameless people.
+
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. Phones: force-quit, reopen → Tap phones → the checklist shows the other person's name.
+
+**Next step for whoever continues:** Rebuild the Release app on both iPhones (also needed for `expo-clipboard`, a new native module on main): `cd mobile && npm install && npx expo run:ios --device --configuration Release`.
+
+**Known issues / blockers:** New email sign-ups still get no name until onboarding asks for one (REQUESTS → Adam).
+
+**Contract changes:** none
+
+## 2026-09-26 09:20 | alan | Claude Code (Opus 5)
+**Task:** AL1 stability — server aborted mid-session on an Apple GPU assertion; LinkedIn + GitHub config verified
+**Status:** done (local, Railway and tunnel all `{"ok":true,"db":true}`; 71 passed, 108 skipped)
+**What I did:**
+- The local uvicorn died with SIGABRT: `failed assertion _status < MTLCommandBufferStatusCommitted at -[IOGPUMetalCommandBuffer setCurrentCommandEncoder:]`. `SentenceTransformer(EMBED_MODEL)` took no `device`, so on an M-series Mac it auto-selected the **MPS** backend, and bge-small on MPS aborts the whole process once the background workers call it concurrently. Added `EMBED_DEVICE` (default `cpu`) in `ml/ml/config.py` and passed it in `ml/ml/embed.py`. Verified 384-dim unit-normalized output, then 30 s of polling with workers running and zero Metal errors. macOS-only — Railway has no GPU — and pinning CPU also keeps laptop vectors identical to Railway's, which writes the same pgvector column.
+- **LinkedIn OIDC verified live**: `GET /auth/v1/settings` now returns `external: {email, linkedin_oidc}` (OIDC, not the legacy `linkedin`, matching `signInWithOAuth({provider:'linkedin_oidc'})`). Real people signed in.
+- **Proved the `TOKEN_ENCRYPTION_KEY` mismatch and fixed it.** Railway's key differed from this laptop's. Without knowing Railway's value: sign an OAuth `state` with the laptop key, send it to Railway's callback with a junk `code`, and time the redirect — a rejected signature returns immediately, an accepted one first round-trips to GitHub. Before: +0 ms (differ). After Alan copied Railway's value into `.env`: +207 ms (match).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests`. Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`.
+**Next step for whoever continues:** Complete one GitHub connect on a phone (sign in with LinkedIn -> Profile -> Manage sources -> Connect GitHub). Every piece is verified but the end-to-end flow has never run to completion; on failure the deep link carries `reason=oauth` (state/exchange) or `reason=denied` (user cancelled).
+**Known issues / blockers:** `mobile/.env` still points at Alan's trycloudflare tunnel — switch `EXPO_PUBLIC_API_BASE_URL` to `https://ml-production-04c0.up.railway.app` before demo day so the demo doesn't depend on a laptop staying awake. The dashboard's "Should be talking, aren't" panel reads `0 made` on every row until someone completes a verified conversation. GitHub client secret and the Supabase DB password were both pasted into a chat transcript — rotate after the hackathon (the DB one needs coordinating with Adam, since Railway's `DATABASE_URL` embeds it).
+**Contract changes:** `.env.example` gains `EMBED_DEVICE` (optional, defaults to `cpu`). Additive; nothing renamed or removed.
+
+## 2026-09-26 09:10 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Verify the HTTP 500 fix on the live server after Adam's Railway redeploy
+
+**Status:** done (live API healthy; phones should now work; one intermittent stall left for Adam to check in the Railway logs)
+
+**What I did:**
+- Live replay with two throwaway accounts (created and deleted with the admin key, never printed): check-in 0.9 s, Open to Meet 0.8 s, suggestions 0.4 s, matches 3.7 s (was 96 s), `/ble/tokens` 1.0 s (was 41 s), tap claim → verified ~2 s, QR verify ~1.8 s. 5 runs over 6 minutes.
+- Intermittent: 3 single requests hung ~60 s in the first ~12 minutes after the deploy. A 9-minute probe afterwards showed no hangs, only `/health` at 3-7 s a few times while a no-DB 404 stayed instant (so the process isn't frozen; it's waiting on the DB pool or threads). I tested and discarded a "move UMAP to a subprocess" change: locally UMAP doesn't block other threads, so it wasn't the cause.
+
+**How to run/test it:** `curl -s https://ml-production-04c0.up.railway.app/health`; phone sequence in the entry below.
+
+**Next step for whoever continues:** Phones: force-quit and reopen the app → Nearby → Event Mode ON on both → Tap phones. Rebuild the Release app when convenient to pick up the mobile hardening (30 s timeout, no stacked polls, Event Mode error text), which keeps a brief server stall from snowballing.
+
+**Known issues / blockers:** The ~60 s stall cause is unconfirmed without the Railway logs (asked Adam in REQUESTS). Don't redeploy right before or during the demo.
+
+## 2026-09-26 09:00 | akshar | Claude Code (Opus 5.5)
+
+**Task:** Diagnose HTTP 500s on the two-iPhone Release build (Nearby, Home check-in / Open to Meet, Event Mode, Tap, QR)
+
+**Status:** fixed in code; NEEDS A RAILWAY REDEPLOY of the `ml` service to take effect
+
+**What I did:**
+- Root cause: two slow endpoints on the live server. `POST /ble/tokens` took **41 s** (my per-row queries: ~290 round trips at ~150 ms Railway→Supabase) and a cold `GET /events/1/matches` took **96 s** (~500 one-sentence embedding calls for ~80 attendees after every restart, with concurrent requests each starting their own build). The phones poll matches every 15 s, so requests piled up, the 10-connection pool / thread pool starved, and every endpoint failed with a plain 500 (no JSON body → the app shows "HTTP 500"); `/health` itself hung for minutes.
+- Verified it was not auth or config: `mobile/.env` points at Railway with the publishable key and mocks off; both phones were signed in as different users (profiles exist, not checked in, zero BLE tokens ever issued); bad or missing tokens correctly return 401 JSON; all 9 migrations are applied; DB connections were healthy. With throwaway accounts (created with the admin key and deleted afterwards), the full flow worked on the live server, just slowly.
+- Fixes: `ml/app/routers/ble.py` issues tokens and ingests sightings in constant round trips (3 statements, verified with statement logging). `ml/app/population.py` does one build per event at a time and batch-embeds all texts first (6× faster locally, same vectors); `tests/test_event_model_singleflight.py`. Mobile: 30 s API timeout with a readable error, no stacked matches polls, Event Mode reports why Bluetooth failed instead of "Starting Bluetooth..." forever.
+- Deploy: GitHub pushes don't deploy the live `ml` service (all 26 GitHub-triggered deploys belong to a misconfigured `hackgt13-project` service and failed). REQUESTS.md asks Adam to run `cd ml && npx @railway/cli up --detach --path-as-root .`.
+
+**How to run/test it:** Backend: 177 tests pass (`TEST_DATABASE_URL=... pytest -q tests`, minus the 2 libomp LightGBM tests). After the redeploy, a new account's `POST /ble/tokens` should take about 1 s, not 41 s.
+
+**Next step for whoever continues:** Adam redeploys `ml` → phones: sign in → Nearby → Event Mode ON on both → Tap phones. A mobile rebuild is optional (the fixes above are UX hardening); the server fix alone unblocks the existing Release builds.
+
+**Known issues / blockers:** No Railway access from Akshar's Mac. The first matches request after each redeploy still does one cold build (now ~6× faster), and the background clusters job starts it at boot.
+
+**Contract changes:** none
+
+## 2026-09-26 07:55 | alan | Claude Code (Opus 5)
+**Task:** AL1 finish — every server credential verified live on Alan's Mac; dashboard running against real data
+**Status:** done locally (`/health` = `{"ok":true,"db":true}`); GitHub connect on Railway still needs 4 env vars
+**What I did:**
+- Filled the root `.env` and verified each value rather than trusting it: `DATABASE_URL` (probed both `aws-0`/`aws-1-us-east-1` pooler hosts since both resolve — `aws-0` authenticates, PostgreSQL 17.6), `SUPABASE_SERVICE_KEY` (HTTP 200 on GoTrue admin + Storage REST), `ANTHROPIC_API_KEY` (real call; `claude-sonnet-5` and `claude-haiku-4-5-20251001` both served), GitHub OAuth (callback / `read:user` scope / state signing / Fernet round-trip).
+- `mobile/.env` was missing both Supabase values, so the phone could not sign in at all — filled and verified the anon key against `/auth/v1/settings`. That call also showed **only the `email` provider is enabled, no `linkedin_oidc`**, even though `mobile/app/sign-in.tsx` offers a LinkedIn button (noted for Adam in REQUESTS.md).
+- `dashboard/` had no `node_modules` and no `NEXT_PUBLIC_ML_API_URL`; installed deps and added a gitignored `.env.local`. It still would have rendered empty: the dev server runs on **3100** but `CORS_ORIGINS` only listed 3000/8081/19006, so the browser dropped every response (request returns 200, just no allow-origin header). Added 3100 to the default in `app/settings.py`. `/map` now shows 80 attendees, 6 communities, live gap analysis.
+- Toolchain on this Mac: `uv` + Python 3.12 (`ml/.venv`), `cloudflared`, Node 22, `gh` — all under `~/.local/bin`, no Homebrew, no sudo.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (69 passed, 108 skipped — DB tests need a throwaway Postgres). Service: `ml/.venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8000`; dashboard: `npm --prefix dashboard run dev -- --port 3100`.
+**Next step for whoever continues:** Set four variables on the Railway `ml` service so GitHub connect works there: `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `ML_API_URL=https://ml-production-04c0.up.railway.app`, and `TOKEN_ENCRYPTION_KEY`. Then add `https://ml-production-04c0.up.railway.app/connect/github/callback` to the OAuth app's redirect URIs.
+**Known issues / blockers:** **`TOKEN_ENCRYPTION_KEY` must be byte-identical on Railway and any laptop server** — both write `linked_accounts.access_token_enc` to the same Supabase database, so a mismatch means whichever server didn't encrypt a token cannot decrypt it. Generating a fresh one for Railway silently breaks GitHub ingestion for anyone who connected via the other server. It also must never be rotated once tokens exist. Separately: two servers (laptop + Railway) now write to the same production database — be deliberate about which one the phone points at. `TEST_DATABASE_URL` must never point at Supabase; the DB test suite wipes its target.
+**Contract changes:** none (`app/settings.py` default CORS list gained `http://localhost:3100`; no env var added or renamed)
 
 ## 2026-09-26 07:00 | akshar | Akshar
 
@@ -1041,6 +715,35 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Put `DATABASE_URL` (Supabase session pooler, 5432), `SUPABASE_SERVICE_KEY`, and `ANTHROPIC_API_KEY` in the root `.env`, restart uvicorn only, confirm `/health` shows `"db":true`, then test Profile -> Manage sources -> Connect GitHub on a phone. Without the DB the callback finishes consent and *then* fails writing `linked_accounts`, which looks like an OAuth error but is not.
 **Known issues / blockers:** The trycloudflare hostname dies with its process, and the GitHub Redirect URI is pinned to it — `docs/deploy.md` (Railway) is the stable option for demo day. An older server on `offset-suffered-prospect-issues.trycloudflare.com` is still live on an unidentified machine; its Redirect URI is still registered and should be deleted once that host is confirmed dead, since trycloudflare names get recycled. `mobile/.env` still needs the Expo Supabase keys before a phone can sign in.
 **Contract changes:** none (`.env.example` reformatted only — no variable added, removed, or renamed)
+
+## 2026-09-26 06:27 | arjun | Codex
+**Task:** AR6 / AD11 — simplify navigation and restore floating AI
+**Status:** done
+**What I did:**
+- Per user request, replaced the AI tab with a bottom-left floating message button containing the constellation logo. Mounted it at the signed-in root so secondary stack screens also have access; hidden in the assistant itself and while typing.
+- Promoted Constellation and Nearby to direct primary tabs, alongside Feed, Events and Profile. Removed the redundant Discover launcher card. Kept original Home functions under Nearby's Meeting activity & Open to Meet action.
+- Kept old AI route as a redirect and existing assistant query links intact. Added bottom scroll space on Feed, Events and Profile and protected the launcher from SVG pointer interception.
+- Mobile owner files changed under explicit user authorization; no backend or dependency changes.
+**How to run/test it:** `cd mobile && npm run typecheck && npm run lint`; `npx expo export --platform ios --output-dir /tmp/constellation-nav-ios`. Passed. Existing browser preview verified direct Constellation/Nearby destinations and assistant modal keyboard activation.
+**Next step for whoever continues:** Reload Expo from this clone. Validate floating launcher taps and native modal stacking on an iPhone; desktop browser pointer automation was unreliable, so keyboard navigation was used for interaction checks.
+**Known issues / blockers:** No physical iPhone test performed. Existing sample-event and installed-app release limitations remain unchanged.
+**Contract changes:** none
+
+## 2026-09-26 06:14 | arjun | Codex
+**Task:** AR6 / AD11 — user-requested Constellation mobile redesign
+**Status:** done
+**What I did:**
+- Updated the existing mobile app (Adam/Akshar-owned mobile files at the user's explicit request): shared navy/white light-only theme, constellation vector branding, vector icons, photo avatars with initials fallback, and branded loading states. No new site or dependencies.
+- Made Feed the default route; preserved old Home as Discover. Five primary tabs: Feed, Discover, AI Chat, Events, Profile. Graph, Nearby, Messages, profile editing, verification and invites remain reachable; existing route aliases remain intact.
+- Graph colors now follow actual shared-interest facets consistently. Line opacity/weight represents existing score; straight star connections replace orbital ellipses. Person sheets retain server-backed interests, meeting context and recorded conversation topics, with clearly labeled profile-overlap strength.
+- Added sample event catalog adapter, category filters, event details, and per-account local RSVP/cancellation persistence. Sample status is explicit; RSVP never creates real attendance or contacts organizers. Backend contracts unchanged.
+- Verified main screens in the existing Expo web preview at phone width; fixed clipped tab labels and SVG web warnings. Verified event RSVP persists across reload; feed refresh deduplicates new posts.
+**How to run/test it:** `cd mobile && npm run typecheck && npm run lint && npm run test:demo`; `npx -y tsx --test features/graph/atomLayout.test.mjs`; `npx expo export --platform ios --output-dir /tmp/constellation-ios-final`. Typecheck/lint, 15 demo checks, 2 layout tests and iOS export pass. Existing preview: http://localhost:8081 (this clone); demo checked manually through Feed, Discover, graph/person sheet, AI Chat, Events/RSVP, Profile and Messages.
+**Next step for whoever continues:** Reload the existing Expo app to see this commit. Physical-device validation is still needed; rebuild the native client to apply app display-name/light-appearance configuration. To add live event registration later, replace `mobile/features/events/catalog.ts` only after a listings/RSVP API exists.
+**Known issues / blockers:** Events are explicitly sample/local, not live registrations. No EAS project/update pipeline is configured, so GitHub push does not distribute an installed-app release. iOS bundle validated; no physical-device test claimed. No teammate servers restarted.
+**Contract changes:** none
+
+# Progress log
 
 ## 2026-09-26 06:10 | arjun | Arjun
 **Task:** AR4 deploy + AD9 embed (Arjun)
@@ -1169,6 +872,28 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **How to run/test it:** `sudo service postgresql start && ./supabase/tests/run-local.sh`
 **Next step for whoever continues:** Nothing for this task. Everyone: from your next push on, use `git pull --rebase origin main && git push origin HEAD:main`.
 **Known issues / blockers:** The force-push hint in `.claude/hooks/guard.py` (line 103-104) still says "push to a new branch" without "last resort"; the file couldn't be edited from here because its own scraping guard matches text inside it. Edit it by hand if you care.
+**Contract changes:** none
+
+## 2026-09-26 04:55 | adam | Adam
+**Task:** Each laptop runs the app and makes its own Expo QR
+**Status:** done
+**What I did:**
+- Added `scripts/phone-qr.sh`. On a clean `main` it pulls, starts Expo through a tunnel, writes `~/Desktop/formal-connection-expo.png`, and prints `PHONE_URL`.
+- Asked Alan, Arjun, and Akshar in REQUESTS.md to run that script instead of scanning someone else's QR.
+**How to run/test it:** `bash -n scripts/phone-qr.sh`. On a laptop: `./scripts/phone-qr.sh`, then scan the Desktop PNG with Expo Go.
+**Next step for whoever continues:** Alan, Arjun, Akshar: run `./scripts/phone-qr.sh` and leave it open.
+**Known issues / blockers:** The QR only works while that laptop stays awake. Campus Wi-Fi still cannot use the LAN script `scripts/start-app.sh`.
+**Contract changes:** none
+
+## 2026-09-26 04:40 | adam | Adam
+**Task:** AD2 sign-in for every phone, not only a filled-in mobile/.env
+**Status:** done
+**What I did:**
+- The publishable Supabase URL, anon key, and Railway API address are now the defaults in `mobile/lib/env.ts` and `mobile/.env.example`. A blank `mobile/.env` still signs into the team project.
+- Sign-in accepts the email code in the app (`verifyEmailCode`) when the phone's mail app will not open the magic link.
+**How to run/test it:** Reload Expo Go on `exp://bej2jrm-adamissac-8081.exp.direct`. LinkedIn opens LinkedIn and returns through `https://mwfzgkikbmnghueolfnw.supabase.co/auth/v1/callback`. Email: send a link, then open it on that phone or type the code.
+**Next step for whoever continues:** If LinkedIn still rejects a teammate, add that LinkedIn account on the developer app (client id `78lllikuxa9uve`, app id `266531181`). The Supabase provider is already enabled.
+**Known issues / blockers:** none in the app. LinkedIn may still limit sign-in to people listed on that developer app.
 **Contract changes:** none
 
 ## 2026-09-26 04:30 UTC | alan | Alan
@@ -1393,6 +1118,38 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** Supabase project ref still unset in `.mcp.json` (Adam).
 **Contract changes:** none
 
+## 2026-09-26 03:32 | adam | Adam
+**Task:** Document where every API key comes from for Alan / Arjun / Railway
+**Status:** done
+**What I did:**
+- Added `docs/secrets-setup.md`: click-by-click for Supabase URL/anon/service/DATABASE_URL, Anthropic, GitHub OAuth, signing keys, Railway variables, and `mobile/.env`. No secret values in the file.
+- Linked it from `docs/deploy.md` and pointed Alan’s open ask at §4 / §8.
+**How to run/test it:** Open `docs/secrets-setup.md`. Teammates fill a local `.env` from it; never commit the values.
+**Next step for whoever continues:** Alan: do the open `(from adam)` ask (callback + AirDrop three values). Adam: when they arrive, set them on Railway `ml`.
+**Known issues / blockers:** none for the doc itself.
+**Contract changes:** none
+
+## 2026-09-26 03:26 | adam | Adam
+**Task:** Fix the Alan GitHub/Railway ask (Alan has no Railway access)
+**Status:** done
+**What I did:**
+- Rewrote Alan's open ask: he only adds the Railway callback on the GitHub OAuth app and privately sends `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` / `TOKEN_ENCRYPTION_KEY` to Adam. Adam sets them on Railway.
+- Added a matching open item under Adam's `REQUESTS.md` section for when those values arrive.
+**How to run/test it:** After Adam sets the vars, Profile → Manage sources → Connect GitHub on a phone against `https://ml-production-04c0.up.railway.app`.
+**Next step for whoever continues:** Alan: do the open `(from adam)` item (callback + private send). Adam: when the three values arrive, run `cd ml && npx @railway/cli variable set NAME --stdin` for each.
+**Known issues / blockers:** Do not put the client secret in git or chat.
+**Contract changes:** none
+
+## 2026-09-26 03:25 | adam | Adam
+**Task:** Ask Alan to finish GitHub connect on Railway
+**Status:** superseded (Alan has no Railway login; see 03:26 entry)
+**What I did:**
+- Added an open ask in Alan's `REQUESTS.md` section: add the Railway callback on the GitHub OAuth app, then set `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` (and confirm `ML_API_URL` + `TOKEN_ENCRYPTION_KEY`) on the Railway `ml` service. Secret stays out of git and chat.
+**How to run/test it:** After Alan marks it done, on a phone open Profile → Manage sources → Connect GitHub against `https://ml-production-04c0.up.railway.app`.
+**Next step for whoever continues:** See the 03:26 entry. Alan does not set Railway vars.
+**Known issues / blockers:** GitHub connect stays off on Railway until those vars are set. `GITHUB_CLIENT_SECRET` must not be committed.
+**Contract changes:** none
+
 ## 2026-09-26 03:05 | adam | Adam
 **Task:** Commit history shows the four teammates, not the tools
 **Status:** done
@@ -1570,6 +1327,33 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Known issues / blockers:** MASTER_SPEC.md still missing from repo. No FastAPI app yet (Alan). No GitHub OAuth app yet (Arjun). Supabase storage download URL (`/storage/v1/object/resumes/<path>`) not yet tested against the real project. Not pushed yet: Arjun's `gh auth login` pending.
 **Contract changes:** none (new env var `APP_GITHUB_REDIRECT` added to .env.example)
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 + matching / match scores spread out (everyone was ~50%), common skills in Constellation list
+**Status:** done (needs Railway redeploy to go live)
+**What I did:**
+- Cause: bge-small cosine similarity is compressed. On the 80-person HackGT population (SYNTHETIC data), raw facet similarities sat at p10 0.67-0.77 and p90 0.85-0.90 for everyone, while real shared interests (`idf_overlap`, median 0.03) had only 20% weight. So 80% of V1 scores fell between 0.50 and 0.60.
+- `ml/ml/config.py` + `ml/ml/scoring.py` (Alan's area, noted): features are calibrated before weighting. Facet sims are rescaled from `SIM_RANGE` (0.60, 0.95) to 0..1, complementarity from `COMPLEMENT_RANGE` (0.45, 0.85), and `idf_overlap / OVERLAP_FULL` (0.20), capped at 1. V1 weights now favor shared niche interests (0.30).
+- Evaluation on SYNTHETIC data (80 people, teammates as ground truth): teammate hit@5 0.994 before and after; teammate-vs-rest AUC 0.998 before, 0.992 after; score std 0.047 before, 0.113 after; range 0.35-0.79 before, 0.16-0.84 after (median 0.37). Ranking quality is unchanged, and the percentages are now meaningful.
+- Suggestions use per-user percentile cutoffs, so they're unaffected. A trained `ranker_lr.pkl` (only if `MATCH_MODEL=lr`) was trained on the old uncalibrated features: retrain with `python scripts/train_ranker.py --source auto` before serving it.
+- `mobile/app/(tabs)/graph.tsx`: rows in "More people you could meet" show up to 4 common skills as light-blue chips plus the "why you matched" sentence (`explanation.summary` from the graph edge).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (130 passed; the ranker_job test needs libomp locally, see AGENTS.md). Redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Next step for whoever continues:** Redeploy ml to Railway (this laptop isn't logged in to Railway). Then check that /graph scores for a real account vary.
+**Known issues / blockers:** Accounts with very few interests will still score low and flat against everyone (nothing to match on). The fix there is a richer profile (GitHub/resume), not the formula.
+**Contract changes:** none (score stays 0..1; values are distributed differently)
+
+## 2026-09-26 | alan | Codex
+**Task:** Finish Claude's match explanations and make extraction less opaque
+**Status:** done (code); live deployment / phone smoke test pending
+**What I did:**
+- Continued a74fe37/e7a1dfa after syncing team commits through 647e3f5. Graph UI now consumes actual summary/factors/basis and identifies AI rewording versus numeric scoring. Fixed graph builder losing learned-ranker attribution (it previously mislabeled every explanation V1).
+- Quick-profile returns an additive explanation derived from its exact V1 features. Full profile shows all signed score contributions; graph shows top positive shares with denominator and approximation caveats. Removed misleading percent-match/profile-overlap labels from the touched profile surfaces and shared MatchMeter.
+- Extraction review now explains source weighting, confirmation, diminishing returns, evidence limitations, and weight versus confidence/proficiency. Each topic shows confirmation and matching weight; no evidence is fabricated when absent.
+- Cross-owner mobile edits explicitly requested by Alan; docs, current/legacy mocks, regression tests and REQUESTS updated. Privacy/contract review completed; no privacy blockers.
+**How to run/test it:** Mobile `tsc --noEmit` and `eslint .` pass; `pnpm dlx tsx scripts/demo-flow.test.ts`: 17 pass. ML `pytest -q tests/test_quick_profile_explanation.py tests/test_explain.py`: 21 pass using bundled Python and temporary dependency targets (hashed embedder, no model download). `git diff --check` passes.
+**Next step for whoever continues:** Deploy ML when safe, reload app, smoke-test graph → person → full profile and Profile → Review on phone. Git pushes do not deploy ML.
+**Known issues / blockers:** No live DB or device verification in this session. Extraction explanation describes actual existing rules, not a new per-document provenance ledger. Learned graph scores and quick-profile V1 scores can differ; UI labels the scoring basis.
+**Contract changes:** Optional quick-profile `explanation`; docs/api.md 15 and new explained fixture. Existing graph shape unchanged; client now types/consumes it. No schema/migration or secret changes.
+
 ## 2026-09-26 | adam | Adam
 **Task:** AD9 / AR5 Graph phone readability (user-requested cross-owner graph presentation update)
 **Status:** done
@@ -1632,58 +1416,3 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 - `npm install` in `mobile/` currently needs `--legacy-peer-deps` — an unrelated peer-dependency conflict between `expo-router`'s bundled `@expo/ui` (which pulls in `vaul`/`radix-ui` for web) and the React version this Expo SDK ships. Not caused by anything BLE-related.
 
 **Contract changes:** none (`docs/schema.sql` and `docs/api.md` untouched).
-## 2026-09-26 22:00 | adam | Codex
-**Task:** AD9 / AR5 — space constellation visual refinement
-**Status:** done
-**What I did:**
-- Restyled the constellation as a near-black night sky with a deterministic starfield, soft blue haze, glowing stellar cores, and thin straight connection lines.
-- Replaced the atom spheres and orbital rings with stars; retained subtle facet colors, upright names, profile selection, pause, and reduced-motion handling.
-- Kept native-driven animation and static SVG lighting with no new dependencies. User requested changes to Arjun's visualization area.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint features/graph/Atom.tsx 'app/(tabs)/graph.tsx' && node --experimental-strip-types --test features/graph/atomLayout.test.mjs`; all passed. Expo export: `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`.
-**Next step for whoever continues:** Reload the app and open Constellation; check the starfield and tap a named star on a physical phone. Rendering lives in `mobile/features/graph/Atom.tsx`.
-**Known issues / blockers:** Physical-device visual/performance verification remains unmeasured.
-**Contract changes:** none
-## 2026-09-26 22:15 | adam | Codex
-**Task:** AD9 / AR5 — irregular constellation spacing
-**Status:** done
-**What I did:**
-- Gave each featured star a different radius and a small angular offset so the constellation no longer forms an evenly spaced ring.
-- Reduced the projection tilt to preserve name separation on small phones throughout the animation. Kept deterministic positions and existing motion performance.
-- User requested this refinement in Arjun's graph area.
-**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit && npx eslint features/graph/atomLayout.ts`; passed, including full-orbit bounds and label separation at widths 286–440 for 1–6 stars.
-**Next step for whoever continues:** Reload Constellation and inspect varied star distances; layout parameters are in `mobile/features/graph/atomLayout.ts`.
-**Known issues / blockers:** No physical-device visual check this increment.
-**Contract changes:** none
-## 2026-09-26 22:30 | adam | Codex
-**Task:** AD2 — login visual polish
-**Status:** done
-**What I did:**
-- Added a restrained night-sky constellation illustration and a rounded white sign-in card, clearer field labels, softer input styling, and a primary email action.
-- Made the email-code form appear after a successful link request or an explicit Already have a code action. Kept OAuth, company login, demo access and the privacy disclosure.
-- Added safe-area spacing, disabled email autocorrect, and live announcements for form feedback.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx && npm run test:demo`; passed (17 demo checks). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed before final placeholder/footer copy placement cleanup.
-**Next step for whoever continues:** Open `/sign-in` to inspect the form; email-link/code handling and visual styles live in `mobile/app/sign-in.tsx`.
-**Known issues / blockers:** No real authentication email sent or physical-device visual check in this increment.
-**Contract changes:** none
-## 2026-09-26 22:45 | adam | Codex
-**Task:** AD2 — flatten login layout
-**Status:** done
-**What I did:**
-- Removed the enclosing rounded white sign-in card and replaced it with spacing and a subtle top divider.
-- Reduced corner rounding on the constellation illustration, fields and buttons so the login no longer stacks bubble-shaped containers.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx`.
-**Next step for whoever continues:** Reload `/sign-in` to inspect the flatter styling in `mobile/app/sign-in.tsx`.
-**Known issues / blockers:** Styling-only change; no physical-device visual check.
-**Contract changes:** none
-## 2026-09-27 00:20 | adam | Codex
-**Task:** AD2 / AD9 / AR5 / AK5 — login icons, score-sized stars, Nearby navigation
-**Status:** done
-**What I did:**
-- Added vector Google, GitHub, LinkedIn, email and code icons to sign-in actions; removed the dark rectangular banner so the constellation artwork sits directly on the page.
-- Added brighter blue/pink/mint/gold category colors and score-based star diameters (16–44 pixels) inside unchanged tap targets; updated the legend and added a score-size regression test.
-- Removed reintroduced native-map proximity circles. Queued expanded-map navigation until iOS modal dismissal, with a post-close effect on other platforms.
-- Changes to the graph/Nearby areas are explicitly user-requested.
-**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx 'app/(tabs)/nearby.tsx' 'app/(tabs)/graph.tsx' components/SignInIcon.tsx features/graph/Atom.tsx features/graph/starStyle.ts features/nearby/NearbyMap.tsx && node --experimental-strip-types --test features/graph/*.test.mjs && npm run test:demo`; passed (18 demo flows, 4 graph tests). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed. Browser verified expanded Nearby → select Maya → View profile opens Maya's matching user ID and profile.
-**Next step for whoever continues:** On iPhone, open Nearby → expand → choose a match → View profile; confirm native dismissal completes and the correct profile opens. Logic lives in `mobile/app/(tabs)/nearby.tsx` (`openFromMap`, `finishDismiss`).
-**Known issues / blockers:** Native modal behavior and Apple Maps appearance were not exercised on a physical iPhone; browser flow and all platform bundles passed. No live OAuth attempt was made.
-**Contract changes:** none

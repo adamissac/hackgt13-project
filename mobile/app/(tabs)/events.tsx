@@ -86,8 +86,11 @@ export default function EventsScreen() {
  // ongoing events are listed under Today instead). Events without a date yet get their own section.
  const covers=(e:NetworkingEvent,k:string)=>!e.dateless&&eventDays(e.startsAt,e.endsAt,e.tz).includes(k);
  const onDay=planned.filter(e=>covers(e,day));
- const today=planned.filter(e=>covers(e,todayKey));
- const comingUp=planned.filter(e=>!e.dateless&&dayKey(e.startsAt,e.tz)>todayKey);
+ // "Coming up" follows the day you tapped: plans that start after it and haven't already ended.
+ const lastDay=(e:NetworkingEvent)=>{const d=eventDays(e.startsAt,e.endsAt,e.tz);return d[d.length-1];};
+ const comingUp=planned.filter(e=>!e.dateless&&dayKey(e.startsAt,e.tz)>day&&lastDay(e)>=todayKey);
+ const dayLabel=(k:string)=>new Date(`${k}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'});
+ const shortDay=(k:string)=>new Date(`${k}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',timeZone:'UTC'});
  const undated=planned.filter(e=>e.dateless);
  const isUpcoming=(e:NetworkingEvent)=>e.dateless||dayKey(e.endsAt??e.startsAt,e.tz)>=todayKey;
  const kmTo=(e:NetworkingEvent)=>area.status==='ready'&&hasPlace(e)?eventsNear([e],area.point,Infinity)[0].km:undefined;
@@ -112,14 +115,10 @@ export default function EventsScreen() {
 
    {catalog.state.status==='ready'&&section==='calendar'&&<>
     <Calendar year={month.year} month={month.month} onMonth={setMonth} events={events} rsvps={rsvps} selectedDay={day} onSelectDay={setDay}/>
-    <Text style={[styles.title,{color:c.text}]}>{day===todayKey?'Today · ':''}{new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'})}</Text>
+    <Text style={[styles.title,{color:c.text}]}>{day===todayKey?'Today · ':''}{dayLabel(day)}</Text>
     {onDay.length?onDay.map(planRow):<Text style={[styles.body,{color:c.muted}]}>Nothing planned this day.</Text>}
-    {day!==todayKey&&today.length>0&&<>
-     <Text style={[styles.title,{color:c.text,marginTop:6}]}>Today</Text>
-     {today.map(planRow)}
-    </>}
-    <Text style={[styles.title,{color:c.text,marginTop:6}]}>Coming up</Text>
-    {comingUp.length?comingUp.map(planRow):planned.length?<Text style={[styles.body,{color:c.muted}]}>Nothing else planned after today.</Text>:<Card>
+    <Text style={[styles.title,{color:c.text,marginTop:6}]}>Coming up after {shortDay(day)}</Text>
+    {comingUp.length?comingUp.map(planRow):planned.length?<Text style={[styles.body,{color:c.muted}]}>Nothing planned after this day.</Text>:<Card>
      <Text style={[styles.body,{color:c.text,fontWeight:'700'}]}>Your calendar is open</Text>
      <Text style={[styles.body,{color:c.muted}]}>Mark events as Attending or Interested and they’ll show up here.</Text>
      <View style={styles.row}><Button label="Events near you" variant="secondary" onPress={()=>open('local')}/><Button label="All events" variant="ghost" onPress={()=>open('all')}/></View>
