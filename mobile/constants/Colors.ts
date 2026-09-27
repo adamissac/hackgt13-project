@@ -6,16 +6,16 @@ const light = {
   surface: '#FFFFFF',
   surfaceAlt: '#F0EFED',
   border: '#E4E3E0',
-  tint: '#343A46',
-  tintSoft: '#ECEEF1',
+  tint: '#1E3A8A',
+  tintSoft: '#E6ECF8',
   onTint: '#FFFFFF',
-  ai: '#626978',
-  aiSoft: '#EFF0F3',
+  ai: '#475A8C',
+  aiSoft: '#EDF1F9',
   success: '#15803D',
   successSoft: '#E8F6EC',
   danger: '#DC2626',
-  tabIconDefault: '#85878C',
-  tabIconSelected: '#343A46',
+  tabIconDefault: '#7C89AA',
+  tabIconSelected: '#1E3A8A',
 };
 
 

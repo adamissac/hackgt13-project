@@ -12,6 +12,16 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / app palette: navy accent instead of slate gray
+**Status:** done
+**What I did:**
+- `mobile/constants/Colors.ts` (shared UI file, noted here): changed the accent from slate gray #343A46 to navy #1E3A8A. That covers tint, the selected tab icon, and buttons. tintSoft is now #E6ECF8, ai #475A8C, aiSoft #EDF1F9, and unselected tab icons #7C89AA (blue-gray). No hard-coded copies of the old colors existed, so every screen follows.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`, then reload Expo Go.
+**Next step for whoever continues:** If anyone wants a different shade, change `tint` and `tabIconSelected` in `mobile/constants/Colors.ts` only.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / Nearby: keep the map when Bluetooth is unavailable
 **Status:** done
 **What I did:**
