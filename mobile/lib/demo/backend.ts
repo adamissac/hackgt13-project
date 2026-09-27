@@ -350,6 +350,8 @@ export function registerEvent(eventId: number) {
   return { ok: true as const };
 }
 export function eventJoinToken(eventId: number = DEMO_EVENT.id) {
+  // Like the server: only the company that owns the event gets its check-in QR.
+  if (!DEMO_LIVE_EVENTS.find((x) => x.id === eventId)?.mine) throw new Error('organizers only');
   return {
     payload: `demo-event-${eventId}`,
     signature: 'demo',

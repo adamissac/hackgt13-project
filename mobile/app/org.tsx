@@ -31,7 +31,7 @@ export default function OrgScreen() {
           <Button
             label={e.registered ? 'Open event' : 'View event'}
             variant="secondary"
-            onPress={() => router.push({ pathname: '/event/[id]', params: { id: String(e.id) } })}
+            onPress={() => router.push({ pathname: '/attend/[id]', params: { id: String(e.id) } })}
           />
         </Card>
       ))}

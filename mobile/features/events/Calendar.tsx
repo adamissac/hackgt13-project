@@ -17,6 +17,7 @@ export function Calendar({ year, month, onMonth, events, rsvps, selectedDay, onS
   const byDay = new Map<string, RsvpStatus[]>();
   for (const e of events) {
     const s = rsvps[e.id];
+    if (e.dateless) continue;
     if (s !== 'attending' && s !== 'interested') continue;
     const k = dayKey(e.startsAt, e.tz);
     byDay.set(k, [...(byDay.get(k) ?? []), s]);

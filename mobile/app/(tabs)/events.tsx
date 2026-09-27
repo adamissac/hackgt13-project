@@ -7,7 +7,7 @@ import { Button, Card, Chip, useColors } from '@/components/ui';
 import { ErrorState, Loading } from '@/components/States';
 import { TabHero } from '@/components/TabHero';
 import { Calendar, RsvpPicker } from '@/features/events/Calendar';
-import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
+import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, fromLiveEvent, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
 import { RSVP_OPTIONS, dayKey, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
 import { useArea } from '@/features/events/useArea';
 import { api } from '@/lib/api';
@@ -35,8 +35,23 @@ export default function EventsScreen() {
  const todayKey=dayKey(new Date());
  const [month,setMonth]=useState({year:Number(todayKey.slice(0,4)),month:Number(todayKey.slice(5,7))});
  const [day,setDay]=useState(todayKey);
- const rsvps:RsvpMap=saved?.scope===scope ? saved.map : catalog.state.status==='ready' ? catalog.state.data.rsvps : {};
- const events=catalog.state.status==='ready'?catalog.state.data.events:[];
+ const savedRsvps:RsvpMap=saved?.scope===scope ? saved.map : catalog.state.status==='ready' ? catalog.state.data.rsvps : {};
+ // Company events (created in the app) sit alongside the Handshake list. Registering one puts it on your calendar;
+ // at the venue you scan the company's QR on its event page to enter the session.
+ const company=live.state.status==='ready'?live.state.data.events.map(fromLiveEvent):[];
+ const events=[...company,...(catalog.state.status==='ready'?catalog.state.data.events:[])];
+ const rsvps:RsvpMap={...savedRsvps,...Object.fromEntries(company.filter(e=>e.registered).map(e=>[e.id,'attending' as RsvpStatus]))};
+ const [registering,setRegistering]=useState<string|null>(null);
+ const register=async(e:NetworkingEvent)=>{
+  if(!e.companyEventId||registering)return; setRegistering(e.id);setError(null);
+  try{await api.registerEvent(e.companyEventId);live.reload();}
+  catch(err){setError(err instanceof Error?err.message:'Could not register. Please try again.');}
+  finally{setRegistering(null);}
+ };
+ const openEvent=(e:NetworkingEvent)=>{
+  if(e.companyEventId){router.push({pathname:'/attend/[id]',params:{id:String(e.companyEventId)}});return;}
+  setSelected(e);setError(null);
+ };
 
  const choose=async(event:NetworkingEvent,status:RsvpStatus)=>{
   if(busy)return; setBusy(true);setError(null);
@@ -48,22 +63,30 @@ export default function EventsScreen() {
  // Each section is its own page: switching jumps back to the top so the change is visible immediately.
  const open=(s:Section)=>{setSection(s);if(s==='local')setAreaWanted(true);scroller.current?.scrollTo({y:0,animated:false});};
 
- const card=(event:NetworkingEvent,km?:number)=><Pressable key={event.id} onPress={()=>{setSelected(event);setError(null);}} accessibilityRole="button" accessibilityLabel={`View ${event.name}`} style={({pressed})=>({opacity:pressed?0.85:1})}>
-  <Card>
-   <View style={styles.row}><View style={[styles.date,{backgroundColor:c.tintSoft}]}><Text style={{color:c.tint,fontSize:16,fontWeight:'700'}}>{eventDate(event.startsAt,event.tz)}</Text></View><View style={{flex:1,gap:6}}><Chip label={event.category} tone="ai"/><Text style={[styles.title,{color:c.text}]}>{event.name}</Text><Text style={[styles.small,{color:c.muted}]}>{event.host}</Text></View></View>
+ // Only the details area opens the event; the action buttons below sit outside it (no button inside a button).
+ const card=(event:NetworkingEvent,km?:number)=><Card key={event.id}>
+  <Pressable onPress={()=>openEvent(event)} accessibilityRole="button" accessibilityLabel={`View ${event.name}`} style={({pressed})=>({gap:12,opacity:pressed?0.85:1})}>
+   <View style={styles.row}><View style={[styles.date,{backgroundColor:c.tintSoft}]}><Text style={{color:c.tint,fontSize:16,fontWeight:'700'}}>{event.dateless?'TBA':eventDate(event.startsAt,event.tz)}</Text></View><View style={{flex:1,gap:6}}><Chip label={event.category} tone="ai"/><Text style={[styles.title,{color:c.text}]}>{event.name}</Text><Text style={[styles.small,{color:c.muted}]}>{event.host}</Text></View></View>
    <View style={styles.row}><AppIcon name="event" size={18}/><Text style={[styles.small,{color:c.muted}]}>{whenLabel(event)} · {event.location}{km!==undefined?` · ${milesLabel(km)}`:''}</Text></View>
    {event.tags.includes('Hiring')&&<View style={styles.row}><Chip label="Hiring" tone="success"/></View>}
-   <RsvpPicker value={rsvps[event.id]} disabled={busy} onChange={(s)=>choose(event,s)}/>
-  </Card>
- </Pressable>;
+  </Pressable>
+   {event.companyEventId ? (
+    !event.registered ? <Button label="Register" onPress={()=>register(event)} loading={registering===event.id}/>
+    : !event.checkedIn ? <View style={{gap:8}}>
+      <Text style={[styles.small,{color:c.success,fontWeight:'700'}]}>Registered · on your calendar</Text>
+      <Button label="Scan QR code" onPress={()=>router.push({pathname:'/join-event',params:{event:String(event.companyEventId)}})}/>
+     </View>
+    : <Button label="Enter session" onPress={()=>openEvent(event)}/>
+   ) : <RsvpPicker value={rsvps[event.id]} disabled={busy} onChange={(s)=>choose(event,s)}/>}
+ </Card>;
 
  const planned=events.filter(e=>isPlanned(rsvps[e.id])).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
- const onDay=planned.filter(e=>dayKey(e.startsAt,e.tz)===day);
- const isUpcoming=(e:NetworkingEvent)=>dayKey(e.endsAt??e.startsAt,e.tz)>=todayKey;
+ const onDay=planned.filter(e=>!e.dateless&&dayKey(e.startsAt,e.tz)===day);
+ const isUpcoming=(e:NetworkingEvent)=>e.dateless||dayKey(e.endsAt??e.startsAt,e.tz)>=todayKey;
  const upcoming=planned.filter(isUpcoming);
  const kmTo=(e:NetworkingEvent)=>area.status==='ready'&&hasPlace(e)?eventsNear([e],area.point,Infinity)[0].km:undefined;
  const statusLabel=(e:NetworkingEvent)=>RSVP_OPTIONS.find(o=>o.value===rsvps[e.id])?.label ?? '';
- const planRow=(e:NetworkingEvent)=><Pressable key={e.id} onPress={()=>{setSelected(e);setError(null);}} accessibilityRole="button" accessibilityLabel={`${e.name}, ${statusLabel(e)}`} style={[styles.planRow,{borderColor:c.border,backgroundColor:c.surface}]}>
+ const planRow=(e:NetworkingEvent)=><Pressable key={e.id} onPress={()=>openEvent(e)} accessibilityRole="button" accessibilityLabel={`${e.name}, ${statusLabel(e)}`} style={[styles.planRow,{borderColor:c.border,backgroundColor:c.surface}]}>
   <View style={[styles.bar,{backgroundColor:rsvps[e.id]==='attending'?c.success:c.ai}]}/>
   <View style={{flex:1,gap:2}}><Text style={{color:c.text,fontWeight:'700',fontSize:15}}>{e.name}</Text><Text style={[styles.small,{color:c.muted}]}>{whenLabel(e)} · {e.location}</Text></View>
   <Text style={{color:rsvps[e.id]==='attending'?c.success:c.ai,fontSize:12,fontWeight:'700'}}>{statusLabel(e)}</Text>
@@ -78,15 +101,6 @@ export default function EventsScreen() {
     </Pressable>)}
    </View>
    {section!=='calendar'&&<Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>}
-   {section==='all'&&live.state.status==='ready'&&live.state.data.events.length>0&&<Card>
-    <Text style={[styles.title,{color:c.text}]}>Live company events</Text>
-    <Text style={[styles.body,{color:c.muted}]}>Register or scan a check-in QR. Nearby then shows people at that event.</Text>
-    {live.state.data.events.slice(0,6).map(e=><Pressable key={e.id} onPress={()=>router.push({pathname:'/event/[id]',params:{id:String(e.id)}})} accessibilityRole="button" style={{paddingVertical:8}}>
-     <Text style={{color:c.text,fontWeight:'700'}}>{e.name}</Text>
-     <Text style={[styles.small,{color:c.muted}]}>{e.host||'Event'}{e.registered?' · You’re in':''}</Text>
-    </Pressable>)}
-    <View style={styles.row}><Button label="Enter join code" variant="secondary" onPress={()=>router.push('/join-event')}/><Button label="All company events" variant="ghost" onPress={()=>router.push('/org')}/></View>
-   </Card>}
    {catalog.state.status==='loading'&&<Loading label="Finding events…"/>}
    {catalog.state.status==='error'&&<ErrorState message={catalog.state.message} onRetry={catalog.reload}/>}
 

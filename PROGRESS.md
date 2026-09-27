@@ -9,6 +9,19 @@
 **Known issues / blockers:** iOS 27 phones (Adam's) crash at launch without a UIScene adoption; a config-plugin fix exists on Akshar's machine (`akshar/backup-before-force-push`, `mobile/plugins/withIOSSceneLifecycle.js`) and still needs to land. Note: team `main` was force-pushed earlier today; check nothing was lost.
 **Contract changes:** none
 
+## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / event sessions: register, scan the company QR on the event page, then Event Mode inside the session
+**Status:** done
+**What I did:**
+- Per Arjun: Event Mode is no longer on Nearby. Company events (`GET /events`) now appear in the Events list and My calendar via `fromLiveEvent()` in `features/events/catalog.ts` (category "Company event"; dateless ones show "TBA" and stay off the calendar). Cards show Register (then the event is on your calendar), then "Scan QR code", then "Enter session".
+- Event page moved from `app/event/[id].tsx` to `app/attend/[id].tsx`. Adam's `app/(company)/event/[id].tsx` resolved to the same URL, so `router.push('/event/[id]')` silently did nothing for attendees. States: Register card; after registering, a navy "At the event? Scan in." card with a Scan QR code button (`/join-event?event=<id>`); after scanning, "You're in the session" with `EventModeCard` (Akshar's, moved here) and "People in this session" (only registered + scanned attendees, via `/events/{id}/matches`). It sets the current event when checked in.
+- `app/join-event.tsx`: a successful scan or join code goes straight to `/attend/<id>`. QR errors are mapped to plain messages. Demo backend: only the owning company gets the check-in QR (like the server).
+- Event cards no longer nest buttons inside a pressable (web warning); only the details area opens the event.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo` (18 passed). In demo: Events, HackGT 13, "Enter session" opens /attend/1 with the session card and Event Mode.
+**Next step for whoever continues:** Test on phones with a real company event: company creates it, attendee registers (it shows on My calendar), attendee scans the QR at `/attend/<id>`, then Event Mode shows the other scanned-in attendees.
+**Known issues / blockers:** The camera scan is not testable in the browser. `POST /events/enter` (join code) still registers and checks in without prior registration (REQUESTS.md, Adam).
+**Contract changes:** none
+
 ## 2026-09-27 02:08 | adam | coding agent
 **Task:** Demo loop with synthetic attendees, onboarding step, speed, smarter GitHub feed
 **Status:** done

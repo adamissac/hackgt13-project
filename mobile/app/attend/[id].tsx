@@ -1,10 +1,11 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ErrorState, Loading } from '@/components/States';
-import { Avatar, Button, Card, useColors } from '@/components/ui';
+import { Avatar, Button, Card, Chip, useColors } from '@/components/ui';
+import { EventModeCard } from '@/features/ble/EventModeCard';
 import { api } from '@/lib/api';
 import { setCurrentEventId } from '@/lib/currentEvent';
 import { useAsync } from '@/lib/useAsync';
@@ -32,6 +33,11 @@ export default function EventScreen() {
   }, [id]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const checkedIn = events.state.status === 'ready' && !!events.state.data.events.find((e) => e.id === id)?.checked_in;
+  // In the session, Event Mode, Nearby and matches all use this event.
+  useEffect(() => {
+    if (checkedIn) void setCurrentEventId(id);
+  }, [checkedIn, id]);
 
   if (events.state.status === 'loading') return <Loading label="Loading event…" />;
   if (events.state.status === 'error') return <ErrorState message={events.state.message} onRetry={events.reload} />;
@@ -82,25 +88,42 @@ export default function EventScreen() {
         </Card>
       ) : null}
       {!event.registered ? (
-        <Button label="Register" onPress={enter} loading={busy} />
-      ) : !event.checked_in ? (
         <Card>
-          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>You’re registered</Text>
+          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Register to attend</Text>
           <Text style={[styles.body, { color: c.muted }]}>
-            At the event, scan the QR code from the organizers to check in. Until then, other attendees can’t see you and
-            Event Mode stays off.
+            Registering adds this event to your calendar. At the event, you’ll scan the company’s QR code to enter the session.
           </Text>
-          <Button label="Scan QR or enter join code" onPress={() => router.push('/join-event')} />
+          <Button label="Register" onPress={enter} loading={busy} />
         </Card>
+      ) : !event.checked_in ? (
+        <View style={[styles.scanCard, { backgroundColor: c.tint }]}>
+          <Text style={styles.scanEyebrow}>REGISTERED · ON YOUR CALENDAR</Text>
+          <Text style={styles.scanTitle}>At the event? Scan in.</Text>
+          <Text style={styles.scanBody}>
+            Scan the QR code the company shows at the entrance to enter the session. Until you do, other attendees can’t
+            see you.
+          </Text>
+          <Pressable
+            onPress={() => router.push({ pathname: '/join-event', params: { event: String(id) } })}
+            accessibilityRole="button"
+            style={({ pressed }) => [styles.scanButton, { opacity: pressed ? 0.85 : 1 }]}>
+            <Text style={[styles.scanButtonText, { color: c.tint }]}>Scan QR code</Text>
+          </Pressable>
+        </View>
       ) : (
-        <Button
-          label="Use this event for Nearby"
-          variant="secondary"
-          onPress={async () => {
-            await setCurrentEventId(id);
-            router.push('/nearby');
-          }}
-        />
+        <View style={{ gap: 12 }}>
+          <View style={[styles.sessionCard, { backgroundColor: c.tintSoft, borderColor: c.tint }]}>
+            <View style={styles.row}>
+              <View style={[styles.liveDot, { backgroundColor: c.success }]} />
+              <Text style={[styles.body, { color: c.tint, fontWeight: '800' }]}>You’re in the session</Text>
+            </View>
+            <Text style={[styles.body, { color: c.ai }]}>
+              Everyone below registered and scanned in, just like you. Turn on Event Mode to find them in the room.
+            </Text>
+          </View>
+          <EventModeCard />
+          <Button label="See who’s close on the map" variant="secondary" onPress={() => router.push('/nearby')} />
+        </View>
       )}
       {token.state.status === 'ready' && token.state.data ? (
         <Card>
@@ -111,9 +134,9 @@ export default function EventScreen() {
           </View>
         </Card>
       ) : null}
-      <Text style={[styles.section, { color: c.text }]}>People at this event</Text>
+      <Text style={[styles.section, { color: c.text }]}>{checkedIn ? 'People in this session' : 'People at this event'}</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Only people who checked in with the event QR or join code, ranked for you. Not a searchable list of every attendee.
+        Only people who registered and scanned in, ranked for you. Not a searchable list of every attendee.
       </Text>
       {matches.state.status === 'loading' && <Loading label="Finding people…" />}
       {matches.state.status === 'ready' && matches.state.data === null && (
@@ -144,7 +167,9 @@ export default function EventScreen() {
                   <Avatar name={m.name} size={44} />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>{m.name}</Text>
-                    <Text style={[styles.body, { color: c.muted }]}>{m.why.slice(0, 3).join(' · ')}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      {m.why.slice(0, 3).map((w) => <Chip key={w} label={w} tone="tint" />)}
+                    </View>
                   </View>
                 </View>
               </Card>
@@ -162,5 +187,13 @@ const styles = StyleSheet.create({
   section: { fontSize: 18, fontWeight: '700', marginTop: 8 },
   body: { fontSize: 15, lineHeight: 22 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  scanCard: { borderRadius: 22, padding: 20, gap: 10 },
+  scanEyebrow: { color: '#B6C9FA', fontSize: 11, fontWeight: '800', letterSpacing: 1.6 },
+  scanTitle: { color: '#FFFFFF', fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  scanBody: { color: '#D3DEF2', fontSize: 15, lineHeight: 22 },
+  scanButton: { backgroundColor: '#FFFFFF', borderRadius: 14, minHeight: 52, alignItems: 'center', justifyContent: 'center', marginTop: 4 },
+  scanButtonText: { fontSize: 17, fontWeight: '800' },
+  sessionCard: { borderWidth: 1.5, borderRadius: 18, padding: 16, gap: 6 },
+  liveDot: { width: 10, height: 10, borderRadius: 5 },
   qr: { alignSelf: 'center', padding: 12, backgroundColor: '#fff', borderRadius: 12, marginTop: 8 },
 });

@@ -5,15 +5,30 @@
 // Non-career listings are left out. RSVPs here stay on this device; register on Handshake itself.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import type { LiveEvent } from '@/lib/api';
+
 import { parseRsvps, type RsvpMap } from './plan';
 
-export type EventCategory = 'Info session' | 'Networking' | 'Workshop' | 'Club meeting';
+export type EventCategory = 'Company event' | 'Info session' | 'Networking' | 'Workshop' | 'Club meeting';
 export interface NetworkingEvent {
  id: string; name: string; host: string; category: EventCategory; tags: string[];
  startsAt: string; endsAt?: string; allDay?: boolean; tz: string;
  format: 'in_person' | 'virtual'; location: string; lat?: number; lng?: number; url: string;
+ /** Set for events a company created in the app: register here, then scan the company's QR at the venue. */
+ companyEventId?: number; registered?: boolean; checkedIn?: boolean;
+ /** No date set by the company yet (never placed on the calendar). */
+ dateless?: boolean;
 }
-export const CATEGORIES: EventCategory[] = ['Info session', 'Networking', 'Workshop', 'Club meeting'];
+export const CATEGORIES: EventCategory[] = ['Company event', 'Info session', 'Networking', 'Workshop', 'Club meeting'];
+
+/** A company event from GET /events, shaped like the catalog so it lists and calendars the same way. */
+export function fromLiveEvent(e: LiveEvent): NetworkingEvent {
+ return {
+  id: `co-${e.id}`, name: e.name, host: e.host || 'Company event', category: 'Company event', tags: ['Company event'],
+  startsAt: e.starts_at ?? '', endsAt: e.ends_at ?? undefined, dateless: !e.starts_at, tz: ATL, format: 'in_person',
+  location: e.location || 'Location on site', url: '', companyEventId: e.id, registered: e.registered, checkedIn: e.checked_in,
+ };
+}
 
 const ATL = 'America/New_York';
 const GT = { lat: 33.7756, lng: -84.3963 };
@@ -88,6 +103,7 @@ export function zoneLabel(iso: string, tz = ATL) {
 }
 /** "Tue, Sep 29 · 5:00 PM ET", or a date range for multi-day events. */
 export function whenLabel(e: NetworkingEvent) {
+ if (e.dateless) return 'Date to be announced';
  if (e.allDay) return e.endsAt ? `${eventDate(e.startsAt, e.tz)} – ${eventDate(e.endsAt, e.tz)}` : eventDate(e.startsAt, e.tz);
  const weekday = new Date(e.startsAt).toLocaleDateString('en-US', {weekday:'short', timeZone:e.tz});
  return `${weekday}, ${eventDate(e.startsAt, e.tz)} · ${eventTime(e.startsAt, e.tz)} ${zoneLabel(e.startsAt, e.tz)}`;

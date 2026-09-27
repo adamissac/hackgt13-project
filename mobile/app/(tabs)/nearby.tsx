@@ -8,7 +8,6 @@ import Svg, { Circle } from 'react-native-svg';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
-import { EventModeCard } from '@/features/ble/EventModeCard';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -144,10 +143,6 @@ export default function NearbyScreen() {
         </View>
       )}
 
-      {/* AK8 (Akshar): Event Mode keeps scanning going at the event. */}
-      <Disclosure title="Event mode" subtitle="Keep scanning while you’re at the event">
-        <EventModeCard />
-      </Disclosure>
       {/* AK3 (Akshar): QR verification fallback, always available. */}
       <Link href="/verify" style={[styles.link, { color: c.tint }]}>
         Just talked with someone? Verify with QR

@@ -21,9 +21,21 @@ export default function JoinEventScreen() {
   const [done, setDone] = useState<string | null>(null);
   const [code, setCode] = useState('');
 
+  // Checked in: go straight into that event's session (its page), which focuses on the people who also scanned in.
   const finish = async (eventId: number, name: string) => {
     await setCurrentEventId(eventId);
     setDone(name);
+    router.replace({ pathname: '/attend/[id]', params: { id: String(eventId) } });
+  };
+  const friendly = (e: unknown) => {
+    const msg = e instanceof Error ? e.message : String(e);
+    return /register/i.test(msg)
+      ? 'Register for this event first (Events tab), then scan again.'
+      : /expired/i.test(msg)
+        ? 'This QR code has expired. Ask the organizers for the current one.'
+        : /invalid/i.test(msg)
+          ? 'That isn’t an event check-in QR code.'
+          : msg;
   };
 
   const joinQr = async (raw: string) => {
@@ -35,7 +47,7 @@ export default function JoinEventScreen() {
       const r = await api.joinEvent(token);
       await finish(r.event_id, r.name);
     } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
+      setError(friendly(e));
     } finally {
       setBusy(false);
     }
