@@ -5,7 +5,7 @@ import { ErrorState, Loading } from '@/components/States';
 import { LoginConnections } from '@/components/LoginConnections';
 import { AiBadge, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { connectGithub, signInLabel, uploadResume, waitForJob } from '@/lib/accounts';
-import { api, type AccountsResponse, type ManualProfile, type ProfileSource } from '@/lib/api';
+import { api, type AccountsResponse, type ProfileSource } from '@/lib/api';
 import { env } from '@/lib/env';
 import { useAsync } from '@/lib/useAsync';
 
@@ -18,18 +18,13 @@ export default function AccountsScreen() {
   const c = useColors();
   const { state, reload } = useAsync(() => api.accounts(), []);
   const [busy, setBusy] = useState<Busy>(null);
-  // The form shows what's saved plus the user's unsaved edits (cleared after a successful save).
-  const [edits, setEdits] = useState<Partial<ManualProfile>>({});
+  // Profiles are built from connected sources (GitHub, resume, linked accounts). The only typed input is one
+  // optional box for anything those miss; it's stored as `interests_text` and extracted like any other source.
+  const [extra, setExtra] = useState<string | null>(null);
 
   const data: AccountsResponse | null = state.status === 'ready' ? state.data : null;
-  const saved: ManualProfile = {
-    headline: data?.profile.headline ?? '',
-    experience: data?.profile.experience ?? '',
-    interests_text: data?.profile.interests_text ?? '',
-    seeking: data?.profile.seeking ?? '',
-    offering: data?.profile.offering ?? '',
-  };
-  const form: ManualProfile = { ...saved, ...edits };
+  const savedExtra = data?.profile.interests_text ?? '';
+  const extraText = extra ?? savedExtra;
 
   const run = async (kind: Exclude<Busy, null>, fn: () => Promise<string | void>) => {
     setBusy(kind);
@@ -69,8 +64,8 @@ export default function AccountsScreen() {
 
   const onSaveManual = () =>
     run('manual', async () => {
-      const r = await api.patchManual(edits);
-      setEdits({});
+      const r = await api.patchManual({ interests_text: extraText.trim() });
+      setExtra(null);
       if (r.job_id) await waitForJob(r.job_id);
       return 'Saved.';
     });
@@ -87,21 +82,6 @@ export default function AccountsScreen() {
   const { sign_in, sources } = data;
   const gh = sources.github;
 
-  const field = (key: keyof ManualProfile, label: string, placeholder: string, multiline = false) => (
-    <View style={{ gap: 4 }}>
-      <Text style={[styles.label, { color: c.muted }]}>{label}</Text>
-      <TextInput
-        value={form[key]}
-        onChangeText={(v) => setEdits((e) => ({ ...e, [key]: v }))}
-        placeholder={placeholder}
-        placeholderTextColor={c.muted}
-        multiline={multiline}
-        style={[styles.input, multiline && styles.multiline, { color: c.text, borderColor: c.border, backgroundColor: c.surfaceAlt }]}
-        accessibilityLabel={label}
-      />
-    </View>
-  );
-
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
@@ -113,7 +93,7 @@ export default function AccountsScreen() {
           </Text>
           {sign_in.provider === 'linkedin' && (
             <Text style={[styles.small, { color: c.muted }]}>
-              LinkedIn only signs you in. We never read your LinkedIn profile; add your experience below instead.
+              LinkedIn only signs you in. We never read your LinkedIn profile; upload your LinkedIn PDF below instead.
             </Text>
           )}
         </Card>
@@ -170,15 +150,22 @@ export default function AccountsScreen() {
 
         <Card>
           <View style={styles.row}>
-            <Text style={[styles.title, { color: c.text }]}>About you</Text>
-            {sources.manual.added ? <Chip label={`${sources.manual.interests} interests`} tone="ai" /> : null}
+            <Text style={[styles.title, { color: c.text }]}>Additional information</Text>
+            {sources.manual.added ? <Chip label={`${sources.manual.interests} interests`} tone="ai" /> : <Text style={[styles.small, { color: c.muted }]}>Optional</Text>}
           </View>
-          {field('headline', 'Headline', 'CS @ Georgia Tech, robotics')}
-          {field('experience', 'Experience', 'Roles, projects, research. Paste from LinkedIn if you like.', true)}
-          {field('interests_text', 'Interests', 'What you’re into, at work and outside it', true)}
-          {field('seeking', 'What I’m looking for', 'e.g. ML internship, cofounders for a climate app', true)}
-          {field('offering', 'What I can offer', 'e.g. RL tutoring, hiring frontend interns', true)}
-          <Button label="Save" onPress={onSaveManual} loading={busy === 'manual'} disabled={Object.keys(edits).length === 0} />
+          <Text style={[styles.small, { color: c.muted }]}>
+            Your profile is built from GitHub, your resume, and the accounts you connect. Add anything they don’t show.
+          </Text>
+          <TextInput
+            value={extraText}
+            onChangeText={setExtra}
+            placeholder="Side projects, clubs, what you’re hoping to find…"
+            placeholderTextColor={c.muted}
+            multiline
+            style={[styles.input, styles.multiline, { color: c.text, borderColor: c.border, backgroundColor: c.surfaceAlt }]}
+            accessibilityLabel="Additional user information (optional)"
+          />
+          <Button label="Save" onPress={onSaveManual} loading={busy === 'manual'} disabled={extra === null || extra.trim() === savedExtra.trim()} />
         </Card>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -191,7 +178,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },
   small: { fontSize: 13, lineHeight: 18 },
-  label: { fontSize: 13, fontWeight: '600' },
   input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 16, minHeight: 48 },
   multiline: { minHeight: 84, textAlignVertical: 'top' },
 });

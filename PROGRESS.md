@@ -11,6 +11,17 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR2 / profile sources: remove typed About you, keep one optional box
+**Status:** done
+**What I did:**
+- Per Arjun, profiles come from connected sources (GitHub, resume or LinkedIn PDF, linked accounts), not typed forms. In `mobile/app/accounts.tsx` (Adam's screen, noted), removed the "About you" card (headline, experience, interests, looking for, can offer). Replaced it with one "Additional information (Optional)" multiline box. It saves via the existing `PATCH /profile/manual` as `interests_text` only, so the server extracts it like any other source. No contract change; previously saved fields stay in the DB untouched.
+- The LinkedIn note now points to uploading the LinkedIn PDF (LinkedIn is sign-in only per the product rules).
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. In the app: Profile, Edit profile, then scroll to "Additional information".
+**Next step for whoever continues:** Headline, seeking, and offering are now only as good as the resume/GitHub extraction. If headlines come out empty, have extraction fill `profiles.headline` (Alan).
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / navigation: Open to Meet is Home again, Feed is its own tab
 **Status:** done
 **What I did:**
