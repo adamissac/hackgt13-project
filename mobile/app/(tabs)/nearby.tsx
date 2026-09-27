@@ -1,6 +1,6 @@
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
@@ -39,20 +39,22 @@ export default function NearbyScreen() {
   return (
     <>
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      <View style={[styles.radarCard, { backgroundColor: c.tintSoft, borderColor: c.tint + '22' }]}>
-        <Svg width={190} height={190} style={styles.rings} pointerEvents="none">
-          {[92, 68, 44, 20].map((r, i) => (
-            <Circle key={r} cx={95} cy={95} r={r} stroke={c.tint} strokeOpacity={0.14 + i * 0.1} strokeWidth={1.5} fill={i === 3 ? c.tint : 'none'} fillOpacity={0.9} />
-          ))}
-        </Svg>
-        <Text style={[styles.radarEyebrow, { color: c.tint }]}>{scan ? '● SCANNING' : 'NEARBY'}</Text>
-        <Text style={[styles.radarTitle, { color: c.tint }]}>Find your{'\n'}matches nearby</Text>
-        <Text style={[styles.small, { color: c.ai, maxWidth: '62%' }]}>
-          {scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
-        </Text>
-        <View style={styles.radarSwitch}>
-          <Switch value={scan} onValueChange={setScan} trackColor={{ true: c.tint, false: '#C9D3EA' }} thumbColor="#FFFFFF" ios_backgroundColor="#C9D3EA" accessibilityLabel="Scan for people nearby" />
-          <Text style={{ color: c.tint, fontWeight: '700' }}>{scan ? 'On' : 'Off'}</Text>
+      <View style={styles.scanRow}>
+        <Pressable onPress={() => setScan(!scan)} accessibilityRole="switch" accessibilityState={{ checked: scan }} accessibilityLabel="Scan for people nearby" style={styles.scanWrap}>
+          <Svg width={132} height={132} style={StyleSheet.absoluteFill} pointerEvents="none">
+            {[64, 52].map((r, i) => (
+              <Circle key={r} cx={66} cy={66} r={r} stroke={c.tint} strokeOpacity={scan ? 0.35 - i * 0.12 : 0.14} strokeWidth={1.5} fill="none" />
+            ))}
+          </Svg>
+          <View style={[styles.scanButton, { backgroundColor: scan ? c.tint : c.surface, borderColor: c.tint }]}>
+            <Text style={{ color: scan ? '#FFFFFF' : c.tint, fontSize: 15, fontWeight: '800' }}>{scan ? 'ON' : 'SCAN'}</Text>
+          </View>
+        </Pressable>
+        <View style={{ flex: 1, gap: 6 }}>
+          <Text style={[styles.radarTitle, { color: c.text }]}>Find your matches <Text style={{ color: c.tint }}>nearby</Text></Text>
+          <Text style={[styles.small, { color: c.muted }]}>
+            {scan ? 'Scanning with Bluetooth. Only your matches show up. Tap to stop.' : 'Tap scan to see which of your matches are close by.'}
+          </Text>
         </View>
       </View>
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
@@ -192,11 +194,10 @@ export default function NearbyScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 20, paddingBottom: 110, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  radarCard: { borderRadius: 24, borderWidth: 1, padding: 22, gap: 8, overflow: 'hidden' },
-  rings: { position: 'absolute', right: -48, top: -40 },
-  radarEyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1.8 },
-  radarTitle: { fontSize: 28, lineHeight: 33, fontWeight: '800', letterSpacing: -0.8 },
-  radarSwitch: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
+  scanRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+  scanWrap: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
+  scanButton: { width: 84, height: 84, borderRadius: 42, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  radarTitle: { fontSize: 24, lineHeight: 29, fontWeight: '800', letterSpacing: -0.6 },
   emptyNearby: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   h1: { fontSize: 18, fontWeight: '800' },

@@ -143,10 +143,10 @@ export default function GraphScreen() {
                 { value: String(view.people.length), label: mode === 'matches' ? 'people' : 'connections' },
                 { value: String(view.topics.length), label: 'shared topics' },
                 { value: `${Math.round(Math.max(0, ...view.people.map((p) => p.score)) * 100)}%`, label: 'best match' },
-              ].map((s) => (
-                <View key={s.label} style={[styles.stat, { backgroundColor: c.tintSoft }]}>
-                  <Text style={[styles.statValue, { color: c.tint }]}>{s.value}</Text>
-                  <Text style={[styles.statLabel, { color: c.ai }]}>{s.label}</Text>
+              ].map((s, i) => (
+                <View key={s.label} style={[styles.stat, { backgroundColor: i === 0 ? c.tint : c.tintSoft }]}>
+                  <Text style={[styles.statValue, { color: i === 0 ? '#FFFFFF' : c.tint }]}>{s.value}</Text>
+                  <Text style={[styles.statLabel, { color: i === 0 ? '#C9D6F5' : c.ai }]}>{s.label}</Text>
                 </View>
               ))}
             </View>

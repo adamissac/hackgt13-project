@@ -42,17 +42,16 @@ export default function FeedScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
-      <View style={[styles.band, { backgroundColor: c.tint }]}>
-        <Text style={styles.bandEyebrow}>YOUR CIRCLE</Text>
-        <Text style={styles.bandTitle}>Stay in the loop.</Text>
-        <Text style={styles.bandBody}>The latest from people you know.</Text>
+      <View style={{ gap: 4, paddingTop: 4 }}>
+        <Text style={[styles.heading, { color: c.text }]}>Stay in the <Text style={{ color: c.tint }}>loop.</Text></Text>
+        <Text style={[styles.lead, { color: c.muted }]}>The latest from people you know.</Text>
       </View>
-      <Card style={{ marginTop: -54 }}>
-        <Pressable onPress={() => setComposing(!composing)} accessibilityRole="button" accessibilityState={{ expanded: composing }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
-          <Text style={{ flex: 1, marginRight: 12, color: c.text, fontSize: 16, fontWeight: '500' }}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
-          <Text style={{ color: c.muted, fontSize: 22 }}>{composing ? '−' : '+'}</Text>
-        </Pressable>
-        {composing && <>
+      <Pressable onPress={() => setComposing(!composing)} accessibilityRole="button" accessibilityState={{ expanded: composing }}
+        style={({ pressed }) => [styles.composePill, { backgroundColor: c.tint, opacity: pressed ? 0.85 : 1 }]}>
+        <Text style={styles.composeText}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
+        <View style={styles.composePlus}><Text style={{ color: c.tint, fontSize: 20, fontWeight: '700', lineHeight: 22 }}>{composing ? '−' : '+'}</Text></View>
+      </Pressable>
+      {composing && <Card>
         <View style={styles.kinds}>
           {(['update', 'post'] as const).map((option) => (
             <Pressable
@@ -78,8 +77,7 @@ export default function FeedScreen() {
         />
         <Button label="Share" onPress={publish} loading={posting} disabled={!body.trim()} />
         {postError && <Text style={{ color: c.danger }}>{postError}</Text>}
-        </>}
-      </Card>
+      </Card>}
 
       {feed.state.status === 'loading' && <Loading label="Loading your feed…" />}
       {feed.state.status === 'error' && <ErrorState message={feed.state.message} onRetry={feed.reload} />}
@@ -130,8 +128,9 @@ function FeedCard({ item }: { item: FeedEntry }) {
     }
   };
 
+  const summary = item.type === 'summary';
   return (
-    <Card>
+    <Card style={summary ? { backgroundColor: c.tintSoft, borderColor: c.tintSoft } : undefined}>
       <View style={styles.row}>
         <Avatar name={item.author.name} photoUrl={item.author.photo_url} />
         <View style={{ flex: 1 }}>
@@ -146,7 +145,7 @@ function FeedCard({ item }: { item: FeedEntry }) {
       {item.type === 'item' && item.talked_about.length > 0 && (
         <View style={styles.chips}>
           {item.talked_about.map((topic) => (
-            <Chip key={topic} label={topic} />
+            <Chip key={topic} label={topic} tone="tint" />
           ))}
         </View>
       )}
@@ -172,10 +171,10 @@ function FeedCard({ item }: { item: FeedEntry }) {
 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 18, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
-  band: { marginTop: -20, marginHorizontal: -20, paddingHorizontal: 24, paddingTop: 26, paddingBottom: 74, gap: 6, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
-  bandEyebrow: { color: '#B6C9FA', fontSize: 11, fontWeight: '700', letterSpacing: 1.8 },
-  bandTitle: { color: '#FFFFFF', fontSize: 32, fontWeight: '700', letterSpacing: -1 },
-  bandBody: { color: '#D3DEF2', fontSize: 15, lineHeight: 22 },
+  heading: { fontSize: 32, fontWeight: '700', letterSpacing: -1 },
+  composePill: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56, borderRadius: 28, paddingLeft: 22, paddingRight: 8 },
+  composeText: { flex: 1, color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  composePlus: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   lead: { fontSize: 15, lineHeight: 21 },
   kinds: { flexDirection: 'row', gap: 8 },
   kind: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },

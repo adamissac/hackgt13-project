@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { ConstellationMark } from '@/components/Brand';
 import { AiBadge, Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { api, type AccountsResponse, type Facet, type Interest, type InterestsResponse, type SkillProfile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -93,10 +92,7 @@ export default function ProfileScreen() {
       )}
 
       <View style={[styles.headerCard, { backgroundColor: c.surface, borderColor: c.border }]}>
-        <View style={[styles.cover, { backgroundColor: c.tint }]}>
-          <View style={styles.coverMark}><ConstellationMark color="#B6C9FA" size={120} /></View>
-        </View>
-        <View style={[styles.avatarRing, { borderColor: c.surface, backgroundColor: c.surface }]}>
+        <View style={[styles.avatarRing, { borderColor: c.tint }]}>
           <Avatar name={name} size={84} />
         </View>
         <View style={{ alignItems: 'center', gap: 6, paddingHorizontal: 20 }}>
@@ -108,13 +104,13 @@ export default function ProfileScreen() {
             <Chip label={`${sourceCount}/2 sources`} tone={sourceCount === 2 ? 'success' : 'neutral'} />
           </View>
         </View>
-        <Button label="Edit profile" variant="secondary" onPress={() => router.push('/accounts')} style={{ alignSelf: 'stretch', marginHorizontal: 20 }} />
+        <Button label="Edit profile" onPress={() => router.push('/accounts')} style={{ alignSelf: 'stretch', marginHorizontal: 20 }} />
       </View>
 
       {data && (!!data.seeking || !!data.offering) && (
         <>
           <SectionTitle>About you</SectionTitle>
-          <Card>
+          <Card style={{ borderLeftWidth: 5, borderLeftColor: c.tint }}>
             {!!data.seeking && <Field label="Looking for" value={data.seeking} />}
             {!!data.offering && <Field label="Can offer" value={data.offering} divider={!!data.seeking} />}
           </Card>
@@ -330,9 +326,7 @@ const styles = StyleSheet.create({
   container: { padding: 20, gap: 14, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   warning: { borderRadius: 12, padding: 12 },
   headerCard: { alignItems: 'center', gap: 12, paddingBottom: 20, borderRadius: 24, borderWidth: 1, overflow: 'hidden' },
-  cover: { alignSelf: 'stretch', height: 104, overflow: 'hidden' },
-  coverMark: { position: 'absolute', right: -14, top: -14, opacity: 0.35 },
-  avatarRing: { marginTop: -52, borderWidth: 4, borderRadius: 50 },
+  avatarRing: { marginTop: 22, borderWidth: 3, borderRadius: 50, padding: 3 },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },

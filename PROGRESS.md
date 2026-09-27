@@ -10,6 +10,17 @@
 **Next step for whoever continues:** On a second attendee phone, enter a printed join code on Events → Enter join code and confirm Nearby uses that event. If Expo web is stale, reload `http://localhost:8081`.
 **Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
 **Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / tabs without top blocks: blue mixed into each page
+**Status:** done
+**What I did:**
+- Per Arjun, no banner or block at the top of any tab except Events. The blue now lives in different elements. Feed: plain heading with a navy word, a solid navy "Share something" pill, AI summary cards tinted light blue, blue topic chips. Constellation: the first stat tile is solid navy (others light blue). Nearby: a round navy SCAN/ON button with radar rings replaces the card and switch (`accessibilityRole="switch"`). Profile: a navy ring around the avatar, a solid navy "Edit profile", and a navy accent stripe on "About you".
+- Styling only (Adam's feed/profile files noted). Checked every tab in the browser at phone size.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
+**Next step for whoever continues:** Keep tabs visually different from each other; Events alone keeps `TabHero`.
+**Known issues / blockers:** On web, typing /me in the address bar lands on Feed; tapping the Profile tab works. Pre-existing, not from this change.
+**Contract changes:** none
+
 ## 2026-09-26 | alan | Codex
 **Task:** Finish Claude's match explanations and make extraction less opaque
 **Status:** done (code); live deployment / phone smoke test pending
