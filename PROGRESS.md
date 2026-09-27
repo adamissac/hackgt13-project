@@ -1441,3 +1441,15 @@
 - `npm install` in `mobile/` currently needs `--legacy-peer-deps` — an unrelated peer-dependency conflict between `expo-router`'s bundled `@expo/ui` (which pulls in `vaul`/`radix-ui` for web) and the React version this Expo SDK ships. Not caused by anything BLE-related.
 
 **Contract changes:** none (`docs/schema.sql` and `docs/api.md` untouched).
+## 2026-09-27 01:00 | adam | Codex
+**Task:** AD9 — company check-in counts and loading responsiveness
+**Status:** done
+**What I did:**
+- Company home and event studio now refresh existing authorized aggregate endpoints every two seconds after the previous request completes, only while the screen is focused and app foregrounded. This picks up other phones' registrations/check-ins without reopening the screen.
+- Shared async loading now coalesces overlapping requests per hook and retains current data during manual refreshes; new dependency loads still use the loading state. Removed the artificial 250 ms delay on every demo API request.
+- Corrected demo company events to share attendee registration/check-in state, use event-specific QR payloads/codes, and derive counts rather than permanent zero placeholders.
+- Kept the displayed event QR stable during background refreshes and renewed it before expiry. Added a regression covering registration, scan, repeat scan, leave, code re-entry and unregister counts on both company views.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint lib/useAsync.ts lib/useLiveRefresh.ts lib/useOrg.ts lib/api.ts lib/demo/backend.ts scripts/demo-flow.test.ts 'app/(company)/index.tsx' 'app/(company)/event/[id].tsx' && npm run test:demo`; passed (19 demo checks). Three-platform Expo export passed before the final QR-stability refactor; typecheck and lint passed again after it.
+**Next step for whoever continues:** On two signed-in devices, keep a company's event studio open; register on the attendee phone and scan its QR. Counts should change on the next poll (roughly 2 seconds plus network time), without a loading flash. Polling lives in `mobile/lib/useLiveRefresh.ts`.
+**Known issues / blockers:** This is near-live polling, not websocket push. A real two-account/two-phone scan was not performed; demo state remains local to each device. No backend deployment or schema change is required.
+**Contract changes:** none

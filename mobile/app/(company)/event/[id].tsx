@@ -1,6 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
@@ -10,6 +10,7 @@ import { Button, Card, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { lastJoinCode, rememberJoinCode } from '@/lib/joinCodes';
 import { useAsync } from '@/lib/useAsync';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 export default function CompanyEventStudio() {
   const c = useColors();
@@ -17,7 +18,16 @@ export default function CompanyEventStudio() {
   const params = useLocalSearchParams<{ id: string; code?: string }>();
   const id = Number(params.id);
   if (params.code) rememberJoinCode(id, params.code);
-  const studio = useAsync(() => api.eventStudio(id), [id]);
+  const stableQr = useRef<{ eventId: number; join: Awaited<ReturnType<typeof api.eventStudio>>['join'] } | null>(null);
+  const studio = useAsync(async () => {
+    const data = await api.eventStudio(id);
+    // Keep the QR pattern steady while cameras scan; renew before expiry.
+    if (stableQr.current?.eventId !== id || Date.parse(stableQr.current.join.expires_at) <= Date.now() + 60_000) {
+      stableQr.current = { eventId: id, join: data.join };
+    }
+    return { ...data, join: stableQr.current.join };
+  }, [id]);
+  useLiveRefresh(studio.refresh);
   const [code, setCode] = useState<string | null>(lastJoinCode(id) ?? params.code ?? null);
   const [promo, setPromo] = useState('');
   const [busy, setBusy] = useState(false);

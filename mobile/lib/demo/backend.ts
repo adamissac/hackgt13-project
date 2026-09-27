@@ -257,7 +257,7 @@ export function listEvents() {
 let demoCompany: { org: import('../api').CompanyOrg; events: import('../api').CompanyEventStudio[] } | null = null;
 
 export function myOrg() {
-  if (demoCompany) return { account: 'company' as const, org: demoCompany.org, events: demoCompany.events };
+  if (demoCompany) return { account: 'company' as const, org: demoCompany.org, events: demoCompany.events.map(withEventCounts) };
   return { account: 'person' as const, org: null, events: [] };
 }
 export function companySignup(body: import('../api').CompanySignup) {
@@ -292,13 +292,18 @@ export function createOrgEvent(body: { name: string; location?: string; descript
     ends_at: null,
     description: body.description ?? '',
     promo: body.promo ?? '',
-    join_code: 'ABC-123',
+    join_code: `EVT-${800 + demoCompany.events.length}`,
     registered: 0,
     checked_in: 0,
   };
   demoCompany.events.unshift(event);
+  DEMO_LIVE_EVENTS.push({ ...event, host: demoCompany.org.name, registered: false, checked_in: false, mine: true });
   emitChange('profile');
   return { event };
+}
+function withEventCounts(event: import('../api').CompanyEventStudio) {
+  const attendee = DEMO_LIVE_EVENTS.find(e => e.id === event.id);
+  return { ...event, registered: Number(Boolean(attendee?.registered)), checked_in: Number(Boolean(attendee?.checked_in)) };
 }
 export function eventStudio(eventId: number) {
   const event = demoCompany?.events.find((e) => e.id === eventId) ?? {
@@ -306,8 +311,8 @@ export function eventStudio(eventId: number) {
     description: '', promo: '', join_code: 'ABC-123', registered: 0, checked_in: 0,
   };
   return {
-    event,
-    join: { payload: 'demo', signature: 'demo', expires_at: new Date().toISOString(), qr_payload: 'demo.demo' },
+    event: withEventCounts(event),
+    join: eventJoinToken(eventId),
     posts: [] as { id: number; body: string; created_at: string }[],
   };
 }
@@ -322,8 +327,11 @@ export function promoteEvent(eventId: number, body: string) {
   if (ev) ev.promo = body;
   return { post: { id: 1, body, created_at: new Date().toISOString() } };
 }
-export function enterEventCode(_code: string) {
-  return { event_id: DEMO_EVENT.id, name: DEMO_EVENT.name };
+export function enterEventCode(code: string) {
+  const normalized = code.replace(/[^a-z0-9]/gi, '').toUpperCase();
+  const event = demoCompany?.events.find(e => e.join_code?.replace(/[^a-z0-9]/gi, '').toUpperCase() === normalized);
+  if (!event) throw new Error('invalid join code');
+  return joinEvent({ payload: `demo-event-${event.id}`, signature: 'demo' });
 }
 export function eventUpdates(eventId: number) {
   const ev = DEMO_LIVE_EVENTS.find((e) => e.id === eventId);

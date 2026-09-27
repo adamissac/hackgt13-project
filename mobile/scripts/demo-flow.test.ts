@@ -182,4 +182,30 @@ step('Feed: one GitHub card per person saying what they are working on and what 
   assert.ok(post && post.type === 'item' && post.details === null);
 });
 
+step('Company counts follow registration, QR check-in, duplicate scans and leaving', () => {
+  demo.companySignup({ company_name: 'Count test', contact_name: 'Organizer', contact_email: 'test@example.test', password: 'demo-only' });
+  const { event } = demo.createOrgEvent({ name: 'QR count test' });
+  const counts = () => {
+    const studio = demo.eventStudio(event.id).event;
+    const home = demo.myOrg().events.find(e => e.id === event.id)!;
+    assert.equal(home.registered, studio.registered);
+    assert.equal(home.checked_in, studio.checked_in);
+    return [studio.registered, studio.checked_in];
+  };
+  assert.deepEqual(counts(), [0, 0]);
+  const token = demo.eventStudio(event.id).join;
+  assert.throws(() => demo.joinEvent(token), /register/);
+  demo.registerEvent(event.id);
+  assert.deepEqual(counts(), [1, 0]);
+  demo.joinEvent(token);
+  demo.joinEvent(token);
+  assert.deepEqual(counts(), [1, 1]);
+  demo.leaveEvent(event.id);
+  assert.deepEqual(counts(), [1, 0]);
+  demo.enterEventCode(event.join_code!);
+  assert.deepEqual(counts(), [1, 1]);
+  demo.unregisterEvent(event.id);
+  assert.deepEqual(counts(), [0, 0]);
+});
+
 console.log(`\n${passed} demo-flow checks passed`);

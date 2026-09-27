@@ -441,19 +441,7 @@ async function rawRequest<T>(method: string, path: string, body?: unknown | Form
 // surface exactly like server errors, so screens exercise the same loading/error paths.
 function call<T>(mock: () => T | Promise<T>, real: () => Promise<T>): Promise<T> {
   if (!env.useMocks) return real();
-  return demoReady().then(
-    () =>
-      new Promise<T>((resolve, reject) =>
-        // Small delay so loading states are visible in demo mode.
-        setTimeout(() => {
-          try {
-            Promise.resolve(mock()).then((value) => resolve(structuredClone(value)), reject);
-          } catch (e) {
-            reject(e);
-          }
-        }, 250),
-      ),
-  );
+  return demoReady().then(mock).then(value => structuredClone(value));
 }
 
 // Suggestions this phone said yes to. The server never tells us the other side's answer, so this is

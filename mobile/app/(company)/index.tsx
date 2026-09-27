@@ -5,11 +5,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorState, Loading } from '@/components/States';
 import { Button, Card, SectionTitle, useColors } from '@/components/ui';
 import { useOrg } from '@/lib/useOrg';
+import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 export default function CompanyHome() {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const { loading, error, org, events, reload } = useOrg();
+  const { loading, error, org, events, reload, refresh } = useOrg();
+  useLiveRefresh(refresh);
 
   if (loading) return <Loading label="Loading your company…" />;
   if (error) return <ErrorState message={error} onRetry={reload} />;
