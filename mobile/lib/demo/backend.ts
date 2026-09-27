@@ -63,6 +63,8 @@ interface State {
   connectedAt: Record<string, string>;
   myPoint: { lat: number; lng: number } | null;
   nextId: number;
+  /** Registration / check-in per company event, kept across reloads (so a demo event session survives a restart). */
+  liveEvents: Record<number, { registered: boolean; checked_in: boolean }>;
 }
 
 const fresh = (): State => ({
@@ -91,6 +93,7 @@ const fresh = (): State => ({
   connectedAt: {},
   myPoint: null,
   nextId: 100,
+  liveEvents: {},
 });
 
 let state: State = fresh();
@@ -252,8 +255,19 @@ const DEMO_LIVE_EVENTS: LiveEvent[] = [
 ];
 
 export function listEvents() {
-  return { events: DEMO_LIVE_EVENTS };
+  return { events: DEMO_LIVE_EVENTS.map((e) => ({ ...e, ...state.liveEvents[e.id] })) };
 }
+function patchLive(eventId: number, patch: Partial<{ registered: boolean; checked_in: boolean }>) {
+  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
+  if (!e) return;
+  Object.assign(e, patch);
+  state.liveEvents = { ...state.liveEvents, [eventId]: { registered: e.registered, checked_in: e.checked_in } };
+  save();
+}
+const liveOf = (eventId: number) => {
+  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
+  return e ? { ...e, ...state.liveEvents[eventId] } : undefined;
+};
 let demoCompany: { org: import('../api').CompanyOrg; events: import('../api').CompanyEventStudio[] } | null = null;
 
 export function myOrg() {
@@ -367,22 +381,16 @@ export function createEvent(body: { name: string; location?: string }) {
   return { event };
 }
 export function registerEvent(eventId: number) {
-  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
   // Registering is not checking in: that needs the organizer's QR at the venue (joinEvent).
-  if (e) e.registered = true;
+  patchLive(eventId, { registered: true });
   return { ok: true as const };
 }
 export function leaveEvent(eventId: number) {
-  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
-  if (e) e.checked_in = false; // registration stays: scan back in later
+  patchLive(eventId, { checked_in: false }); // registration stays: scan back in later
   return { ok: true as const };
 }
 export function unregisterEvent(eventId: number) {
-  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
-  if (e) {
-    e.registered = false;
-    e.checked_in = false;
-  }
+  patchLive(eventId, { registered: false, checked_in: false });
   return { ok: true as const };
 }
 export function eventJoinToken(eventId: number = DEMO_EVENT.id) {
@@ -398,10 +406,10 @@ export function eventJoinToken(eventId: number = DEMO_EVENT.id) {
 }
 export function joinEvent(body: { payload: string; signature: string }) {
   const id = Number(body.payload.replace('demo-event-', ''));
-  const e = DEMO_LIVE_EVENTS.find((x) => x.id === id);
+  const e = liveOf(id);
   if (!e || body.signature !== 'demo') throw new Error('invalid_signature');
   if (!e.registered) throw new Error('register for this event first');
-  e.checked_in = true;
+  patchLive(id, { checked_in: true });
   return { event_id: e.id, name: e.name };
 }
 

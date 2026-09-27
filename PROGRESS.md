@@ -14,6 +14,19 @@
 
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / Feed is always your connections; stale "inside an event" sessions clear themselves
+**Status:** done
+**What I did:**
+- Per Arjun, the Feed is not event-scoped: `app/(tabs)/feed.tsx` always calls `api.feed()` (connections' posts only; empty with no connections). The server's optional `/feed?event_id` stays but the app no longer sends it.
+- Bug: a saved event session (AsyncStorage `fc.event-session`, e.g. left over from demo mode or another account) made Feed show "check in to this event first". `components/EventBar.tsx` now checks `GET /events` on mount; if you're not checked in to that event, it clears the session and returns to HackGT without calling leave.
+- Demo backend keeps company-event registration and check-in in its saved state (`state.liveEvents`), so a real demo check-in survives reloads while stale ones clear.
+- Browser-verified: stale session cleared on reload, Feed has no error; real demo check-in keeps the bar after reload and Feed loads.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`
+**Next step for whoever continues:** none for this.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / inside an event, Feed and Constellation "My network" show only people at the event
 **Status:** done (live needs a Railway redeploy)
 **What I did:**

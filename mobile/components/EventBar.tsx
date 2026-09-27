@@ -7,7 +7,10 @@ import { ActivityIndicator, Alert, Platform, Pressable, StyleSheet, Text, View }
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { enableEventMode, subscribeEventMode } from '@/features/ble/eventMode';
-import { leaveEventSession, type EventSession } from '@/lib/eventSession';
+import { api } from '@/lib/api';
+import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { setCurrentEventId } from '@/lib/currentEvent';
+import { clearEventSession, leaveEventSession, type EventSession } from '@/lib/eventSession';
 
 import { useColors } from './ui';
 
@@ -38,6 +41,21 @@ export function EventBar({ session }: { session: EventSession }) {
   }, [session.endsAt]);
 
   useEffect(() => subscribeEventMode((s) => setRadio({ on: s.on, error: s.error })), []);
+  // The saved session can be stale (you left on another device, signed into another account, or tried demo mode).
+  // If the server says you're not checked in to this event, quietly go back to the normal app.
+  useEffect(() => {
+    let alive = true;
+    api.listEvents()
+      .then((r) => {
+        if (!alive || r.events.find((e) => e.id === session.eventId)?.checked_in) return;
+        clearEventSession();
+        void setCurrentEventId(HACKGT_EVENT_ID);
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [session.eventId]);
   // Scanning in was consent: keep Event Mode on for the whole session (resumes after a restart).
   useEffect(() => {
     if (!ended) void enableEventMode().catch(() => undefined);
