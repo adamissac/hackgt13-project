@@ -75,7 +75,32 @@
       "target": "u_00000000-0000-0000-0000-000000000101",
       "kind": "match",
       "weight": 0.382,
-      "facet": "personal"
+      "facet": "personal",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and pytorch. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.1963,
+            "share": 0.2586
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.164,
+            "share": 0.2161
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.142,
+            "share": 0.187
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "pytorch"
+        ]
+      }
     },
     {
       "source": "u_00000000-0000-0000-0000-000000000101",
@@ -106,7 +131,32 @@
       "target": "u_00000000-0000-0000-0000-000000000102",
       "kind": "match",
       "weight": 0.3379,
-      "facet": "career"
+      "facet": "career",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and pytorch. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.1963,
+            "share": 0.2586
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.164,
+            "share": 0.2161
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.142,
+            "share": 0.187
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "pytorch"
+        ]
+      }
     },
     {
       "source": "u_00000000-0000-0000-0000-000000000102",
@@ -137,7 +187,32 @@
       "target": "u_00000000-0000-0000-0000-000000000103",
       "kind": "match",
       "weight": 0.2192,
-      "facet": "technical"
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and pytorch. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.1963,
+            "share": 0.2586
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.164,
+            "share": 0.2161
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.142,
+            "share": 0.187
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "pytorch"
+        ]
+      }
     },
     {
       "source": "u_00000000-0000-0000-0000-000000000103",

@@ -260,12 +260,26 @@ Connection Graph data (MASTER_SPEC 3.12). Full sample: `docs/mocks/graph.json`.
     {"id": "t_42", "type": "topic", "label": "reinforcement learning", "facet": "technical"}
   ],
   "edges": [
-    {"source": "me", "target": "u_<uuid>", "kind": "match", "weight": 0.74, "facet": "technical"},
+    {"source": "me", "target": "u_<uuid>", "kind": "match", "weight": 0.74, "facet": "technical",
+     "explanation": {
+       "summary": "You both work on reinforcement learning and pytorch. Your strongest overlap is technical.",
+       "basis": "v1",
+       "factors": [ {"label": "technical overlap", "contribution": 0.196, "share": 0.259} ],
+       "shared_topics": ["reinforcement learning", "pytorch"]}},
     {"source": "u_<uuid>", "target": "t_42", "kind": "has_topic", "weight": 0.9},
     {"source": "me", "target": "t_42", "kind": "has_topic", "weight": 0.8}
   ]
 }
 ```
+`explanation` is on `match` and `connection` edges only ("why you matched", MASTER_SPEC 6.9). It is the
+match score decomposed into the features the ranker actually used, so the parts sum back to the score:
+`factors` is the top 3 by `contribution` (weight x feature value), `share` is that factor's fraction of the
+positive total — enough to draw a small bar. `basis` says where the numbers came from: `v1` (hand-tuned
+linear score, exact), `lr` (logistic ranker, exact in the logit), or `v1_proxy` (a tree ranker is serving and
+is not linearly decomposable, so the bars are indicative — label them as approximate). `summary` is
+template-built from those factors and the shared topics; it never names an interest the two do not share.
+Topic edges carry no `explanation`. Evidence lines are not repeated here — they are on
+`GET /matches/{id}/quick-profile` and `expand()`.
 - `matches` (default): me, my allowed matches at the event (must be checked in; `event_id` defaults to my latest check-in),
   and topics we share (top 3 per person). `depth=2` also pulls in allowed people through those topics.
 - `network`: me, my connections (`kind: "connection"`, `connected_at` set, for the timeline slider), shared topics.
