@@ -1,3 +1,16 @@
+## 2026-09-26 21:10 | adam | Codex
+**Task:** AD9 / AK5 — Nearby cleanup and reciprocal Maps navigation
+**Status:** done in code; backend test environment unavailable locally
+**What I did:**
+- Removed the nearby proximity rings and band filters. The map/list now show all eligible nearby matches in one organized surface; decorative pin positions never represent a person’s real direction or location.
+- Added a Find action only for a mutual match. It enters the existing 30-minute meetup flow rather than exposing coordinates from Nearby.
+- Added an external walking-navigation button only after the viewer and the other matched person have both started temporary location sharing. The API now withholds `their_location` until both shares exist.
+- Added a pure navigation-URL test and updated the location API test and contract documentation for reciprocal sharing.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/nearby.tsx' 'app/meetup/[id].tsx' features/nearby/NearbyMap.tsx features/nearby/NearbyMap.web.tsx features/location/navigation.ts && node --experimental-strip-types --test features/location/navigation.test.mjs features/nearby/mapLayout.test.mjs`; mobile checks pass. Backend: `cd ml && .venv/bin/python -m pytest -q tests/test_location.py` when the ML virtualenv is installed.
+**Next step for whoever continues:** On two physical phones, both accept the same suggestion, both press Find → Share my location, then confirm Navigate to opens walking Maps; confirm it is absent if either person has not shared.
+**Known issues / blockers:** This checkout lacks `ml/.venv` and system Python lacks pytest, so the new backend test could not run locally. Expo preview process is local only; native Maps/Bluetooth needs devices.
+**Contract changes:** `docs/api.md` §37: `their_location` is now explicitly reciprocal; external navigation is allowed only in the reciprocal share window.
+
 ## 2026-09-26 20:49 | adam | Codex
 **Task:** AD9 / AR5 — user-requested lightweight 3D atom constellation
 **Status:** done

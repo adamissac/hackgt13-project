@@ -23,13 +23,16 @@ def rows(db, sid):
     return db.fetchone("select count(*) as n from location_shares where suggestion_id = %s", (sid,))["n"]
 
 
-def test_share_and_read_other_person(dbclient, db, meetup):
+def test_location_is_reciprocal_after_both_people_share(dbclient, db, meetup):
     sid, a, b = meetup
     r = dbclient.post(f"/location-shares/{sid}", headers=auth(a), json=HERE)
     assert r.status_code == 200 and r.json()["sharing"] is True
     seen = dbclient.get(f"/location-shares/{sid}", headers=auth(b)).json()
     assert seen["other"] == {"user_id": a, "name": "Ana Diaz"}
-    assert seen["their_location"]["lat"] == HERE["lat"] and seen["sharing"] is False
+    assert seen["their_location"] is None and seen["sharing"] is False
+    dbclient.post(f"/location-shares/{sid}", headers=auth(b), json=HERE)
+    seen = dbclient.get(f"/location-shares/{sid}", headers=auth(b)).json()
+    assert seen["their_location"]["lat"] == HERE["lat"] and seen["sharing"] is True
     # A doesn't get their own point back as "theirs"
     assert dbclient.get(f"/location-shares/{sid}", headers=auth(a)).json()["their_location"] is None
 

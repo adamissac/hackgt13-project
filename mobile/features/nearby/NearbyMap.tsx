@@ -5,12 +5,12 @@
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import MapView, { Circle, Marker, type Region } from 'react-native-maps';
+import MapView, { Marker, type Region } from 'react-native-maps';
 
 import { useColors } from '@/components/ui';
 import type { Peer } from '@/features/ble';
 
-import { BAND_METERS, BANDS, offsetMeters, bandAngle } from './geo';
+import { offsetMeters, peerAngle } from './geo';
 
 const FALLBACK = { latitude: 33.7756, longitude: -84.3963 }; // Georgia Tech, if location is off
 
@@ -59,18 +59,10 @@ export function NearbyMap({ peers, selectedId, onSelect, expanded = false }: { p
         showsPointsOfInterests={false}
         showsBuildings={false}
         onPress={() => onSelect(null)}>
-        {BANDS.map((b, i) => (
-          <Circle
-            key={b}
-            center={center}
-            radius={BAND_METERS[i]}
-            strokeColor={c.tint}
-            strokeWidth={1.5}
-            fillColor={i === 0 ? 'rgba(110,120,135,0.10)' : 'rgba(110,120,135,0.03)'}
-          />
-        ))}
         {peers.map((p) => {
-          const pos = offsetMeters(center, bandAngle(p, peers), BAND_METERS[BANDS.indexOf(p.band)] * 0.92);
+          // This gives each eligible nearby match a tap target without implying
+          // their direction or position. Exact coordinates never enter Nearby.
+          const pos = offsetMeters(center, peerAngle(p.user_id), 18 + (peers.indexOf(p) % 4) * 7);
           const sel = p.user_id === selectedId;
           return (
             <Marker key={`${p.user_id}-${sel}`} coordinate={pos} onPress={(e) => { e.stopPropagation(); onSelect(p.user_id); }} tracksViewChanges={false} zIndex={sel ? 10 : 1}>

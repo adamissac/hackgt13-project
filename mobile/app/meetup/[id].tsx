@@ -1,12 +1,13 @@
 import * as Location from 'expo-location';
 import { Stack, router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, firstName, useColors } from '@/components/ui';
 import { arrowDeg, bearingDeg, compassWord, distanceBand, distanceM, type LatLng } from '@/features/location/geo';
+import { meetupMapsUrl } from '@/features/location/navigation';
 import { api, type LocationShareState } from '@/lib/api';
 import { env } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
@@ -203,6 +204,13 @@ export default function MeetupScreen() {
       {band?.close ? (
         <Button label="Found them? Verify with QR" onPress={() => router.push('/verify')} />
       ) : null}
+      {phase === 'sharing' && them ? (
+        <Button
+          label={`Navigate to ${first}`}
+          variant="secondary"
+          onPress={() => { void Linking.openURL(meetupMapsUrl(them)).catch(() => setError('Could not open Maps.')); }}
+        />
+      ) : null}
       {info && (
         <Button
           label={`Message ${first}`}
@@ -225,7 +233,7 @@ export default function MeetupScreen() {
         />
       )}
       <Text style={[styles.small, { color: c.muted, textAlign: 'center' }]}>
-        Only {first} sees your location, only as a direction and rough distance. It&apos;s deleted when sharing ends.
+        Maps is available only after you both chose this meetup and both started temporary sharing. Location is deleted when sharing ends.
       </Text>
     </ScrollView>
   );

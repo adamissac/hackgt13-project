@@ -421,7 +421,8 @@ Errors: same as resolve, plus `self_invite` (400).
 Only between the two people in a `matched` suggestion, while both are Open to Meet, until they meet (any verified
 conversation after the match), for at most 30 minutes, and only within 2 hours of the match. Every "not allowed"
 reason returns the same `410 {"error": "sharing ended"}` and deletes both rows. The other phone can also subscribe
-to its `location_shares` row through Supabase Realtime (RLS: only the other participant reads).
+to its `location_shares` row through Supabase Realtime (RLS: only the other participant with an active temporary
+share reads).
 
 `POST /location-shares/{suggestion_id}` <- `{ "lat": 33.7756, "lng": -84.3963 }` (every ~10 s while sharing)
 -> `{ "sharing": true, "expires_at": "2026-09-26T15:34:05Z" }` (one shared 30-minute window; updates never extend it)
@@ -432,7 +433,8 @@ to its `location_shares` row through Supabase Realtime (RLS: only the other part
   "expires_at": "2026-09-26T15:34:05Z",
   "their_location": { "lat": 33.7760, "lng": -84.3970, "updated_at": "2026-09-26T15:10:02Z" } }
 ```
-`their_location` is null until the other person shares. The app shows only a rough distance band and an arrow.
+`their_location` is null until both people have opted into temporary sharing. The app can show a rough distance band,
+an arrow, and an external walking-navigation action only during that reciprocal sharing window.
 
 `DELETE /location-shares/{suggestion_id}` -> `{ "sharing": false }` (ends sharing for both)
 

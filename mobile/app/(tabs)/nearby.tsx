@@ -8,17 +8,17 @@ import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from 
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
 import { EventModeCard } from '@/features/ble/EventModeCard';
-import { BAND_HINT, BANDS, mapPreview } from '@/features/nearby/geo';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
+import { api } from '@/lib/api';
+import { useAsync } from '@/lib/useAsync';
 
-// Nearby (MASTER_SPEC 3.4). Map layout by Arjun; scanning, bands, Event Mode and QR are Akshar's
-// (features/ble). Distances are bands only, never meters, and direction is never shown.
+// Nearby (MASTER_SPEC 3.4). Bluetooth decides eligibility; this browse map never reveals
+// a match's actual position. Mutual temporary meetup sharing is handled on /meetup/[id].
 export default function NearbyScreen() {
   const c = useColors();
   const [scan, setScan] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const [band, setBand] = useState<string>('All');
   const insets = useSafeAreaInsets();
   const { scanning, peers: heard, radioError, fetchError } = useProximity(scan);
   // Without the Bluetooth radio (Expo Go, radio off, permission denied) nobody can be placed as
@@ -27,18 +27,13 @@ export default function NearbyScreen() {
   const radioNote = radioError === BLE_UNAVAILABLE_MESSAGE
     ? 'Bluetooth isn’t available in Expo Go, so people nearby can’t be detected here. The map still shows where you are. Just met someone? Verify with a QR code below.'
     : radioError;
+  const meetups = useAsync(() => api.meetups(), []);
   const selected = peers.find((p) => p.user_id === selectedId) ?? null;
-  const filtered = peers.filter(p => band === 'All' || p.band === band);
-  const preview = mapPreview(filtered, selectedId);
-  const filters = (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
-      {['All', ...BANDS].map(value => <Pressable key={value} onPress={() => { setBand(value); setSelectedId(null); }} accessibilityRole="button" accessibilityState={{ selected: value === band }}
-        style={{ paddingHorizontal: 14, minHeight: 44, justifyContent: 'center', borderRadius: 22, backgroundColor: value === band ? c.tint : c.surfaceAlt }}>
-        <Text style={{ color: value === band ? c.onTint : c.text, fontWeight: '600' }}>{value}</Text>
-      </Pressable>)}
-    </ScrollView>
-  );
-  const mapNote = radioError ? 'The blue dot is you. Your location stays on this phone.' : `${preview.length} of ${filtered.length} matches on the map. ${preview.length < filtered.length ? 'Select anyone from the list to show them. ' : ''}Approximate distance, not actual direction.`;
+  const meetupByUser = new Map((meetups.state.status === 'ready' ? meetups.state.data.meetups : []).map((m) => [m.other.user_id, m]));
+  const selectedMeetup = selected ? meetupByUser.get(selected.user_id) : undefined;
+  const mapNote = radioError
+    ? 'The blue dot is you. Your location stays on this phone.'
+    : `${peers.length} nearby matches shown. Pin placement is for browsing only, never someone’s real-world direction.`;
 
   return (
     <>
@@ -66,8 +61,8 @@ export default function NearbyScreen() {
               <Text style={[styles.h2, { color: c.text }]}>Bluetooth is off</Text>
               <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text>
             </Card>
-          ) : filters}
-          {!expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} />}
+          ) : null}
+          {!expanded && <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} />}
           <Text style={[styles.small, { color: c.muted }]}>
             {mapNote}
           </Text>
@@ -81,8 +76,7 @@ export default function NearbyScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.h2, { color: c.text }]}>{selected.name}</Text>
                   <Text style={[styles.small, { color: c.muted }]}>
-                    {selected.band}: {BAND_HINT[selected.band]}
-                    {selected.highlight ? ' · top match' : ''}
+                    Nearby match{selected.highlight ? ' · top match' : ''}
                   </Text>
                 </View>
                 <Pressable onPress={() => setSelectedId(null)} hitSlop={12} accessibilityLabel="Close">
@@ -97,23 +91,20 @@ export default function NearbyScreen() {
                 </View>
               )}
               <Button label="See profile + icebreakers" onPress={() => router.push(`/match/${selected.user_id}`)} />
+              {selectedMeetup && <Button label={`Find ${(selected.name || 'match').split(' ')[0]}`} variant="secondary" onPress={() => router.push({ pathname: '/meetup/[id]', params: { id: String(selectedMeetup.suggestion_id) } })} />}
             </Card>
           )}
 
-          {peers.length > 0 &&
-            BANDS.map((band) => {
-              const inBand = filtered.filter((p) => p.band === band);
-              if (!inBand.length) return null;
-              return (
-                <View key={band} style={{ gap: 8 }}>
-                  <SectionTitle>{`${band} · ${BAND_HINT[band]}`}</SectionTitle>
+          {peers.length > 0 && (
+                <View style={{ gap: 8 }}>
+                  <SectionTitle>Everyone nearby</SectionTitle>
                   <Card style={{ paddingVertical: 4 }}>
-                    {inBand.map((p, i) => (
+                    {peers.map((p, i) => (
                       <Pressable
                         key={p.user_id}
                         onPress={() => setSelectedId(p.user_id)}
                         accessibilityRole="button"
-                        style={[styles.row, i < inBand.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }]}>
+                        style={[styles.row, i < peers.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }]}>
                         <Avatar name={p.name} size={36} />
                         <View style={{ flex: 1 }}>
                           <Text style={[styles.rowName, { color: c.text }]}>
@@ -128,8 +119,7 @@ export default function NearbyScreen() {
                     ))}
                   </Card>
                 </View>
-              );
-            })}
+          )}
         </>
       ) : (
         <View style={styles.emptyNearby}>
@@ -163,20 +153,21 @@ export default function NearbyScreen() {
             </View>
             <Button label="Done" variant="secondary" onPress={() => setExpanded(false)} />
           </View>
-          {filters}
+          <Text style={[styles.small, { color: c.muted }]}>All nearby matches</Text>
         </View>
-        {expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} expanded />}
+        {expanded && <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} expanded />}
         <View style={{ padding: 16, gap: 10 }}>
           <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
           {radioNote ? <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text> : fetchError ? <Text style={[styles.small, { color: c.danger }]}>{fetchError}</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {filtered.map(p => <Pressable key={p.user_id} onPress={() => setSelectedId(p.user_id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === p.user_id }}
+            {peers.map(p => <Pressable key={p.user_id} onPress={() => setSelectedId(p.user_id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === p.user_id }}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: selectedId === p.user_id ? c.tint : c.border, backgroundColor: c.surface }}>
               <Avatar name={p.name} size={32} />
               <Text style={{ color: c.text }}>{p.name}</Text>
             </Pressable>)}
           </ScrollView>
           {selected && <Button label={`View ${(selected.name || 'match').split(' ')[0]}’s profile →`} onPress={() => { setExpanded(false); router.push(`/match/${selected.user_id}`); }} />}
+          {selected && selectedMeetup && <Button label={`Find ${(selected.name || 'match').split(' ')[0]}`} variant="secondary" onPress={() => { setExpanded(false); router.push({ pathname: '/meetup/[id]', params: { id: String(selectedMeetup.suggestion_id) } }); }} />}
         </View>
       </View>
     </Modal>

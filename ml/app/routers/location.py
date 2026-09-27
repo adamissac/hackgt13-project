@@ -102,8 +102,10 @@ def read(suggestion_id: int, user: User = Depends(current_user)):
         "other": {"user_id": other_id, "name": (name or {}).get("name")},
         "sharing": mine is not None,
         "expires_at": _iso(mine["expires_at"] if mine else theirs["expires_at"] if theirs else None),
+        # Exact coordinates are reciprocal: a matched person must actively share
+        # their own location before this response ever includes the other's point.
         "their_location": ({"lat": theirs["lat"], "lng": theirs["lng"], "updated_at": _iso(theirs["updated_at"])}
-                           if theirs else None),
+                           if mine and theirs else None),
     }
 
 

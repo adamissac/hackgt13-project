@@ -41,6 +41,7 @@ insert into chats (id, user_a, user_b, origin) values (900, '00000000-0000-0000-
 insert into messages (chat_id, sender_id, body) values (900, '00000000-0000-0000-0000-00000000000b', 'hi');
 insert into suggestions (id, user_a, user_b, status) values (901, '00000000-0000-0000-0000-00000000000b', '00000000-0000-0000-0000-00000000000c', 'matched');
 insert into location_shares (suggestion_id, user_id, lat, lng, expires_at) values (901, '00000000-0000-0000-0000-00000000000b', 33.77, -84.39, now() + interval '30 minutes');
+insert into location_shares (suggestion_id, user_id, lat, lng, expires_at) values (901, '00000000-0000-0000-0000-00000000000c', 33.78, -84.40, now() + interval '30 minutes');
 insert into storage.objects (bucket_id, name) values ('resumes', '00000000-0000-0000-0000-00000000000b/resume.pdf');
 insert into push_tokens (user_id, token, platform) values ('00000000-0000-0000-0000-00000000000b', 'ExponentPushToken[b]', 'ios');
 
@@ -72,11 +73,11 @@ begin
   insert into push_tokens (user_id, token, platform) values ('00000000-0000-0000-0000-00000000000a', 'ExponentPushToken[a]', 'android');
 end $$;
 
--- As user C (B's chat partner and match): sees the shared chat and B's meetup location, not B's notifications.
+-- As user C (B's chat partner and match): after C also opts in, sees B's meetup location, not B's notifications.
 select set_config('request.jwt.claim.sub', '00000000-0000-0000-0000-00000000000c', false);
 do $$ begin
   if (select count(*) from messages) <> 1 then raise exception 'participant C cannot read the chat'; end if;
-  if (select count(*) from location_shares) <> 1 then raise exception 'matched participant C cannot read B''s location'; end if;
+  if (select count(*) from location_shares) <> 1 then raise exception 'reciprocally sharing participant C cannot read B''s location'; end if;
   if (select count(*) from notifications) <> 0 then raise exception 'C can see B''s notifications'; end if;
 end $$;
 
