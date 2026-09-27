@@ -1,1567 +1,2306 @@
 {
- "mode": "matches",
- "event_id": 1,
- "self_id": "me",
- "generated_at": "2026-09-26T12:00:00-04:00",
- "synthetic": true,
- "nodes": [
-  {
-   "id": "me",
-   "type": "self",
-   "label": "You"
-  },
-  {
-   "id": "t_127",
-   "type": "topic",
-   "label": "reinforcement learning",
-   "facet": "technical",
-   "idf": 2.66
-  },
-  {
-   "id": "t_118",
-   "type": "topic",
-   "label": "quantitative research",
-   "facet": "career",
-   "idf": 2.53
-  },
-  {
-   "id": "t_158",
-   "type": "topic",
-   "label": "time series analysis",
-   "facet": "technical",
-   "idf": 3.51
-  },
-  {
-   "id": "t_116",
-   "type": "topic",
-   "label": "pytorch",
-   "facet": "technical",
-   "idf": 3.51
-  },
-  {
-   "id": "t_84",
-   "type": "topic",
-   "label": "mathematics",
-   "facet": "academic",
-   "idf": 1.84
-  },
-  {
-   "id": "t_132",
-   "type": "topic",
-   "label": "rock climbing",
-   "facet": "personal",
-   "idf": 2.13
-  },
-  {
-   "id": "t_115",
-   "type": "topic",
-   "label": "python",
-   "facet": "technical",
-   "idf": 1.35
-  },
-  {
-   "id": "t_6",
-   "type": "topic",
-   "label": "ai research",
-   "facet": "career",
-   "idf": 2.21
-  },
-  {
-   "id": "t_19",
-   "type": "topic",
-   "label": "chess",
-   "facet": "personal",
-   "idf": 2.53
-  },
-  {
-   "id": "u_028",
-   "type": "person",
-   "label": "Tara",
-   "name": "Tara A.",
-   "role": "student",
-   "score": 0.785,
-   "highlight": true,
-   "open_to_meet": true,
-   "cluster": 32,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "pytorch",
-   "why": [
-    "pytorch",
-    "reinforcement learning",
-    "quantitative research"
-   ],
-   "topics": [
-    "reward shaping",
-    "computer science",
-    "reinforcement learning",
-    "quantitative research",
-    "pytorch",
-    "poker",
-    "ai research",
-    "multi-agent systems"
-   ],
-   "shared_count": 4,
-   "rank": 1,
-   "photo_url": null
-  },
-  {
-   "id": "u_049",
-   "type": "person",
-   "label": "Sofia",
-   "name": "Sofia J.",
-   "role": "student",
-   "score": 0.781,
-   "highlight": true,
-   "open_to_meet": true,
-   "cluster": 32,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "time series analysis",
-   "why": [
-    "time series analysis",
-    "reinforcement learning",
-    "quantitative research"
-   ],
-   "topics": [
-    "backtesting",
-    "reinforcement learning",
-    "mathematics",
-    "video games",
-    "time series analysis",
-    "quantitative research",
-    "trading",
-    "basketball"
-   ],
-   "shared_count": 4,
-   "rank": 2,
-   "photo_url": null
-  },
-  {
-   "id": "u_003",
-   "type": "person",
-   "label": "Lea",
-   "name": "Lea R.",
-   "role": "student",
-   "score": 0.52,
-   "highlight": true,
-   "open_to_meet": false,
-   "cluster": 32,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "quantitative research",
-    "mathematics"
-   ],
-   "topics": [
-    "multi-agent systems",
-    "mathematics",
-    "reinforcement learning",
-    "game theory",
-    "quantitative research",
-    "formula 1",
-    "salsa dancing"
-   ],
-   "shared_count": 3,
-   "rank": 3,
-   "photo_url": null
-  },
-  {
-   "id": "u_082",
-   "type": "person",
-   "label": "Aisha",
-   "name": "Aisha M.",
-   "role": "student",
-   "score": 0.374,
-   "highlight": true,
-   "open_to_meet": true,
-   "cluster": 20,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "quantitative research",
-   "why": [
-    "quantitative research",
-    "mathematics",
-    "python"
-   ],
-   "topics": [
-    "trading",
-    "mathematics",
-    "fastapi",
-    "python",
-    "openai",
-    "llm apps",
-    "jazz",
-    "quantitative finance"
-   ],
-   "shared_count": 3,
-   "rank": 4,
-   "photo_url": null
-  },
-  {
-   "id": "u_059",
-   "type": "person",
-   "label": "Marcus",
-   "name": "Marcus G.",
-   "role": "student",
-   "score": 0.356,
-   "highlight": true,
-   "open_to_meet": true,
-   "cluster": 24,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "mathematics",
-    "python"
-   ],
-   "topics": [
-    "raspberry pi",
-    "supabase",
-    "iot",
-    "sustainability",
-    "climate tech",
-    "data engineering",
-    "segment anything",
-    "mathematics"
-   ],
-   "shared_count": 3,
-   "rank": 5,
-   "photo_url": null
-  },
-  {
-   "id": "u_002",
-   "type": "person",
-   "label": "Rosa",
-   "name": "Rosa Q.",
-   "role": "student",
-   "score": 0.328,
-   "highlight": true,
-   "open_to_meet": false,
-   "cluster": 17,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research",
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "knowledge graphs",
-    "data science",
-    "ai research",
-    "research tools",
-    "computer engineering",
-    "python",
-    "data visualization",
-    "tailwind css"
-   ],
-   "shared_count": 3,
-   "rank": 6,
-   "photo_url": null
-  },
-  {
-   "id": "u_071",
-   "type": "person",
-   "label": "Leo",
-   "name": "Leo G.",
-   "role": "student",
-   "score": 0.271,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 20,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "quantitative research",
-   "why": [
-    "quantitative research",
-    "python"
-   ],
-   "topics": [
-    "react",
-    "quantitative finance",
-    "openai",
-    "industrial design",
-    "quantitative research",
-    "trading",
-    "llm apps",
-    "postgresql"
-   ],
-   "shared_count": 2,
-   "rank": 7,
-   "photo_url": null
-  },
-  {
-   "id": "u_080",
-   "type": "person",
-   "label": "Jonah",
-   "name": "Jonah B.",
-   "role": "student",
-   "score": 0.259,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 17,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research",
-    "mathematics"
-   ],
-   "topics": [
-    "flask",
-    "research tools",
-    "react",
-    "knowledge graphs",
-    "data science",
-    "mathematics",
-    "d3.js",
-    "data visualization"
-   ],
-   "shared_count": 2,
-   "rank": 8,
-   "photo_url": null
-  },
-  {
-   "id": "u_008",
-   "type": "person",
-   "label": "Zara",
-   "name": "Zara C.",
-   "role": "student",
-   "score": 0.256,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 2,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "mathematics"
-   ],
-   "topics": [
-    "fastapi",
-    "aws",
-    "ai agents",
-    "privacy",
-    "mongodb",
-    "ml engineering",
-    "mathematics",
-    "typescript"
-   ],
-   "shared_count": 2,
-   "rank": 9,
-   "photo_url": null
-  },
-  {
-   "id": "u_013",
-   "type": "person",
-   "label": "Jordan",
-   "name": "Jordan V.",
-   "role": "recruiter",
-   "score": 0.228,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 29,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "postgresql",
-    "ai agents",
-    "rock climbing",
-    "react",
-    "rag",
-    "health tech",
-    "guitar",
-    "healthcare"
-   ],
-   "shared_count": 2,
-   "rank": 10,
-   "photo_url": null
-  },
-  {
-   "id": "u_031",
-   "type": "person",
-   "label": "Sofia",
-   "name": "Sofia P.",
-   "role": "student",
-   "score": 0.228,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 33,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "startups",
-    "rock climbing",
-    "python",
-    "electron",
-    "opencv",
-    "computer vision",
-    "biomedical engineering",
-    "sales tech"
-   ],
-   "shared_count": 2,
-   "rank": 11,
-   "photo_url": null
-  },
-  {
-   "id": "u_051",
-   "type": "person",
-   "label": "Kofi",
-   "name": "Kofi Z.",
-   "role": "student",
-   "score": 0.212,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 17,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research",
-    "python"
-   ],
-   "topics": [
-    "python",
-    "data visualization",
-    "research tools",
-    "ai research",
-    "flask",
-    "materials science",
-    "guitar",
-    "d3.js"
-   ],
-   "shared_count": 2,
-   "rank": 12,
-   "photo_url": null
-  },
-  {
-   "id": "u_087",
-   "type": "person",
-   "label": "Sam",
-   "name": "Sam V.",
-   "role": "student",
-   "score": 0.203,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 24,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "supabase",
-    "computer vision",
-    "iot",
-    "raspberry pi",
-    "climate tech",
-    "biomedical engineering",
-    "sustainability",
-    "python"
-   ],
-   "shared_count": 2,
-   "rank": 13,
-   "photo_url": null
-  },
-  {
-   "id": "u_015",
-   "type": "person",
-   "label": "Leo",
-   "name": "Leo R.",
-   "role": "student",
-   "score": 0.183,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 20,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "quantitative research",
-   "why": [
-    "quantitative research"
-   ],
-   "topics": [
-    "trading",
-    "quantitative finance",
-    "mechanical engineering",
-    "react",
-    "llm apps",
-    "quantitative research",
-    "fintech",
-    "guitar"
-   ],
-   "shared_count": 1,
-   "rank": 14,
-   "photo_url": null
-  },
-  {
-   "id": "u_000",
-   "type": "person",
-   "label": "Theo",
-   "name": "Theo W.",
-   "role": "student",
-   "score": 0.148,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 6,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "pgvector",
-    "biomedical engineering",
-    "ml engineering",
-    "sentence transformers",
-    "semantic search",
-    "health tech",
-    "rock climbing",
-    "healthcare"
-   ],
-   "shared_count": 1,
-   "rank": 15,
-   "photo_url": null
-  },
-  {
-   "id": "u_076",
-   "type": "person",
-   "label": "Andre",
-   "name": "Andre W.",
-   "role": "student",
-   "score": 0.148,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "creative tools",
-    "node.js",
-    "powerlifting",
-    "generative ai",
-    "product engineering",
-    "computer engineering",
-    "atlanta united",
-    "edtech"
-   ],
-   "shared_count": 1,
-   "rank": 16,
-   "photo_url": null
-  },
-  {
-   "id": "u_058",
-   "type": "person",
-   "label": "Noah",
-   "name": "Noah K.",
-   "role": "student",
-   "score": 0.135,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "product engineering",
-    "openai",
-    "react",
-    "film photography",
-    "generative ai",
-    "computer engineering",
-    "creative tools",
-    "ai engineering"
-   ],
-   "shared_count": 1,
-   "rank": 17,
-   "photo_url": null
-  },
-  {
-   "id": "u_019",
-   "type": "person",
-   "label": "Elena",
-   "name": "Elena O.",
-   "role": "student",
-   "score": 0.132,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 25,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research"
-   ],
-   "topics": [
-    "business administration",
-    "data engineering",
-    "jazz",
-    "pgvector",
-    "data visualization",
-    "ai research",
-    "guitar",
-    "knowledge graphs"
-   ],
-   "shared_count": 1,
-   "rank": 18,
-   "photo_url": null
-  },
-  {
-   "id": "u_035",
-   "type": "person",
-   "label": "Emma",
-   "name": "Emma V.",
-   "role": "student",
-   "score": 0.132,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 25,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research"
-   ],
-   "topics": [
-    "knowledge graphs",
-    "rag",
-    "materials science",
-    "data visualization",
-    "data engineering",
-    "next.js",
-    "ai research",
-    "redis"
-   ],
-   "shared_count": 1,
-   "rank": 19,
-   "photo_url": null
-  },
-  {
-   "id": "u_052",
-   "type": "person",
-   "label": "Maya",
-   "name": "Maya U.",
-   "role": "student",
-   "score": 0.132,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 25,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "ai research",
-   "why": [
-    "ai research"
-   ],
-   "topics": [
-    "fastapi",
-    "data visualization",
-    "video games",
-    "react-force-graph",
-    "ai research",
-    "knowledge graphs",
-    "rag",
-    "computer engineering"
-   ],
-   "shared_count": 1,
-   "rank": 20,
-   "photo_url": null
-  },
-  {
-   "id": "u_004",
-   "type": "person",
-   "label": "Lina",
-   "name": "Lina C.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 9,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "ai agents",
-    "productivity",
-    "mobile engineering",
-    "ai engineering",
-    "piano",
-    "next.js",
-    "gemini",
-    "ios development"
-   ],
-   "shared_count": 1,
-   "rank": 21,
-   "photo_url": null
-  },
-  {
-   "id": "u_034",
-   "type": "person",
-   "label": "Ines",
-   "name": "Ines X.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 22,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "opencv",
-    "assistive tech",
-    "gemini",
-    "mathematics",
-    "jazz",
-    "accessibility",
-    "yolo",
-    "speech to text"
-   ],
-   "shared_count": 1,
-   "rank": 22,
-   "photo_url": null
-  },
-  {
-   "id": "u_043",
-   "type": "person",
-   "label": "Aarav",
-   "name": "Aarav V.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 2,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "typescript",
-    "ml engineering",
-    "anime",
-    "fastapi",
-    "health tech",
-    "ai agents",
-    "mathematics",
-    "next.js"
-   ],
-   "shared_count": 1,
-   "rank": 23,
-   "photo_url": null
-  },
-  {
-   "id": "u_044",
-   "type": "person",
-   "label": "Ines",
-   "name": "Ines R.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 4,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "typescript",
-    "developer experience",
-    "video games",
-    "mathematics",
-    "software engineering",
-    "gemini",
-    "legacy code",
-    "developer tools"
-   ],
-   "shared_count": 1,
-   "rank": 24,
-   "photo_url": null
-  },
-  {
-   "id": "u_064",
-   "type": "person",
-   "label": "Rohan",
-   "name": "Rohan P.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "mastra",
-    "generative ai",
-    "mathematics",
-    "product engineering",
-    "openai",
-    "react",
-    "ai engineering",
-    "edtech"
-   ],
-   "shared_count": 1,
-   "rank": 25,
-   "photo_url": null
-  },
-  {
-   "id": "u_068",
-   "type": "person",
-   "label": "Sofia",
-   "name": "Sofia D.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 10,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "openai",
-    "ai agents",
-    "fintech",
-    "mastra",
-    "twilio",
-    "mathematics",
-    "fraud detection",
-    "node.js"
-   ],
-   "shared_count": 1,
-   "rank": 26,
-   "photo_url": null
-  },
-  {
-   "id": "u_078",
-   "type": "person",
-   "label": "Owen",
-   "name": "Owen J.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 15,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "cloudflare",
-    "product engineering",
-    "ai coaching",
-    "mathematics",
-    "llm apps",
-    "anime",
-    "edtech",
-    "typescript"
-   ],
-   "shared_count": 1,
-   "rank": 27,
-   "photo_url": null
-  },
-  {
-   "id": "u_023",
-   "type": "person",
-   "label": "Hana",
-   "name": "Hana J.",
-   "role": "student",
-   "score": 0.126,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 5,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "chess",
-   "why": [
-    "chess"
-   ],
-   "topics": [
-    "hardware",
-    "virtual reality",
-    "accessibility",
-    "materials science",
-    "c++",
-    "xr engineering",
-    "platformio",
-    "game development"
-   ],
-   "shared_count": 1,
-   "rank": 28,
-   "photo_url": null
-  },
-  {
-   "id": "u_040",
-   "type": "person",
-   "label": "Jordan",
-   "name": "Jordan H.",
-   "role": "student",
-   "score": 0.126,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 4,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "chess",
-   "why": [
-    "chess"
-   ],
-   "topics": [
-    "typescript",
-    "software engineering",
-    "industrial design",
-    "rag",
-    "gemini",
-    "developer tools",
-    "legacy code",
-    "developer experience"
-   ],
-   "shared_count": 1,
-   "rank": 29,
-   "photo_url": null
-  },
-  {
-   "id": "u_046",
-   "type": "person",
-   "label": "Lina",
-   "name": "Lina L.",
-   "role": "student",
-   "score": 0.126,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 7,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "chess",
-   "why": [
-    "chess"
-   ],
-   "topics": [
-    "embedded systems",
-    "healthcare",
-    "electrical engineering",
-    "iot",
-    "running",
-    "3d printing",
-    "hardware startups",
-    "basketball"
-   ],
-   "shared_count": 1,
-   "rank": 30,
-   "photo_url": null
-  }
- ],
- "edges": [
-  {
-   "source": "me",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.95
-  },
-  {
-   "source": "me",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "t_158",
-   "kind": "has_topic",
-   "weight": 0.8
-  },
-  {
-   "source": "me",
-   "target": "t_116",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.6
-  },
-  {
-   "source": "me",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.6
-  },
-  {
-   "source": "me",
-   "target": "t_19",
-   "kind": "has_topic",
-   "weight": 0.5
-  },
-  {
-   "source": "me",
-   "target": "u_028",
-   "kind": "match",
-   "weight": 0.785,
-   "facet": "technical"
-  },
-  {
-   "source": "u_028",
-   "target": "t_116",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "u_028",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.8
-  },
-  {
-   "source": "u_028",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.79
-  },
-  {
-   "source": "u_028",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.65
-  },
-  {
-   "source": "me",
-   "target": "u_049",
-   "kind": "match",
-   "weight": 0.781,
-   "facet": "technical"
-  },
-  {
-   "source": "u_049",
-   "target": "t_158",
-   "kind": "has_topic",
-   "weight": 0.71
-  },
-  {
-   "source": "u_049",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.87
-  },
-  {
-   "source": "u_049",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "u_049",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.86
-  },
-  {
-   "source": "me",
-   "target": "u_003",
-   "kind": "match",
-   "weight": 0.52,
-   "facet": "technical"
-  },
-  {
-   "source": "u_003",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "u_003",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.74
-  },
-  {
-   "source": "u_003",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.82
-  },
-  {
-   "source": "me",
-   "target": "u_082",
-   "kind": "match",
-   "weight": 0.374,
-   "facet": "career"
-  },
-  {
-   "source": "u_082",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.66
-  },
-  {
-   "source": "u_082",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.9
-  },
-  {
-   "source": "u_082",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "u_059",
-   "kind": "match",
-   "weight": 0.356,
-   "facet": "personal"
-  },
-  {
-   "source": "u_059",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.73
-  },
-  {
-   "source": "u_059",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.8
-  },
-  {
-   "source": "u_059",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.72
-  },
-  {
-   "source": "me",
-   "target": "u_002",
-   "kind": "match",
-   "weight": 0.328,
-   "facet": "career"
-  },
-  {
-   "source": "u_002",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.81
-  },
-  {
-   "source": "u_002",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.55
-  },
-  {
-   "source": "u_002",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.76
-  },
-  {
-   "source": "me",
-   "target": "u_071",
-   "kind": "match",
-   "weight": 0.271,
-   "facet": "career"
-  },
-  {
-   "source": "u_071",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "u_071",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.58
-  },
-  {
-   "source": "me",
-   "target": "u_080",
-   "kind": "match",
-   "weight": 0.259,
-   "facet": "career"
-  },
-  {
-   "source": "u_080",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.68
-  },
-  {
-   "source": "u_080",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "me",
-   "target": "u_008",
-   "kind": "match",
-   "weight": 0.256,
-   "facet": "personal"
-  },
-  {
-   "source": "u_008",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.61
-  },
-  {
-   "source": "u_008",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.76
-  },
-  {
-   "source": "me",
-   "target": "u_013",
-   "kind": "match",
-   "weight": 0.228,
-   "facet": "personal"
-  },
-  {
-   "source": "u_013",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "u_013",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.61
-  },
-  {
-   "source": "me",
-   "target": "u_031",
-   "kind": "match",
-   "weight": 0.228,
-   "facet": "personal"
-  },
-  {
-   "source": "u_031",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.81
-  },
-  {
-   "source": "u_031",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "me",
-   "target": "u_051",
-   "kind": "match",
-   "weight": 0.212,
-   "facet": "career"
-  },
-  {
-   "source": "u_051",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "u_051",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.89
-  },
-  {
-   "source": "me",
-   "target": "u_087",
-   "kind": "match",
-   "weight": 0.203,
-   "facet": "personal"
-  },
-  {
-   "source": "u_087",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.58
-  },
-  {
-   "source": "u_087",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.74
-  },
-  {
-   "source": "me",
-   "target": "u_015",
-   "kind": "match",
-   "weight": 0.183,
-   "facet": "career"
-  },
-  {
-   "source": "u_015",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.73
-  },
-  {
-   "source": "me",
-   "target": "u_000",
-   "kind": "match",
-   "weight": 0.148,
-   "facet": "personal"
-  },
-  {
-   "source": "u_000",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.73
-  },
-  {
-   "source": "me",
-   "target": "u_076",
-   "kind": "match",
-   "weight": 0.148,
-   "facet": "personal"
-  },
-  {
-   "source": "u_076",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "u_058",
-   "kind": "match",
-   "weight": 0.135,
-   "facet": "personal"
-  },
-  {
-   "source": "u_058",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.64
-  },
-  {
-   "source": "me",
-   "target": "u_019",
-   "kind": "match",
-   "weight": 0.132,
-   "facet": "career"
-  },
-  {
-   "source": "u_019",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.62
-  },
-  {
-   "source": "me",
-   "target": "u_035",
-   "kind": "match",
-   "weight": 0.132,
-   "facet": "career"
-  },
-  {
-   "source": "u_035",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "me",
-   "target": "u_052",
-   "kind": "match",
-   "weight": 0.132,
-   "facet": "career"
-  },
-  {
-   "source": "u_052",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "me",
-   "target": "u_004",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_004",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.71
-  },
-  {
-   "source": "me",
-   "target": "u_034",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_034",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "u_043",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_043",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.75
-  },
-  {
-   "source": "me",
-   "target": "u_044",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_044",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "me",
-   "target": "u_064",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_064",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.84
-  },
-  {
-   "source": "me",
-   "target": "u_068",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_068",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "me",
-   "target": "u_078",
-   "kind": "match",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_078",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.87
-  },
-  {
-   "source": "me",
-   "target": "u_023",
-   "kind": "match",
-   "weight": 0.126,
-   "facet": "personal"
-  },
-  {
-   "source": "u_023",
-   "target": "t_19",
-   "kind": "has_topic",
-   "weight": 0.5
-  },
-  {
-   "source": "me",
-   "target": "u_040",
-   "kind": "match",
-   "weight": 0.126,
-   "facet": "personal"
-  },
-  {
-   "source": "u_040",
-   "target": "t_19",
-   "kind": "has_topic",
-   "weight": 0.55
-  },
-  {
-   "source": "me",
-   "target": "u_046",
-   "kind": "match",
-   "weight": 0.126,
-   "facet": "personal"
-  },
-  {
-   "source": "u_046",
-   "target": "t_19",
-   "kind": "has_topic",
-   "weight": 0.74
-  }
- ]
+  "mode": "matches",
+  "event_id": 1,
+  "self_id": "me",
+  "generated_at": "2026-09-26T12:00:00-04:00",
+  "synthetic": true,
+  "nodes": [
+    {
+      "id": "me",
+      "type": "self",
+      "label": "You"
+    },
+    {
+      "id": "t_127",
+      "type": "topic",
+      "label": "reinforcement learning",
+      "facet": "technical",
+      "idf": 2.66
+    },
+    {
+      "id": "t_118",
+      "type": "topic",
+      "label": "quantitative research",
+      "facet": "career",
+      "idf": 2.53
+    },
+    {
+      "id": "t_158",
+      "type": "topic",
+      "label": "time series analysis",
+      "facet": "technical",
+      "idf": 3.51
+    },
+    {
+      "id": "t_116",
+      "type": "topic",
+      "label": "pytorch",
+      "facet": "technical",
+      "idf": 3.51
+    },
+    {
+      "id": "t_84",
+      "type": "topic",
+      "label": "mathematics",
+      "facet": "academic",
+      "idf": 1.84
+    },
+    {
+      "id": "t_132",
+      "type": "topic",
+      "label": "rock climbing",
+      "facet": "personal",
+      "idf": 2.13
+    },
+    {
+      "id": "t_115",
+      "type": "topic",
+      "label": "python",
+      "facet": "technical",
+      "idf": 1.35
+    },
+    {
+      "id": "t_6",
+      "type": "topic",
+      "label": "ai research",
+      "facet": "career",
+      "idf": 2.21
+    },
+    {
+      "id": "t_19",
+      "type": "topic",
+      "label": "chess",
+      "facet": "personal",
+      "idf": 2.53
+    },
+    {
+      "id": "u_028",
+      "type": "person",
+      "label": "Tara",
+      "name": "Tara A.",
+      "role": "student",
+      "score": 0.785,
+      "highlight": true,
+      "open_to_meet": true,
+      "cluster": 32,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "pytorch",
+      "why": [
+        "pytorch",
+        "reinforcement learning",
+        "quantitative research"
+      ],
+      "topics": [
+        "reward shaping",
+        "computer science",
+        "reinforcement learning",
+        "quantitative research",
+        "pytorch",
+        "poker",
+        "ai research",
+        "multi-agent systems"
+      ],
+      "shared_count": 4,
+      "rank": 1,
+      "photo_url": null
+    },
+    {
+      "id": "u_049",
+      "type": "person",
+      "label": "Sofia",
+      "name": "Sofia J.",
+      "role": "student",
+      "score": 0.781,
+      "highlight": true,
+      "open_to_meet": true,
+      "cluster": 32,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "time series analysis",
+      "why": [
+        "time series analysis",
+        "reinforcement learning",
+        "quantitative research"
+      ],
+      "topics": [
+        "backtesting",
+        "reinforcement learning",
+        "mathematics",
+        "video games",
+        "time series analysis",
+        "quantitative research",
+        "trading",
+        "basketball"
+      ],
+      "shared_count": 4,
+      "rank": 2,
+      "photo_url": null
+    },
+    {
+      "id": "u_003",
+      "type": "person",
+      "label": "Lea",
+      "name": "Lea R.",
+      "role": "student",
+      "score": 0.52,
+      "highlight": true,
+      "open_to_meet": false,
+      "cluster": 32,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "reinforcement learning",
+      "why": [
+        "reinforcement learning",
+        "quantitative research",
+        "mathematics"
+      ],
+      "topics": [
+        "multi-agent systems",
+        "mathematics",
+        "reinforcement learning",
+        "game theory",
+        "quantitative research",
+        "formula 1",
+        "salsa dancing"
+      ],
+      "shared_count": 3,
+      "rank": 3,
+      "photo_url": null
+    },
+    {
+      "id": "u_082",
+      "type": "person",
+      "label": "Aisha",
+      "name": "Aisha M.",
+      "role": "student",
+      "score": 0.374,
+      "highlight": true,
+      "open_to_meet": true,
+      "cluster": 20,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "quantitative research",
+      "why": [
+        "quantitative research",
+        "mathematics",
+        "python"
+      ],
+      "topics": [
+        "trading",
+        "mathematics",
+        "fastapi",
+        "python",
+        "openai",
+        "llm apps",
+        "jazz",
+        "quantitative finance"
+      ],
+      "shared_count": 3,
+      "rank": 4,
+      "photo_url": null
+    },
+    {
+      "id": "u_059",
+      "type": "person",
+      "label": "Marcus",
+      "name": "Marcus G.",
+      "role": "student",
+      "score": 0.356,
+      "highlight": true,
+      "open_to_meet": true,
+      "cluster": 24,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "mathematics",
+        "python"
+      ],
+      "topics": [
+        "raspberry pi",
+        "supabase",
+        "iot",
+        "sustainability",
+        "climate tech",
+        "data engineering",
+        "segment anything",
+        "mathematics"
+      ],
+      "shared_count": 3,
+      "rank": 5,
+      "photo_url": null
+    },
+    {
+      "id": "u_002",
+      "type": "person",
+      "label": "Rosa",
+      "name": "Rosa Q.",
+      "role": "student",
+      "score": 0.328,
+      "highlight": true,
+      "open_to_meet": false,
+      "cluster": 17,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research",
+        "rock climbing",
+        "python"
+      ],
+      "topics": [
+        "knowledge graphs",
+        "data science",
+        "ai research",
+        "research tools",
+        "computer engineering",
+        "python",
+        "data visualization",
+        "tailwind css"
+      ],
+      "shared_count": 3,
+      "rank": 6,
+      "photo_url": null
+    },
+    {
+      "id": "u_071",
+      "type": "person",
+      "label": "Leo",
+      "name": "Leo G.",
+      "role": "student",
+      "score": 0.271,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 20,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "quantitative research",
+      "why": [
+        "quantitative research",
+        "python"
+      ],
+      "topics": [
+        "react",
+        "quantitative finance",
+        "openai",
+        "industrial design",
+        "quantitative research",
+        "trading",
+        "llm apps",
+        "postgresql"
+      ],
+      "shared_count": 2,
+      "rank": 7,
+      "photo_url": null
+    },
+    {
+      "id": "u_080",
+      "type": "person",
+      "label": "Jonah",
+      "name": "Jonah B.",
+      "role": "student",
+      "score": 0.259,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 17,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research",
+        "mathematics"
+      ],
+      "topics": [
+        "flask",
+        "research tools",
+        "react",
+        "knowledge graphs",
+        "data science",
+        "mathematics",
+        "d3.js",
+        "data visualization"
+      ],
+      "shared_count": 2,
+      "rank": 8,
+      "photo_url": null
+    },
+    {
+      "id": "u_008",
+      "type": "person",
+      "label": "Zara",
+      "name": "Zara C.",
+      "role": "student",
+      "score": 0.256,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 2,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "mathematics"
+      ],
+      "topics": [
+        "fastapi",
+        "aws",
+        "ai agents",
+        "privacy",
+        "mongodb",
+        "ml engineering",
+        "mathematics",
+        "typescript"
+      ],
+      "shared_count": 2,
+      "rank": 9,
+      "photo_url": null
+    },
+    {
+      "id": "u_013",
+      "type": "person",
+      "label": "Jordan",
+      "name": "Jordan V.",
+      "role": "recruiter",
+      "score": 0.228,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 29,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "python"
+      ],
+      "topics": [
+        "postgresql",
+        "ai agents",
+        "rock climbing",
+        "react",
+        "rag",
+        "health tech",
+        "guitar",
+        "healthcare"
+      ],
+      "shared_count": 2,
+      "rank": 10,
+      "photo_url": null
+    },
+    {
+      "id": "u_031",
+      "type": "person",
+      "label": "Sofia",
+      "name": "Sofia P.",
+      "role": "student",
+      "score": 0.228,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 33,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "python"
+      ],
+      "topics": [
+        "startups",
+        "rock climbing",
+        "python",
+        "electron",
+        "opencv",
+        "computer vision",
+        "biomedical engineering",
+        "sales tech"
+      ],
+      "shared_count": 2,
+      "rank": 11,
+      "photo_url": null
+    },
+    {
+      "id": "u_051",
+      "type": "person",
+      "label": "Kofi",
+      "name": "Kofi Z.",
+      "role": "student",
+      "score": 0.212,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 17,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research",
+        "python"
+      ],
+      "topics": [
+        "python",
+        "data visualization",
+        "research tools",
+        "ai research",
+        "flask",
+        "materials science",
+        "guitar",
+        "d3.js"
+      ],
+      "shared_count": 2,
+      "rank": 12,
+      "photo_url": null
+    },
+    {
+      "id": "u_087",
+      "type": "person",
+      "label": "Sam",
+      "name": "Sam V.",
+      "role": "student",
+      "score": 0.203,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 24,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "python"
+      ],
+      "topics": [
+        "supabase",
+        "computer vision",
+        "iot",
+        "raspberry pi",
+        "climate tech",
+        "biomedical engineering",
+        "sustainability",
+        "python"
+      ],
+      "shared_count": 2,
+      "rank": 13,
+      "photo_url": null
+    },
+    {
+      "id": "u_015",
+      "type": "person",
+      "label": "Leo",
+      "name": "Leo R.",
+      "role": "student",
+      "score": 0.183,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 20,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "quantitative research",
+      "why": [
+        "quantitative research"
+      ],
+      "topics": [
+        "trading",
+        "quantitative finance",
+        "mechanical engineering",
+        "react",
+        "llm apps",
+        "quantitative research",
+        "fintech",
+        "guitar"
+      ],
+      "shared_count": 1,
+      "rank": 14,
+      "photo_url": null
+    },
+    {
+      "id": "u_000",
+      "type": "person",
+      "label": "Theo",
+      "name": "Theo W.",
+      "role": "student",
+      "score": 0.148,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 6,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "pgvector",
+        "biomedical engineering",
+        "ml engineering",
+        "sentence transformers",
+        "semantic search",
+        "health tech",
+        "rock climbing",
+        "healthcare"
+      ],
+      "shared_count": 1,
+      "rank": 15,
+      "photo_url": null
+    },
+    {
+      "id": "u_076",
+      "type": "person",
+      "label": "Andre",
+      "name": "Andre W.",
+      "role": "student",
+      "score": 0.148,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "creative tools",
+        "node.js",
+        "powerlifting",
+        "generative ai",
+        "product engineering",
+        "computer engineering",
+        "atlanta united",
+        "edtech"
+      ],
+      "shared_count": 1,
+      "rank": 16,
+      "photo_url": null
+    },
+    {
+      "id": "u_058",
+      "type": "person",
+      "label": "Noah",
+      "name": "Noah K.",
+      "role": "student",
+      "score": 0.135,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "product engineering",
+        "openai",
+        "react",
+        "film photography",
+        "generative ai",
+        "computer engineering",
+        "creative tools",
+        "ai engineering"
+      ],
+      "shared_count": 1,
+      "rank": 17,
+      "photo_url": null
+    },
+    {
+      "id": "u_019",
+      "type": "person",
+      "label": "Elena",
+      "name": "Elena O.",
+      "role": "student",
+      "score": 0.132,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 25,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research"
+      ],
+      "topics": [
+        "business administration",
+        "data engineering",
+        "jazz",
+        "pgvector",
+        "data visualization",
+        "ai research",
+        "guitar",
+        "knowledge graphs"
+      ],
+      "shared_count": 1,
+      "rank": 18,
+      "photo_url": null
+    },
+    {
+      "id": "u_035",
+      "type": "person",
+      "label": "Emma",
+      "name": "Emma V.",
+      "role": "student",
+      "score": 0.132,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 25,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research"
+      ],
+      "topics": [
+        "knowledge graphs",
+        "rag",
+        "materials science",
+        "data visualization",
+        "data engineering",
+        "next.js",
+        "ai research",
+        "redis"
+      ],
+      "shared_count": 1,
+      "rank": 19,
+      "photo_url": null
+    },
+    {
+      "id": "u_052",
+      "type": "person",
+      "label": "Maya",
+      "name": "Maya U.",
+      "role": "student",
+      "score": 0.132,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 25,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "ai research",
+      "why": [
+        "ai research"
+      ],
+      "topics": [
+        "fastapi",
+        "data visualization",
+        "video games",
+        "react-force-graph",
+        "ai research",
+        "knowledge graphs",
+        "rag",
+        "computer engineering"
+      ],
+      "shared_count": 1,
+      "rank": 20,
+      "photo_url": null
+    },
+    {
+      "id": "u_004",
+      "type": "person",
+      "label": "Lina",
+      "name": "Lina C.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 9,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "ai agents",
+        "productivity",
+        "mobile engineering",
+        "ai engineering",
+        "piano",
+        "next.js",
+        "gemini",
+        "ios development"
+      ],
+      "shared_count": 1,
+      "rank": 21,
+      "photo_url": null
+    },
+    {
+      "id": "u_034",
+      "type": "person",
+      "label": "Ines",
+      "name": "Ines X.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 22,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "opencv",
+        "assistive tech",
+        "gemini",
+        "mathematics",
+        "jazz",
+        "accessibility",
+        "yolo",
+        "speech to text"
+      ],
+      "shared_count": 1,
+      "rank": 22,
+      "photo_url": null
+    },
+    {
+      "id": "u_043",
+      "type": "person",
+      "label": "Aarav",
+      "name": "Aarav V.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 2,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "typescript",
+        "ml engineering",
+        "anime",
+        "fastapi",
+        "health tech",
+        "ai agents",
+        "mathematics",
+        "next.js"
+      ],
+      "shared_count": 1,
+      "rank": 23,
+      "photo_url": null
+    },
+    {
+      "id": "u_044",
+      "type": "person",
+      "label": "Ines",
+      "name": "Ines R.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 4,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "typescript",
+        "developer experience",
+        "video games",
+        "mathematics",
+        "software engineering",
+        "gemini",
+        "legacy code",
+        "developer tools"
+      ],
+      "shared_count": 1,
+      "rank": 24,
+      "photo_url": null
+    },
+    {
+      "id": "u_064",
+      "type": "person",
+      "label": "Rohan",
+      "name": "Rohan P.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "mastra",
+        "generative ai",
+        "mathematics",
+        "product engineering",
+        "openai",
+        "react",
+        "ai engineering",
+        "edtech"
+      ],
+      "shared_count": 1,
+      "rank": 25,
+      "photo_url": null
+    },
+    {
+      "id": "u_068",
+      "type": "person",
+      "label": "Sofia",
+      "name": "Sofia D.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 10,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "openai",
+        "ai agents",
+        "fintech",
+        "mastra",
+        "twilio",
+        "mathematics",
+        "fraud detection",
+        "node.js"
+      ],
+      "shared_count": 1,
+      "rank": 26,
+      "photo_url": null
+    },
+    {
+      "id": "u_078",
+      "type": "person",
+      "label": "Owen",
+      "name": "Owen J.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 15,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "cloudflare",
+        "product engineering",
+        "ai coaching",
+        "mathematics",
+        "llm apps",
+        "anime",
+        "edtech",
+        "typescript"
+      ],
+      "shared_count": 1,
+      "rank": 27,
+      "photo_url": null
+    },
+    {
+      "id": "u_023",
+      "type": "person",
+      "label": "Hana",
+      "name": "Hana J.",
+      "role": "student",
+      "score": 0.126,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 5,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "chess",
+      "why": [
+        "chess"
+      ],
+      "topics": [
+        "hardware",
+        "virtual reality",
+        "accessibility",
+        "materials science",
+        "c++",
+        "xr engineering",
+        "platformio",
+        "game development"
+      ],
+      "shared_count": 1,
+      "rank": 28,
+      "photo_url": null
+    },
+    {
+      "id": "u_040",
+      "type": "person",
+      "label": "Jordan",
+      "name": "Jordan H.",
+      "role": "student",
+      "score": 0.126,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 4,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "chess",
+      "why": [
+        "chess"
+      ],
+      "topics": [
+        "typescript",
+        "software engineering",
+        "industrial design",
+        "rag",
+        "gemini",
+        "developer tools",
+        "legacy code",
+        "developer experience"
+      ],
+      "shared_count": 1,
+      "rank": 29,
+      "photo_url": null
+    },
+    {
+      "id": "u_046",
+      "type": "person",
+      "label": "Lina",
+      "name": "Lina L.",
+      "role": "student",
+      "score": 0.126,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 7,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "chess",
+      "why": [
+        "chess"
+      ],
+      "topics": [
+        "embedded systems",
+        "healthcare",
+        "electrical engineering",
+        "iot",
+        "running",
+        "3d printing",
+        "hardware startups",
+        "basketball"
+      ],
+      "shared_count": 1,
+      "rank": 30,
+      "photo_url": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "me",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.95
+    },
+    {
+      "source": "me",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "t_158",
+      "kind": "has_topic",
+      "weight": 0.8
+    },
+    {
+      "source": "me",
+      "target": "t_116",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.6
+    },
+    {
+      "source": "me",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.6
+    },
+    {
+      "source": "me",
+      "target": "t_19",
+      "kind": "has_topic",
+      "weight": 0.5
+    },
+    {
+      "source": "me",
+      "target": "u_028",
+      "kind": "match",
+      "weight": 0.785,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on pytorch and reinforcement learning. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.2233,
+            "share": 0.2844
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.1831,
+            "share": 0.2332
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.1407,
+            "share": 0.1792
+          }
+        ],
+        "shared_topics": [
+          "pytorch",
+          "reinforcement learning",
+          "quantitative research"
+        ]
+      }
+    },
+    {
+      "source": "u_028",
+      "target": "t_116",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "u_028",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.8
+    },
+    {
+      "source": "u_028",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.79
+    },
+    {
+      "source": "u_028",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.65
+    },
+    {
+      "source": "me",
+      "target": "u_049",
+      "kind": "match",
+      "weight": 0.781,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on time series analysis and reinforcement learning. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.238,
+            "share": 0.3047
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.1952,
+            "share": 0.2499
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.15,
+            "share": 0.192
+          }
+        ],
+        "shared_topics": [
+          "time series analysis",
+          "reinforcement learning",
+          "quantitative research"
+        ]
+      }
+    },
+    {
+      "source": "u_049",
+      "target": "t_158",
+      "kind": "has_topic",
+      "weight": 0.71
+    },
+    {
+      "source": "u_049",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.87
+    },
+    {
+      "source": "u_049",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "u_049",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.86
+    },
+    {
+      "source": "me",
+      "target": "u_003",
+      "kind": "match",
+      "weight": 0.52,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and quantitative research. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.1274,
+            "share": 0.245
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.1045,
+            "share": 0.2009
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.0802,
+            "share": 0.1543
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "quantitative research",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_003",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "u_003",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.74
+    },
+    {
+      "source": "u_003",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.82
+    },
+    {
+      "source": "me",
+      "target": "u_082",
+      "kind": "match",
+      "weight": 0.374,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in quantitative research and mathematics. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.1116,
+            "share": 0.2984
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0915,
+            "share": 0.2447
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0703,
+            "share": 0.188
+          }
+        ],
+        "shared_topics": [
+          "quantitative research",
+          "mathematics",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_082",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.66
+    },
+    {
+      "source": "u_082",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.9
+    },
+    {
+      "source": "u_082",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "u_059",
+      "kind": "match",
+      "weight": 0.356,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and mathematics. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.1017,
+            "share": 0.2856
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0834,
+            "share": 0.2342
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.064,
+            "share": 0.1799
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "mathematics",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_059",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.73
+    },
+    {
+      "source": "u_059",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.8
+    },
+    {
+      "source": "u_059",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.72
+    },
+    {
+      "source": "me",
+      "target": "u_002",
+      "kind": "match",
+      "weight": 0.328,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research and rock climbing. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.093,
+            "share": 0.2836
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0763,
+            "share": 0.2326
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0586,
+            "share": 0.1787
+          }
+        ],
+        "shared_topics": [
+          "ai research",
+          "rock climbing",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_002",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.81
+    },
+    {
+      "source": "u_002",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.55
+    },
+    {
+      "source": "u_002",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.76
+    },
+    {
+      "source": "me",
+      "target": "u_071",
+      "kind": "match",
+      "weight": 0.271,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in quantitative research and python. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0687,
+            "share": 0.2534
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0563,
+            "share": 0.2078
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0433,
+            "share": 0.1596
+          }
+        ],
+        "shared_topics": [
+          "quantitative research",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_071",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "u_071",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.58
+    },
+    {
+      "source": "me",
+      "target": "u_080",
+      "kind": "match",
+      "weight": 0.259,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research and mathematics. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0725,
+            "share": 0.2798
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0594,
+            "share": 0.2295
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0457,
+            "share": 0.1763
+          }
+        ],
+        "shared_topics": [
+          "ai research",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_080",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.68
+    },
+    {
+      "source": "u_080",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "me",
+      "target": "u_008",
+      "kind": "match",
+      "weight": 0.256,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and mathematics. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0769,
+            "share": 0.3004
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0631,
+            "share": 0.2463
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0485,
+            "share": 0.1893
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_008",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.61
+    },
+    {
+      "source": "u_008",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.76
+    },
+    {
+      "source": "me",
+      "target": "u_013",
+      "kind": "match",
+      "weight": 0.228,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and python. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0684,
+            "share": 0.3
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0561,
+            "share": 0.246
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0431,
+            "share": 0.189
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_013",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "u_013",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.61
+    },
+    {
+      "source": "me",
+      "target": "u_031",
+      "kind": "match",
+      "weight": 0.228,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and python. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0607,
+            "share": 0.2664
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0498,
+            "share": 0.2184
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0383,
+            "share": 0.1678
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_031",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.81
+    },
+    {
+      "source": "u_031",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "me",
+      "target": "u_051",
+      "kind": "match",
+      "weight": 0.212,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research and python. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0523,
+            "share": 0.2468
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0429,
+            "share": 0.2024
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.033,
+            "share": 0.1555
+          }
+        ],
+        "shared_topics": [
+          "ai research",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_051",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "u_051",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.89
+    },
+    {
+      "source": "me",
+      "target": "u_087",
+      "kind": "match",
+      "weight": 0.203,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and python. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0613,
+            "share": 0.3021
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0503,
+            "share": 0.2477
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0386,
+            "share": 0.1903
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_087",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.58
+    },
+    {
+      "source": "u_087",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.74
+    },
+    {
+      "source": "me",
+      "target": "u_015",
+      "kind": "match",
+      "weight": 0.183,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in quantitative research. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0513,
+            "share": 0.2801
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.042,
+            "share": 0.2297
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0323,
+            "share": 0.1765
+          }
+        ],
+        "shared_topics": [
+          "quantitative research"
+        ]
+      }
+    },
+    {
+      "source": "u_015",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.73
+    },
+    {
+      "source": "me",
+      "target": "u_000",
+      "kind": "match",
+      "weight": 0.148,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0454,
+            "share": 0.3068
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0372,
+            "share": 0.2516
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0286,
+            "share": 0.1933
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_000",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.73
+    },
+    {
+      "source": "me",
+      "target": "u_076",
+      "kind": "match",
+      "weight": 0.148,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.042,
+            "share": 0.2837
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0344,
+            "share": 0.2326
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0264,
+            "share": 0.1787
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_076",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "u_058",
+      "kind": "match",
+      "weight": 0.135,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. Rock climbing is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0361,
+            "share": 0.2675
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0296,
+            "share": 0.2193
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0227,
+            "share": 0.1685
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_058",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.64
+    },
+    {
+      "source": "me",
+      "target": "u_019",
+      "kind": "match",
+      "weight": 0.132,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0367,
+            "share": 0.2777
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0301,
+            "share": 0.2277
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0231,
+            "share": 0.175
+          }
+        ],
+        "shared_topics": [
+          "ai research"
+        ]
+      }
+    },
+    {
+      "source": "u_019",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.62
+    },
+    {
+      "source": "me",
+      "target": "u_035",
+      "kind": "match",
+      "weight": 0.132,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0398,
+            "share": 0.3015
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0326,
+            "share": 0.2472
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0251,
+            "share": 0.1899
+          }
+        ],
+        "shared_topics": [
+          "ai research"
+        ]
+      }
+    },
+    {
+      "source": "u_035",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "me",
+      "target": "u_052",
+      "kind": "match",
+      "weight": 0.132,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research. Your strongest overlap is career.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0326,
+            "share": 0.2467
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0267,
+            "share": 0.2023
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0205,
+            "share": 0.1554
+          }
+        ],
+        "shared_topics": [
+          "ai research"
+        ]
+      }
+    },
+    {
+      "source": "u_052",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "me",
+      "target": "u_004",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0373,
+            "share": 0.2911
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0306,
+            "share": 0.2387
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0235,
+            "share": 0.1834
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_004",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.71
+    },
+    {
+      "source": "me",
+      "target": "u_034",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0382,
+            "share": 0.2986
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0313,
+            "share": 0.2449
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0241,
+            "share": 0.1881
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_034",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "u_043",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0337,
+            "share": 0.2634
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0276,
+            "share": 0.216
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0212,
+            "share": 0.1659
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_043",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.75
+    },
+    {
+      "source": "me",
+      "target": "u_044",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0343,
+            "share": 0.2682
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0281,
+            "share": 0.2199
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0216,
+            "share": 0.169
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_044",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "me",
+      "target": "u_064",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.032,
+            "share": 0.25
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0262,
+            "share": 0.205
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0202,
+            "share": 0.1575
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_064",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.84
+    },
+    {
+      "source": "me",
+      "target": "u_068",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0349,
+            "share": 0.2728
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0286,
+            "share": 0.2237
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.022,
+            "share": 0.1719
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_068",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "me",
+      "target": "u_078",
+      "kind": "match",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. Your strongest overlap is academic.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.033,
+            "share": 0.2577
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.027,
+            "share": 0.2113
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0208,
+            "share": 0.1624
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_078",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.87
+    },
+    {
+      "source": "me",
+      "target": "u_023",
+      "kind": "match",
+      "weight": 0.126,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into chess. Chess is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0312,
+            "share": 0.2473
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0256,
+            "share": 0.2028
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0196,
+            "share": 0.1558
+          }
+        ],
+        "shared_topics": [
+          "chess"
+        ]
+      }
+    },
+    {
+      "source": "u_023",
+      "target": "t_19",
+      "kind": "has_topic",
+      "weight": 0.5
+    },
+    {
+      "source": "me",
+      "target": "u_040",
+      "kind": "match",
+      "weight": 0.126,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into chess. Chess is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0322,
+            "share": 0.2556
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0264,
+            "share": 0.2096
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0203,
+            "share": 0.161
+          }
+        ],
+        "shared_topics": [
+          "chess"
+        ]
+      }
+    },
+    {
+      "source": "u_040",
+      "target": "t_19",
+      "kind": "has_topic",
+      "weight": 0.55
+    },
+    {
+      "source": "me",
+      "target": "u_046",
+      "kind": "match",
+      "weight": 0.126,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into chess. Chess is uncommon here, so sharing it means more than it looks.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0381,
+            "share": 0.3021
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0312,
+            "share": 0.2477
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.024,
+            "share": 0.1903
+          }
+        ],
+        "shared_topics": [
+          "chess"
+        ]
+      }
+    },
+    {
+      "source": "u_046",
+      "target": "t_19",
+      "kind": "has_topic",
+      "weight": 0.74
+    }
+  ]
 }

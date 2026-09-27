@@ -1,825 +1,1169 @@
 {
- "mode": "network",
- "event_id": 1,
- "self_id": "me",
- "generated_at": "2026-09-26T12:00:00-04:00",
- "synthetic": true,
- "nodes": [
-  {
-   "id": "me",
-   "type": "self",
-   "label": "You"
-  },
-  {
-   "id": "t_127",
-   "type": "topic",
-   "label": "reinforcement learning",
-   "facet": "technical",
-   "idf": 2.66
-  },
-  {
-   "id": "t_118",
-   "type": "topic",
-   "label": "quantitative research",
-   "facet": "career",
-   "idf": 2.53
-  },
-  {
-   "id": "t_158",
-   "type": "topic",
-   "label": "time series analysis",
-   "facet": "technical",
-   "idf": 3.51
-  },
-  {
-   "id": "t_116",
-   "type": "topic",
-   "label": "pytorch",
-   "facet": "technical",
-   "idf": 3.51
-  },
-  {
-   "id": "t_84",
-   "type": "topic",
-   "label": "mathematics",
-   "facet": "academic",
-   "idf": 1.84
-  },
-  {
-   "id": "t_132",
-   "type": "topic",
-   "label": "rock climbing",
-   "facet": "personal",
-   "idf": 2.13
-  },
-  {
-   "id": "t_115",
-   "type": "topic",
-   "label": "python",
-   "facet": "technical",
-   "idf": 1.35
-  },
-  {
-   "id": "t_6",
-   "type": "topic",
-   "label": "ai research",
-   "facet": "career",
-   "idf": 2.21
-  },
-  {
-   "id": "t_19",
-   "type": "topic",
-   "label": "chess",
-   "facet": "personal",
-   "idf": 2.53
-  },
-  {
-   "id": "u_028",
-   "type": "person",
-   "label": "Tara",
-   "name": "Tara A.",
-   "role": "student",
-   "score": 0.785,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 32,
-   "connected": true,
-   "connected_at": "2026-09-26T19:13:00-04:00",
-   "top_topic": "pytorch",
-   "why": [
-    "pytorch",
-    "reinforcement learning",
-    "quantitative research"
-   ],
-   "topics": [
-    "reward shaping",
-    "computer science",
-    "reinforcement learning",
-    "quantitative research",
-    "pytorch",
-    "poker",
-    "ai research",
-    "multi-agent systems"
-   ],
-   "shared_count": 4,
-   "rank": 1,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_082",
-   "type": "person",
-   "label": "Aisha",
-   "name": "Aisha M.",
-   "role": "student",
-   "score": 0.374,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 20,
-   "connected": true,
-   "connected_at": "2026-09-26T14:26:00-04:00",
-   "top_topic": "quantitative research",
-   "why": [
-    "quantitative research",
-    "mathematics",
-    "python"
-   ],
-   "topics": [
-    "trading",
-    "mathematics",
-    "fastapi",
-    "python",
-    "openai",
-    "llm apps",
-    "jazz",
-    "quantitative finance"
-   ],
-   "shared_count": 3,
-   "rank": 2,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_002",
-   "type": "person",
-   "label": "Rosa",
-   "name": "Rosa Q.",
-   "role": "student",
-   "score": 0.328,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 17,
-   "connected": true,
-   "connected_at": "2026-09-27T23:39:00-04:00",
-   "top_topic": "ai research",
-   "why": [
-    "ai research",
-    "rock climbing",
-    "python"
-   ],
-   "topics": [
-    "knowledge graphs",
-    "data science",
-    "ai research",
-    "research tools",
-    "computer engineering",
-    "python",
-    "data visualization",
-    "tailwind css"
-   ],
-   "shared_count": 3,
-   "rank": 3,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_080",
-   "type": "person",
-   "label": "Jonah",
-   "name": "Jonah B.",
-   "role": "student",
-   "score": 0.259,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 17,
-   "connected": true,
-   "connected_at": "2026-09-26T18:52:00-04:00",
-   "top_topic": "ai research",
-   "why": [
-    "ai research",
-    "mathematics"
-   ],
-   "topics": [
-    "flask",
-    "research tools",
-    "react",
-    "knowledge graphs",
-    "data science",
-    "mathematics",
-    "d3.js",
-    "data visualization"
-   ],
-   "shared_count": 2,
-   "rank": 4,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_008",
-   "type": "person",
-   "label": "Zara",
-   "name": "Zara C.",
-   "role": "student",
-   "score": 0.256,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 2,
-   "connected": true,
-   "connected_at": "2026-09-26T13:05:00-04:00",
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing",
-    "mathematics"
-   ],
-   "topics": [
-    "fastapi",
-    "aws",
-    "ai agents",
-    "privacy",
-    "mongodb",
-    "ml engineering",
-    "mathematics",
-    "typescript"
-   ],
-   "shared_count": 2,
-   "rank": 5,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "invite"
-  },
-  {
-   "id": "u_000",
-   "type": "person",
-   "label": "Theo",
-   "name": "Theo W.",
-   "role": "student",
-   "score": 0.148,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 6,
-   "connected": true,
-   "connected_at": "2026-09-27T22:18:00-04:00",
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "pgvector",
-    "biomedical engineering",
-    "ml engineering",
-    "sentence transformers",
-    "semantic search",
-    "health tech",
-    "rock climbing",
-    "healthcare"
-   ],
-   "shared_count": 1,
-   "rank": 6,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_076",
-   "type": "person",
-   "label": "Andre",
-   "name": "Andre W.",
-   "role": "student",
-   "score": 0.148,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": true,
-   "connected_at": "2026-09-26T17:31:00-04:00",
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "creative tools",
-    "node.js",
-    "powerlifting",
-    "generative ai",
-    "product engineering",
-    "computer engineering",
-    "atlanta united",
-    "edtech"
-   ],
-   "shared_count": 1,
-   "rank": 7,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_058",
-   "type": "person",
-   "label": "Noah",
-   "name": "Noah K.",
-   "role": "student",
-   "score": 0.135,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": true,
-   "connected_at": "2026-09-26T12:44:00-04:00",
-   "top_topic": "rock climbing",
-   "why": [
-    "rock climbing"
-   ],
-   "topics": [
-    "product engineering",
-    "openai",
-    "react",
-    "film photography",
-    "generative ai",
-    "computer engineering",
-    "creative tools",
-    "ai engineering"
-   ],
-   "shared_count": 1,
-   "rank": 8,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_052",
-   "type": "person",
-   "label": "Maya",
-   "name": "Maya U.",
-   "role": "student",
-   "score": 0.132,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 25,
-   "connected": true,
-   "connected_at": "2026-09-27T21:57:00-04:00",
-   "top_topic": "ai research",
-   "why": [
-    "ai research"
-   ],
-   "topics": [
-    "fastapi",
-    "data visualization",
-    "video games",
-    "react-force-graph",
-    "ai research",
-    "knowledge graphs",
-    "rag",
-    "computer engineering"
-   ],
-   "shared_count": 1,
-   "rank": 9,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_004",
-   "type": "person",
-   "label": "Lina",
-   "name": "Lina C.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 9,
-   "connected": true,
-   "connected_at": "2026-09-26T16:10:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "ai agents",
-    "productivity",
-    "mobile engineering",
-    "ai engineering",
-    "piano",
-    "next.js",
-    "gemini",
-    "ios development"
-   ],
-   "shared_count": 1,
-   "rank": 10,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "invite"
-  },
-  {
-   "id": "u_034",
-   "type": "person",
-   "label": "Ines",
-   "name": "Ines X.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 22,
-   "connected": true,
-   "connected_at": "2026-09-26T11:23:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "opencv",
-    "assistive tech",
-    "gemini",
-    "mathematics",
-    "jazz",
-    "accessibility",
-    "yolo",
-    "speech to text"
-   ],
-   "shared_count": 1,
-   "rank": 11,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_044",
-   "type": "person",
-   "label": "Ines",
-   "name": "Ines R.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 4,
-   "connected": true,
-   "connected_at": "2026-09-27T20:36:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "typescript",
-    "developer experience",
-    "video games",
-    "mathematics",
-    "software engineering",
-    "gemini",
-    "legacy code",
-    "developer tools"
-   ],
-   "shared_count": 1,
-   "rank": 12,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_064",
-   "type": "person",
-   "label": "Rohan",
-   "name": "Rohan P.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 3,
-   "connected": true,
-   "connected_at": "2026-09-26T15:49:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "mastra",
-    "generative ai",
-    "mathematics",
-    "product engineering",
-    "openai",
-    "react",
-    "ai engineering",
-    "edtech"
-   ],
-   "shared_count": 1,
-   "rank": 13,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  },
-  {
-   "id": "u_068",
-   "type": "person",
-   "label": "Sofia",
-   "name": "Sofia D.",
-   "role": "student",
-   "score": 0.128,
-   "highlight": false,
-   "open_to_meet": false,
-   "cluster": 10,
-   "connected": true,
-   "connected_at": "2026-09-26T10:02:00-04:00",
-   "top_topic": "mathematics",
-   "why": [
-    "mathematics"
-   ],
-   "topics": [
-    "openai",
-    "ai agents",
-    "fintech",
-    "mastra",
-    "twilio",
-    "mathematics",
-    "fraud detection",
-    "node.js"
-   ],
-   "shared_count": 1,
-   "rank": 14,
-   "photo_url": null,
-   "met_at": "HackGT 13",
-   "how_met": "in_person"
-  }
- ],
- "edges": [
-  {
-   "source": "me",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.95
-  },
-  {
-   "source": "me",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "t_158",
-   "kind": "has_topic",
-   "weight": 0.8
-  },
-  {
-   "source": "me",
-   "target": "t_116",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.6
-  },
-  {
-   "source": "me",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.6
-  },
-  {
-   "source": "me",
-   "target": "t_19",
-   "kind": "has_topic",
-   "weight": 0.5
-  },
-  {
-   "source": "me",
-   "target": "u_028",
-   "kind": "connection",
-   "weight": 0.785,
-   "facet": "technical"
-  },
-  {
-   "source": "u_028",
-   "target": "t_116",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "u_028",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.8
-  },
-  {
-   "source": "u_028",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.79
-  },
-  {
-   "source": "u_028",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.65
-  },
-  {
-   "source": "me",
-   "target": "u_082",
-   "kind": "connection",
-   "weight": 0.374,
-   "facet": "career"
-  },
-  {
-   "source": "u_082",
-   "target": "t_118",
-   "kind": "has_topic",
-   "weight": 0.66
-  },
-  {
-   "source": "u_082",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.9
-  },
-  {
-   "source": "u_082",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "u_002",
-   "kind": "connection",
-   "weight": 0.328,
-   "facet": "career"
-  },
-  {
-   "source": "u_002",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.81
-  },
-  {
-   "source": "u_002",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.55
-  },
-  {
-   "source": "u_002",
-   "target": "t_115",
-   "kind": "has_topic",
-   "weight": 0.76
-  },
-  {
-   "source": "me",
-   "target": "u_080",
-   "kind": "connection",
-   "weight": 0.259,
-   "facet": "career"
-  },
-  {
-   "source": "u_080",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.68
-  },
-  {
-   "source": "u_080",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "me",
-   "target": "u_008",
-   "kind": "connection",
-   "weight": 0.256,
-   "facet": "personal"
-  },
-  {
-   "source": "u_008",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.61
-  },
-  {
-   "source": "u_008",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.76
-  },
-  {
-   "source": "me",
-   "target": "u_000",
-   "kind": "connection",
-   "weight": 0.148,
-   "facet": "personal"
-  },
-  {
-   "source": "u_000",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.73
-  },
-  {
-   "source": "me",
-   "target": "u_076",
-   "kind": "connection",
-   "weight": 0.148,
-   "facet": "personal"
-  },
-  {
-   "source": "u_076",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.7
-  },
-  {
-   "source": "me",
-   "target": "u_058",
-   "kind": "connection",
-   "weight": 0.135,
-   "facet": "personal"
-  },
-  {
-   "source": "u_058",
-   "target": "t_132",
-   "kind": "has_topic",
-   "weight": 0.64
-  },
-  {
-   "source": "me",
-   "target": "u_052",
-   "kind": "connection",
-   "weight": 0.132,
-   "facet": "career"
-  },
-  {
-   "source": "u_052",
-   "target": "t_6",
-   "kind": "has_topic",
-   "weight": 0.78
-  },
-  {
-   "source": "me",
-   "target": "u_004",
-   "kind": "connection",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_004",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.71
-  },
-  {
-   "source": "me",
-   "target": "u_034",
-   "kind": "connection",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_034",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.85
-  },
-  {
-   "source": "me",
-   "target": "u_044",
-   "kind": "connection",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_044",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  },
-  {
-   "source": "me",
-   "target": "u_064",
-   "kind": "connection",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_064",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.84
-  },
-  {
-   "source": "me",
-   "target": "u_068",
-   "kind": "connection",
-   "weight": 0.128,
-   "facet": "academic"
-  },
-  {
-   "source": "u_068",
-   "target": "t_84",
-   "kind": "has_topic",
-   "weight": 0.77
-  }
- ]
+  "mode": "network",
+  "event_id": 1,
+  "self_id": "me",
+  "generated_at": "2026-09-26T12:00:00-04:00",
+  "synthetic": true,
+  "nodes": [
+    {
+      "id": "me",
+      "type": "self",
+      "label": "You"
+    },
+    {
+      "id": "t_127",
+      "type": "topic",
+      "label": "reinforcement learning",
+      "facet": "technical",
+      "idf": 2.66
+    },
+    {
+      "id": "t_118",
+      "type": "topic",
+      "label": "quantitative research",
+      "facet": "career",
+      "idf": 2.53
+    },
+    {
+      "id": "t_158",
+      "type": "topic",
+      "label": "time series analysis",
+      "facet": "technical",
+      "idf": 3.51
+    },
+    {
+      "id": "t_116",
+      "type": "topic",
+      "label": "pytorch",
+      "facet": "technical",
+      "idf": 3.51
+    },
+    {
+      "id": "t_84",
+      "type": "topic",
+      "label": "mathematics",
+      "facet": "academic",
+      "idf": 1.84
+    },
+    {
+      "id": "t_132",
+      "type": "topic",
+      "label": "rock climbing",
+      "facet": "personal",
+      "idf": 2.13
+    },
+    {
+      "id": "t_115",
+      "type": "topic",
+      "label": "python",
+      "facet": "technical",
+      "idf": 1.35
+    },
+    {
+      "id": "t_6",
+      "type": "topic",
+      "label": "ai research",
+      "facet": "career",
+      "idf": 2.21
+    },
+    {
+      "id": "t_19",
+      "type": "topic",
+      "label": "chess",
+      "facet": "personal",
+      "idf": 2.53
+    },
+    {
+      "id": "u_028",
+      "type": "person",
+      "label": "Tara",
+      "name": "Tara A.",
+      "role": "student",
+      "score": 0.785,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 32,
+      "connected": true,
+      "connected_at": "2026-09-26T19:13:00-04:00",
+      "top_topic": "pytorch",
+      "why": [
+        "pytorch",
+        "reinforcement learning",
+        "quantitative research"
+      ],
+      "topics": [
+        "reward shaping",
+        "computer science",
+        "reinforcement learning",
+        "quantitative research",
+        "pytorch",
+        "poker",
+        "ai research",
+        "multi-agent systems"
+      ],
+      "shared_count": 4,
+      "rank": 1,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_082",
+      "type": "person",
+      "label": "Aisha",
+      "name": "Aisha M.",
+      "role": "student",
+      "score": 0.374,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 20,
+      "connected": true,
+      "connected_at": "2026-09-26T14:26:00-04:00",
+      "top_topic": "quantitative research",
+      "why": [
+        "quantitative research",
+        "mathematics",
+        "python"
+      ],
+      "topics": [
+        "trading",
+        "mathematics",
+        "fastapi",
+        "python",
+        "openai",
+        "llm apps",
+        "jazz",
+        "quantitative finance"
+      ],
+      "shared_count": 3,
+      "rank": 2,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_002",
+      "type": "person",
+      "label": "Rosa",
+      "name": "Rosa Q.",
+      "role": "student",
+      "score": 0.328,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 17,
+      "connected": true,
+      "connected_at": "2026-09-27T23:39:00-04:00",
+      "top_topic": "ai research",
+      "why": [
+        "ai research",
+        "rock climbing",
+        "python"
+      ],
+      "topics": [
+        "knowledge graphs",
+        "data science",
+        "ai research",
+        "research tools",
+        "computer engineering",
+        "python",
+        "data visualization",
+        "tailwind css"
+      ],
+      "shared_count": 3,
+      "rank": 3,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_080",
+      "type": "person",
+      "label": "Jonah",
+      "name": "Jonah B.",
+      "role": "student",
+      "score": 0.259,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 17,
+      "connected": true,
+      "connected_at": "2026-09-26T18:52:00-04:00",
+      "top_topic": "ai research",
+      "why": [
+        "ai research",
+        "mathematics"
+      ],
+      "topics": [
+        "flask",
+        "research tools",
+        "react",
+        "knowledge graphs",
+        "data science",
+        "mathematics",
+        "d3.js",
+        "data visualization"
+      ],
+      "shared_count": 2,
+      "rank": 4,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_008",
+      "type": "person",
+      "label": "Zara",
+      "name": "Zara C.",
+      "role": "student",
+      "score": 0.256,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 2,
+      "connected": true,
+      "connected_at": "2026-09-26T13:05:00-04:00",
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing",
+        "mathematics"
+      ],
+      "topics": [
+        "fastapi",
+        "aws",
+        "ai agents",
+        "privacy",
+        "mongodb",
+        "ml engineering",
+        "mathematics",
+        "typescript"
+      ],
+      "shared_count": 2,
+      "rank": 5,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "invite"
+    },
+    {
+      "id": "u_000",
+      "type": "person",
+      "label": "Theo",
+      "name": "Theo W.",
+      "role": "student",
+      "score": 0.148,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 6,
+      "connected": true,
+      "connected_at": "2026-09-27T22:18:00-04:00",
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "pgvector",
+        "biomedical engineering",
+        "ml engineering",
+        "sentence transformers",
+        "semantic search",
+        "health tech",
+        "rock climbing",
+        "healthcare"
+      ],
+      "shared_count": 1,
+      "rank": 6,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_076",
+      "type": "person",
+      "label": "Andre",
+      "name": "Andre W.",
+      "role": "student",
+      "score": 0.148,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": true,
+      "connected_at": "2026-09-26T17:31:00-04:00",
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "creative tools",
+        "node.js",
+        "powerlifting",
+        "generative ai",
+        "product engineering",
+        "computer engineering",
+        "atlanta united",
+        "edtech"
+      ],
+      "shared_count": 1,
+      "rank": 7,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_058",
+      "type": "person",
+      "label": "Noah",
+      "name": "Noah K.",
+      "role": "student",
+      "score": 0.135,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": true,
+      "connected_at": "2026-09-26T12:44:00-04:00",
+      "top_topic": "rock climbing",
+      "why": [
+        "rock climbing"
+      ],
+      "topics": [
+        "product engineering",
+        "openai",
+        "react",
+        "film photography",
+        "generative ai",
+        "computer engineering",
+        "creative tools",
+        "ai engineering"
+      ],
+      "shared_count": 1,
+      "rank": 8,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_052",
+      "type": "person",
+      "label": "Maya",
+      "name": "Maya U.",
+      "role": "student",
+      "score": 0.132,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 25,
+      "connected": true,
+      "connected_at": "2026-09-27T21:57:00-04:00",
+      "top_topic": "ai research",
+      "why": [
+        "ai research"
+      ],
+      "topics": [
+        "fastapi",
+        "data visualization",
+        "video games",
+        "react-force-graph",
+        "ai research",
+        "knowledge graphs",
+        "rag",
+        "computer engineering"
+      ],
+      "shared_count": 1,
+      "rank": 9,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_004",
+      "type": "person",
+      "label": "Lina",
+      "name": "Lina C.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 9,
+      "connected": true,
+      "connected_at": "2026-09-26T16:10:00-04:00",
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "ai agents",
+        "productivity",
+        "mobile engineering",
+        "ai engineering",
+        "piano",
+        "next.js",
+        "gemini",
+        "ios development"
+      ],
+      "shared_count": 1,
+      "rank": 10,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "invite"
+    },
+    {
+      "id": "u_034",
+      "type": "person",
+      "label": "Ines",
+      "name": "Ines X.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 22,
+      "connected": true,
+      "connected_at": "2026-09-26T11:23:00-04:00",
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "opencv",
+        "assistive tech",
+        "gemini",
+        "mathematics",
+        "jazz",
+        "accessibility",
+        "yolo",
+        "speech to text"
+      ],
+      "shared_count": 1,
+      "rank": 11,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_044",
+      "type": "person",
+      "label": "Ines",
+      "name": "Ines R.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 4,
+      "connected": true,
+      "connected_at": "2026-09-27T20:36:00-04:00",
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "typescript",
+        "developer experience",
+        "video games",
+        "mathematics",
+        "software engineering",
+        "gemini",
+        "legacy code",
+        "developer tools"
+      ],
+      "shared_count": 1,
+      "rank": 12,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_064",
+      "type": "person",
+      "label": "Rohan",
+      "name": "Rohan P.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 3,
+      "connected": true,
+      "connected_at": "2026-09-26T15:49:00-04:00",
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "mastra",
+        "generative ai",
+        "mathematics",
+        "product engineering",
+        "openai",
+        "react",
+        "ai engineering",
+        "edtech"
+      ],
+      "shared_count": 1,
+      "rank": 13,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    },
+    {
+      "id": "u_068",
+      "type": "person",
+      "label": "Sofia",
+      "name": "Sofia D.",
+      "role": "student",
+      "score": 0.128,
+      "highlight": false,
+      "open_to_meet": false,
+      "cluster": 10,
+      "connected": true,
+      "connected_at": "2026-09-26T10:02:00-04:00",
+      "top_topic": "mathematics",
+      "why": [
+        "mathematics"
+      ],
+      "topics": [
+        "openai",
+        "ai agents",
+        "fintech",
+        "mastra",
+        "twilio",
+        "mathematics",
+        "fraud detection",
+        "node.js"
+      ],
+      "shared_count": 1,
+      "rank": 14,
+      "photo_url": null,
+      "met_at": "HackGT 13",
+      "how_met": "in_person"
+    }
+  ],
+  "edges": [
+    {
+      "source": "me",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.95
+    },
+    {
+      "source": "me",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "t_158",
+      "kind": "has_topic",
+      "weight": 0.8
+    },
+    {
+      "source": "me",
+      "target": "t_116",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.6
+    },
+    {
+      "source": "me",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.6
+    },
+    {
+      "source": "me",
+      "target": "t_19",
+      "kind": "has_topic",
+      "weight": 0.5
+    },
+    {
+      "source": "me",
+      "target": "u_028",
+      "kind": "connection",
+      "weight": 0.785,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on pytorch and reinforcement learning. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.2233,
+            "share": 0.2844
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.1831,
+            "share": 0.2332
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.1407,
+            "share": 0.1792
+          }
+        ],
+        "shared_topics": [
+          "pytorch",
+          "reinforcement learning",
+          "quantitative research"
+        ]
+      }
+    },
+    {
+      "source": "u_028",
+      "target": "t_116",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "u_028",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.8
+    },
+    {
+      "source": "u_028",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.79
+    },
+    {
+      "source": "u_028",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.65
+    },
+    {
+      "source": "me",
+      "target": "u_082",
+      "kind": "connection",
+      "weight": 0.374,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in quantitative research and mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.1116,
+            "share": 0.2984
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0915,
+            "share": 0.2447
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0703,
+            "share": 0.188
+          }
+        ],
+        "shared_topics": [
+          "quantitative research",
+          "mathematics",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_082",
+      "target": "t_118",
+      "kind": "has_topic",
+      "weight": 0.66
+    },
+    {
+      "source": "u_082",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.9
+    },
+    {
+      "source": "u_082",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "u_002",
+      "kind": "connection",
+      "weight": 0.328,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research and rock climbing. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.093,
+            "share": 0.2836
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0763,
+            "share": 0.2326
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0586,
+            "share": 0.1787
+          }
+        ],
+        "shared_topics": [
+          "ai research",
+          "rock climbing",
+          "python"
+        ]
+      }
+    },
+    {
+      "source": "u_002",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.81
+    },
+    {
+      "source": "u_002",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.55
+    },
+    {
+      "source": "u_002",
+      "target": "t_115",
+      "kind": "has_topic",
+      "weight": 0.76
+    },
+    {
+      "source": "me",
+      "target": "u_080",
+      "kind": "connection",
+      "weight": 0.259,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research and mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0725,
+            "share": 0.2798
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0594,
+            "share": 0.2295
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0457,
+            "share": 0.1763
+          }
+        ],
+        "shared_topics": [
+          "ai research",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_080",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.68
+    },
+    {
+      "source": "u_080",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "me",
+      "target": "u_008",
+      "kind": "connection",
+      "weight": 0.256,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing and mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0769,
+            "share": 0.3004
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0631,
+            "share": 0.2463
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0485,
+            "share": 0.1893
+          }
+        ],
+        "shared_topics": [
+          "rock climbing",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_008",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.61
+    },
+    {
+      "source": "u_008",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.76
+    },
+    {
+      "source": "me",
+      "target": "u_000",
+      "kind": "connection",
+      "weight": 0.148,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0454,
+            "share": 0.3068
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0372,
+            "share": 0.2516
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0286,
+            "share": 0.1933
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_000",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.73
+    },
+    {
+      "source": "me",
+      "target": "u_076",
+      "kind": "connection",
+      "weight": 0.148,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.042,
+            "share": 0.2837
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0344,
+            "share": 0.2326
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0264,
+            "share": 0.1787
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_076",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.7
+    },
+    {
+      "source": "me",
+      "target": "u_058",
+      "kind": "connection",
+      "weight": 0.135,
+      "facet": "personal",
+      "explanation": {
+        "summary": "You are both into rock climbing. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "shared personal interests",
+            "contribution": 0.0361,
+            "share": 0.2675
+          },
+          {
+            "label": "shared niche interests",
+            "contribution": 0.0296,
+            "share": 0.2193
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0227,
+            "share": 0.1685
+          }
+        ],
+        "shared_topics": [
+          "rock climbing"
+        ]
+      }
+    },
+    {
+      "source": "u_058",
+      "target": "t_132",
+      "kind": "has_topic",
+      "weight": 0.64
+    },
+    {
+      "source": "me",
+      "target": "u_052",
+      "kind": "connection",
+      "weight": 0.132,
+      "facet": "career",
+      "explanation": {
+        "summary": "You are both in ai research. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "career overlap",
+            "contribution": 0.0326,
+            "share": 0.2467
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0267,
+            "share": 0.2023
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0205,
+            "share": 0.1554
+          }
+        ],
+        "shared_topics": [
+          "ai research"
+        ]
+      }
+    },
+    {
+      "source": "u_052",
+      "target": "t_6",
+      "kind": "has_topic",
+      "weight": 0.78
+    },
+    {
+      "source": "me",
+      "target": "u_004",
+      "kind": "connection",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0373,
+            "share": 0.2911
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0306,
+            "share": 0.2387
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0235,
+            "share": 0.1834
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_004",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.71
+    },
+    {
+      "source": "me",
+      "target": "u_034",
+      "kind": "connection",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0382,
+            "share": 0.2986
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0313,
+            "share": 0.2449
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0241,
+            "share": 0.1881
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_034",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.85
+    },
+    {
+      "source": "me",
+      "target": "u_044",
+      "kind": "connection",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0343,
+            "share": 0.2682
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0281,
+            "share": 0.2199
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0216,
+            "share": 0.169
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_044",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    },
+    {
+      "source": "me",
+      "target": "u_064",
+      "kind": "connection",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.032,
+            "share": 0.25
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0262,
+            "share": 0.205
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0202,
+            "share": 0.1575
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_064",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.84
+    },
+    {
+      "source": "me",
+      "target": "u_068",
+      "kind": "connection",
+      "weight": 0.128,
+      "facet": "academic",
+      "explanation": {
+        "summary": "You both study mathematics. You met in person and the overlap held up.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "academic background",
+            "contribution": 0.0349,
+            "share": 0.2728
+          },
+          {
+            "label": "technical overlap",
+            "contribution": 0.0286,
+            "share": 0.2237
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.022,
+            "share": 0.1719
+          }
+        ],
+        "shared_topics": [
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_068",
+      "target": "t_84",
+      "kind": "has_topic",
+      "weight": 0.77
+    }
+  ]
 }

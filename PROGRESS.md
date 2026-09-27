@@ -213,6 +213,20 @@
 **Next step for whoever continues:** On two physical phones, both accept the same suggestion, both press Find → Share my location, then confirm Navigate to opens walking Maps; confirm it is absent if either person has not shared.
 **Known issues / blockers:** This checkout lacks `ml/.venv` and system Python lacks pytest, so the new backend test could not run locally. Expo preview process is local only; native Maps/Bluetooth needs devices.
 **Contract changes:** `docs/api.md` §37: `their_location` is now explicitly reciprocal; external navigation is allowed only in the reciprocal share window.
+## 2026-09-27 09:15 | alan | Claude Code (Opus 5)
+**Task:** Render "why you matched" in the Connection Graph side panel — **edits in Arjun's folder**
+**Status:** done — dashboard typecheck, lint, 11 tests and build all pass; verified in a real browser at desktop and 375px
+**What I did:**
+- The `explanation` field I shipped yesterday was **invisible**: `GraphView.tsx` only rendered `why` as topic chips, so the summary and factor bars never reached a screen. MASTER_SPEC 14's *"matches list shows ranked people with 'why you matched'"* was not really satisfied by chips alone.
+- Side panel now shows the summary sentence, then one bar per contributing feature (label, bar width from `share`, percentage), then the shared-topic chips. Falls back to the old chips-only rendering when an edge has no explanation, so nothing regresses if the server is older.
+- `basis` is surfaced honestly: `v1`/`lr` read "Share of this match's score, from the features the ranker used"; `v1_proxy` reads "Approximate: a tree ranker is serving, so these shares are indicative."
+- Types added to `dashboard/lib/types.ts` (`MatchExplanation`, `ExplanationFactor`). The panel also guards on shape — a malformed `explanation` is ignored rather than blanking the whole panel.
+- **The dashboard serves its own mocks**, separate from `docs/mocks/`. Without a token `/graph` reads `dashboard/public/mocks/graph_*.json`, and those had no explanations, so mock mode would have rendered nothing. Generated them for all 46 match/connection edges across the three files, using the same phrasing and facet ordering as `ml/ml/scoring.py` so the mock exercises the real contract. Deterministic (seeded by node id).
+- Verified in the browser, not just by types: clicked a person, confirmed the summary, three bars (28% / 23% / 18%) and the basis line render; at 375px there is no horizontal overflow and the rows reflow via a media query. The element overlapping the rows in a dev screenshot is `NEXTJS-PORTAL`, the Next dev-tools button — dev only, not a layout bug.
+**How to run/test it:** `cd dashboard && npm run typecheck && npm run lint && npm test && npm run build`. Visually: `npm --prefix dashboard run dev -- --port 3100`, open `/graph`, click any person.
+**Next step for whoever continues:** The mobile app embeds this page in a WebView — worth one look on a real phone, since that is the surface a judge sees. `mobile/features/graph` has its own native renderer that does **not** read `explanation`; if the app shows its own panel rather than the WebView, it needs the same treatment.
+**Known issues / blockers:** `dashboard/` is Arjun's folder — Arjun, revert freely if this cuts across your panel work; the API contract is unchanged either way. Mock explanations are generated, not captured from a live run, so the numbers are plausible rather than real; live mode shows the ranker's actual values.
+**Contract changes:** none (consumes the `explanation` field added yesterday in docs/api.md §26).
 
 ## 2026-09-26 20:49 | adam | Codex
 **Task:** AD9 / AR5 — user-requested lightweight 3D atom constellation

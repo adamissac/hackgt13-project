@@ -167,6 +167,16 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
   );
   const people = useMemo(() => view?.nodes.filter((n): n is PersonNode => n.type === "person") ?? [], [view]);
   const selected = view?.nodes.find((n) => n.id === selectedId) ?? null;
+  // "Why you matched" rides on the me->person edge, not the node (docs/api.md §26).
+  const explanation = useMemo(() => {
+    if (selected?.type !== "person") return undefined;
+    const edge = view?.edges.find(
+      (e) => e.target === selected.id && (e.kind === "match" || e.kind === "connection"),
+    );
+    const ex = edge?.explanation;
+    // The API owns this shape, but a malformed payload must not blank the whole panel.
+    return ex && typeof ex.summary === "string" && Array.isArray(ex.factors) ? ex : undefined;
+  }, [view, selected]);
   const topicByLabel = useMemo(() => {
     const m = new Map<string, TopicNode>();
     raw?.nodes.forEach((n) => n.type === "topic" && m.set(n.label, n));
@@ -330,10 +340,33 @@ export default function GraphView({ eventId = 1, initialMode = "matches" }: { ev
                 </div>
               </div>
               {selected.highlight && <p className="flag">● Top match for you</p>}
-              {selected.why && selected.why.length > 0 && (
+              {(explanation || (selected.why && selected.why.length > 0)) && (
                 <>
                   <h3>Why you matched</h3>
-                  <div className="chips">{selected.why.map((w) => <Chip key={w} name={w} />)}</div>
+                  {explanation && <p className="why-summary">{explanation.summary}</p>}
+                  {explanation && explanation.factors.length > 0 && (
+                    <>
+                      <ul className="why-factors">
+                        {explanation.factors.map((f) => (
+                          <li key={f.label}>
+                            <span className="why-label">{f.label}</span>
+                            <span className="why-bar" aria-hidden>
+                              <i style={{ width: `${Math.max(2, Math.round(f.share * 100))}%` }} />
+                            </span>
+                            <span className="why-pct">{Math.round(f.share * 100)}%</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="why-basis">
+                        {explanation.basis === "v1_proxy"
+                          ? "Approximate: a tree ranker is serving, so these shares are indicative."
+                          : "Share of this match's score, from the features the ranker used."}
+                      </p>
+                    </>
+                  )}
+                  <div className="chips">
+                    {(explanation?.shared_topics ?? selected.why ?? []).map((w) => <Chip key={w} name={w} />)}
+                  </div>
                 </>
               )}
               <h3>Their topics</h3>

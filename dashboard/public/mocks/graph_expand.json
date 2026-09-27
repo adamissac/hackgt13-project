@@ -1,99 +1,150 @@
 {
- "node_id": "t_127",
- "mode": "matches",
- "event_id": 1,
- "synthetic": true,
- "nodes": [
-  {
-   "id": "u_062",
-   "type": "person",
-   "label": "Nia",
-   "name": "Nia E.",
-   "role": "student",
-   "score": 0.434,
-   "highlight": true,
-   "open_to_meet": false,
-   "cluster": 32,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "ai research",
-    "mathematics"
-   ],
-   "topics": [
-    "transformers",
-    "mathematics",
-    "ai research",
-    "basketball",
-    "phd programs",
-    "reinforcement learning",
-    "offline rl",
-    "running"
-   ],
-   "shared_count": 3,
-   "rank": 31,
-   "photo_url": null
-  },
-  {
-   "id": "u_001",
-   "type": "person",
-   "label": "Hana",
-   "name": "Hana S.",
-   "role": "student",
-   "score": 0.314,
-   "highlight": false,
-   "open_to_meet": true,
-   "cluster": 32,
-   "connected": false,
-   "connected_at": null,
-   "top_topic": "reinforcement learning",
-   "why": [
-    "reinforcement learning",
-    "ai research"
-   ],
-   "topics": [
-    "control systems",
-    "robot learning",
-    "ai research",
-    "computer science",
-    "reinforcement learning",
-    "robotics",
-    "cooking",
-    "salsa dancing"
-   ],
-   "shared_count": 2,
-   "rank": 32,
-   "photo_url": null
-  }
- ],
- "edges": [
-  {
-   "source": "me",
-   "target": "u_062",
-   "kind": "match",
-   "weight": 0.434,
-   "facet": "technical"
-  },
-  {
-   "source": "u_062",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.66
-  },
-  {
-   "source": "me",
-   "target": "u_001",
-   "kind": "match",
-   "weight": 0.314,
-   "facet": "technical"
-  },
-  {
-   "source": "u_001",
-   "target": "t_127",
-   "kind": "has_topic",
-   "weight": 0.69
-  }
- ]
+  "node_id": "t_127",
+  "mode": "matches",
+  "event_id": 1,
+  "synthetic": true,
+  "nodes": [
+    {
+      "id": "u_062",
+      "type": "person",
+      "label": "Nia",
+      "name": "Nia E.",
+      "role": "student",
+      "score": 0.434,
+      "highlight": true,
+      "open_to_meet": false,
+      "cluster": 32,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "reinforcement learning",
+      "why": [
+        "reinforcement learning",
+        "ai research",
+        "mathematics"
+      ],
+      "topics": [
+        "transformers",
+        "mathematics",
+        "ai research",
+        "basketball",
+        "phd programs",
+        "reinforcement learning",
+        "offline rl",
+        "running"
+      ],
+      "shared_count": 3,
+      "rank": 31,
+      "photo_url": null
+    },
+    {
+      "id": "u_001",
+      "type": "person",
+      "label": "Hana",
+      "name": "Hana S.",
+      "role": "student",
+      "score": 0.314,
+      "highlight": false,
+      "open_to_meet": true,
+      "cluster": 32,
+      "connected": false,
+      "connected_at": null,
+      "top_topic": "reinforcement learning",
+      "why": [
+        "reinforcement learning",
+        "ai research"
+      ],
+      "topics": [
+        "control systems",
+        "robot learning",
+        "ai research",
+        "computer science",
+        "reinforcement learning",
+        "robotics",
+        "cooking",
+        "salsa dancing"
+      ],
+      "shared_count": 2,
+      "rank": 32,
+      "photo_url": null
+    }
+  ],
+  "edges": [
+    {
+      "source": "me",
+      "target": "u_062",
+      "kind": "match",
+      "weight": 0.434,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and ai research. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.1298,
+            "share": 0.299
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.1064,
+            "share": 0.2451
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.0817,
+            "share": 0.1883
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "ai research",
+          "mathematics"
+        ]
+      }
+    },
+    {
+      "source": "u_062",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.66
+    },
+    {
+      "source": "me",
+      "target": "u_001",
+      "kind": "match",
+      "weight": 0.314,
+      "facet": "technical",
+      "explanation": {
+        "summary": "You both work on reinforcement learning and ai research. Your strongest overlap is technical.",
+        "basis": "v1",
+        "factors": [
+          {
+            "label": "technical overlap",
+            "contribution": 0.0894,
+            "share": 0.2848
+          },
+          {
+            "label": "what each of you wants and offers",
+            "contribution": 0.0733,
+            "share": 0.2335
+          },
+          {
+            "label": "career overlap",
+            "contribution": 0.0563,
+            "share": 0.1794
+          }
+        ],
+        "shared_topics": [
+          "reinforcement learning",
+          "ai research"
+        ]
+      }
+    },
+    {
+      "source": "u_001",
+      "target": "t_127",
+      "kind": "has_topic",
+      "weight": 0.69
+    }
+  ]
 }

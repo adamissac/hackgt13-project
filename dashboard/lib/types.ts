@@ -45,12 +45,34 @@ export type GraphNode = SelfNode | PersonNode | TopicNode;
 
 export type EdgeKind = "match" | "connection" | "has_topic";
 
+/** One feature's share of the match score. `contribution` is weight x feature value, so the factors
+ *  sum back to the score the ranker produced; `share` is that factor's slice of the positive total,
+ *  which is what the bar widths use. */
+export interface ExplanationFactor {
+  label: string;
+  contribution: number;
+  share: number;
+}
+
+/** "Why you matched", from the ML service (docs/api.md §26). `basis` says where the numbers came
+ *  from: "v1" and "lr" are exact decompositions of the score, "v1_proxy" means a tree ranker is
+ *  serving and the bars are indicative only. `varied` marks a summary rewritten for variety - the
+ *  factor numbers are never affected by that. */
+export interface MatchExplanation {
+  summary: string;
+  basis: "v1" | "lr" | "v1_proxy";
+  factors: ExplanationFactor[];
+  shared_topics: string[];
+  varied?: boolean;
+}
+
 export interface GraphEdge {
   source: string;
   target: string;
   kind: EdgeKind;
   weight: number;
   facet?: Facet;
+  explanation?: MatchExplanation;
 }
 
 export interface GraphPayload {
