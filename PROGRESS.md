@@ -11,6 +11,18 @@
 **Contract changes:** docs/api.md 45 (company events); docs/mocks/get-events.json. Alan: new routes live in `ml/app/routers/events.py`.
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / a different blue design on each tab
+**Status:** done
+**What I did:**
+- Per Arjun, each tab uses the navy in its own way (Events keeps `TabHero`, and only Events uses it now). Feed: an edge-to-edge navy band with rounded bottom, and the composer card overlapping it. Constellation: a large navy headline plus three light-blue stat tiles (people, shared topics, best match %). Nearby: a light-blue "radar" card with navy concentric rings (react-native-svg) and the scan switch. Profile: a navy cover strip with a faint constellation mark and the avatar overlapping it, in a white card.
+- Styling only, in `app/(tabs)/feed.tsx` and `app/profile.tsx` (Adam's; noted), plus `app/(tabs)/graph.tsx` and `app/(tabs)/nearby.tsx`. Checked each tab in the browser at phone size.
+- The local Expo server had crashed (Abort trap in phone-qr.sh). Restarted it with the same URL, exp://hshigw0-arjunk91-8081.exp.direct.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
+**Next step for whoever continues:** Keep the tabs visually distinct. Don't add `TabHero` to them.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / company events: check in only by QR, Event Mode gated on check-in
 **Status:** done
 **What I did:**
