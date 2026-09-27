@@ -40,10 +40,13 @@ class Builder:
             self.nodes[nid]["evidence"] = evidence
         return nid
 
-    def edge(self, source: str, target: str, kind: str, weight: float, facet: str | None = None) -> None:
+    def edge(self, source: str, target: str, kind: str, weight: float, facet: str | None = None,
+             explanation: dict | None = None) -> None:
         e = {"source": source, "target": target, "kind": kind, "weight": round(float(weight), 4)}
         if facet:
             e["facet"] = facet
+        if explanation is not None:
+            e["explanation"] = explanation
         self.edges[(source, target)] = e
 
     def person(self, p: dict, *, score: float, features: dict, highlight: bool, cluster, connected: bool,
@@ -59,12 +62,26 @@ class Builder:
                            "open_to_meet": bool(p.get("open_to_meet")), "cluster": cluster,
                            "connected": connected, "connected_at": connected_at,
                            "top_topic": shared[0]["name"] if shared else None, "shared_count": len(shared)}
-        self.edge("me", nid, "connection" if connected else "match", score, dominant_facet(features))
+        self.edge("me", nid, "connection" if connected else "match", score, dominant_facet(features),
+                  explanation=self.explanation(p, features))
         for s in shared[:topics_k]:
             t = self.topic(s["id"])
             self.edge(nid, t, "has_topic", p["interests"][s["id"]]["weight"])
             self.edge("me", t, "has_topic", self.me["interests"][s["id"]]["weight"])
         return True
+
+    def explanation(self, p: dict, features: dict) -> dict:
+        """Why-you-matched for the me->person edge, trimmed for a graph that can hold 150 nodes.
+
+        Only the summary, the top factors (enough to draw a small bar), and topic names. The full
+        breakdown with evidence lines is on GET /matches/{id}/quick-profile and expand(); repeating
+        it per edge would multiply the payload for data the graph never renders.
+        """
+        e = scoring.explain_match(self.me, p, self.index, features=features)
+        return {"summary": e["summary"], "basis": e["basis"],
+                "factors": [{"label": r["label"], "contribution": r["contribution"], "share": r["share"]}
+                            for r in e["factors"]],
+                "shared_topics": [t["name"] for t in e["shared_topics"][:3]]}
 
     def people_count(self) -> int:
         return sum(1 for n in self.nodes.values() if n["type"] == "person")

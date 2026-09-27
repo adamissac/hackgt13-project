@@ -94,34 +94,49 @@ def score_contributions(f, model=None):
     return {k: float(V1_WEIGHTS.get(k, 0.0) * f.get(k, 0.0)) for k in FEATURES}, basis
 
 
-def _summary(factors, topics, a, b):
-    """One or two sentences, built from the factors that actually scored. No LLM, no invented facts."""
-    names = [t["name"] for t in topics[:2]]
-    top = factors[0] if factors else None
-    lead = ""
-    if len(names) >= 2:
-        lead = f"You both work on {names[0]} and {names[1]}."
-    elif names:
-        lead = f"You both work on {names[0]}."
+_VERB = {"technical": "both work on", "academic": "both study",
+         "career": "are both in", "personal": "are both into"}
 
+
+def _lead(topics, index):
+    """'You both work on rust and cybersecurity.' Verb comes from the topic's own facet, so a
+    personal interest does not read as work."""
+    if not topics:
+        return ""
+    verb = _VERB.get(index.facets[topics[0]["id"]], "both work on")
+    names = [t["name"] for t in topics[:2]]
+    joined = f"{names[0]} and {names[1]}" if len(names) >= 2 else names[0]
+    return f"You {verb} {joined}."
+
+
+def _summary(factors, topics, f, index):
+    """One or two sentences from the factors that actually scored. No LLM, no invented facts.
+
+    The bars rank by contribution. The sentence deliberately does not: `bridge` and `role_pair`
+    carry small weights, so they never top the bars, yet they are the most interesting thing you
+    can say about a pair. Lead with whichever signal is *distinctive*, then fall back to the
+    biggest contributor.
+    """
+    lead = _lead(topics, index)
+    top = factors[0] if factors else None
     if top is None or top["contribution"] <= 0:
         return lead or "Not much overlap yet - this one is a long shot."
+    first = topics[0]["name"] if topics else None
 
-    key = top["name"]
-    if key == "bridge" and names:
-        # The interesting case: different communities, one strong shared thread.
-        tail = f"You come from different circles here, which makes the {names[0]} overlap worth a conversation."
-    elif key == "complementarity":
-        tail = "What one of you is looking for lines up with what the other offers."
-    elif key == "role_pair":
+    if f.get("bridge", 0.0) > 0 and first:
+        # The non-obvious match: different communities, one strong shared thread.
+        tail = (f"You are in different circles at this event, so {first} is the thread worth "
+                f"pulling on.")
+    elif f.get("role_pair", 0.0) > 0:
         tail = "One of you is hiring and the other is looking, on overlapping ground."
-    elif key == "idf_overlap" and names:
-        tail = f"{names[0].capitalize()} is niche enough here that sharing it means something."
-    elif key.startswith("sim_"):
-        facet = key[4:]
-        tail = f"Your strongest overlap is {facet}."
+    elif top["name"] == "complementarity":
+        tail = "What one of you is looking for lines up with what the other offers."
+    elif top["name"] == "idf_overlap" and first:
+        tail = f"{first.capitalize()} is uncommon here, so sharing it means more than it looks."
+    elif top["name"].startswith("sim_"):
+        tail = f"Your strongest overlap is {top['name'][4:]}."
     else:
-        tail = f"Strongest signal: {FEATURE_LABELS.get(key, key)}."
+        tail = f"Strongest signal: {top['label']}."
     return (lead + " " + tail).strip() if lead else tail
 
 
@@ -144,7 +159,7 @@ def explain_match(a, b, index, features=None, model=None, cluster=None, top_k=3)
         key=lambda r: -r["contribution"])
     topics = shared_interests(a, b, index, 5)
     top = [r for r in factors if r["contribution"] > 0][:top_k]
-    return {"summary": _summary(top, topics, a, b),
+    return {"summary": _summary(top, topics, f, index),
             "factors": top,
             "all_factors": factors,
             "shared_topics": [{"id": t["id"], "name": t["name"],
@@ -177,7 +192,11 @@ def rank_candidates(me, others, index, cluster=None, model=None, explore_eps=0.1
     out = []
     for rank, j in enumerate(order):
         o, f = rows[j]
+        # One explanation per candidate, built from the features that produced this ranking.
+        # `why` is derived from it rather than calling shared_interests() a second time.
+        e = explain_match(me, o, index, features=f, model=model)
         out.append({"id": o["id"], "name": o.get("name"), "rank": rank, "score": float(scores[j]),
                     "highlight": bool(scores[j] >= cutoff), "features": f,
-                    "why": [s["name"] for s in shared_interests(me, o, index, 3)]})
+                    "why": [t["name"] for t in e["shared_topics"][:3]],
+                    "explanation": e})
     return out
