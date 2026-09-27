@@ -3,6 +3,8 @@
 // resolves with the matching file in docs/mocks/ instead of hitting the network.
 
 import type { Relationship } from '../features/relationship/stage';
+import { File as ExpoFile } from 'expo-file-system';
+
 import { emitChange } from './changes';
 import { demo, demoAssistantReply, demoReady } from './demo';
 import { env } from './env';
@@ -495,9 +497,12 @@ export const api = {
     ),
   ingestResume: (file: { uri: string; name: string; type?: string }) =>
     call(mocks.ingest, () => {
+      // Expo SDK 57's fetch can't send React Native's `{ uri, name, type }` form parts ("Unsupported
+      // FormDataPart implementation": every upload failed on the phone before reaching the server). It sends
+      // anything with bytes(): expo-file-system's File reads the picked file and supplies name + type.
       const form = new FormData();
       form.append('source', 'resume');
-      form.append('file', { uri: file.uri, name: file.name, type: file.type ?? 'application/pdf' } as unknown as Blob);
+      form.append('file', new ExpoFile(file.uri) as unknown as Blob);
       return request<IngestResponse>('POST', '/profile/ingest', form);
     }),
   ingest: (body: ManualIngest | LinkedIngest) =>

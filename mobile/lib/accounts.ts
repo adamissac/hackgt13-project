@@ -58,7 +58,7 @@ export async function uploadResume(): Promise<string | null> {
   }
   try {
     const { job_id } = await api.ingestResume({ uri: file.uri, name: file.name, type: file.mimeType ?? 'application/pdf' });
-    console.log('[resume] uploaded, job', job_id);
+    console.log('[resume] uploaded, job', job_id);  // server now parses it; waitForJob follows
     return job_id;
   } catch (e) {
     console.warn('[resume] upload failed:', e instanceof Error ? e.message : e);
