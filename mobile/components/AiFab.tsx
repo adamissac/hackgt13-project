@@ -27,7 +27,7 @@ export function AiFab() {
   </Pressable>;
 }
 const styles = StyleSheet.create({
-  fab: { position: 'absolute', zIndex: 100, left: 18, width: 60, height: 60, borderRadius: 22,
+  fab: { position: 'absolute', zIndex: 100, right: 18, width: 60, height: 60, borderRadius: 22,
     alignItems: 'center', justifyContent: 'center', shadowColor: '#172D50',
     shadowOpacity: 0.2, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 8 },
 });
