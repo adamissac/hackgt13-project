@@ -24,6 +24,7 @@ import {
 import { router } from "expo-router";
 
 import { Brand } from '@/components/Brand';
+import { SignInIcon } from '@/components/SignInIcon';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -88,10 +89,10 @@ export default function SignInScreen() {
             <Svg width="100%" height={88} viewBox="0 0 360 88">
               <Path d="M 44 57 L 119 29 L 195 55 L 271 20 L 322 43" stroke="#7F98C1" strokeWidth={0.8} opacity={0.5} fill="none" />
               {[ [44,57], [119,29], [195,55], [271,20], [322,43] ].map(([x,y], i) => (
-                <Circle key={`halo${i}`} cx={x} cy={y} r={i === 2 ? 12 : 7} fill="#AFC8F5" opacity={0.09} />
+                <Circle key={`halo${i}`} cx={x} cy={y} r={i === 2 ? 12 : 7} fill="#526EA5" opacity={0.09} />
               ))}
               {[ [44,57], [119,29], [195,55], [271,20], [322,43], [80,18], [238,69], [301,72], [157,12] ].map(([x,y], i) => (
-                <Circle key={i} cx={x} cy={y} r={i === 2 ? 2.7 : i < 5 ? 1.8 : 0.7} fill="#E3ECFF" opacity={i < 5 ? 1 : 0.45} />
+                <Circle key={i} cx={x} cy={y} r={i === 2 ? 2.7 : i < 5 ? 1.8 : 0.7} fill="#47628D" opacity={i < 5 ? 1 : 0.45} />
               ))}
             </Svg>
           </View>
@@ -115,9 +116,9 @@ export default function SignInScreen() {
               {busy === "linkedin" ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.buttonTextLight}>
+                <><SignInIcon provider="linkedin" /><Text style={styles.buttonTextLight}>
                   Continue with LinkedIn
-                </Text>
+                </Text></>
               )}
             </Pressable>
           )}
@@ -132,9 +133,9 @@ export default function SignInScreen() {
               {busy === "github" ? (
                 <ActivityIndicator />
               ) : (
-                <Text style={[styles.buttonText, { color: tint }]}>
+                <><SignInIcon provider="github" color={tint} /><Text style={[styles.buttonText, { color: tint }]}>
                   Continue with GitHub
-                </Text>
+                </Text></>
               )}
             </Pressable>
           )}
@@ -149,14 +150,14 @@ export default function SignInScreen() {
               {busy === "google" ? (
                 <ActivityIndicator />
               ) : (
-                <Text style={[styles.buttonText, { color: tint }]}>
+                <><SignInIcon provider="google" /><Text style={[styles.buttonText, { color: tint }]}>
                   Continue with Google
-                </Text>
+                </Text></>
               )}
             </Pressable>
           )}
 
-          {(providers.linkedin_oidc || providers.github) && <Text style={[styles.or, { color: muted }]}>or continue with email</Text>}
+          {(providers.linkedin_oidc || providers.github || providers.google) && <Text style={[styles.or, { color: muted }]}>or continue with email</Text>}
           <Text style={styles.label}>Email address</Text>
           <TextInput
             style={[styles.input, { color: text, borderColor: "#DDE2EA" }]}
@@ -188,9 +189,9 @@ export default function SignInScreen() {
             {busy === "email" ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.buttonTextLight}>
+              <><SignInIcon provider="email" /><Text style={styles.buttonTextLight}>
                 {showCode ? 'Send a new sign-in link' : 'Continue with email'}
-              </Text>
+              </Text></>
             )}
           </Pressable>
           <Text style={[styles.emailHint, { color: muted }]}>No password to remember. We’ll email you a secure link.</Text>
@@ -223,9 +224,9 @@ export default function SignInScreen() {
             {busy === "code" ? (
               <ActivityIndicator />
             ) : (
-              <Text style={[styles.buttonText, { color: tint }]}>
+              <><SignInIcon provider="code" color={tint} /><Text style={[styles.buttonText, { color: tint }]}>
                 Sign in with code
-              </Text>
+              </Text></>
             )}
           </Pressable>
           </>}
@@ -298,7 +299,7 @@ const styles = StyleSheet.create({
     letterSpacing: -1.5,
   },
   subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 4 },
-  sky: { backgroundColor: '#0C1425', borderRadius: 8, overflow: 'hidden', marginTop: 8, marginBottom: 4 },
+  sky: { backgroundColor: 'transparent', marginTop: 0, marginBottom: -12 },
   form: { backgroundColor: 'transparent', borderTopWidth: 1, borderColor: '#E5E7ED', paddingTop: 24, marginTop: 8, gap: 12 },
   formTitle: { fontSize: 19, fontWeight: '600', letterSpacing: -0.4 },
   formSubtitle: { fontSize: 13, lineHeight: 19, marginTop: -6, marginBottom: 6 },
@@ -306,6 +307,9 @@ const styles = StyleSheet.create({
   emailHint: { fontSize: 12, lineHeight: 18, textAlign: 'center' },
   codeToggle: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   button: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 12,
     minHeight: 56,
     borderRadius: 8,
     alignItems: "center",

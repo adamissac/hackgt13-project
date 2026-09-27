@@ -196,7 +196,7 @@ export default function GraphScreen() {
                 </View>
               ))}
             </View>
-            <Text style={[styles.body, { color: c.muted }]}>Stronger, brighter lines mean more shared interests; faint lines mean less overlap. Positions are for readability, not physical distance. Each line connects someone to you, never to another person.</Text>
+            <Text style={[styles.body, { color: c.muted }]}>Bigger stars mean higher match scores. Colors show shared-interest categories; brighter lines mean more overlap. Positions are for readability, not physical distance. Each line connects someone to you, never to another person.</Text>
           </Disclosure>
 
           {topicObj && mode === 'matches' ? (

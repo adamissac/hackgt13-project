@@ -3,12 +3,12 @@
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import MapView, { Circle, Marker, type Region } from 'react-native-maps';
+import MapView, { Marker, type Region } from 'react-native-maps';
 
 import { useColors } from '@/components/ui';
 import type { Peer } from '@/features/ble';
 
-import { BAND_METERS, browseSlots, offsetMeters } from './geo';
+import { browseSlots, offsetMeters } from './geo';
 
 const FALLBACK = { latitude: 33.7756, longitude: -84.3963 }; // Georgia Tech, if location is off
 
@@ -57,16 +57,6 @@ export function NearbyMap({ peers, selectedId, onSelect, expanded = false }: { p
         showsPointsOfInterests={false}
         showsBuildings={false}
         onPress={() => onSelect(null)}>
-        {BAND_METERS.map((radius, i) => (
-          <Circle
-            key={radius}
-            center={center}
-            radius={radius}
-            strokeColor={c.tint}
-            strokeWidth={1.5}
-            fillColor={i === 0 ? 'rgba(110,120,135,0.10)' : 'rgba(110,120,135,0.03)'}
-          />
-        ))}
         {browseSlots(peers).map(({ peer: p, column, row, columns }) => {
           // This gives each eligible nearby match a tap target without implying
           // their direction or position. Exact coordinates never enter Nearby.

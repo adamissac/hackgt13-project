@@ -1609,3 +1609,15 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Reload `/sign-in` to inspect the flatter styling in `mobile/app/sign-in.tsx`.
 **Known issues / blockers:** Styling-only change; no physical-device visual check.
 **Contract changes:** none
+## 2026-09-27 00:20 | adam | Codex
+**Task:** AD2 / AD9 / AR5 / AK5 — login icons, score-sized stars, Nearby navigation
+**Status:** done
+**What I did:**
+- Added vector Google, GitHub, LinkedIn, email and code icons to sign-in actions; removed the dark rectangular banner so the constellation artwork sits directly on the page.
+- Added brighter blue/pink/mint/gold category colors and score-based star diameters (16–44 pixels) inside unchanged tap targets; updated the legend and added a score-size regression test.
+- Removed reintroduced native-map proximity circles. Queued expanded-map navigation until iOS modal dismissal, with a post-close effect on other platforms.
+- Changes to the graph/Nearby areas are explicitly user-requested.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx 'app/(tabs)/nearby.tsx' 'app/(tabs)/graph.tsx' components/SignInIcon.tsx features/graph/Atom.tsx features/graph/starStyle.ts features/nearby/NearbyMap.tsx && node --experimental-strip-types --test features/graph/*.test.mjs && npm run test:demo`; passed (18 demo flows, 4 graph tests). `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web` passed. Browser verified expanded Nearby → select Maya → View profile opens Maya's matching user ID and profile.
+**Next step for whoever continues:** On iPhone, open Nearby → expand → choose a match → View profile; confirm native dismissal completes and the correct profile opens. Logic lives in `mobile/app/(tabs)/nearby.tsx` (`openFromMap`, `finishDismiss`).
+**Known issues / blockers:** Native modal behavior and Apple Maps appearance were not exercised on a physical iPhone; browser flow and all platform bundles passed. No live OAuth attempt was made.
+**Contract changes:** none

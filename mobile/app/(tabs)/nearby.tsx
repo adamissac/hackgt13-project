@@ -1,6 +1,6 @@
-import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Link, router, type Href } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
@@ -19,6 +19,20 @@ export default function NearbyScreen() {
   const [scan, setScan] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const destination = useRef<Href | null>(null);
+  const finishDismiss = useCallback(() => {
+    const next = destination.current;
+    destination.current = null;
+    if (next) router.push(next);
+  }, []);
+  const openFromMap = (next: Href) => {
+    destination.current = next;
+    setExpanded(false);
+  };
+  useEffect(() => {
+    // iOS must finish dismissing its native modal before pushing a new screen.
+    if (!expanded && Platform.OS !== 'ios') finishDismiss();
+  }, [expanded, finishDismiss]);
   const insets = useSafeAreaInsets();
   const { scanning, peers: heard, radioError, fetchError } = useProximity(scan);
   // Without the Bluetooth radio (Expo Go, radio off, permission denied) nobody can be placed as
@@ -154,7 +168,7 @@ export default function NearbyScreen() {
         </Disclosure>
       ) : null}
     </ScrollView>
-    <Modal visible={expanded} animationType="slide" presentationStyle="fullScreen" onRequestClose={() => setExpanded(false)}>
+    <Modal visible={expanded} animationType="slide" presentationStyle="fullScreen" onDismiss={finishDismiss} onRequestClose={() => setExpanded(false)}>
       <View style={{ flex: 1, backgroundColor: c.background, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <View style={{ paddingHorizontal: 20, paddingVertical: 10, gap: 8 }}>
           <View style={styles.toggleRow}>
@@ -177,8 +191,8 @@ export default function NearbyScreen() {
               <Text style={{ color: c.text }}>{p.name}</Text>
             </Pressable>)}
           </ScrollView>
-          {selected && <Button label={`View ${(selected.name || 'match').split(' ')[0]}’s profile →`} onPress={() => { setExpanded(false); router.push(`/match/${selected.user_id}`); }} />}
-          {selected && selectedMeetup && <Button label={`Find ${(selected.name || 'match').split(' ')[0]}`} variant="secondary" onPress={() => { setExpanded(false); router.push({ pathname: '/meetup/[id]', params: { id: String(selectedMeetup.suggestion_id) } }); }} />}
+          {selected && <Button label={`View ${(selected.name || 'match').split(' ')[0]}’s profile →`} onPress={() => openFromMap({ pathname: '/match/[id]', params: { id: selected.user_id } })} />}
+          {selected && selectedMeetup && <Button label={`Find ${(selected.name || 'match').split(' ')[0]}`} variant="secondary" onPress={() => openFromMap({ pathname: '/meetup/[id]', params: { id: String(selectedMeetup.suggestion_id) } })} />}
         </View>
       </View>
     </Modal>

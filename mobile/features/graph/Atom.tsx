@@ -5,7 +5,7 @@ import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg'
 import { atomLayout } from './atomLayout';
 import type { Person } from './model';
 
-import { FACET_COLORS } from '@/constants/Colors';
+import { STAR_COLORS as FACET_COLORS, starSize } from './starStyle';
 const LABELS = { technical: 'Technology', career: 'Career & entrepreneurship', personal: 'Personal interests', academic: 'Academics' };
 const PHASES = Array.from({ length: 73 }, (_, i) => i / 72);
 const ORBIT_ANGLES = [-58, 8, 66];
@@ -17,14 +17,14 @@ function Sphere({ size, color, id }: { size: number; color: string; id: string }
       <Defs>
         <RadialGradient id={id}>
           <Stop offset="0" stopColor="#FFFFFF" />
-          <Stop offset="0.12" stopColor="#E8EEFF" />
-          <Stop offset="0.24" stopColor={color} stopOpacity={0.65} />
+          <Stop offset="0.12" stopColor={color} />
+          <Stop offset="0.30" stopColor={color} stopOpacity={0.8} />
           <Stop offset="0.55" stopColor={color} stopOpacity={0.16} />
           <Stop offset="1" stopColor={color} stopOpacity={0} />
         </RadialGradient>
       </Defs>
       <Circle cx={size / 2} cy={size / 2} r={size / 2 - 1} fill={`url(#${id})`} />
-      <Path d={`M ${size / 2} ${size * .18} L ${size / 2} ${size * .82} M ${size * .18} ${size / 2} L ${size * .82} ${size / 2}`} stroke="#DDE7FF" strokeOpacity={0.65} strokeWidth={0.7} />
+      <Path d={`M ${size / 2} ${size * .18} L ${size / 2} ${size * .82} M ${size * .18} ${size / 2} L ${size * .82} ${size / 2}`} stroke={color} strokeOpacity={0.9} strokeWidth={0.9} />
       <Circle cx={size / 2} cy={size / 2} r={size * .045} fill="#FFFFFF" />
     </Svg>
   );
@@ -139,7 +139,7 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, paused = fal
             accessibilityLabel={`View ${p.name}, ${p.shared[0] ?? 'shared interests'}`} accessibilityState={{ selected }}
             style={({ pressed }) => ({ width: 64, minHeight: 64, alignItems: 'center', gap: 3, opacity: pressed ? 0.7 : 1 })}>
             <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Sphere size={44} color={colorOf(p)} id={`personSphere${i}`} />
+              <Sphere size={starSize(p.score)} color={colorOf(p)} id={`personSphere${i}`} />
             </View>
             <Text numberOfLines={1} style={{ maxWidth: 64, color: selected ? '#FFFFFF' : '#C7D2E8', fontSize: 11, fontWeight: '500', paddingHorizontal: 3 }}>{p.first}</Text>
           </Pressable>
