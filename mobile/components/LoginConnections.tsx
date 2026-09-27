@@ -21,7 +21,6 @@ export function LoginConnections() {
     // what this project actually reports, or the button reads "not available yet" forever.
     const xSlug = xProviderSlug(enabled);
     const providers: { id: LinkableProvider; label: string }[] = [];
-    if (enabled.google) providers.push({ id: 'google', label: 'Google' });
     if (xSlug) providers.push({ id: xSlug, label: 'X' });
     return { providers, linked: data.identities.map((identity) => identity.provider) };
   }, [guest]);
@@ -40,19 +39,17 @@ export function LoginConnections() {
     }
   };
 
-  if (guest) return null;
+  // Nothing to connect (X not switched on): show nothing rather than an empty card.
+  if (guest || (state.status === 'ready' && state.data.providers.length === 0)) return null;
   return (
     <Card>
       <SectionTitle>Sign-in accounts</SectionTitle>
-      <Text style={{ color: c.muted }}>Connect another way to sign in to this same profile. Google and X are used for identity only; we do not import mail, contacts, or posts.</Text>
+      <Text style={{ color: c.muted }}>Connect another way to sign in to this same profile. X is used for identity only; we do not import mail, contacts, or posts.</Text>
       {state.status === 'loading' && <Text style={{ color: c.muted }}>Loading accounts…</Text>}
       {state.status === 'error' && <>
         <Text style={{ color: c.danger }}>{state.message}</Text>
         <Button label="Retry" onPress={reload} />
       </>}
-      {state.status === 'ready' && state.data.providers.length === 0 && (
-        <Text style={{ color: c.muted }}>No other sign-in methods are switched on yet.</Text>
-      )}
       {state.status === 'ready' && state.data.providers.map(({ id, label }) => {
         const linked = state.data.linked.includes(id);
         return <Button key={id}

@@ -101,14 +101,18 @@ export function xProviderSlug(providers: Record<string, boolean>): XSlug | null 
   return null;
 }
 
-// There is deliberately no signInWithGoogle()/signInWithX(). Google and X are link-only: see
-// LinkableProvider below and components/LoginConnections.tsx. Adding a sign-in entry point for
-// them brings back duplicate accounts, which is the thing that design avoids.
+/** Google sign-in (team decision: a sign-in button next to LinkedIn/GitHub, not a Profile connector).
+ *  Supabase links it to an existing account automatically when the verified Google email matches. */
+export async function signInWithGoogle(): Promise<void> {
+  await signInWithProvider('google');
+}
+
+// X stays link-only (Profile -> Sign-in accounts); there is no signInWithX().
 
 /** Providers offered as *links* only. They are deliberately absent from the sign-in screen:
  *  signing in with one would create a second account whenever the provider does not return a
  *  verified email matching an existing one. Linking attaches them to the account you already have. */
-export type LinkableProvider = 'google' | XSlug;
+export type LinkableProvider = XSlug;
 
 /** Add a login identity to the current user, without creating a second app account. */
 export async function connectLoginProvider(provider: LinkableProvider): Promise<boolean> {

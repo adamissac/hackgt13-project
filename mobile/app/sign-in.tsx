@@ -15,6 +15,7 @@ import {
   enabledProviders,
   sendMagicLink,
   signInWithGitHub,
+  signInWithGoogle,
   signInWithLinkedIn,
   useAuth,
   verifyEmailCode,
@@ -24,7 +25,7 @@ import { router } from "expo-router";
 
 import { Brand } from '@/components/Brand';
 
-type SignInKind = "linkedin" | "github" | "email" | "code";
+type SignInKind = "linkedin" | "github" | "google" | "email" | "code";
 
 export default function SignInScreen() {
   const { continueAsGuest } = useAuth();
@@ -120,11 +121,22 @@ export default function SignInScreen() {
             </Pressable>
           )}
 
-          {/* Google and X are deliberately NOT sign-in options. Signing in with them would create a
-              separate account whenever the provider does not hand back a verified email matching an
-              existing one — same person, two profiles, the second one with no interests. They are
-              offered instead under Profile -> Sign-in accounts, where `linkIdentity` attaches them to
-              the account you already have. See components/LoginConnections.tsx. */}
+          {providers.google && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("google", signInWithGoogle)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "google" ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={[styles.buttonText, { color: tint }]}>
+                  Continue with Google
+                </Text>
+              )}
+            </Pressable>
+          )}
 
           <Text style={[styles.or, { color: muted }]}>
             or continue with email

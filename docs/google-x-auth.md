@@ -1,5 +1,10 @@
 # Google and X sign-in / account linking
 
+**Update (team decision, 2026-09-26):** Google is a normal sign-in button on the sign-in screen, next to
+LinkedIn and GitHub (`signInWithGoogle` in mobile/lib/auth.tsx), not a Profile connector. Supabase attaches it to
+an existing account automatically when the verified Google email matches. X stays link-only. Google is
+configured and enabled in Supabase (client ID in supabase/config.toml, secret only in the dashboard).
+
 Uses the existing Supabase Auth account and PKCE callback, not Firebase Auth. Alan requested these
 providers and confirmed Supabase on 2026-09-26. New accounts use the existing `on_create_account()`
 trigger and onboarding gate. Connecting an identity uses `linkIdentity`, preserving the current user.
