@@ -11,6 +11,17 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR2 / preview of the uploaded resume or LinkedIn PDF
+**Status:** done
+**What I did:**
+- New `mobile/features/resume/ResumePreview.tsx`, shown inside the "Resume or LinkedIn PDF" card on `app/accounts.tsx` once a file is added. It reads the newest `resumes` row and signs a 10-minute URL for the object in the private `resumes` bucket, straight from Supabase with the user's session (both are owner-read under RLS; no server change). On iOS a non-scrolling WebView renders the first page of the PDF/DOCX inline. Android and web show a PDF/DOC tile with the filename. Tapping the preview or "View full file" opens it in the in-app browser with a fresh signed URL. States: loading, error, "couldn't be saved for viewing" (row has storage error), and a demo-mode note.
+- Added `react-native-webview` 13.16.1 via `npx expo install` (bundled in Expo Go SDK 57). `npx expo export --platform ios` builds.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. On a signed-in phone: Profile, Edit profile, upload a PDF; the preview appears in the card, and tapping it opens the full file.
+**Next step for whoever continues:** Resume and LinkedIn PDF share one slot (the newest upload replaces the old). Separate slots need a `kind` on `resumes` plus ingest support (contract change, Adam/Alan).
+**Known issues / blockers:** Not tested on a signed-in phone (the demo has no stored file). The new `POST /events/enter` join-code path (Adam, f944c24) registers AND checks in without a prior registration, which bypasses Arjun's "registered + scanned" rule. Flagged to Arjun and noted in REQUESTS.md for Adam.
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR2 / profile sources: remove typed About you, keep one optional box
 **Status:** done
 **What I did:**

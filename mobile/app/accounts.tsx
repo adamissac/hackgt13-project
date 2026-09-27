@@ -3,6 +3,7 @@ import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, Te
 
 import { ErrorState, Loading } from '@/components/States';
 import { LoginConnections } from '@/components/LoginConnections';
+import { ResumePreview } from '@/features/resume/ResumePreview';
 import { AiBadge, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { connectGithub, signInLabel, uploadResume, waitForJob } from '@/lib/accounts';
 import { api, type AccountsResponse, type ProfileSource } from '@/lib/api';
@@ -142,6 +143,7 @@ export default function AccountsScreen() {
               Demo mode: files aren’t really uploaded. Sign in to build your real profile.
             </Text>
           )}
+          {sources.resume.added && <ResumePreview version={sources.resume.updated_at} />}
           <Button label={sources.resume.added ? 'Replace PDF' : 'Upload PDF'} variant={sources.resume.added ? 'secondary' : 'primary'} onPress={onResume} loading={busy === 'resume'} />
           {sources.resume.added && (
             <Button label="Remove resume" variant="danger" onPress={() => confirmRemove('resume', 'your resume')} loading={busy === 'remove-resume'} />
