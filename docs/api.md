@@ -278,6 +278,10 @@ positive total — enough to draw a small bar. `basis` says where the numbers ca
 linear score, exact), `lr` (logistic ranker, exact in the logit), or `v1_proxy` (a tree ranker is serving and
 is not linearly decomposable, so the bars are indicative — label them as approximate). `summary` is
 template-built from those factors and the shared topics; it never names an interest the two do not share.
+By default the strongest few summaries are then rewritten by Haiku in one batched call per request, for
+variety across a screenful of matches — those carry `"varied": true`. The rewrite is rejected if it names
+an interest the pair does not share, and the factor numbers are never touched, so the bars always stay the
+ranker's. Set `EXPLAIN_VARY=0` to serve the deterministic templates only (no API key needed).
 Topic edges carry no `explanation`. Evidence lines are not repeated here — they are on
 `GET /matches/{id}/quick-profile` and `expand()`.
 - `matches` (default): me, my allowed matches at the event (must be checked in; `event_id` defaults to my latest check-in),

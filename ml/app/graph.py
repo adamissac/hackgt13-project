@@ -8,13 +8,19 @@
 
 Node ids: "me", "u_<uuid>", "t_<interest id>".
 """
-from ml import scoring
+import os
+
+from ml import generation, scoring
 from ml.config import FACETS
 
 from . import db, matching, population
 
 MAX_NODES = 150
 TOPICS_PER_PERSON = 3
+# A graph can hold 150 people but a user only reads a handful of summaries. Varying the strongest
+# edges keeps one Haiku call bounded (~6 s for 8) instead of scaling with the whole screen.
+MAX_VARIED = 10
+_varied_cache: dict[tuple[str, str], str] = {}      # (person node id, template) -> varied sentence
 
 
 def first_name(name: str | None) -> str:
@@ -86,10 +92,47 @@ class Builder:
     def people_count(self) -> int:
         return sum(1 for n in self.nodes.values() if n["type"] == "person")
 
+    def vary_summaries(self, edges: list[dict]) -> None:
+        """Rewrite the template summaries in varied prose, in ONE batched Haiku call per request.
+
+        The templates repeat across a screenful of matches, which reads robotically. This only ever
+        replaces `summary`; the factors and their contributions are untouched, so the numbers a judge
+        sees are still the ranker's. Anything the model omits or that names an interest the pair does
+        not share keeps its template. Set EXPLAIN_VARY=0 to turn it off entirely.
+        """
+        if os.getenv("EXPLAIN_VARY", "1") != "1":
+            return
+        with_ex = [e for e in edges if e.get("explanation")]
+        # Serve anything already rewritten this process; a judge reopening the graph pays nothing.
+        todo = []
+        for e in with_ex:
+            hit = _varied_cache.get((e["target"], e["explanation"]["summary"]))
+            if hit:
+                e["explanation"].update(summary=hit, varied=True)
+            else:
+                todo.append(e)
+        todo.sort(key=lambda e: -e["weight"])
+        todo = todo[:MAX_VARIED]
+        if not todo:
+            return
+        items = [{"id": e["target"], "template": e["explanation"]["summary"],
+                  "topics": e["explanation"]["shared_topics"],
+                  "factors": [f["label"] for f in e["explanation"]["factors"]],
+                  "bridge": "different circles" in e["explanation"]["summary"],
+                  "recruiter": "hiring" in e["explanation"]["summary"]} for e in todo]
+        varied = generation.vary_why(items, vocabulary={n.lower() for n in self.index.names})
+        for e in todo:
+            s = varied.get(e["target"])
+            if s:
+                _varied_cache[(e["target"], e["explanation"]["summary"])] = s
+                e["explanation"].update(summary=s, varied=True)
+
     def out(self) -> dict:
         nodes = list(self.nodes.values())[:MAX_NODES]
         keep = {n["id"] for n in nodes}
-        return {"nodes": nodes, "edges": [e for e in self.edges.values() if e["source"] in keep and e["target"] in keep]}
+        edges = [e for e in self.edges.values() if e["source"] in keep and e["target"] in keep]
+        self.vary_summaries([e for e in edges if e["kind"] in ("match", "connection")])
+        return {"nodes": nodes, "edges": edges}
 
 
 # ------------------------------------------------------------------ matches mode

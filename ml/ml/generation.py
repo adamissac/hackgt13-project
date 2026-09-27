@@ -5,6 +5,7 @@ shared interests with evidence lines, and the seeking/offering text. Output is s
 one retry, then GenerationError (callers fall back to a deterministic template).
 """
 import logging
+import re
 
 import pydantic
 from pydantic import BaseModel, field_validator
@@ -98,6 +99,106 @@ def template_starters(other_first: str, shared: list[dict]) -> dict:
         why = f"You and {other_first} could complement each other's goals."
         openers = ["What are you hoping to find at this event?", "What are you working on right now?"]
     return {"why": why, "openers": openers}
+
+
+# ------------------------------------------------------------------ varied "why you matched" summaries
+class VariedSummary(BaseModel):
+    id: str
+    summary: str
+
+
+class VariedSummaries(BaseModel):
+    summaries: list[VariedSummary]
+
+
+VARY_SYSTEM = """You rewrite one-sentence explanations of why two people at a networking event were
+matched. You are given, for each match: the shared interests, which signals scored highest, and a
+plain template sentence that is already correct.
+
+Your only job is to say the SAME THING in more natural, varied words. The template sentences repeat
+across dozens of matches and that repetition is the problem you are solving.
+
+Hard rules:
+- Use ONLY the shared interests listed for that match. Never name an interest, project, employer,
+  school, or detail that is not in that match's input. If a match lists no shared interests, do not
+  name any.
+- Never invent numbers, percentages, or match scores.
+- Keep the meaning: if the input says they are in different circles, or that one is hiring, say so.
+- Address the reader as "you". One or two sentences, under 30 words. No emojis, no exclamation
+  marks, no flattery.
+- Vary sentence structure between matches. Do not start every summary the same way.
+- Return one entry per input id, with the same id."""
+
+
+def _vary_input(items: list[dict]) -> str:
+    lines = []
+    for it in items:
+        lines.append(f"id: {it['id']}")
+        lines.append(f"  shared interests: {', '.join(it['topics']) if it['topics'] else '(none)'}")
+        lines.append(f"  strongest signals: {', '.join(it['factors']) if it['factors'] else '(none)'}")
+        if it.get("bridge"):
+            lines.append("  note: these two are in different communities at this event")
+        if it.get("recruiter"):
+            lines.append("  note: one is recruiting, the other is looking")
+        lines.append(f"  template: {it['template']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _grounded(sentence: str, allowed: set[str], vocabulary: set[str]) -> bool:
+    """Reject a rewrite that names an interest this pair does not actually share.
+
+    The vocabulary is every canonical interest in the population, so this catches the failure that
+    matters: attributing someone else's interest to this pair. It cannot catch every possible
+    fabrication, which is why the template stays the fallback.
+    """
+    low = sentence.lower()
+    for name in vocabulary:
+        if name in allowed or len(name) < 4:
+            continue
+        if re.search(rf"\b{re.escape(name)}\b", low):
+            return False
+    return True
+
+
+def vary_why(items: list[dict], vocabulary: set[str] | None = None) -> dict[str, str]:
+    """Rewrite template summaries in varied prose. One batched call for the whole screen.
+
+    items: [{id, template, topics: [names], factors: [labels], bridge: bool, recruiter: bool}]
+    Returns {id: sentence} for entries that came back valid AND grounded. Anything missing or
+    ungrounded is simply absent, and the caller keeps its template — this never raises.
+    """
+    if not items:
+        return {}
+    vocabulary = vocabulary or set()
+    try:
+        resp = client().messages.parse(
+            model=LLM_FAST, max_tokens=120 * len(items) + 200,
+            system=[{"type": "text", "text": VARY_SYSTEM, "cache_control": {"type": "ephemeral"}}],
+            messages=[{"role": "user", "content": _vary_input(items)}],
+            output_format=VariedSummaries,
+        )
+    except Exception as e:                      # no key, no network, API error: keep the templates
+        log.warning("vary_why unavailable (%s: %s); keeping template summaries", type(e).__name__, e)
+        return {}
+    u = resp.usage
+    log.info("vary_why model=%s n=%d in=%s out=%s stop=%s", LLM_FAST, len(items),
+             u.input_tokens, u.output_tokens, resp.stop_reason)
+    if resp.stop_reason in ("refusal", "max_tokens") or resp.parsed_output is None:
+        log.warning("vary_why gave no usable output (stop=%s); keeping template summaries", resp.stop_reason)
+        return {}
+
+    allowed_by_id = {it["id"]: {t.lower() for t in it["topics"]} for it in items}
+    out = {}
+    for row in resp.parsed_output.summaries:
+        s = row.summary.strip()
+        if row.id not in allowed_by_id or not s or len(s) > 240:
+            continue
+        if not _grounded(s, allowed_by_id[row.id], vocabulary):
+            log.warning("vary_why dropped an ungrounded summary for %s", row.id)
+            continue
+        out[row.id] = s
+    return out
 
 
 # ------------------------------------------------------------------ follow-up notes (MASTER_SPEC 6.10)

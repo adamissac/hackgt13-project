@@ -140,6 +140,99 @@ def test_tree_model_is_honest_about_not_decomposing(pop):
     assert basis == "v1_proxy"
 
 
+# ------------------------------------------------------------------ Haiku variety pass
+def test_ungrounded_rewrite_is_rejected():
+    """The whole point of the grounding check: a rewrite may not name an interest the pair does
+    not share, even though the model was only shown that pair's topics."""
+    from ml.generation import _grounded
+    vocab = {"rust", "kendo", "marine biology", "pottery"}
+    assert _grounded("You both work on rust.", {"rust"}, vocab)
+    assert not _grounded("You both work on rust and pottery.", {"rust"}, vocab)
+    # short words are skipped so a topic like 'ai' cannot false-positive on ordinary prose
+    assert _grounded("Your aims align.", {"rust"}, {"ai"})
+
+
+def test_vary_why_keeps_templates_when_the_llm_is_unavailable(monkeypatch):
+    """No API key, no network, API error: the caller must still get usable summaries."""
+    from ml import generation
+    monkeypatch.setattr(generation, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))
+    out = generation.vary_why([{"id": "a", "template": "You both work on rust.", "topics": ["rust"],
+                                "factors": ["technical overlap"], "bridge": False, "recruiter": False}])
+    assert out == {}          # empty, never an exception; caller keeps its template
+
+
+def test_vary_why_drops_a_hallucinated_row(monkeypatch):
+    from ml import generation
+
+    class Row:
+        def __init__(self, i, s):
+            self.id, self.summary = i, s
+
+    class Parsed:
+        summaries = [Row("good", "Rust is the common thread here."),
+                     Row("bad", "You both love pottery and rust.")]
+
+    class Resp:
+        parsed_output, stop_reason = Parsed(), "end_turn"
+        usage = type("U", (), {"input_tokens": 1, "output_tokens": 1})()
+
+    monkeypatch.setattr(generation, "client",
+                        lambda: type("C", (), {"messages": type("M", (), {"parse": staticmethod(lambda **k: Resp())})()})())
+    items = [{"id": i, "template": "t", "topics": ["rust"], "factors": [], "bridge": False, "recruiter": False}
+             for i in ("good", "bad")]
+    out = generation.vary_why(items, vocabulary={"rust", "pottery"})
+    assert "good" in out and "bad" not in out       # pottery is not shared -> dropped
+
+
+def test_graph_variety_can_be_switched_off(pop, monkeypatch):
+    """EXPLAIN_VARY=0 must skip the call entirely, not just discard the result."""
+    from app import graph as G
+    by_id, index = pop
+    monkeypatch.setenv("EXPLAIN_VARY", "0")
+    called = []
+    monkeypatch.setattr(G.generation, "vary_why", lambda *a, **k: called.append(1) or {})
+    b = G.Builder(by_id["me"], index)
+    f = scoring.pair_features(by_id["me"], by_id["twin"], index)
+    b.person(by_id["twin"], score=0.7, features=f, highlight=True, cluster=None,
+             connected=False, connected_at=None, facet_filter="all")
+    out = b.out()
+    edge = next(e for e in out["edges"] if e["kind"] == "match")
+    assert called == []
+    assert edge["explanation"]["summary"] and "varied" not in edge["explanation"]
+
+
+def test_graph_keeps_the_template_when_variety_returns_nothing(pop, monkeypatch):
+    from app import graph as G
+    by_id, index = pop
+    monkeypatch.setenv("EXPLAIN_VARY", "1")
+    monkeypatch.setattr(G, "_varied_cache", {})
+    monkeypatch.setattr(G.generation, "vary_why", lambda *a, **k: {})
+    b = G.Builder(by_id["me"], index)
+    f = scoring.pair_features(by_id["me"], by_id["twin"], index)
+    b.person(by_id["twin"], score=0.7, features=f, highlight=True, cluster=None,
+             connected=False, connected_at=None, facet_filter="all")
+    edge = next(e for e in b.out()["edges"] if e["kind"] == "match")
+    assert "robotics" in edge["explanation"]["summary"] or "rock climbing" in edge["explanation"]["summary"]
+
+
+def test_variety_never_touches_the_numbers(pop, monkeypatch):
+    """Only `summary` may change. The bars a judge sees stay the ranker's."""
+    from app import graph as G
+    by_id, index = pop
+    monkeypatch.setenv("EXPLAIN_VARY", "1")
+    monkeypatch.setattr(G, "_varied_cache", {})
+    monkeypatch.setattr(G.generation, "vary_why", lambda items, **k: {items[0]["id"]: "Totally different wording."})
+    b = G.Builder(by_id["me"], index)
+    f = scoring.pair_features(by_id["me"], by_id["twin"], index)
+    b.person(by_id["twin"], score=0.7, features=f, highlight=True, cluster=None,
+             connected=False, connected_at=None, facet_filter="all")
+    edge = next(e for e in b.out()["edges"] if e["kind"] == "match")
+    ex = edge["explanation"]
+    assert ex["summary"] == "Totally different wording." and ex["varied"] is True
+    expected = scoring.explain_match(by_id["me"], by_id["twin"], index, features=f)
+    assert [r["contribution"] for r in ex["factors"]] == [r["contribution"] for r in expected["factors"]]
+
+
 def test_rank_candidates_explains_every_row(pop):
     by_id, index = pop
     ranked = scoring.rank_candidates(by_id["me"], list(by_id.values()), index)

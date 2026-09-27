@@ -31,6 +31,19 @@
 **Next step for whoever continues:** Real proximity needs the dev build: `cd mobile && npx expo run:ios --device` or `npx eas-cli build --profile development`.
 **Known issues / blockers:** Bluetooth never works in Expo Go; that is expected.
 **Contract changes:** none
+## 2026-09-26 13:45 | alan | Claude Code (Opus 5)
+**Task:** AL3 follow-up — Haiku rewrites the why-you-matched sentences so a screenful of matches does not read identically
+**Status:** done — 121 passed, 118 skipped (6 new). On by default; `EXPLAIN_VARY=0` turns it off.
+**What I did:**
+- The template summaries were correct but repetitive: across 8 real matches only **2 of 8** had a distinct opening, which looks robotic when a judge scrolls. `generation.vary_why()` rewrites them with Haiku (`LLM_FAST`), reusing the existing `messages.parse` + pydantic + one-retry pattern already in that module. Measured on the synthetic population: **2/8 distinct openings -> 6/8**, all 8 grounded.
+- **The rewrite can only change words, never numbers.** It receives the shared topics, the factor labels and the template, and only `explanation.summary` is replaced — `factors`/`contribution`/`share` are untouched, so the bars a judge sees are still the ranker's. A test asserts that.
+- **Grounding is enforced, not hoped for.** `_grounded()` rejects any rewrite naming a canonical interest the pair does not share (checked against the whole population vocabulary, which catches the failure that matters: attributing someone else's interest). Rejected rows silently keep their template. A test feeds a hallucinated row through and asserts it is dropped.
+- **Never a hard dependency.** No API key, no network, API error, refusal, `max_tokens`, unparseable output — every path returns `{}` and the caller keeps the deterministic template. Tested.
+- Cost and latency bounded: **one batched call per graph request**, capped at the `MAX_VARIED = 10` strongest edges (a graph holds 150 people; nobody reads 150 summaries), plus an in-process cache keyed by (person, template). Measured: first build 3547 ms, second build **0 ms**.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_explain.py` (18 passed, all offline — no test makes a real API call). To see real output, build a graph with `EXPLAIN_VARY=1` and `ANTHROPIC_API_KEY` set.
+**Next step for whoever continues:** If the graph feels slow on first load during the demo, drop `MAX_VARIED` or set `EXPLAIN_VARY=0` — templates alone are still correct and instant.
+**Known issues / blockers:** First uncached graph build pays ~3.5 s for the Haiku call; repeat loads are free. `_varied_cache` is per-process and unbounded — fine for a hackathon, but it would need a TTL or size cap to run for days. The grounding check cannot catch every possible fabrication (it catches named interests, not invented employers), which is exactly why the template remains the fallback rather than the LLM becoming the source of truth.
+**Contract changes:** `docs/api.md` §26 — `explanation` may now carry `"varied": true` when a summary was rewritten; behaviour and the `EXPLAIN_VARY` switch documented. `.env.example` gains `EXPLAIN_VARY` (optional, defaults on). Additive; nothing renamed.
 
 ## 2026-09-26 13:10 | alan | Claude Code (Opus 5)
 **Task:** AL3 "why you matched" (MASTER_SPEC 6.9) — decompose the match score into the features that produced it
