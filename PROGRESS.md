@@ -1,3 +1,14 @@
+## 2026-09-27 02:16 | akshar | Claude Code (Opus 5.5)
+**Task:** AK3/AK2 phone testing fixes: tap-to-verify feedback, "nothing was sent" after connecting
+**Status:** done (server fix goes live with the Railway auto-deploy of this push)
+**What I did:**
+- Tap screen (`mobile/app/verify.tsx`, `features/ble/tap.ts`): shows what the server answered (too far / not recognized / waiting on them) instead of a silent "Waiting for their phone"; if the server says too_far, the app raises its own threshold to match; "Use QR instead" after 10 s. 6 tap tests.
+- Connect feedback (`ml/app/conversations.py`): re-verifying the same pair within the dedupe window reuses the conversation, and the first answer used to be locked in, so a later "yes" was ignored and showed "Nothing was sent". Now your latest answer counts; already-connected pairs see "connected" (notified once). Still only a mutual yes connects. +3 tests; full suite 265 passed on a local Postgres+pgvector.
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=postgresql://postgres@localhost:5444/fc_test .venv/bin/python -m pytest -q tests/test_verification.py`; `cd mobile && node --experimental-strip-types --test features/ble/tap.test.mjs`.
+**Next step for whoever continues:** After Railway redeploys, two real accounts: Verify → Tap phones (or QR) → both "Yes, connect" → both see "You're connected". One "No thanks" → the other only ever sees "waiting".
+**Known issues / blockers:** iOS 27 phones (Adam's) crash at launch without a UIScene adoption; a config-plugin fix exists on Akshar's machine (`akshar/backup-before-force-push`, `mobile/plugins/withIOSSceneLifecycle.js`) and still needs to land. Note: team `main` was force-pushed earlier today; check nothing was lost.
+**Contract changes:** none
+
 ## 2026-09-27 02:08 | adam | coding agent
 **Task:** Demo loop with synthetic attendees, onboarding step, speed, smarter GitHub feed
 **Status:** done
