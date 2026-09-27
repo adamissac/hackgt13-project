@@ -109,5 +109,5 @@ def synthetic_tick() -> None:
     """Seeded demo attendees answer suggestions, chat, and connect (app/synthetic.py)."""
     from . import synthetic
     out = synthetic.tick()
-    if any(out.values()):
+    if any(v for k, v in out.items() if k != "located"):
         log.info("synthetic attendees: %s", out)

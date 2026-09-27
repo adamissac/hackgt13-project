@@ -220,6 +220,14 @@ Request `{ "response": "yes" }` (or `"no"`)
 ```
 Errors: `404 suggestion not found` (not a participant).
 
+### 18a. POST /suggestions/demo (demo attendees only)
+Request `{ "user_id": "uuid" }`. Says yes to meeting a demo attendee (`profiles.is_synthetic`) right away instead of
+waiting until both are around. Creates the suggestion (or reuses the open one) with my yes recorded and answers like
+`/respond`: `{ "suggestion_id": 42, "status": "waiting" }` or `{ "suggestion_id": 42, "status": "matched", "chat_id": 7 }`.
+Most demo attendees say yes a few seconds later (the app sees it as a normal match); about 1 in 5 never answer
+(silent, like a "no"). Once I share my location on the match, the demo attendee shares a made-up point ~150 m away
+that walks toward me. Errors: `403 only available with demo attendees`, `404 person not found`.
+
 ## 19. GET /qr/verify-token
 The verification QR the other person scans at the end of a conversation. Same shape as 8. Server-signed (HMAC-SHA256, `QR_SIGNING_KEY`), 60-second expiry, single-use nonce.
 
@@ -330,7 +338,7 @@ An author with 3+ items in 24 h appears as one `summary` entry instead.
       "kind": "post", "title": null, "body": "Wrote up my robotics notes", "url": null,
       "created_at": "2026-09-26T15:04:05+00:00", "score": 0.61, "talked_about": ["robotics"], "details": null },
     { "type": "item", "item_id": 11, "author": { "user_id": "uuid", "name": "Daniel Kim", "photo_url": null },
-      "kind": "github", "title": "started working on lob-alpha", "body": "Short-horizon price prediction from order book data",
+      "kind": "github", "title": "working on lob-alpha", "body": "Short-horizon price prediction from order book data",
       "url": "https://github.com/dkim-quant/lob-alpha", "created_at": "2026-09-26T16:20:00+00:00", "score": 0.66,
       "talked_about": [],
       "details": { "summary": "Daniel started lob-alpha, a model that predicts the next few seconds of price movement from limit order book snapshots.",
@@ -349,7 +357,10 @@ languages, frameworks from manifests, recent commit messages, release notes, REA
 or forks: `summary` (1-2 sentences on what they built), `highlights` (up to 4 concrete bullets), `ask` (a question
 to ask them next time), `stack` (up to 6 chips), `ai` (false when the facts-only template wrote it because the model
 was unavailable or not grounded). It is `null` for posts, updates, and GitHub items not briefed yet: the AR8 poller
-briefs new items within ~10 minutes and rewrites a brief when the repo gets new pushes. `items` (additive) on a
+writes each person ONE `github` item with `title` "working on <repo> [and N more projects]" whose brief covers their
+public repos pushed in the last 7 days (up to 3); it is rewritten in place when the set of active projects changes,
+or at most every 6 h while they keep pushing. The feed shows one GitHub card per person (that item, else their newest
+GitHub milestone), never one per repo or push. `items` (additive) on a
 `summary` entry lists the collapsed items, newest first, in the feed-item shape, so the app can expand them.
 
 ## 30. POST /feed/posts

@@ -147,64 +147,6 @@ def test_repo_facts_are_public_repo_data_only(monkeypatch):
     assert ga.repo_facts(ITEM, {**REPO, "fork": True}, "gho_x", "octo", "Ana") is None
 
 
-def test_brand_new_empty_repo_gets_a_thin_template_brief(monkeypatch):
-    seen = []
-    monkeypatch.setattr(ga.github_ingest, "_get", routed({"/languages": {}}, seen))
-    monkeypatch.setattr(ga.github_ingest, "_manifests", lambda *a: pytest.fail("no tree call for an empty repo"))
-    f = ga.repo_facts(ITEM, {**REPO, "size": 0}, "gho_x", "octo", "Ana")
-    assert seen == ["/repos/octo/lob-alpha/languages"]
-    monkeypatch.setattr(ga.generation, "project_brief", lambda f: (_ for _ in ()).throw(RuntimeError("no key")))
-    d = ga.make_brief(f, REPO["pushed_at"], NOW)
-    assert d["source"] == "template" and d["thin"] is True and d["pushed_at"] == REPO["pushed_at"]
-    assert d["summary"] == "Ana started working on lob-alpha: Short-term price moves from limit order book data."
-    assert d["ask"] == "What got you started on lob-alpha?"
-
-
-def test_briefs_are_rewritten_only_when_the_repo_changes():
-    d = {"summary": "s", "pushed_at": "p1", "at": NOW.isoformat(), "thin": False}
-    assert ga.needs_brief(None, "p1", NOW)
-    assert not ga.needs_brief(d, "p1", NOW + timedelta(days=3))                      # nothing new pushed
-    assert not ga.needs_brief(d, "p2", NOW + timedelta(hours=1))                     # new push, brief still fresh
-    assert ga.needs_brief(d, "p2", NOW + timedelta(hours=7))                         # new push, brief over 6 h old
-    assert ga.needs_brief({**d, "thin": True}, "p2", NOW + timedelta(minutes=5))     # thin brief: rewrite right away
-    assert not ga.needs_brief({"skipped": True, "at": NOW.isoformat()}, None, NOW)   # gone/private: leave it
-
-
-def test_refresh_briefs_is_capped_and_stores_details(monkeypatch):
-    rows = [{"id": n, "title": f"started working on r{n}", "body": "",
-             "payload": {"repo": f"octo/r{n}", "type": "new_repo"}} for n in range(6)]
-    repos = [{**REPO, "name": f"r{n}", "full_name": f"octo/r{n}"} for n in range(6)]
-    rows.append({"id": 99, "title": "started working on gone", "body": "", "payload": {"repo": "octo/gone"}})
-    updates = []
-
-    class Conn:
-        def execute(self, sql, params):
-            updates.append(params)
-
-    class Ctx:
-        def __enter__(self):
-            return Conn()
-
-        def __exit__(self, *a):
-            return False
-
-    monkeypatch.setattr(ga.db, "fetchall", lambda sql, params: rows)
-    monkeypatch.setattr(ga.db, "fetchone", lambda sql, params: {"name": "Ana Diaz"})
-    monkeypatch.setattr(ga.db, "conn", lambda: Ctx())
-    monkeypatch.setattr(ga, "repo_facts", lambda row, repo, token, login, first:
-                        {**FACTS, "first_name": first, "repo": row["payload"]["repo"].split("/")[1]})
-    monkeypatch.setattr(ga.generation, "project_brief",
-                        lambda f: {"summary": f"{f['first_name']} built {f['repo']}.", "highlights": ["h1"], "ask": "Why?"})
-    import ml.embed
-    monkeypatch.setattr(ml.embed, "embed", lambda texts: np.zeros((len(texts), 384), np.float32))
-    assert ga.refresh_briefs("user-1", "gho_x", "octo", repos, now=NOW) == ga.MAX_BRIEFS_PER_POLL == len(updates)
-    details = updates[0][0].obj["details"]
-    assert details["summary"] == "Ana built r0." and details["source"] == "ai" and details["stack"] == ["Python", "C++",
-                                                                                                          "PyTorch"]
-    assert details["pushed_at"] == REPO["pushed_at"] and details["thin"] is False
-    assert "gho_x" not in str(updates)
-
-
 def fake_llm(monkeypatch, brief):
     from ml import generation as g
     resp = SimpleNamespace(stop_reason="end_turn", usage=SimpleNamespace(input_tokens=1, output_tokens=1),
@@ -237,21 +179,80 @@ def test_project_brief_with_an_invented_number_in_the_summary_fails_to_template(
         g.project_brief(FACTS)
 
 
-def test_unavailable_repo_is_marked_skipped_not_retried(monkeypatch):
-    updates = []
+def test_empty_new_repo_needs_no_extra_calls(monkeypatch):
+    seen = []
+    monkeypatch.setattr(ga.github_ingest, "_get", routed({"/languages": {}}, seen))
+    monkeypatch.setattr(ga.github_ingest, "_manifests", lambda *a: pytest.fail("no tree call for an empty repo"))
+    f = ga.repo_facts(ITEM, {**REPO, "size": 0}, "gho_x", "octo", "Ana")
+    assert seen == ["/repos/octo/lob-alpha/languages"] and f["commits"] == [] and f["readme"] == ""
 
-    class Ctx:
-        def __enter__(self):
-            return SimpleNamespace(execute=lambda sql, params: updates.append((sql, params)))
 
-        def __exit__(self, *a):
-            return False
+def test_active_repos_are_last_week_public_most_recent_first():
+    repos = [{**REPO, "full_name": "octo/old", "pushed_at": iso(NOW - timedelta(days=9))},
+             {**REPO, "full_name": "octo/a", "pushed_at": iso(NOW - timedelta(hours=5))},
+             {**REPO, "full_name": "octo/b", "pushed_at": iso(NOW - timedelta(hours=1))},
+             {**REPO, "full_name": "octo/fork", "fork": True, "pushed_at": iso(NOW)},
+             {**REPO, "full_name": "octo/c", "pushed_at": iso(NOW - timedelta(days=2))},
+             {**REPO, "full_name": "octo/d", "pushed_at": iso(NOW - timedelta(days=3))}]
+    assert [r["full_name"] for r in ga.active_repos(repos, NOW)] == ["octo/b", "octo/a", "octo/c"]
 
-    monkeypatch.setattr(ga.db, "fetchall", lambda sql, params: [
-        {"id": 7, "title": "started working on gone", "body": "", "payload": {"repo": "octo/gone"}}])
-    monkeypatch.setattr(ga.db, "fetchone", lambda sql, params: {"name": "Ana Diaz"})
-    monkeypatch.setattr(ga.db, "conn", lambda: Ctx())
-    monkeypatch.setattr(ga.github_ingest, "_get", routed({}))                  # /repos/octo/gone -> 404 -> None
-    assert ga.refresh_briefs("user-1", "gho_x", "octo", [], now=NOW) == 0
-    (sql, params), = updates
-    assert "embedding" not in sql and params[0].obj == {"details": {"skipped": True, "at": NOW.isoformat()}}
+
+def test_working_on_brief_is_rewritten_only_when_the_work_changes():
+    p = {"sig": "s1", "repos": ["octo/a"], "details": {"at": NOW.isoformat(), "thin": False}}
+    assert ga.needs_refresh(None, "s1", ["octo/a"], NOW)
+    assert not ga.needs_refresh(p, "s1", ["octo/a"], NOW + timedelta(days=2))            # nothing new pushed
+    assert not ga.needs_refresh(p, "s2", ["octo/a"], NOW + timedelta(hours=1))           # new pushes: wait 6 h
+    assert ga.needs_refresh(p, "s2", ["octo/a"], NOW + timedelta(hours=7))
+    assert ga.needs_refresh(p, "s2", ["octo/a", "octo/b"], NOW + timedelta(minutes=5))   # a new project: now
+    assert ga.needs_refresh({**p, "details": {"at": NOW.isoformat(), "thin": True}}, "s2", ["octo/a"], NOW)
+
+
+class _Conn:
+    def __init__(self, log):
+        self.log = log
+
+    def __enter__(self):
+        return SimpleNamespace(execute=lambda sql, params: self.log.append((sql, params)))
+
+    def __exit__(self, *a):
+        return False
+
+
+def test_refresh_current_work_writes_one_item_for_all_active_projects(monkeypatch):
+    writes = []
+    repos = [{**REPO, "name": n, "full_name": f"octo/{n}", "pushed_at": iso(NOW - timedelta(hours=i))}
+             for i, n in enumerate(["lob-alpha", "site", "notes", "extra"])]
+    monkeypatch.setattr(ga.db, "fetchone", lambda sql, params: None if "current_work" in sql else {"name": "Ana Diaz"})
+    monkeypatch.setattr(ga.db, "fetchall", lambda sql, params: [{"title": "launched site"}])
+    monkeypatch.setattr(ga.db, "conn", lambda: _Conn(writes))
+    monkeypatch.setattr(ga, "repo_facts", lambda item, repo, token, login, first:
+                        {**FACTS, "first_name": first, "repo": repo["name"]})
+    seen = {}
+
+    def brief(first, projects, milestones):
+        seen.update(first=first, repos=[p["repo"] for p in projects], milestones=milestones)
+        return {"summary": "Ana is building an order book model.", "highlights": ["lob-alpha: LSTM"], "ask": "Why?"}
+    monkeypatch.setattr(ga.generation, "current_work_brief", brief)
+    import ml.embed
+    monkeypatch.setattr(ml.embed, "embed", lambda texts: np.zeros((len(texts), 384), np.float32))
+    assert ga.refresh_current_work("user-1", "gho_x", "octo", repos, now=NOW) is True
+    assert seen == {"first": "Ana", "repos": ["lob-alpha", "site", "notes"], "milestones": ["launched site"]}
+    (sql, params), = writes
+    assert sql.startswith("insert into feed_items") and params[1] == "working on lob-alpha and 2 more projects"
+    payload = params[4].obj
+    assert payload["type"] == "current_work" and payload["key"] == "current:user-1"
+    assert payload["details"]["source"] == "ai" and payload["details"]["stack"] == ["Python", "C++", "PyTorch"]
+    assert "gho_x" not in str(writes)
+    # same pushes again: nothing to do
+    monkeypatch.setattr(ga.db, "fetchone", lambda sql, params: {"id": 5, "payload": payload})
+    assert ga.refresh_current_work("user-1", "gho_x", "octo", repos, now=NOW + timedelta(hours=9)) is False
+
+
+def test_working_on_template_when_the_model_is_unavailable():
+    from ml import generation as g
+    out = g.template_current_work("Ana", [FACTS, {**FACTS, "repo": "site", "description": "Personal site",
+                                                  "commits": ["add blog"]}])
+    assert out["summary"].startswith("Ana is working on lob-alpha and site.")
+    assert out["highlights"][1] == "site: Personal site; latest: add blog"
+    assert out["ask"] == "What are you building with lob-alpha?"
+

@@ -141,12 +141,9 @@ def test_github_items_carry_their_brief(dbclient, db, people, monkeypatch):
     from ml import generation
     me, friend, other, stranger = people
     gid = github_item(db, other, BRIEF)
-    pending = github_item(db, other, None, hours_ago=40)          # not briefed yet
-    skipped = github_item(db, other, {"skipped": True, "at": "2026-09-26T12:00:00Z"}, hours_ago=50)
     items = {i["item_id"]: i for i in feed_of(dbclient, me)["items"]}
     assert items[gid]["details"] == {"summary": BRIEF["summary"], "highlights": BRIEF["highlights"],
                                      "ask": BRIEF["ask"], "stack": ["Python", "PyTorch"], "ai": True}
-    assert items[pending]["details"] is None and items[skipped]["details"] is None
     # internal bookkeeping never leaves the server
     assert "pushed_at" not in str(items[gid]) and "thin" not in str(items[gid])
     # a stranger never sees it; the brief is part of the item and follows its visibility
@@ -155,6 +152,21 @@ def test_github_items_carry_their_brief(dbclient, db, people, monkeypatch):
     monkeypatch.setattr(generation, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))
     reply = dbclient.post(f"/feed/{gid}/reply-suggestion", headers=auth(me)).json()["reply"]
     assert reply == f"Nice one, Ivy. {BRIEF['ask']}"
+
+
+def test_one_github_card_per_person(dbclient, db, people):
+    from psycopg.types.json import Jsonb
+    me, friend, other, stranger = people
+    old_milestones = [github_item(db, other, None, hours_ago=h) for h in (2, 30, 50)]
+    # no 'working on' brief yet: only the newest milestone shows
+    ids = {i["item_id"] for i in feed_of(dbclient, me)["items"]}
+    assert ids & set(old_milestones) == {old_milestones[0]}
+    current = db.fetchone("insert into feed_items (author_id, kind, title, body, payload, created_at) values "
+                          "(%s, 'github', 'working on lob-alpha and 1 more project', %s, %s, now() - interval '5 hours') "
+                          "returning id", (other, BRIEF["summary"], Jsonb({"type": "current_work", "details": BRIEF})))["id"]
+    post = item(db, other, "a plain post")
+    ids = {i["item_id"] for i in feed_of(dbclient, me)["items"]}
+    assert current in ids and post in ids and not ids & set(old_milestones)
 
 
 def test_brief_text_counts_for_talked_topics(dbclient, db, people):

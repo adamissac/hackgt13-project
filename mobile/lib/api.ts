@@ -459,6 +459,10 @@ function call<T>(mock: () => T | Promise<T>, real: () => Promise<T>): Promise<T>
 // Suggestions this phone said yes to. The server never tells us the other side's answer, so this is
 // how "I said yes, waiting" survives a reload in live mode (silent consent).
 const saidYes = new Set<number>();
+// Who each open suggestion is with, and the people I'm waiting on after saying yes. Once I answer, the
+// suggestion leaves GET /suggestions, so without this the match screen fell back to "not around yet".
+const suggestionWith = new Map<number, string>();
+const waitingOn = new Set<string>();
 
 export interface AppNotification {
   id: number;
@@ -511,12 +515,14 @@ async function liveRelationship(userId: string): Promise<Relationship> {
   ]);
   const chat = (chats.data ?? [])[0] as { id: number } | undefined;
   const conv = pending.conversations.find((x) => x.other.user_id === userId);
+  sugg.suggestions.forEach((x) => suggestionWith.set(x.suggestion_id, x.other.user_id));
   const sug = sugg.suggestions.find((x) => x.other.user_id === userId);
   const base = { user_id: userId, chat_id: chat?.id ?? null, conversation_id: conv?.conversation_id ?? null, suggestion_id: sug?.suggestion_id ?? null };
   if (conns.connections.some((x) => x.user_id === userId)) return { ...base, stage: 'CONNECTED' };
   if (conv) return { ...base, stage: 'POST_CONVERSATION_PENDING' };
   if (chat) return { ...base, stage: 'MUTUAL_MEET' };
   if (sug && saidYes.has(sug.suggestion_id)) return { ...base, stage: 'MEET_INTEREST_PENDING' };
+  if (!sug && waitingOn.has(userId)) return { ...base, stage: 'MEET_INTEREST_PENDING' };
   return { ...base, stage: 'DISCOVERED' };
 }
 
@@ -759,14 +765,40 @@ export const api = {
       () =>
       request<{ reply: string }>('POST', '/assistant/chat', { messages, event_id: eventId ?? null }),
     ),
-  suggestions: () => call(demo.suggestions, () => request<SuggestionsResponse>('GET', '/suggestions')),
+  suggestions: () =>
+    call(demo.suggestions, () =>
+      request<SuggestionsResponse>('GET', '/suggestions').then((r) => {
+        r.suggestions.forEach((x) => suggestionWith.set(x.suggestion_id, x.other.user_id));
+        return r;
+      }),
+    ),
+  /** Demo attendees only: say yes to meeting them now instead of waiting until you're both around. */
+  demoMeet: (userId: string) =>
+    call(
+      () => {
+        const sug = demo.suggestions().suggestions.find((x) => x.other.user_id === userId);
+        if (!sug) throw new Error('This demo person is not available right now.');
+        return demo.respond(sug.suggestion_id, 'yes');
+      },
+      () =>
+        request<SuggestionRespondResponse & { suggestion_id: number }>('POST', '/suggestions/demo', { user_id: userId }).then((r) => {
+          saidYes.add(r.suggestion_id);
+          waitingOn.add(userId);
+          emitChange('relationships', 'chats');
+          return r;
+        }),
+    ),
   respondToSuggestion: (suggestionId: number, response: 'yes' | 'no') =>
     call(
       // A "no" stays on this phone only. The response is "waiting" unless both said yes.
       () => demo.respond(suggestionId, response),
       () =>
         request<SuggestionRespondResponse>('POST', `/suggestions/${suggestionId}/respond`, { response }).then((r) => {
-          if (response === 'yes') saidYes.add(suggestionId);
+          if (response === 'yes') {
+            saidYes.add(suggestionId);
+            const other = suggestionWith.get(suggestionId);
+            if (other) waitingOn.add(other);
+          }
           emitChange('relationships', 'chats');
           return r;
         }),

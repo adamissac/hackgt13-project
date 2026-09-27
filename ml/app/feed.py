@@ -5,6 +5,7 @@ Visibility: my own items plus items by my connections, and only kinds the author
 
 score = 0.6 * cos(embed(item), my combined vector) + 0.3 * exp(-hours / 48) + 0.1 * (item mentions a topic I
         checked as discussed with that author)
+GitHub: one card per person (their 'working on' brief, else their newest milestone), never one per repo or push.
 Bursts: an author with >= 3 items in 24 h is shown as one summary line (Haiku) instead of the separate items.
 """
 import hashlib
@@ -29,7 +30,7 @@ _lock = threading.Lock()
 
 
 def details_of(r: dict) -> dict | None:
-    """The public shape of a GitHub item's brief (github_activity.refresh_briefs), or None."""
+    """The public shape of a GitHub item's brief (github_activity.refresh_current_work), or None."""
     d = (r.get("payload") or {}).get("details") if r.get("kind") == "github" else None
     if not isinstance(d, dict) or not d.get("summary"):
         return None
@@ -145,9 +146,25 @@ def shape_item(r: dict) -> dict:
             "score": round(r["score"], 4), "talked_about": r["mentions"], "details": details_of(r)}
 
 
+def one_github_card_per_person(rows: list[dict]) -> list[dict]:
+    """GitHub activity shows as ONE card per person: their 'working on' brief if they have one, else their newest
+    GitHub milestone. Individual repos and pushes are folded into that brief, not repeated."""
+    keep: dict[str, dict] = {}
+    for r in rows:
+        if r["kind"] != "github":
+            continue
+        cur = keep.get(r["author_id"])
+        current = (r["payload"] or {}).get("type") == "current_work"
+        cur_current = cur is not None and (cur["payload"] or {}).get("type") == "current_work"
+        if cur is None or (current and not cur_current) or (current == cur_current and r["created_at"] > cur["created_at"]):
+            keep[r["author_id"]] = r
+    ids = {r["id"] for r in keep.values()}
+    return [r for r in rows if r["kind"] != "github" or r["id"] in ids]
+
+
 def build_feed(viewer: str, now: datetime | None = None) -> list[dict]:
     now = now or datetime.now(timezone.utc)
-    rows = visible_items(viewer)
+    rows = one_github_card_per_person(visible_items(viewer))
     ensure_embeddings(rows)
     scored = score_items(viewer, rows, now)
     recent: dict[str, list[dict]] = {}

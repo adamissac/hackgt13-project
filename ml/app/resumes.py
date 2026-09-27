@@ -51,9 +51,19 @@ def record_upload(user_id: str, data: bytes, filename: str, mime: str) -> int:
 
 def process(user_id: str, resume_id: int, source: str, text: str, filename: str) -> dict:
     try:
-        structure = resume_structure.parse_structure(text)
-        result = profile_store.ingest_text(user_id, source, text, {"filename": filename, "resume_id": resume_id,
-                                                                   "structure": structure.model_dump()})
+        # The section parse (fast model) and the interest extraction (smart model) don't depend on each other:
+        # run them at the same time instead of one after the other.
+        from concurrent.futures import ThreadPoolExecutor
+
+        from ml import extraction
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            structure_f = pool.submit(resume_structure.parse_structure, text)
+            extracted_f = pool.submit(extraction.extract, text, source)
+            structure, extracted = structure_f.result(), extracted_f.result()
+        with db.conn() as c:
+            doc_id = profile_store.save_document(c, user_id, source, text, {
+                "filename": filename, "resume_id": resume_id, "structure": structure.model_dump()})
+        result = profile_store.store_extraction(user_id, doc_id, source, extracted)
         doc = profile_store.latest_document(user_id, source)
         db.execute("update resumes set status = 'parsed', raw_document_id = %s, updated_at = now() where id = %s",
                    (doc["id"] if doc else None, resume_id))

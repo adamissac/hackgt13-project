@@ -8,10 +8,12 @@ Every 10 minutes, for each connected GitHub account:
 Items are deduplicated by a stable key in payload.key, embedded with bge-small, and only ever public data.
 Visibility is enforced by feed.visible_items (the author's connections, feed_prefs.show_github).
 
-Each item also gets a brief in payload.details (what the project is, 2-4 concrete highlights, one question to ask
-them), written from the repo's public facts only: description, topics, languages, frameworks from manifests, recent
-commit subjects, release notes, README. A brief is rewritten when the repo gets new pushes (right away if the first
-one was thin, e.g. an empty new repo; else at most every BRIEF_REFRESH), capped at MAX_BRIEFS_PER_POLL per user.
+Each person also gets ONE "working on" item (payload.type = 'current_work', key current:<user>): a brief across
+their most recently active public repos (pushed in the last 7 days, up to 3) saying what they are building and
+what they did lately, plus one question to ask them. Written from public facts only (description, topics,
+languages, manifest frameworks, their recent commit subjects, milestones, README). It is rewritten in place when
+the set of active projects changes, or at most every BRIEF_REFRESH when they keep pushing (right away if the last
+one was thin). The feed shows that card instead of one card per repo or push.
 """
 import logging
 from datetime import datetime, timedelta, timezone
@@ -28,8 +30,9 @@ log = logging.getLogger("github_activity")
 POLL_SECONDS = 600
 LOOKBACK = timedelta(days=14)
 MAX_ITEMS_PER_POLL = 20
-MAX_BRIEFS_PER_POLL = 4
 BRIEF_REFRESH = timedelta(hours=6)
+ACTIVE_WINDOW = timedelta(days=7)
+MAX_PROJECTS = 3
 BRIEF_README_CHARS = 3000
 BRIEF_COMMITS = 12
 _etags: dict[str, dict] = {}      # url -> {"etag", "body"}, per process (fine for the hackathon)
@@ -153,9 +156,9 @@ def poll_user(user_id: str, token: str, login: str) -> int:
                      v, i["created_at"]))
         log.info("github activity: %d new items for %s", len(new), user_id)
     try:
-        refresh_briefs(user_id, token, login, repos)
+        refresh_current_work(user_id, token, login, repos)
     except github_ingest.GitHubError as e:
-        log.warning("github briefs skipped for %s this cycle: %s", user_id, e)
+        log.warning("github 'working on' brief skipped for %s this cycle: %s", user_id, e)
     return len(new)
 
 
@@ -240,66 +243,72 @@ def stack_of(f: dict) -> list[str]:
     return out[:6]
 
 
-def make_brief(f: dict, pushed_at: str | None, now: datetime) -> dict:
-    try:
-        brief, source = generation.project_brief(f), "ai"
-    except Exception as e:                      # no key, API down, ungrounded: facts-only template
-        log.warning("project brief fell back to template for %s: %s", f["repo"], e)
-        brief, source = generation.template_brief(f), "template"
-    return {**brief, "stack": stack_of(f), "source": source, "pushed_at": pushed_at, "at": now.isoformat(),
-            "thin": not (f.get("readme") or f.get("commits"))}
+def active_repos(repos: list[dict], now: datetime) -> list[dict]:
+    """Public, non-fork repos pushed in the last week, most recent first."""
+    live = [r for r in repos if not r.get("fork") and not r.get("private")
+            and (_ts(r.get("pushed_at")) or now - 2 * ACTIVE_WINDOW) >= now - ACTIVE_WINDOW]
+    return sorted(live, key=lambda r: r["pushed_at"], reverse=True)[:MAX_PROJECTS]
 
 
-def needs_brief(details: dict | None, pushed_at: str | None, now: datetime) -> bool:
-    if not details:
+def needs_refresh(payload: dict | None, sig: str, names: list[str], now: datetime) -> bool:
+    if not payload:
         return True
-    if not pushed_at or details.get("pushed_at") == pushed_at:
-        return False                             # nothing new pushed since the brief was written
-    at = _ts(details.get("at"))
-    return bool(details.get("thin")) or at is None or now - at >= BRIEF_REFRESH
+    if payload.get("sig") == sig:
+        return False                              # nothing pushed since the last brief
+    if sorted(payload.get("repos") or []) != sorted(names):
+        return True                               # a different set of projects: rewrite now
+    d = payload.get("details") or {}
+    at = _ts(d.get("at"))
+    return bool(d.get("thin")) or at is None or now - at >= BRIEF_REFRESH
 
 
-def refresh_briefs(user_id: str, token: str, login: str, repos: list[dict], now: datetime | None = None) -> int:
+def refresh_current_work(user_id: str, token: str, login: str, repos: list[dict], now: datetime | None = None) -> bool:
+    """Write or update this person's one 'working on' feed item. Returns True if it was (re)written."""
     now = now or datetime.now(timezone.utc)
-    rows = db.fetchall("select id, title, body, payload from feed_items where author_id = %s and kind = 'github' "
-                       "and created_at > %s order by created_at desc limit 50", (user_id, now - LOOKBACK))
-    by_full = {r["full_name"]: r for r in repos if r.get("full_name")}
-    todo = []
-    for row in rows:
-        p = row["payload"] or {}
-        full = p.get("repo")
-        if full and needs_brief(p.get("details"), (by_full.get(full) or {}).get("pushed_at"), now):
-            todo.append(row)
-    if not todo:
-        return 0
+    active = active_repos(repos, now)
+    if not active:
+        return False
+    names = [r["full_name"] for r in active]
+    sig = ",".join(f"{r['full_name']}@{r.get('pushed_at')}" for r in active)
+    existing = db.fetchone("select id, payload from feed_items where author_id = %s and kind = 'github' "
+                           "and payload->>'type' = 'current_work' and created_at > %s order by created_at desc limit 1",
+                           (user_id, now - LOOKBACK))
+    if not needs_refresh(existing and existing["payload"], sig, names, now):
+        return False
     prof = db.fetchone("select name from profiles where id = %s", (user_id,)) or {}
     first = (prof.get("name") or "").split(" ")[0] or login
+    projects = [f for f in (repo_facts({"title": f"working on {r['name']}", "body": "",
+                                        "payload": {"repo": r["full_name"], "type": "active"}}, r, token, login, first)
+                            for r in active) if f]
+    if not projects:
+        return False
+    milestones = [r["title"] for r in db.fetchall(
+        "select title from feed_items where author_id = %s and kind = 'github' and coalesce(payload->>'type', '') "
+        "<> 'current_work' and created_at > %s order by created_at desc limit 6", (user_id, now - ACTIVE_WINDOW))]
+    try:
+        brief, source = generation.current_work_brief(first, projects, milestones), "ai"
+    except Exception as e:                      # no key, API down, ungrounded: facts-only template
+        log.warning("'working on' brief fell back to template for %s: %s", user_id, e)
+        brief, source = generation.template_current_work(first, projects), "template"
+    stack: list[str] = []
+    for p in projects:
+        stack += [x for x in stack_of(p) if x.lower() not in {y.lower() for y in stack}]
+    details = {**brief, "stack": stack[:6], "source": source, "at": now.isoformat(),
+               "thin": not any(p.get("readme") or p.get("commits") for p in projects)}
+    short = [p["repo"] for p in projects]
+    title = "working on " + short[0] + (f" and {len(short) - 1} more project{'s' if len(short) > 2 else ''}"
+                                        if len(short) > 1 else "")
+    payload = {"key": f"current:{user_id}", "type": "current_work", "repos": names, "sig": sig, "details": details}
     from ml.embed import embed
-    done = 0
-    for row in todo[:MAX_BRIEFS_PER_POLL]:
-        full = row["payload"]["repo"]
-        facts = repo_facts(row, by_full.get(full), token, login, first)
-        if facts is None:                        # deleted, private, or a fork: no brief, and don't retry every cycle
-            with db.conn() as c:
-                c.execute("update feed_items set payload = coalesce(payload, '{}'::jsonb) || %s where id = %s",
-                          (Jsonb({"details": {"skipped": True, "at": now.isoformat()}}), row["id"]))
-            continue
-        details = make_brief(facts, (by_full.get(full) or {}).get("pushed_at"), now)
-        vec = embed([" ".join([row["title"] or "", details["summary"], *details["highlights"]])])[0]
-        with db.conn() as c:
-            c.execute("update feed_items set payload = coalesce(payload, '{}'::jsonb) || %s, embedding = %s "
-                      "where id = %s", (Jsonb({"details": details}), vec, row["id"]))
-        done += 1
-    log.info("github briefs: %d written for %s", done, user_id)
-    return done
-
-
-@every(POLL_SECONDS, "github_activity")
-def poll_all() -> None:
-    rows = db.fetchall("select user_id::text as user_id, provider_uid, access_token_enc from linked_accounts "
-                       "where provider = 'github' and access_token_enc is not null")
-    for r in rows:
-        try:
-            poll_user(r["user_id"], github_oauth.decrypt_token(r["access_token_enc"]), r["provider_uid"])
-        except github_ingest.GitHubError as e:
-            log.warning("github poll failed for %s: %s", r["user_id"], e)
+    vec = embed([" ".join([title, brief["summary"], *brief["highlights"]])])[0]
+    with db.conn() as c:
+        if existing:
+            c.execute("update feed_items set title = %s, body = %s, url = %s, payload = %s, embedding = %s, "
+                      "created_at = %s where id = %s",
+                      (title, brief["summary"], active[0].get("html_url"), Jsonb(payload), vec, now, existing["id"]))
+        else:
+            c.execute("insert into feed_items (author_id, kind, title, body, url, payload, embedding, created_at) "
+                      "values (%s, 'github', %s, %s, %s, %s, %s, %s)",
+                      (user_id, title, brief["summary"], active[0].get("html_url"), Jsonb(payload), vec, now))
+    log.info("github 'working on' brief written for %s (%s, %d projects)", user_id, source, len(projects))
+    return True

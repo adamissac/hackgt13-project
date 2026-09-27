@@ -1,3 +1,17 @@
+## 2026-09-27 02:08 | adam | coding agent
+**Task:** Demo loop with synthetic attendees, onboarding step, speed, smarter GitHub feed
+**Status:** done
+**What I did:**
+- Demo attendees (`profiles.is_synthetic`): `POST /suggestions/demo` lets a real person say "Want to meet" now instead of waiting until both are around. Most answer yes 3-8 s later (normal match + chat); ~1 in 5 never answer (silent). On a matched meetup, once the real person shares location, the demo attendee shares a made-up point ~150 m away that walks toward them (`synthetic.share_locations`, every 5 s tick). Real-people flows unchanged.
+- Match screen: "Want to meet" for demo attendees; the app remembers who I said yes to (it used to fall back to "when you're both around") and re-checks every 4 s while waiting.
+- Onboarding: once shown it stays open until Continue / Skip (connecting GitHub used to mark the profile complete and jump past the resume step); it also opens after sign-in when resume or GitHub is missing (`mobile/lib/useOnboarding.ts`).
+- Speed: resume section parse and interest extraction run in parallel (`app/resumes.py`); assistant uses low effort (`ASSISTANT_EFFORT`, default low) and gets the user's top 5 matches up front, so "who should I meet" needs no tool round trip.
+- Feed: replaced per-repo briefs with ONE "working on" item per person across their public repos pushed in the last 7 days (up to 3), rewritten when the active set changes or at most every 6 h; the feed shows one GitHub card per person (`feed.one_github_card_per_person`).
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=... .venv/bin/python -m pytest -q tests` (268 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`.
+**Next step for whoever continues:** Live: check in, turn on Open to Meet, open a demo attendee from Constellation, tap Want to meet, then Find them and share location.
+**Known issues / blockers:** The "said yes, waiting" memory for real suggestions is per app session (server never reveals the other side).
+**Contract changes:** `docs/api.md` 18a `POST /suggestions/demo` (new, demo attendees only) + `docs/mocks/suggestions_demo.json`; 29: GitHub items are one "working on" brief per person. `.env.example`: `ASSISTANT_EFFORT`. No schema change (demo requests are marked `suggestions.building_id = 'demo-request'`).
+
 ## 2026-09-27 01:17 | adam | coding agent
 **Task:** AD11 + AR8 feed: GitHub updates say what they actually built
 **Status:** done

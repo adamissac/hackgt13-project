@@ -169,16 +169,15 @@ step('Graph: explanations survive the view model; legacy graphs still work', () 
   assert.equal(person.explanation?.factors[0].share, 0.5);
 });
 
-step('Feed: GitHub updates say what they built and what to ask; bursts expand', () => {
+step('Feed: one GitHub card per person saying what they are working on and what to ask', () => {
   const feed = feedMock as FeedResponse;
-  const github = feed.items.find((e) => e.type === 'item' && e.kind === 'github');
-  assert.ok(github && github.type === 'item' && github.details);
-  assert.ok(github.details.summary.length > 40 && github.details.highlights.length >= 2 && github.details.ask);
-  assert.ok(DEMO_PEOPLE.some((p) => p.user_id === github.author.user_id));
-  const burst = feed.items.find((e) => e.type === 'summary');
-  assert.ok(burst && burst.type === 'summary' && burst.items);
-  assert.deepEqual(burst.items.map((i) => i.item_id).sort(), [...burst.item_ids].sort());
-  assert.ok(burst.items.every((i) => i.details && i.details.ask));
+  const github = feed.items.filter((e) => e.type === 'item' && e.kind === 'github');
+  assert.equal(new Set(github.map((e) => e.author.user_id)).size, github.length);
+  for (const g of github) {
+    assert.ok(g.type === 'item' && g.details && g.title?.startsWith('working on'));
+    assert.ok(g.details.summary.length > 40 && g.details.highlights.length >= 2 && g.details.ask);
+    assert.ok(DEMO_PEOPLE.some((p) => p.user_id === g.author.user_id));
+  }
   const post = feed.items.find((e) => e.type === 'item' && e.kind === 'post');
   assert.ok(post && post.type === 'item' && post.details === null);
 });

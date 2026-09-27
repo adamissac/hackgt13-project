@@ -40,6 +40,18 @@ class Respond(BaseModel):
     response: Literal["yes", "no"]
 
 
+class DemoMeet(BaseModel):
+    user_id: str
+
+
+@router.post("/demo")
+def demo_meet(body: DemoMeet, user: User = Depends(current_user)):
+    """Demo attendees only (profiles.is_synthetic): say yes to meeting them now, without waiting until you're both
+    around. Same silent-consent answer as /respond: "waiting" unless they said yes."""
+    from .. import synthetic
+    return synthetic.request_meet(user.id, body.user_id)
+
+
 @router.post("/{suggestion_id}/respond")
 def respond(suggestion_id: int, body: Respond, user: User = Depends(current_user)):
     with db.conn() as c:

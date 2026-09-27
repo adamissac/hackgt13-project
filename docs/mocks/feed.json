@@ -9,7 +9,7 @@
         "photo_url": null
       },
       "kind": "github",
-      "title": "started working on lob-alpha",
+      "title": "working on lob-alpha",
       "body": "Short-horizon price prediction from limit order book data",
       "url": "https://github.com/dkim-quant/lob-alpha",
       "created_at": "2026-09-26T16:20:00+00:00",
@@ -53,113 +53,34 @@
       "details": null
     },
     {
-      "type": "summary",
+      "type": "item",
+      "item_id": 9,
       "author": {
         "user_id": "00000000-0000-4000-8000-00000000d103",
         "name": "Sara Chen",
         "photo_url": null
       },
-      "summary": "Sara launched ClubHub, a campus clubs app, and shipped a release with event reminders and dark mode.",
-      "item_ids": [
-        7,
-        8,
-        9
-      ],
+      "kind": "github",
+      "title": "working on clubhub and 1 more project",
+      "body": "Sara is building ClubHub, a campus clubs app, and just shipped v1.1 with event reminders and dark mode.",
+      "url": "https://github.com/sarachen/clubhub",
       "created_at": "2026-09-26T14:00:00+00:00",
       "score": 0.55,
-      "items": [
-        {
-          "type": "item",
-          "item_id": 9,
-          "author": {
-            "user_id": "00000000-0000-4000-8000-00000000d103",
-            "name": "Sara Chen",
-            "photo_url": null
-          },
-          "kind": "github",
-          "title": "shipped v1.1 of clubhub",
-          "body": "Event reminders and dark mode",
-          "url": "https://github.com/sarachen/clubhub/releases/tag/v1.1",
-          "created_at": "2026-09-26T14:00:00+00:00",
-          "score": 0.55,
-          "talked_about": [],
-          "details": {
-            "summary": "Sara shipped ClubHub v1.1, which reminds members before events they RSVP'd to and adds a dark mode.",
-            "highlights": [
-              "Push reminders one hour before an event you RSVP'd to",
-              "Dark mode built from the design-system color tokens, not one-off colors"
-            ],
-            "ask": "How did you pick when to send the reminders?",
-            "stack": [
-              "TypeScript",
-              "React Native",
-              "Expo"
-            ],
-            "ai": true
-          }
-        },
-        {
-          "type": "item",
-          "item_id": 8,
-          "author": {
-            "user_id": "00000000-0000-4000-8000-00000000d103",
-            "name": "Sara Chen",
-            "photo_url": null
-          },
-          "kind": "github",
-          "title": "launched clubhub",
-          "body": "Events and RSVPs for Georgia Tech clubs\nLive at https://sarachen.github.io/clubhub",
-          "url": "https://sarachen.github.io/clubhub",
-          "created_at": "2026-09-26T11:30:00+00:00",
-          "score": 0.52,
-          "talked_about": [],
-          "details": {
-            "summary": "Sara launched ClubHub, a React Native app where Georgia Tech clubs post events and members RSVP. It is live on the web.",
-            "highlights": [
-              "One codebase for iOS, Android, and web with Expo",
-              "Clubs post events; members RSVP and export them to their calendar",
-              "Every screen uses the shared UI kit from Sara's design system"
-            ],
-            "ask": "Which clubs signed up first, and what did they ask for?",
-            "stack": [
-              "TypeScript",
-              "React Native",
-              "Expo"
-            ],
-            "ai": true
-          }
-        },
-        {
-          "type": "item",
-          "item_id": 7,
-          "author": {
-            "user_id": "00000000-0000-4000-8000-00000000d103",
-            "name": "Sara Chen",
-            "photo_url": null
-          },
-          "kind": "github",
-          "title": "open-sourced clubhub-ui",
-          "body": "Design-token UI kit behind ClubHub",
-          "url": "https://github.com/sarachen/clubhub-ui",
-          "created_at": "2026-09-26T09:10:00+00:00",
-          "score": 0.5,
-          "talked_about": [],
-          "details": {
-            "summary": "Sara open-sourced clubhub-ui: Design-token UI kit behind ClubHub.",
-            "highlights": [
-              "Written mostly in TypeScript (96%)",
-              "Uses React Native",
-              "Recent work: add focus order to forms; tokens for dark mode"
-            ],
-            "ask": "Why did you decide to open-source clubhub-ui?",
-            "stack": [
-              "TypeScript",
-              "React Native"
-            ],
-            "ai": false
-          }
-        }
-      ]
+      "talked_about": [],
+      "details": {
+        "summary": "Sara is building ClubHub, a React Native app where Georgia Tech clubs post events and members RSVP, and just shipped v1.1 with event reminders and dark mode.",
+        "highlights": [
+          "clubhub: live on the web; latest release adds push reminders one hour before an RSVP'd event",
+          "clubhub-ui: the open-source component kit behind ClubHub, driven by design tokens with accessible focus order"
+        ],
+        "ask": "How did you pick when to send the reminders?",
+        "stack": [
+          "TypeScript",
+          "React Native",
+          "Expo"
+        ],
+        "ai": true
+      }
     }
   ],
   "next_cursor": null

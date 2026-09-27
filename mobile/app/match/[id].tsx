@@ -1,6 +1,6 @@
 import * as Clipboard from "expo-clipboard";
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 
 import { ErrorState, Loading } from "@/components/States";
@@ -18,6 +18,7 @@ import { useOpenToMeet } from "@/features/presence/openToMeet";
 import { StageTracker } from "@/features/relationship/StageTracker";
 import { stageLabel, type Relationship } from "@/features/relationship/stage";
 import { api, type Facet, type QuickProfile } from "@/lib/api";
+import { emitChange } from "@/lib/changes";
 import { HACKGT_EVENT_ID } from "@/lib/constants";
 import { env } from "@/lib/env";
 import { useAsync } from "@/lib/useAsync";
@@ -55,6 +56,13 @@ export default function MatchScreen() {
     [id],
     ["profile"],
   );
+  // While I'm waiting on their answer, check again every few seconds (demo attendees answer in seconds).
+  const stage = rel.state.status === "ready" ? rel.state.data.stage : null;
+  useEffect(() => {
+    if (stage !== "MEET_INTEREST_PENDING") return;
+    const t = setInterval(() => emitChange("relationships"), 4000);
+    return () => clearInterval(t);
+  }, [stage]);
 
   if (profile.state.status === "loading")
     return <Loading label="Loading profile…" />;
@@ -219,6 +227,23 @@ function Actions({
             style={{ flex: 1.3 }}
           />
         </View>
+      ) : demoAttendee ? (
+        // Demo attendees can't be "around"; asking now keeps the synthetic loop usable.
+        <Button
+          label="Want to meet"
+          onPress={async () => {
+            setBusy("yes");
+            setError(null);
+            try {
+              await api.demoMeet(rel.user_id);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : String(e));
+            } finally {
+              setBusy(null);
+            }
+          }}
+          loading={busy === "yes"}
+        />
       ) : (
         <Text style={[styles.small, { color: c.muted }]}>
           When you’re both around and open to meet, we’ll ask you both. Nobody

@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AiBadge, Button, Card, useColors } from '@/components/ui';
 import { connectGithub, uploadResume, waitForJob } from '@/lib/accounts';
 import { api } from '@/lib/api';
-import { emitChange } from '@/lib/changes';
+import { dismissOnboarding } from '@/lib/useOnboarding';
 
 type Step = 'idle' | 'working' | 'done' | 'error';
 
@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
     } catch {
       // not fatal: Home will just ask again
     }
-    emitChange('profile'); // the root layout sees the new status and opens the app
+    dismissOnboarding(); // the root layout sees it's closed and opens the app
   };
 
   const anyDone = github === 'done' || resume === 'done';

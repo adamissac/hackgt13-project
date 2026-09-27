@@ -10,6 +10,7 @@ and every tool applies the same scope rules as the REST endpoints:
 No tool can return anyone's connections or connection count, so the model has nothing to leak.
 """
 import json
+import os
 import logging
 
 
@@ -21,6 +22,7 @@ from . import db, feed, matching, profile_store
 
 log = logging.getLogger("assistant")
 MAX_TURNS = 6
+ASSISTANT_EFFORT = os.getenv("ASSISTANT_EFFORT", "low")   # "" to use the model default
 TOPIC_SIM = 0.6
 
 SYSTEM = """You are the AI networking assistant inside Formal Connection, a HackGT 13 app where people only connect
@@ -201,10 +203,16 @@ def _snapshot(tools: "Tools", event_id: int | None) -> str:
         me = tools.get_my_profile()
         interests = ", ".join(i["name"] for i in me["interests"][:12])
         checked_in = event_id is not None and matching.is_checked_in(tools.viewer, int(event_id))
-        return (f"\n\nAbout the user: {me.get('name') or 'unknown name'}; {me.get('headline') or 'no headline'}. "
-                f"Interests: {interests or 'none yet (suggest adding GitHub or a resume)'}. "
-                f"Looking for: {me.get('seeking') or 'not set'}. Can offer: {me.get('offering') or 'not set'}. "
-                f"Checked in to event {event_id}: {'yes' if checked_in else 'no'}.")
+        out = (f"\n\nAbout the user: {me.get('name') or 'unknown name'}; {me.get('headline') or 'no headline'}. "
+               f"Interests: {interests or 'none yet (suggest adding GitHub or a resume)'}. "
+               f"Looking for: {me.get('seeking') or 'not set'}. Can offer: {me.get('offering') or 'not set'}. "
+               f"Checked in to event {event_id}: {'yes' if checked_in else 'no'}.")
+        if checked_in:
+            # The most common questions are about who to meet: answer them without a tool round trip.
+            top = tools.get_my_top_matches(int(event_id), 5)
+            out += ("\nThe user's current top matches at this event (same data as get_my_top_matches with limit 5; "
+                    "call the tool only for more people or other events): " + json.dumps(top, default=str))
+        return out
     except Exception:
         log.exception("assistant snapshot failed")
         return ""
@@ -212,14 +220,13 @@ def _snapshot(tools: "Tools", event_id: int | None) -> str:
 
 def run_loop(system: str, tools_spec: list, messages: list[dict], run_tool) -> str:
     convo = [{"role": m["role"], "content": m["content"]} for m in messages]
+    # Low effort: chat answers come from tool results and short reasoning; thinking longer only adds wait.
+    extra = {"output_config": {"effort": ASSISTANT_EFFORT}} if ASSISTANT_EFFORT else {}
     for _ in range(MAX_TURNS):
         resp = _client().messages.create(
-            model=LLM_SMART, max_tokens=1200,
+            model=LLM_SMART, max_tokens=4000,
             system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            tools=tools_spec, messages=convo) if tools_spec else _client().messages.create(
-            model=LLM_SMART, max_tokens=1200,
-            system=[{"type": "text", "text": system, "cache_control": {"type": "ephemeral"}}],
-            messages=convo)
+            messages=convo, **({"tools": tools_spec} if tools_spec else {}), **extra)
         log.info("assistant model=%s in=%s out=%s stop=%s", LLM_SMART, resp.usage.input_tokens,
                  resp.usage.output_tokens, resp.stop_reason)
         if resp.stop_reason == "refusal":
