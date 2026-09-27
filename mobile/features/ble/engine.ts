@@ -5,7 +5,7 @@ import { AppState } from 'react-native';
 
 import { beginAdvertising, endAdvertising, requestAdvertisePermission } from './advertiser';
 import { BLE_UNAVAILABLE_MESSAGE, bleAvailable } from './native';
-import { requestScanPermission, startScan, stopScan } from './scanner';
+import { bluetoothStateMessage, requestScanPermission, startScan, stopScan, waitForPoweredOn } from './scanner';
 import { RssiFilter, bandForRssi, type DistanceBand } from './signal';
 import { TOKEN_RE, currentToken, ensureTokens, isOwnToken, msUntilRotation } from './tokens';
 import { FLUSH_MS, enqueueSighting, flushSightings } from './uploader';
@@ -61,6 +61,8 @@ function heardNow(): HeardToken[] {
 
 async function advertiseCurrent() {
   await ensureTokens();
+  // Stopped while the tokens loaded: don't start broadcasting again.
+  if (owners.size === 0) return;
   const token = currentToken();
   endAdvertising();
   if (token) beginAdvertising(token);
@@ -99,6 +101,8 @@ export async function startEngine(opts: { eventId: number | null; owner?: string
       if (!bleAvailable()) throw new Error(BLE_UNAVAILABLE_MESSAGE);
       const [scanOk, advOk] = await Promise.all([requestScanPermission(), requestAdvertisePermission()]);
       if (!scanOk || !advOk) throw new Error('Bluetooth permission was denied. Allow it in Settings.');
+      const state = await waitForPoweredOn();
+      if (state !== 'PoweredOn') throw new Error(bluetoothStateMessage(state));
       await advertiseCurrent();
       startScan(
         (p) => onSeen(p.localName, p.rssi, p.lastSeenAt),

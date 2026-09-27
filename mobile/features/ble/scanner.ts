@@ -50,6 +50,41 @@ export function startScan(onPeerSeen: (peer: DiscoveredPeer) => void, onError?: 
   });
 }
 
+/**
+ * Resolves with the adapter state once it is PoweredOn, or with the last state after `timeoutMs`.
+ * On iOS a new manager reports Unknown for a moment (and while the permission prompt is up); scanning
+ * then fails with "BluetoothLE is in unknown state", so wait instead of racing it.
+ */
+export async function waitForPoweredOn(timeoutMs = 8_000): Promise<string> {
+  const manager = getBleManager();
+  if (!manager) throw new Error(BLE_UNAVAILABLE_MESSAGE);
+  const now = await manager.state();
+  if (now === 'PoweredOn') return now;
+  return new Promise((resolve) => {
+    let last: string = now;
+    const sub = manager.onStateChange((state) => {
+      last = state;
+      if (state === 'PoweredOn') {
+        clearTimeout(timer);
+        sub.remove();
+        resolve(state);
+      }
+    }, true);
+    const timer = setTimeout(() => {
+      sub.remove();
+      resolve(last);
+    }, timeoutMs);
+  });
+}
+
+/** A sentence for a Bluetooth adapter state that isn't PoweredOn. */
+export function bluetoothStateMessage(state: string): string {
+  if (state === 'PoweredOff') return 'Bluetooth is off. Turn it on in Control Center, then try again.';
+  if (state === 'Unauthorized') return 'Bluetooth permission was denied. Allow it in Settings → Constellation.';
+  if (state === 'Unsupported') return 'This device does not support Bluetooth Low Energy.';
+  return `Bluetooth is not ready yet (${state}). Try again in a moment.`;
+}
+
 export function stopScan(): void {
   getBleManager()?.stopDeviceScan();
 }

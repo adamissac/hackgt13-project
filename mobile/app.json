@@ -19,7 +19,15 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.formalconnection.app"
+      "package": "com.formalconnection.app",
+      "permissions": [
+        "android.permission.BLUETOOTH",
+        "android.permission.BLUETOOTH_ADMIN",
+        "android.permission.BLUETOOTH_CONNECT",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -46,7 +54,8 @@
         "react-native-ble-plx",
         {
           "isBackgroundEnabled": false,
-          "neverForLocation": false
+          "neverForLocation": false,
+          "bluetoothAlwaysPermission": "Constellation uses Bluetooth while Nearby or Event Mode is on to find attendees near you and to verify that you talked in person. Your phone broadcasts a rotating anonymous code; codes heard nearby are recorded privately and deleted after 24 hours."
         }
       ],
       [
@@ -55,7 +64,9 @@
           "androidBluetoothPermissions": [
             "advertise"
           ],
-          "multipeerServiceTypes": false
+          "multipeerServiceTypes": false,
+          "bluetoothAlwaysUsageDescription": "Constellation uses Bluetooth while Nearby or Event Mode is on to find attendees near you and to verify that you talked in person. Your phone broadcasts a rotating anonymous code; codes heard nearby are recorded privately and deleted after 24 hours.",
+          "bluetoothPeripheralUsageDescription": "Constellation uses Bluetooth while Nearby or Event Mode is on to find attendees near you and to verify that you talked in person. Your phone broadcasts a rotating anonymous code; codes heard nearby are recorded privately and deleted after 24 hours."
         }
       ],
       [
@@ -79,6 +90,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "1e625bbb-ed60-4b52-be48-60b996790071"
+      }
+    },
+    "owner": "adamissac"
   }
 }
