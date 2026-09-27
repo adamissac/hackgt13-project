@@ -5,6 +5,12 @@ export const BANDS: DistanceBand[] = ['very close', 'nearby', 'farther away'];
 /** Circle radius per band, in meters (rough: Bluetooth bands, MASTER_SPEC 7.3). */
 export const BAND_METERS = [3, 8, 16];
 type MapPeer = { user_id: string; band: DistanceBand };
+/** Stable separate browse slots; never inferred real-world positions. */
+export function browseSlots<T extends { user_id: string }>(peers: T[]) {
+  const sorted = [...peers].sort((a, b) => a.user_id.localeCompare(b.user_id));
+  const columns = Math.max(1, Math.ceil(Math.sqrt(sorted.length)));
+  return sorted.map((peer, i) => ({ peer, column: i % columns, row: Math.floor(i / columns), columns }));
+}
 /** Keep the map readable; the screen's list still contains every eligible match. */
 export function mapPreview<T extends MapPeer>(peers: T[], selectedId: string | null): T[] {
   return BANDS.flatMap(band => {

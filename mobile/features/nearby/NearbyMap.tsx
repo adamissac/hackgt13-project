@@ -1,7 +1,5 @@
-// Nearby map (Arjun, on top of Akshar's AK5 proximity data). A real street map around YOU, with three
-// circles for the Bluetooth distance bands. Bluetooth gives distance, not direction, so each person is
-// pinned somewhere in their band at a stable angle derived from their id: the ring is meaningful, the
-// direction is not (said on screen). Your coordinates stay on the phone: nothing here is uploaded.
+// Nearby browsing map: only the viewer's position is real. Separate decorative
+// slots prevent matches from covering each other; coordinates stay on the phone.
 import * as Location from 'expo-location';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -10,7 +8,7 @@ import MapView, { Marker, type Region } from 'react-native-maps';
 import { useColors } from '@/components/ui';
 import type { Peer } from '@/features/ble';
 
-import { offsetMeters, peerAngle } from './geo';
+import { browseSlots, offsetMeters } from './geo';
 
 const FALLBACK = { latitude: 33.7756, longitude: -84.3963 }; // Georgia Tech, if location is off
 
@@ -59,10 +57,13 @@ export function NearbyMap({ peers, selectedId, onSelect, expanded = false }: { p
         showsPointsOfInterests={false}
         showsBuildings={false}
         onPress={() => onSelect(null)}>
-        {peers.map((p) => {
+        {browseSlots(peers).map(({ peer: p, column, row, columns }) => {
           // This gives each eligible nearby match a tap target without implying
           // their direction or position. Exact coordinates never enter Nearby.
-          const pos = offsetMeters(center, peerAngle(p.user_id), 18 + (peers.indexOf(p) % 4) * 7);
+          const rows = Math.ceil(peers.length / columns);
+          const x = columns === 1 ? 0 : (column / (columns - 1) - 0.5) * 24;
+          const y = rows === 1 ? 8 : (row / (rows - 1) - 0.5) * 24;
+          const pos = offsetMeters(center, Math.atan2(y, x), Math.hypot(x, y));
           const sel = p.user_id === selectedId;
           return (
             <Marker key={`${p.user_id}-${sel}`} coordinate={pos} onPress={(e) => { e.stopPropagation(); onSelect(p.user_id); }} tracksViewChanges={false} zIndex={sel ? 10 : 1}>
