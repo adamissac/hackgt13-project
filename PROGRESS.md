@@ -10,6 +10,21 @@
 **Known issues / blockers:** none known.
 **Contract changes:** `docs/api.md` 45a `POST /events/{event_id}/leave` (new).
 
+## 2026-09-27 03:05 | akshar | Claude Code (Opus 5.5)
+**Task:** Mobile dark mode: finish what Alan started (7fea3f6 palette + store, 66876c7 picker)
+**Status:** done in JS; "System" following the phone needs a native rebuild (app.json change)
+**What I did:**
+- Tab bars (`app/(tabs)/_layout.tsx`, `app/(company)/_layout.tsx`) used `Colors.light` directly; now `useColors()`.
+- `AppIcon`, `ConstellationMark`, `ChatMark` defaulted to fixed navy (invisible on dark); default is now the theme's `tabIconSelected`.
+- Sign-in and company sign-in: background, form divider, inputs, placeholders and chips from the theme (were fixed light hexes).
+- `app.json` `userInterfaceStyle: automatic` (was `light`, which pins iOS to light, so "System" could never go dark and native controls stayed light).
+- Left intentionally fixed: white text on tinted buttons, white QR backgrounds (scanners need contrast), the graph's dark space card, dark hero cards, resume "paper" preview.
+- Verified in the web build in dark and light: sign-in, onboarding, Home, Feed, Constellation, Nearby, Events, Profile, Your sources (picker), match page. Light/dark switch is instant.
+**How to run/test it:** Profile -> Edit profile -> Appearance -> Light / Dark / System. `cd mobile && npx tsc --noEmit && npx eslint .`
+**Next step for whoever continues:** Rebuild the dev/Release app once so "System" follows the iPhone's dark mode (light/dark choices already work without a rebuild).
+**Known issues / blockers:** Light/Dark picks work immediately; System needs the rebuild. The web Nearby map is a placeholder; native Apple Maps follows the system appearance.
+**Contract changes:** none
+
 ## 2026-09-27 02:16 | akshar | Claude Code (Opus 5.5)
 **Task:** AK3/AK2 phone testing fixes: tap-to-verify feedback, "nothing was sent" after connecting
 **Status:** done (server fix goes live with the Railway auto-deploy of this push)
