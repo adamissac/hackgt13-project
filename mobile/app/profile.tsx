@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { HERO_TEXT } from '@/components/TabHero';
+import { ConstellationMark } from '@/components/Brand';
 import { AiBadge, Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { api, type AccountsResponse, type Facet, type Interest, type InterestsResponse, type SkillProfile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -92,18 +92,23 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <View style={[styles.headerCard, { backgroundColor: c.tint }]}>
-        <Avatar name={name} size={76} />
-        <View style={{ alignItems: 'center', gap: 6 }}>
-          <Text style={[styles.name, { color: HERO_TEXT.title }]}>{name}</Text>
-          {!!headline && <Text style={[styles.body, { color: HERO_TEXT.body, textAlign: 'center' }]}>{headline}</Text>}
+      <View style={[styles.headerCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View style={[styles.cover, { backgroundColor: c.tint }]}>
+          <View style={styles.coverMark}><ConstellationMark color="#B6C9FA" size={120} /></View>
+        </View>
+        <View style={[styles.avatarRing, { borderColor: c.surface, backgroundColor: c.surface }]}>
+          <Avatar name={name} size={84} />
+        </View>
+        <View style={{ alignItems: 'center', gap: 6, paddingHorizontal: 20 }}>
+          <Text style={[styles.name, { color: c.text }]}>{name}</Text>
+          {!!headline && <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>{headline}</Text>}
           <View style={[styles.chips, { justifyContent: 'center' }]}>
             {guest && <Chip label="Demo" tone="ai" />}
             <Chip label={`${visible.length} skills & interests`} tone="tint" />
             <Chip label={`${sourceCount}/2 sources`} tone={sourceCount === 2 ? 'success' : 'neutral'} />
           </View>
         </View>
-        <Button label="Edit profile" variant="secondary" onPress={() => router.push('/accounts')} style={{ alignSelf: 'stretch' }} />
+        <Button label="Edit profile" variant="secondary" onPress={() => router.push('/accounts')} style={{ alignSelf: 'stretch', marginHorizontal: 20 }} />
       </View>
 
       {data && (!!data.seeking || !!data.offering) && (
@@ -312,7 +317,10 @@ function SourceRow({ icon, title, detail, ok, divider }: { icon: string; title: 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 14, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   warning: { borderRadius: 12, padding: 12 },
-  headerCard: { alignItems: 'center', gap: 14, paddingVertical: 24, paddingHorizontal: 20, borderRadius: 26 },
+  headerCard: { alignItems: 'center', gap: 12, paddingBottom: 20, borderRadius: 24, borderWidth: 1, overflow: 'hidden' },
+  cover: { alignSelf: 'stretch', height: 104, overflow: 'hidden' },
+  coverMark: { position: 'absolute', right: -14, top: -14, opacity: 0.35 },
+  avatarRing: { marginTop: -52, borderWidth: 4, borderRadius: 50 },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },

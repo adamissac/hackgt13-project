@@ -3,7 +3,6 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import { TabHero } from '@/components/TabHero';
 import { Avatar, Button, Card, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { buildView } from '@/features/graph/model';
 import { PersonSheet } from '@/features/graph/PersonSheet';
@@ -134,7 +133,24 @@ export default function GraphScreen() {
         </Card>
       ) : (
         <>
-          <TabHero mark={false} eyebrow={mode === 'matches' ? 'YOUR MATCHES' : 'YOUR CONNECTIONS'} title={topic ? `Top people into ${topic}` : COPY[mode].title} body={COPY[mode].explain} />
+          <View style={{ gap: 12 }}>
+            <View style={{ gap: 4 }}>
+              <Text style={[styles.headline, { color: c.tint }]}>{topic ? `Top people into ${topic}` : COPY[mode].title}</Text>
+              <Text style={[styles.body, { color: c.muted }]}>{COPY[mode].explain}</Text>
+            </View>
+            <View style={styles.stats}>
+              {[
+                { value: String(view.people.length), label: mode === 'matches' ? 'people' : 'connections' },
+                { value: String(view.topics.length), label: 'shared topics' },
+                { value: `${Math.round(Math.max(0, ...view.people.map((p) => p.score)) * 100)}%`, label: 'best match' },
+              ].map((s) => (
+                <View key={s.label} style={[styles.stat, { backgroundColor: c.tintSoft }]}>
+                  <Text style={[styles.statValue, { color: c.tint }]}>{s.value}</Text>
+                  <Text style={[styles.statLabel, { color: c.ai }]}>{s.label}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
           {view.topics.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
@@ -243,6 +259,11 @@ export default function GraphScreen() {
 }
 
 const styles = StyleSheet.create({
+  headline: { fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -1 },
+  stats: { flexDirection: 'row', gap: 10 },
+  stat: { flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 12, gap: 2 },
+  statValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
+  statLabel: { fontSize: 12, fontWeight: '600' },
   fill: { flex: 1, padding: 16, gap: 12 },
   container: { padding: 16, gap: 16, paddingBottom: 110, width: '100%', maxWidth: 560, alignSelf: 'center' },
   chartHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 18, paddingTop: 4 },

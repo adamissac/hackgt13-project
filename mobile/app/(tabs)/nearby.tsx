@@ -4,7 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import { TabHero } from '@/components/TabHero';
+import Svg, { Circle } from 'react-native-svg';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
@@ -39,12 +39,22 @@ export default function NearbyScreen() {
   return (
     <>
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      <TabHero
-        eyebrow={scan ? 'SCANNING' : 'NEARBY'}
-        title="Find your matches nearby"
-        body={scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
-        right={<Switch value={scan} onValueChange={setScan} trackColor={{ true: '#4F7BE8', false: '#FFFFFF33' }} thumbColor="#FFFFFF" ios_backgroundColor="#FFFFFF33" accessibilityLabel="Scan for people nearby" />}
-      />
+      <View style={[styles.radarCard, { backgroundColor: c.tintSoft, borderColor: c.tint + '22' }]}>
+        <Svg width={190} height={190} style={styles.rings} pointerEvents="none">
+          {[92, 68, 44, 20].map((r, i) => (
+            <Circle key={r} cx={95} cy={95} r={r} stroke={c.tint} strokeOpacity={0.14 + i * 0.1} strokeWidth={1.5} fill={i === 3 ? c.tint : 'none'} fillOpacity={0.9} />
+          ))}
+        </Svg>
+        <Text style={[styles.radarEyebrow, { color: c.tint }]}>{scan ? '● SCANNING' : 'NEARBY'}</Text>
+        <Text style={[styles.radarTitle, { color: c.tint }]}>Find your{'\n'}matches nearby</Text>
+        <Text style={[styles.small, { color: c.ai, maxWidth: '62%' }]}>
+          {scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
+        </Text>
+        <View style={styles.radarSwitch}>
+          <Switch value={scan} onValueChange={setScan} trackColor={{ true: c.tint, false: '#C9D3EA' }} thumbColor="#FFFFFF" ios_backgroundColor="#C9D3EA" accessibilityLabel="Scan for people nearby" />
+          <Text style={{ color: c.tint, fontWeight: '700' }}>{scan ? 'On' : 'Off'}</Text>
+        </View>
+      </View>
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
 
       {fetchError && !radioError && /check in/i.test(fetchError) ? (
@@ -182,6 +192,11 @@ export default function NearbyScreen() {
 
 const styles = StyleSheet.create({
   container: { padding: 24, gap: 20, paddingBottom: 110, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  radarCard: { borderRadius: 24, borderWidth: 1, padding: 22, gap: 8, overflow: 'hidden' },
+  rings: { position: 'absolute', right: -48, top: -40 },
+  radarEyebrow: { fontSize: 11, fontWeight: '800', letterSpacing: 1.8 },
+  radarTitle: { fontSize: 28, lineHeight: 33, fontWeight: '800', letterSpacing: -0.8 },
+  radarSwitch: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6 },
   emptyNearby: { alignItems: 'center', justifyContent: 'center', paddingVertical: 48, gap: 12 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   h1: { fontSize: 18, fontWeight: '800' },

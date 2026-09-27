@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
-import { TabHero } from '@/components/TabHero';
 import { AiBadge, Avatar, Button, Card, Chip, useColors } from '@/components/ui';
 import { api, type FeedEntry, type FeedPostResponse } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -43,8 +42,12 @@ export default function FeedScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
-      <TabHero eyebrow="YOUR CIRCLE" title="Stay in the loop." body="The latest from people you know." />
-      <Card>
+      <View style={[styles.band, { backgroundColor: c.tint }]}>
+        <Text style={styles.bandEyebrow}>YOUR CIRCLE</Text>
+        <Text style={styles.bandTitle}>Stay in the loop.</Text>
+        <Text style={styles.bandBody}>The latest from people you know.</Text>
+      </View>
+      <Card style={{ marginTop: -54 }}>
         <Pressable onPress={() => setComposing(!composing)} accessibilityRole="button" accessibilityState={{ expanded: composing }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
           <Text style={{ flex: 1, marginRight: 12, color: c.text, fontSize: 16, fontWeight: '500' }}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>
           <Text style={{ color: c.muted, fontSize: 22 }}>{composing ? '−' : '+'}</Text>
@@ -169,6 +172,10 @@ function FeedCard({ item }: { item: FeedEntry }) {
 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 18, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
+  band: { marginTop: -20, marginHorizontal: -20, paddingHorizontal: 24, paddingTop: 26, paddingBottom: 74, gap: 6, borderBottomLeftRadius: 32, borderBottomRightRadius: 32 },
+  bandEyebrow: { color: '#B6C9FA', fontSize: 11, fontWeight: '700', letterSpacing: 1.8 },
+  bandTitle: { color: '#FFFFFF', fontSize: 32, fontWeight: '700', letterSpacing: -1 },
+  bandBody: { color: '#D3DEF2', fontSize: 15, lineHeight: 22 },
   lead: { fontSize: 15, lineHeight: 21 },
   kinds: { flexDirection: 'row', gap: 8 },
   kind: { minHeight: 40, paddingHorizontal: 14, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
