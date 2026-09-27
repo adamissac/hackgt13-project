@@ -1,3 +1,18 @@
+## 2026-09-27 05:30 | adam | coding agent
+**Task:** Pre-Xcode check of the iOS dev build and the whole Bluetooth path
+**Status:** done
+**What I did:**
+- Native build proven without local Xcode: EAS iOS build (new `simulator` profile) of commit `fd06eb7` compiled and linked everything (ble-plx, munim-bluetooth/Nitro, maps, camera, location, haptics, dev client). `expo-doctor` 21/21; `expo export --platform ios` bundles; prebuild output checked (Info.plist, no entitlements so free Apple IDs can sign, iOS 16.4 minimum, Android BLE + FGS permissions).
+- BLE fixes: wait for the adapter to be PoweredOn before scanning (a scan started while iOS still reports Unknown fails with "BluetoothLE is in unknown state"), with clear messages for off/denied/unsupported; never restart advertising if stopped while tokens load. Our own Bluetooth permission text (discloses the rotating code and 24 h private recording) instead of the libraries' generic text.
+- `mobile/app.config.js`: `IOS_BUNDLE_ID` (env or personal `mobile/.env`) so each teammate on a free Apple ID can sign; Apple allows a bundle id on one team only.
+- Checked against the ble-proximity notes: one 128-bit UUID, 8-char base32 tokens (fit iOS's name slot), foreground-only on iOS with keep-awake + copy, one long scan, 30 s uploads with model/foreground, bands -60/-75 match the server. On Android munim sets the adapter name to the token while advertising (restored on stop).
+- `ml/scripts/e2e_ble_live.py`: two simulated phones on the live API (tokens, sightings, Nearby band 'immediate', tap claim from both -> verified + checklist, far tap -> 400 too_far): PASS.
+- Guide for the team: `docs/ios-dev-build.md`.
+**How to run/test it:** see `docs/ios-dev-build.md`; server half: `cd ml/scripts && npx @railway/cli run ../.venv/bin/python -u e2e_ble_live.py`.
+**Next step for whoever continues:** Build on two iPhones with `npx expo run:ios --device` and run the test matrix in the guide; log median RSSI per pair here.
+**Known issues / blockers:** iOS only broadcasts the token with the app on screen (platform limit). This Mac has no Xcode, so the device build itself must run on a teammate's Mac.
+**Contract changes:** `mobile/.env.example`: optional `IOS_BUNDLE_ID` (build-time only, not shipped).
+
 ## 2026-09-27 05:10 | adam | Cursor Grok 4.7
 **Task:** Handoff of untracked local agent folders
 **Status:** done
