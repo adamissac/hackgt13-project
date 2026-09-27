@@ -92,8 +92,19 @@ export function PersonSheet({ p, mode, onClose }: { p: Person; mode: GraphMode; 
       ) : null}
 
       <View style={[styles.box, { backgroundColor: c.surfaceAlt }]}>
-        <Text style={[styles.label, { color: c.muted }]}>SHARED-INTEREST STRENGTH</Text>
-        <Text style={[styles.body, { color: c.text }]}>{p.score >= 0.7 ? 'Strong' : p.score >= 0.4 ? 'Moderate' : 'Emerging'} · {Math.round(p.score * 100)}% profile overlap</Text>
+        <Text style={[styles.label, { color: c.muted }]}>MATCHING SIGNALS</Text>
+        <Text style={[styles.small, { color: c.muted }]}>Ranking score, not a probability of mutual interest or percent of shared skills.</Text>
+        {p.explanation && <>
+          <Text style={[styles.small, { color: c.muted }]}>
+            {p.explanation.basis === 'v1_proxy' ? 'Approximate rules-based factors; not an exact breakdown of the learned score.'
+              : p.explanation.basis === 'lr' ? 'Largest positive model log-odds contributions.' : 'Largest positive contributions from weighted matching rules.'}
+            {p.explanation.varied ? ' AI reworded the summary, not the numbers.' : ' Summary generated from matching rules.'}
+          </Text>
+          {p.explanation.factors.map((f) => <Text key={f.label} style={[styles.small, { color: c.text }]}>
+            {f.label}: {Math.round(f.share * 100)}% of positive contribution
+          </Text>)}
+          <Text style={[styles.small, { color: c.muted }]}>Only the strongest positive factors are shown; these shares may not total 100%.</Text>
+        </>}
       </View>
       {state.status === 'loading' && <Text style={[styles.small, { color: c.muted }]}>Loading their profile…</Text>}
 

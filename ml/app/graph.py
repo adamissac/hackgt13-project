@@ -56,7 +56,8 @@ class Builder:
         self.edges[(source, target)] = e
 
     def person(self, p: dict, *, score: float, features: dict, highlight: bool, cluster, connected: bool,
-               connected_at, facet_filter: str, topics_k: int = TOPICS_PER_PERSON) -> bool:
+               connected_at, facet_filter: str, topics_k: int = TOPICS_PER_PERSON,
+               explanation: dict | None = None) -> bool:
         shared = scoring.shared_interests(self.me, p, self.index, 20)
         if facet_filter != "all":
             shared = [s for s in shared if self.index.facets[s["id"]] == facet_filter]
@@ -69,21 +70,21 @@ class Builder:
                            "connected": connected, "connected_at": connected_at,
                            "top_topic": shared[0]["name"] if shared else None, "shared_count": len(shared)}
         self.edge("me", nid, "connection" if connected else "match", score, dominant_facet(features),
-                  explanation=self.explanation(p, features))
+                  explanation=self.explanation(p, features, explanation))
         for s in shared[:topics_k]:
             t = self.topic(s["id"])
             self.edge(nid, t, "has_topic", p["interests"][s["id"]]["weight"])
             self.edge("me", t, "has_topic", self.me["interests"][s["id"]]["weight"])
         return True
 
-    def explanation(self, p: dict, features: dict) -> dict:
+    def explanation(self, p: dict, features: dict, ranked: dict | None = None) -> dict:
         """Why-you-matched for the me->person edge, trimmed for a graph that can hold 150 nodes.
 
         Only the summary, the top factors (enough to draw a small bar), and topic names. The full
         breakdown with evidence lines is on GET /matches/{id}/quick-profile and expand(); repeating
         it per edge would multiply the payload for data the graph never renders.
         """
-        e = scoring.explain_match(self.me, p, self.index, features=features)
+        e = ranked if ranked is not None else scoring.explain_match(self.me, p, self.index, features=features)
         return {"summary": e["summary"], "basis": e["basis"],
                 "factors": [{"label": r["label"], "contribution": r["contribution"], "share": r["share"]}
                             for r in e["factors"]],
@@ -144,7 +145,8 @@ def matches_graph(viewer: str, event_id: int, depth: int, max_people: int, min_s
         if b.people_count() >= max_people:
             break
         b.person(m.people[r["id"]], score=r["score"], features=r["features"], highlight=r["highlight"],
-                 cluster=(m.cluster or {}).get(r["id"]), connected=False, connected_at=None, facet_filter=facet)
+                 cluster=(m.cluster or {}).get(r["id"]), connected=False, connected_at=None, facet_filter=facet,
+                 explanation=r.get("explanation"))
     if depth >= 2:   # also expand through the shared topics already on screen
         topic_ids = [int(n["id"][2:]) for n in list(b.nodes.values()) if n["type"] == "topic"]
         for iid in topic_ids:
@@ -155,7 +157,7 @@ def matches_graph(viewer: str, event_id: int, depth: int, max_people: int, min_s
                     continue
                 b.person(m.people[r["id"]], score=r["score"], features=r["features"], highlight=r["highlight"],
                          cluster=(m.cluster or {}).get(r["id"]), connected=False, connected_at=None,
-                         facet_filter=facet)
+                         facet_filter=facet, explanation=r.get("explanation"))
     return b.out()
 
 
@@ -205,7 +207,7 @@ def expand(viewer: str, node_id: str, mode: str, event_id: int | None, limit: in
             p = m.people[r["id"]]
             b.person(p, score=r["score"], features=r["features"], highlight=r["highlight"],
                      cluster=(m.cluster or {}).get(r["id"]), connected=False, connected_at=None, facet_filter="all",
-                     topics_k=0)
+                     topics_k=0, explanation=r.get("explanation"))
             b.edge(f"u_{p['id']}", b.topic(iid), "has_topic", p["interests"][iid]["weight"])
         return b.out()
     if node_id.startswith("u_") and matching.is_valid_uuid(node_id[2:]):

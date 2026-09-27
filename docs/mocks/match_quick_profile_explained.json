@@ -1,0 +1,23 @@
+{
+  "user_id": "7f1c2a9e-0000-4000-8000-000000000002",
+  "name": "Sam Lee", "photo_url": null, "role": "student",
+  "headline": "", "seeking": "", "offering": "", "connected": true,
+  "score": 0.1, "shared_topics": [],
+  "facet_overlap": {"technical": 0.5, "career": 0, "personal": 0, "academic": 0},
+  "complementarity": 0,
+  "explanation": {
+    "summary": "Your strongest overlap is technical.", "basis": "v1",
+    "factors": [{"name": "sim_technical", "label": "technical overlap", "value": 0.5, "contribution": 0.1, "share": 1}],
+    "all_factors": [
+      {"name": "sim_technical", "label": "technical overlap", "value": 0.5, "contribution": 0.1, "share": 1},
+      {"name": "sim_career", "label": "career overlap", "value": 0, "contribution": 0, "share": 0},
+      {"name": "sim_personal", "label": "shared personal interests", "value": 0, "contribution": 0, "share": 0},
+      {"name": "sim_academic", "label": "academic background", "value": 0, "contribution": 0, "share": 0},
+      {"name": "idf_overlap", "label": "shared niche interests", "value": 0, "contribution": 0, "share": 0},
+      {"name": "complementarity", "label": "what each of you wants and offers", "value": 0, "contribution": 0, "share": 0},
+      {"name": "bridge", "label": "different circles, same thread", "value": 0, "contribution": 0, "share": 0},
+      {"name": "role_pair", "label": "student and recruiter fit", "value": 0, "contribution": 0, "share": 0}
+    ],
+    "shared_topics": []
+  }
+}

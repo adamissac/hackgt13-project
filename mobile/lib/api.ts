@@ -123,6 +123,16 @@ export interface ConnectionsResponse { connections: Connection[] }
 export type ConnectionDetail = Connection & { shared_topics: string[] };
 
 export interface SharedTopic { interest_id: number; name: string; facet: Facet; strength: number; evidence: string }
+export interface MatchExplanation {
+  summary: string;
+  basis: 'v1' | 'lr' | 'v1_proxy';
+  factors: { name: string; label: string; value: number; contribution: number; share: number }[];
+  all_factors?: MatchExplanation['factors'];
+  varied?: boolean;
+}
+export type GraphExplanation = Omit<MatchExplanation, 'factors' | 'all_factors'> & {
+  factors: Pick<MatchExplanation['factors'][number], 'label' | 'contribution' | 'share'>[];
+};
 export interface QuickProfile {
   user_id: string;
   name: string;
@@ -138,6 +148,7 @@ export interface QuickProfile {
   shared_topics: SharedTopic[];
   facet_overlap: Record<Facet, number>;
   complementarity: number;
+  explanation?: MatchExplanation;
 }
 
 export interface Suggestion {
@@ -230,7 +241,7 @@ export interface GraphPerson {
 }
 export interface GraphTopic { id: string; type: 'topic'; label: string; facet: Facet; evidence?: string }
 export type GraphNode = { id: string; type: 'self'; label: string } | GraphPerson | GraphTopic;
-export interface GraphEdge { source: string; target: string; kind: 'match' | 'connection' | 'has_topic'; weight: number; facet?: Facet }
+export interface GraphEdge { source: string; target: string; kind: 'match' | 'connection' | 'has_topic'; weight: number; facet?: Facet; explanation?: GraphExplanation }
 export interface GraphResponse { nodes: GraphNode[]; edges: GraphEdge[]; synthetic?: boolean }
 export interface MeDashboard {
   total: number; days: number;

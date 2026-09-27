@@ -10,6 +10,18 @@
 **Next step for whoever continues:** On a second attendee phone, enter a printed join code on Events → Enter join code and confirm Nearby uses that event. If Expo web is stale, reload `http://localhost:8081`.
 **Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
 **Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
+## 2026-09-26 | alan | Codex
+**Task:** Finish Claude's match explanations and make extraction less opaque
+**Status:** done (code); live deployment / phone smoke test pending
+**What I did:**
+- Continued a74fe37/e7a1dfa after syncing team commits through 647e3f5. Graph UI now consumes actual summary/factors/basis and identifies AI rewording versus numeric scoring. Fixed graph builder losing learned-ranker attribution (it previously mislabeled every explanation V1).
+- Quick-profile returns an additive explanation derived from its exact V1 features. Full profile shows all signed score contributions; graph shows top positive shares with denominator and approximation caveats. Removed misleading percent-match/profile-overlap labels from the touched profile surfaces and shared MatchMeter.
+- Extraction review now explains source weighting, confirmation, diminishing returns, evidence limitations, and weight versus confidence/proficiency. Each topic shows confirmation and matching weight; no evidence is fabricated when absent.
+- Cross-owner mobile edits explicitly requested by Alan; docs, current/legacy mocks, regression tests and REQUESTS updated. Privacy/contract review completed; no privacy blockers.
+**How to run/test it:** Mobile `tsc --noEmit` and `eslint .` pass; `pnpm dlx tsx scripts/demo-flow.test.ts`: 17 pass. ML `pytest -q tests/test_quick_profile_explanation.py tests/test_explain.py`: 21 pass using bundled Python and temporary dependency targets (hashed embedder, no model download). `git diff --check` passes.
+**Next step for whoever continues:** Deploy ML when safe, reload app, smoke-test graph → person → full profile and Profile → Review on phone. Git pushes do not deploy ML.
+**Known issues / blockers:** No live DB or device verification in this session. Extraction explanation describes actual existing rules, not a new per-document provenance ledger. Learned graph scores and quick-profile V1 scores can differ; UI labels the scoring basis.
+**Contract changes:** Optional quick-profile `explanation`; docs/api.md 15 and new explained fixture. Existing graph shape unchanged; client now types/consumes it. No schema/migration or secret changes.
 
 ## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / a different blue design on each tab

@@ -184,6 +184,17 @@ Only SHARED topics are returned, never the other person's full interest list.
 `strength` = min of both people's weights on the topic (0-1). `evidence` is the other person's evidence line.
 `facet_overlap` = cosine similarity of the two people's facet vectors (0-1), for the overlap radar chart.
 
+Additive `explanation` uses the same V1 features as this endpoint's `score` (not the potentially learned graph score):
+`{summary, basis: "v1", factors, all_factors, shared_topics}`. Factors contain
+`{name, label, value, contribution, share}`; `all_factors` includes negative and zero terms.
+Nested `explanation.shared_topics` items are `{id, name, contribution, evidence_a, evidence_b}`;
+unlike the top-level topics they include evidence for both the viewer and the other person.
+Contributions sum to the score before rounding; multiply by 100 for score points, not probability percentages.
+`share` is a fraction of positive contributions only, not confidence. Topic evidence is limited to shared topics
+under the existing relationship authorization. Older servers/demo fixtures may omit `explanation`; clients must
+show an unavailable state, not invent a breakdown. The fixture `match_quick_profile.json` demonstrates this legacy case.
+`match_quick_profile_explained.json` demonstrates a complete V1 breakdown including zero terms.
+
 ## 16. PATCH /me/open-to-meet
 Request `{ "open": true }`   Response `{ "open_to_meet": true }`
 OFF also ends any live meetup location sharing the caller is part of (chats remain).

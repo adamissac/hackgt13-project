@@ -420,6 +420,7 @@ export function quickProfile(userId: string): QuickProfile {
     seeking: p.seeking,
     offering: p.offering,
     connected: rel(userId).stage === 'CONNECTED',
+    // Curated demo scores have no computed feature attribution: exercise the honest unavailable state.
     score: p.score,
     shared_topics: p.shared,
     facet_overlap: p.facet_overlap,

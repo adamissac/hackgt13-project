@@ -79,7 +79,7 @@ export default function MatchScreen() {
           {p.headline || (p.role === "recruiter" ? "Recruiter" : "Student")}
         </Text>
         <View style={styles.chips}>
-          <Chip label={`${Math.round(p.score * 100)}% match`} tone="tint" />
+          <Chip label={`Match score: ${Math.round(p.score * 100)}`} tone="tint" />
           {proximity && <Chip label={BAND[proximity]} tone="success" />}
           {p.role === "recruiter" && <Chip label="Recruiter" />}
         </View>
@@ -94,6 +94,7 @@ export default function MatchScreen() {
       )}
 
       <Icebreakers userId={id} name={p.name} />
+      <ScoreExplanation p={p} />
 
       <SectionTitle>What you have in common</SectionTitle>
       <Card>
@@ -385,6 +386,30 @@ function Icebreakers({ userId, name }: { userId: string; name: string }) {
           </View>
         </>
       )}
+    </Card>
+  );
+}
+
+function ScoreExplanation({ p }: { p: QuickProfile }) {
+  const c = useColors();
+  const e = p.explanation;
+  return (
+    <Card>
+      <Text style={[styles.why, { color: c.text }]}>How this score works</Text>
+      <Text style={[styles.body, { color: c.muted }]}>
+        This is a ranking signal, not a probability of friendship or mutual interest.
+        {e?.basis === 'v1_proxy' ? ' These factors are an approximate rules-based explanation, not a breakdown of the learned score.'
+          : e?.basis === 'lr' ? ' Factors describe contributions to the model’s log-odds, not percentage points.'
+            : ' This profile score uses weighted matching rules; AI-generated wording does not set the score.'}
+      </Text>
+      {e ? <>
+        <Text style={[styles.body, { color: c.text }]}>{e.summary}</Text>
+        {(e.all_factors ?? e.factors).map((f) => (
+          <Text key={f.name} style={[styles.small, { color: c.muted }]}>
+            {f.label}: {f.contribution >= 0 ? '+' : ''}{(f.contribution * (e.basis === 'lr' ? 1 : 100)).toFixed(1)} {e.basis === 'lr' ? 'log-odds' : 'points'}
+          </Text>
+        ))}
+      </> : <Text style={[styles.small, { color: c.muted }]}>Detailed score factors are not available for this profile yet.</Text>}
     </Card>
   );
 }

@@ -144,7 +144,18 @@ export default function ProfileScreen() {
       )}
       {visible.length > 0 && (
         <Card>
-          <AiBadge label="Extracted by AI from your sources" />
+          <AiBadge label="Interests from your sources and review" />
+          <Text style={[styles.small, { color: c.muted }]}>
+            AI suggests topics from the sources you provide, then similar names are grouped together.
+            These are estimates, not verified skills. Tap Review to see the supporting evidence,
+            confirm accurate topics, or hide mistakes.
+          </Text>
+          {reviewing && <Text style={[styles.small, { color: c.muted }]}>
+            Matching weight combines extraction strength, source weighting, and your confirmation.
+            Contributions from the latest extraction of each source are combined with diminishing returns.
+            Weight is not AI confidence or a measure of proficiency. Saved evidence may be an AI summary,
+            not a verbatim quote: check it against your source. The strongest source is shown when sources overlap.
+          </Text>}
           {FACETS.map((f) => {
             const items = visible.filter((i) => i.facet === f.key);
             if (!items.length) return null;
@@ -157,7 +168,8 @@ export default function ProfileScreen() {
                       <View style={{ flex: 1, gap: 2 }}>
                         <Text style={[styles.interestName, { color: c.text }]}>{i.name}</Text>
                         {!!i.evidence && <Text style={[styles.small, { color: c.muted }]}>{i.evidence}</Text>}
-                        <Text style={[styles.tiny, { color: c.muted }]}>from {i.source}</Text>
+                        <Text style={[styles.tiny, { color: c.muted }]}>from {i.source} · {i.confirmed ? 'Confirmed by you' : 'Not confirmed'} · matching weight {i.weight.toFixed(2)}</Text>
+                        {!i.evidence && <Text style={[styles.tiny, { color: c.muted }]}>No supporting snippet saved. Review before confirming.</Text>}
                       </View>
                       <Pressable
                         onPress={() =>

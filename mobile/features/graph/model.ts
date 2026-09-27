@@ -1,7 +1,7 @@
 // Turns GET /graph (api.md 26) into something a person can read at a glance:
 // people on three rings around you (inner = stronger match), topics you share as filters,
 // and one plain sentence per person saying why. Pure functions: no React, easy to test.
-import type { Facet, GraphPerson, GraphResponse } from '@/lib/api';
+import type { Facet, GraphPerson, GraphResponse, GraphExplanation } from '@/lib/api';
 
 export interface Person {
   id: string;
@@ -16,6 +16,7 @@ export interface Person {
   shared: string[]; // topics you both have, strongest first
   metAt: string | null;
   howMet: 'in_person' | 'invite' | null;
+  explanation?: GraphExplanation;
 }
 
 export interface Topic {
@@ -56,6 +57,7 @@ export function buildView(g: GraphResponse): GraphView {
         first: name.split(/\s+/)[0] ?? name,
         role: p.role ?? 'student',
         score: p.score,
+        explanation: g.edges.find((e) => e.source === me && e.target === p.id && (e.kind === 'match' || e.kind === 'connection'))?.explanation,
         facet: g.edges.find((e) => e.source === me && e.target === p.id)?.facet ?? [...topicById.values()].find((t) => t.label === shared[0])?.facet,
         top: p.highlight,
         openToMeet: p.open_to_meet,
@@ -79,6 +81,7 @@ export function buildView(g: GraphResponse): GraphView {
 
 /** "You both have reinforcement learning, time series analysis and rock climbing in common." */
 export function whySentence(p: Person): string {
+  if (p.explanation?.summary) return p.explanation.summary;
   const t = p.shared.slice(0, 3);
   if (!t.length) return 'Your profiles overlap.';
   const list = t.length === 1 ? t[0] : `${t.slice(0, -1).join(', ')} and ${t[t.length - 1]}`;

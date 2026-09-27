@@ -145,7 +145,7 @@ export function MatchMeter({ score }: { score: number }) {
       <RNView style={[styles.meterTrack, { backgroundColor: c.surfaceAlt }]}>
         <RNView style={[styles.meterFill, { width: `${pct}%`, backgroundColor: c.tint }]} />
       </RNView>
-      <RNText style={[styles.meterText, { color: c.muted }]}>{pct}% match</RNText>
+      <RNText style={[styles.meterText, { color: c.muted }]}>Match score: {pct}</RNText>
     </RNView>
   );
 }

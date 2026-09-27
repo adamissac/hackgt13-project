@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { demoAssistantReply } from '../lib/demo/assistant';
 import * as demo from '../lib/demo/backend';
 import { DEMO_PEOPLE } from '../lib/demo/people';
+import { buildView, whySentence } from '../features/graph/model';
 
 demo.timing.reactionMs = 0;
 demo.timing.replyMs = 0;
@@ -151,6 +152,19 @@ step('Assistant answers who to meet, topic search, icebreakers, why', () => {
 step('Graph: Maya is a connection in network mode', () => {
   const g = demo.graph('network');
   assert.ok(g.nodes.some((n) => n.type === 'person' && n.label === 'Maya'));
+});
+
+step('Graph: explanations survive the view model; legacy graphs still work', () => {
+  const g = demo.graph('matches');
+  const edge = g.edges.find((e) => e.kind === 'match' || e.kind === 'connection')!;
+  const legacy = buildView(g).people.find((p) => p.id === edge.target)!;
+  assert.ok(whySentence(legacy).length);
+  edge.explanation = { summary: 'Shared technical interests.', basis: 'v1_proxy', varied: true,
+    factors: [{ label: 'technical overlap', contribution: 0.1, share: 0.5 }] };
+  const person = buildView(g).people.find((p) => p.id === edge.target)!;
+  assert.equal(whySentence(person), edge.explanation.summary);
+  assert.equal(person.explanation?.basis, 'v1_proxy');
+  assert.equal(person.explanation?.factors[0].share, 0.5);
 });
 
 console.log(`\n${passed} demo-flow checks passed`);

@@ -55,6 +55,8 @@ def quick_profile(user_id: str, user: User = Depends(current_user)):
         # Seeded demo attendee (Arjun's population): the app offers "simulate meeting" instead of Bluetooth/QR.
         "demo_attendee": bool(them.get("is_synthetic")) or synthetic.is_synthetic(them["id"]),
         "score": round(score, 4),
+        # Explain this endpoint's V1 score, not the possibly learned graph ranking.
+        "explanation": scoring.explain_match(me, them, index, features=f, cluster=cluster),
         "shared_topics": [{"interest_id": s["id"], "name": s["name"], "facet": index.facets[s["id"]],
                            "strength": round(min(me["interests"][s["id"]]["weight"],
                                                  them["interests"][s["id"]]["weight"]), 4),
