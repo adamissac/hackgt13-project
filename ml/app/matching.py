@@ -86,6 +86,15 @@ def is_connected(a: str, b: str) -> bool:
     return db.fetchone("select 1 as ok from connections where user_a = %s and user_b = %s", (lo, hi)) is not None
 
 
+def conversation_event(a: str, b: str, claimed: int | None) -> int | None:
+    """Event to file a verified conversation under. A client-claimed event only counts when BOTH people are checked
+    in to it (company events: registered and scanned the QR), so nobody is attributed to an event they never entered.
+    Otherwise fall back to the most recent event both attend, or None (a normal, non-event conversation)."""
+    if claimed is not None and is_checked_in(a, claimed) and is_checked_in(b, claimed):
+        return claimed
+    return shared_event(a, b)
+
+
 def shared_event(a: str, b: str) -> int | None:
     """Most recent event both people are checked in to."""
     r = db.fetchone(

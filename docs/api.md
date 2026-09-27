@@ -232,7 +232,7 @@ that walks toward me. Errors: `403 only available with demo attendees`, `404 per
 The verification QR the other person scans at the end of a conversation. Same shape as 8. Server-signed (HMAC-SHA256, `QR_SIGNING_KEY`), 60-second expiry, single-use nonce.
 
 ## 20. POST /qr/verify
-Request `{ "payload": "...", "signature": "...", "event_id": 1 }` (`event_id` optional; defaults to an event both are checked in to)
+Request `{ "payload": "...", "signature": "...", "event_id": 1 }` (`event_id` optional; used only if BOTH people are checked in to it, otherwise an event both are checked in to, else none)
 ```json
 { "conversation_id": 31, "handshake_id": 123,
   "other": { "user_id": "uuid", "name": "Maya R.", "photo_url": "..." },
@@ -486,6 +486,7 @@ Errors: `404 meetup not found` (not a participant), `410 sharing ended`.
 
 ## 38. POST /tap/claim   "hold your phones together" (Akshar; code in `ml/app/routers/tap.py`)
 Request `{ "token": "k3j9x2p1", "rssi": -38, "event_id": 1 }`: the other phone's current Bluetooth token (api.md 12), heard
+`event_id` (optional) files the conversation under that event only if BOTH people are checked in to it; otherwise an event both attend, else none.
 at touching range (smoothed RSSI >= -50 dBm) for ~2 s. The app repeats the claim every second while the phones stay together.
 ```json
 { "status": "waiting" }      // the other phone hasn't claimed me back yet (within 15 s)
@@ -569,7 +570,7 @@ in character, and say yes to connecting. Suggestions never pair two demo attende
 `GET /events/{event_id}/join-token` (organizers only) → `{ "payload", "signature", "expires_at", "event_id", "qr_payload" }` (7-day join QR)
 `POST /events/join` ← `{ "payload", "signature" }` → `{ "event_id": 3, "name": "Fall fair" }`
 Checks in a person who already registered. Registered but not scanned = not checked in = invisible to other attendees.
-`POST /events/enter` ← `{ "code": "ABC-123" }` → `{ "event_id": 3, "name": "Fall fair" }` registers **and** checks in (`404 code not found`). Printed join codes are the QR equivalent.
+`POST /events/enter` ← `{ "code": "ABC-123" }` → `{ "event_id": 3, "name": "Fall fair" }` checks in a person who already registered in the app, same rule as the QR (`404 code not found`, `403 register for this event first`). Printed join codes are the QR equivalent.
 `GET /events/{event_id}/updates` (registered or organizer) → `{ "event_id": 3, "promo": "", "description": "", "posts": [ { "id": 1, "body": "Talks start at 2", "created_at": "..." } ] }`
 Errors: `400 invalid_signature`, `400 expired`, `403 organizers only` (join-token), `403 register for this event first` (join), `404 event not found`, `404 code not found`.
 Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory. Organizers see registration and check-in counts, never attendee names.

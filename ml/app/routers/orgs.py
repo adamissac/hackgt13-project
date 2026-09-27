@@ -182,15 +182,16 @@ def promote(event_id: int, body: PromoteBody, user: User = Depends(current_user)
 
 @router.post("/events/enter")
 def enter_code(body: EnterCodeBody, user: User = Depends(current_user)):
-    """Person joins a company event with the printed code. Not a connection."""
+    """Registered person checks in to a company event with the printed code (same rule as the QR,
+    POST /events/join: register in the app first). Not a connection."""
     ensure_profile(user.id)
     digest = orgs.hash_join_code(body.code)
     ev = db.fetchone("select id, name from events where join_code_hash = %s", (digest,))
     if not ev:
         raise ApiError(404, "code not found")
-    db.execute(
-        "insert into event_registrations (event_id, user_id) values (%s, %s) on conflict do nothing",
-        (ev["id"], user.id))
+    if not db.fetchone("select 1 as ok from event_registrations where event_id = %s and user_id = %s",
+                       (ev["id"], user.id)):
+        raise ApiError(403, "register for this event first")
     db.execute(
         "insert into attendance (event_id, user_id) values (%s, %s) on conflict do nothing",
         (ev["id"], user.id))

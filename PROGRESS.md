@@ -10,6 +10,19 @@
 **Contract changes:** none
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / only registered + scanned attendees meet at an event; all-day Sep 27 demo event
+**Status:** done
+**What I did:**
+- `POST /events/enter` (join code, `ml/app/routers/orgs.py`, Adam's; noted): now requires a prior app registration, like the QR (`403 register for this event first`). It no longer auto-registers. This closes the REQUESTS.md item Arjun confirmed.
+- New `matching.conversation_event(a, b, claimed)`: `/qr/verify` and `/tap/claim` file a conversation under the client's `event_id` only if BOTH people are checked in (registered + scanned) to it. Otherwise it uses a shared attended event, else none. Who you see in a session (matches, Nearby bands, suggestions) was already limited to that event's `attendance`.
+- Demo "Demo test event" (id 777) now runs all day on Sep 27 (00:00-23:59 ET); check-in has no time window. Company events 23h or longer show "All day · Sep 27".
+- Tests: `ml/tests/test_event_checkin_qr.py` gains join code needs registration, and conversation filed under event only if both checked in (DB tests; run in CI).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_checkin_qr.py` (DB tests need TEST_DATABASE_URL; CI runs them). `cd mobile && npx tsc --noEmit && npx expo lint`.
+**Next step for whoever continues:** Redeploy ml to Railway so the live server enforces the join-code and conversation rules: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Known issues / blockers:** This laptop isn't logged in to Railway.
+**Contract changes:** docs/api.md 20 (/qr/verify `event_id` used only if both are checked in), 38 (/tap/claim same), 44/46 `POST /events/enter` (requires registration, new `403 register for this event first`). Response shapes unchanged. Affects Adam (join code), Akshar (tap/verify). REQUESTS.md notes added.
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / test event starting now, Attending then Scan company QR, Bluetooth connect inside the session
 **Status:** done
 **What I did:**

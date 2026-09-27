@@ -74,3 +74,29 @@ def test_only_scanned_attendees_see_each_other(dbclient, db):
     assert ben in shown
     assert cal not in shown
     assert dbclient.get(f"/events/{eid}/matches", headers=auth(cal)).status_code == 403
+
+
+def test_join_code_also_needs_registration(dbclient, db):
+    from app import orgs
+    owner = add_user(db, name="Org Owner")
+    eid = _company_event(db, owner)
+    db.execute("update events set join_code_hash = %s where id = %s", (orgs.hash_join_code("ABC-123"), eid))
+    ana = seed_person(db, "Ana", [("robotics", "technical", 0.9)])
+    r = dbclient.post("/events/enter", json={"code": "abc123"}, headers=auth(ana))
+    assert r.status_code == 403 and r.json()["error"] == "register for this event first"
+    assert _card(dbclient, ana, eid)["checked_in"] is False
+    dbclient.post(f"/events/{eid}/register", headers=auth(ana))
+    assert dbclient.post("/events/enter", json={"code": "ABC-123"}, headers=auth(ana)).status_code == 200
+    assert _card(dbclient, ana, eid)["checked_in"] is True
+
+
+def test_conversation_filed_under_event_only_if_both_checked_in(db):
+    from app import matching
+    owner = add_user(db, name="Org Owner")
+    eid = _company_event(db, owner)
+    ana = seed_person(db, "Ana", [("robotics", "technical", 0.9)])
+    ben = seed_person(db, "Ben", [("robotics", "technical", 0.9)])
+    db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (eid, ana))
+    assert matching.conversation_event(ana, ben, eid) is None       # Ben never scanned in
+    db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (eid, ben))
+    assert matching.conversation_event(ana, ben, eid) == eid

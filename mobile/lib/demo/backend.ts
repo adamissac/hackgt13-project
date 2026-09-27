@@ -234,19 +234,20 @@ const DEMO_LIVE_EVENTS: LiveEvent[] = [
     description: 'The main HackGT 13 event.',
     promo: 'Talks start at 2. Booth 14 is hiring.',
   },
-  // A company event that always starts "now" (for 3 hours), to try Attending -> scan QR -> session in demo mode.
+  // A company event that runs all day on Sep 27 (Atlanta time), to try Attending -> scan QR -> session in demo mode.
+  // Check-in has no time window: the QR works any time during (or before) the event.
   {
     id: 777,
     name: 'Demo test event',
     host: 'Demo Company',
     location: 'Klaus atrium',
-    starts_at: new Date().toISOString(),
-    ends_at: new Date(Date.now() + 3 * 3600_000).toISOString(),
+    starts_at: '2026-09-27T00:00:00-04:00',
+    ends_at: '2026-09-27T23:59:00-04:00',
     registered: false,
     checked_in: false,
     mine: false,
-    description: 'A live test event. Mark yourself Attending, then scan the company QR code to enter the session.',
-    promo: 'Starts now. Scan in at the entrance.',
+    description: 'An all-day test event on Sep 27. Mark yourself Attending, then scan the company QR code to enter the session any time today.',
+    promo: 'All day Sep 27. Check in any time.',
   },
 ];
 

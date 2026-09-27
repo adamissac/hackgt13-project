@@ -43,7 +43,7 @@ def verify(body: VerifyBody, user: User = Depends(current_user)):
                           "or (blocker_id = %s and blocked_id = %s)", (user.id, other, other, user.id))
     if blocked:
         raise ApiError(403, "this profile isn't available")
-    event_id = body.event_id if body.event_id is not None else matching.shared_event(user.id, other)
+    event_id = matching.conversation_event(user.id, other, body.event_id)
     try:
         with db.conn() as c:
             hs = c.execute("insert into handshakes (scanner_id, scanned_id, event_id, nonce) values (%s, %s, %s, %s) "

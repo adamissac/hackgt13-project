@@ -26,6 +26,8 @@ export function fromLiveEvent(e: LiveEvent): NetworkingEvent {
  return {
   id: `co-${e.id}`, name: e.name, host: e.host || 'Company event', category: 'Company event', tags: ['Company event'],
   startsAt: e.starts_at ?? '', endsAt: e.ends_at ?? undefined, dateless: !e.starts_at, tz: ATL, format: 'in_person',
+  // 23+ hours = an all-day event (shown as "All day" rather than a midnight start time)
+  allDay: !!(e.starts_at && e.ends_at && Date.parse(e.ends_at) - Date.parse(e.starts_at) >= 23 * 3600_000),
   location: e.location || 'Location on site', url: '', companyEventId: e.id, registered: e.registered, checkedIn: e.checked_in,
  };
 }
@@ -104,7 +106,10 @@ export function zoneLabel(iso: string, tz = ATL) {
 /** "Tue, Sep 29 · 5:00 PM ET", or a date range for multi-day events. */
 export function whenLabel(e: NetworkingEvent) {
  if (e.dateless) return 'Date to be announced';
- if (e.allDay) return e.endsAt ? `${eventDate(e.startsAt, e.tz)} – ${eventDate(e.endsAt, e.tz)}` : eventDate(e.startsAt, e.tz);
+ if (e.allDay) {
+  const start = eventDate(e.startsAt, e.tz), end = e.endsAt ? eventDate(e.endsAt, e.tz) : start;
+  return start === end ? `All day · ${start}` : `${start} – ${end}`;
+ }
  const weekday = new Date(e.startsAt).toLocaleDateString('en-US', {weekday:'short', timeZone:e.tz});
  return `${weekday}, ${eventDate(e.startsAt, e.tz)} · ${eventTime(e.startsAt, e.tz)} ${zoneLabel(e.startsAt, e.tz)}`;
 }

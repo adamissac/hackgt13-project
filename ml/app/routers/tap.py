@@ -77,7 +77,7 @@ def claim(body: Claim, user: User = Depends(current_user)):
     if not _record(user.id, other):
         return {"status": "waiting"}
     ensure_profile(user.id)
-    event_id = body.event_id if body.event_id is not None else matching.shared_event(user.id, other)
+    event_id = matching.conversation_event(user.id, other, body.event_id)
     with db.conn() as c:
         # Both phones end up here (each sees the other's claim); the 10-minute dedupe returns the same row.
         conv_id, _ = conversations.create_conversation(c, user.id, other, "ble", event_id)
