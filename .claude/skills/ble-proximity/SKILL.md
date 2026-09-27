@@ -27,7 +27,7 @@ Spec: MASTER_SPEC 3.4, 3.5, 6.8, and all of Section 7.
 - Per token: 5-second rolling median, then a 1D Kalman filter. Start with small process noise and measurement noise near the observed RSSI variance, then tune on recorded data.
 - Bands: stronger than about -60 dBm "very close", -60 to -75 "nearby", weaker "farther away". Calibrate per device model on Saturday and keep per-model offsets.
 - The distance formula (A about -59 dBm at 1 m, n about 2.5) is for debugging only. UI copy shows bands, never meters.
-- Upload sightings in batches every 30 seconds with device model and whether the app was foregrounded.
+- Upload sightings in batches every 5 seconds (Quick Scan responsiveness; changed September 27) with device model and whether the app was foregrounded.
 
 ## Verification (Section 7.4)
 - Bluetooth: at least 3 minutes above -65 dBm and classifier probability at or above 0.7. Otherwise offer the signed QR (60-second expiry, single-use nonce).

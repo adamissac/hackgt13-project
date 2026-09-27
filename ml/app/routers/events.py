@@ -220,3 +220,27 @@ def matches(event_id: int, limit: int = Query(20, ge=1, le=100), user: User = De
                     "role": p.get("role"), "score": round(r["score"], 4), "rank": r["rank"] + 1,
                     "highlight": r["highlight"], "why": r["why"], "proximity": bands.get(r["id"])})
     return {"event_id": event_id, "model": model, "matches": out}
+
+
+@router.get("/events/{event_id}/nearby")
+def nearby(event_id: int, limit: int = Query(100, ge=1, le=100), user: User = Depends(current_user)):
+    """Recent radio evidence, including connections; never truncate recommendations first."""
+    _event_or_404(event_id)
+    if not matching.is_checked_in(user.id, event_id):
+        raise ApiError(403, "check in to this event first")
+    if not db.fetchone("select 1 as ok from profiles where id = %s and open_to_meet", (user.id,)):
+        raise ApiError(403, "Turn on Open to Meet to see people nearby")
+    banned = matching.excluded_ids(user.id, include_connections=False)
+    # Read opt-in/check-in live: model caches must never delay withdrawing visibility.
+    rows = db.fetchall("select p.id::text as id, p.name, p.photo_url, p.role from profiles p "
+                       "join attendance a on a.user_id = p.id where a.event_id = %s "
+                       "and p.open_to_meet and p.id != %s", (event_id, user.id))
+    candidates = {p["id"]: p for p in rows if p["id"] not in banned}
+    bands = matching.proximity_bands(user.id, list(candidates))
+    order = {"immediate": 0, "near": 1, "far": 2}
+    ids = sorted(bands, key=lambda uid: (order[bands[uid]], uid))[:limit]
+    return {"event_id": event_id, "model": "proximity", "matches": [
+        {"user_id": uid, "name": candidates[uid].get("name"),
+         "photo_url": candidates[uid].get("photo_url"), "role": candidates[uid].get("role"),
+         "score": 0, "rank": i + 1, "highlight": False, "why": [], "proximity": bands[uid]}
+        for i, uid in enumerate(ids)]}

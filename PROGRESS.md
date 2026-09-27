@@ -1,3 +1,15 @@
+## 2026-09-27 06:41 | arjun | Codex
+**Task:** AK2/AK3/AK5 nearby discovery and in-person verification; AR4 Constellation entry points
+**Status:** done
+**What I did:**
+- Updated the existing mobile app: Constellation and Home expose QR/phone-tap and explicit opt-in GPS verification. GPS uses fresh fixes, encrypted 60-second codes, conservative 50m proximity, existing single-use handshakes and private bilateral connection consent. No stored coordinates or schema changes.
+- Separated nearby radio visibility from top-20 recommendations, including connected and unconnected checked-in attendees; current Open to Meet, blocks and own declines apply. Upload every 5s, poll every 3s; fixed adapter/startup races and event-switch handling.
+- Cross-owner changes in mobile/ and ml/ are the user's requested scope. Added API docs/mocks and GPS/nearby regressions; contract-keeper and privacy-auditor reviewed, cached-consent finding fixed with live DB eligibility.
+**How to run/test it:** `cd mobile && npm run typecheck && npm run lint && npm run test:demo` (19 pass); `node --experimental-strip-types --test features/ble/*.test.mjs features/nearby/*.test.mjs features/feed/visibility.test.mjs` (14 pass); `npx expo export --platform ios --output-dir /tmp/constellation-gps-ios` passes. Repo root: `DYLD_LIBRARY_PATH="$PWD/ml/.venv/lib/python3.13/site-packages/sklearn/.dylibs" ml/.venv/bin/python -m pytest -q ml/tests` (150 pass, 141 DB tests skipped locally; GitHub CI supplies pgvector).
+**Next step for whoever continues:** On two real phones open Constellation → Connect with GPS verification; create/scan code, complete both checklists. Repeat QR/tap. For Quick Scan use development builds, same event check-in, both Open to Meet on; confirm connected and unconnected attendees appear. Inspect GitHub CI and Railway deployment for this push.
+**Known issues / blockers:** No physical-phone radio/GPS test possible here. Expo Go cannot run Bluetooth but supports foreground GPS/QR. GPS requires <=25m reported accuracy and may fail indoors; QR remains available. Device-reported GPS is not attestation. Local full tests need bundled OpenMP runtime above; database tests run in CI.
+**Contract changes:** docs/api.md §47 and three mocks: GET /events/{id}/nearby, POST /proximity/token, POST /proximity/verify; shared mobile/ml callers updated. No database migration or new env var.
+
 ## 2026-09-27 05:34 | adam | Cursor Grok 4.7
 **Task:** Demo synthetic attendees approve meet and connect quickly
 **Status:** done

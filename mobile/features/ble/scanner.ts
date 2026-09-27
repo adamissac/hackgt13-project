@@ -62,18 +62,24 @@ export async function waitForPoweredOn(timeoutMs = 8_000): Promise<string> {
   if (now === 'PoweredOn') return now;
   return new Promise((resolve) => {
     let last: string = now;
-    const sub = manager.onStateChange((state) => {
+    let settled = false;
+    let sub: { remove: () => void } | undefined;
+    const timer = setTimeout(() => {
+      settled = true;
+      sub?.remove();
+      resolve(last);
+    }, timeoutMs);
+    sub = manager.onStateChange((state) => {
       last = state;
-      if (state === 'PoweredOn') {
+      if (state === 'PoweredOn' && !settled) {
+        settled = true;
         clearTimeout(timer);
-        sub.remove();
+        sub?.remove();
         resolve(state);
       }
     }, true);
-    const timer = setTimeout(() => {
-      sub.remove();
-      resolve(last);
-    }, timeoutMs);
+    // Some native bridges emit synchronously before assigning the subscription.
+    if (settled) sub.remove();
   });
 }
 

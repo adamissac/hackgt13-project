@@ -1,3 +1,4 @@
+import { ConnectInPerson } from '@/features/verification/ConnectInPerson';
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -116,8 +117,8 @@ export default function GraphScreen() {
     </View>
   );
 
-  if (state.status === 'loading') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<Loading label="Finding your people…" /></View>;
-  if (state.status === 'error') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<ErrorState message={state.message} onRetry={reload} /></View>;
+  if (state.status === 'loading') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<ConnectInPerson /><Loading label="Finding your people…" /></View>;
+  if (state.status === 'error') return <View style={[styles.fill, { backgroundColor: c.background }]}>{Segmented}<ConnectInPerson /><ErrorState message={state.message} onRetry={reload} /></View>;
   if (!view) return null;
 
   const rest = pool.slice(FEATURED);
@@ -126,7 +127,7 @@ export default function GraphScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
-      {Segmented}
+      {Segmented}<ConnectInPerson />
 
       {view.people.length === 0 ? (
         <Card>

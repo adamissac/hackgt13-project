@@ -2,7 +2,7 @@
 // Raw readings are sampled to at most one per token per second; the server's classifier smooths.
 import { api, type BleSighting } from '@/lib/api';
 
-export const FLUSH_MS = 30_000;
+export const FLUSH_MS = 5_000;
 const MAX_QUEUE = 5_000; // if offline for a long time, keep the newest
 const MAX_AGE_MS = 24 * 60 * 60_000;
 

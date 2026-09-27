@@ -1,0 +1,17 @@
+{
+  "event_id": 1,
+  "model": "proximity",
+  "matches": [
+    {
+      "user_id": "0b2c6d1e-1111-4222-8333-444455556666",
+      "name": "Nearby attendee",
+      "photo_url": null,
+      "role": null,
+      "score": 0,
+      "rank": 1,
+      "highlight": false,
+      "why": [],
+      "proximity": "near"
+    }
+  ]
+}

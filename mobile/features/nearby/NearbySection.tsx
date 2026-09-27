@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
+import { ConnectInPerson } from '@/features/verification/ConnectInPerson';
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
@@ -49,7 +50,7 @@ export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: bo
   const selectedMeetup = selected ? meetupByUser.get(selected.user_id) : undefined;
   const mapNote = radioError
     ? 'The blue dot is you. Your location stays on this phone.'
-    : `${peers.length} nearby matches shown. Pin placement is for browsing only, never someone’s real-world direction.`;
+    : `${peers.length} nearby people shown. Pin placement is for browsing only, never someone’s real-world direction.`;
 
   return (
     <>
@@ -58,6 +59,7 @@ export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: bo
           <SectionTitle right={<Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} />}>Around you</SectionTitle>
           {!expanded && <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} />}
           <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
+          <Text style={[styles.small, { color: c.muted }]}>To appear on each other’s maps, check in to the same event, turn on Open to Meet, and keep Quick Scan open on both phones. Bluetooth needs the development build; GPS and QR work in Expo Go.</Text>
         </>
       )}
 
@@ -65,7 +67,7 @@ export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: bo
         <Card>
           <Text style={[styles.h2, { color: c.text }]}>Check in to see who’s here</Text>
           <Text style={[styles.small, { color: c.muted }]}>
-            Only attendees who scanned the event’s QR code show up to each other. Register for the event, then scan the
+            Both people must be checked in to the same event, have Open to Meet on, and keep Quick Scan open in a Bluetooth development build. Existing connections can appear too. Register for the event, then scan the
             organizers’ QR code at the entrance.
           </Text>
           <Button label="Scan event QR code" onPress={() => router.push('/join-event')} />
@@ -81,7 +83,7 @@ export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: bo
             </Card>
           ) : null}
 
-          {scanning && !radioError && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
+          {scanning && !radioError && peers.length === 0 && <Loading label="Looking for people nearby…" />}
 
           {selected && (
             <Card highlight>
@@ -152,6 +154,7 @@ export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: bo
         {expanded && <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} expanded />}
         <View style={{ padding: 16, gap: 10 }}>
           <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
+          <Text style={[styles.small, { color: c.muted }]}>To appear on each other’s maps, check in to the same event, turn on Open to Meet, and keep Quick Scan open on both phones. Bluetooth needs the development build; GPS and QR work in Expo Go.</Text>
           {radioNote ? <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text> : fetchError ? <Text style={[styles.small, { color: c.danger }]}>{fetchError}</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {peers.map(p => <Pressable key={p.user_id} onPress={() => setSelectedId(p.user_id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === p.user_id }}
@@ -174,9 +177,7 @@ export function VerifyLinks() {
   const c = useColors();
   return (
     <>
-      <Link href="/verify" style={[styles.link, { color: c.tint }]}>
-        Just talked with someone? Verify with QR
-      </Link>
+      <ConnectInPerson />
       {__DEV__ ? (
         <Disclosure title="Developer tools">
           <Link href="/ble-debug" style={[styles.devLink, { color: c.muted }]}>BLE hello world</Link>

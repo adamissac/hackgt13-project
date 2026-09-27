@@ -611,3 +611,14 @@ Additive fields (no breaking changes):
 - `GET /me/accounts` (40): `sources.github.repo_count` = public repos read by the last import (`0` = connected but nothing
   public; `null` = never imported).
 - `POST /profile/ingest` (1): a PDF with little or no text layer is transcribed by Claude before extraction.
+
+
+## 47. Nearby radio discovery and opt-in GPS verification   owner: Akshar
+
+All three endpoints require the authenticated user's JWT. No schema or environment changes.
+
+- `GET /events/{event_id}/nearby?limit=100` (1–100): returns the same `{event_id, model, matches}` shape as matches, with `model: "proximity"`. Candidates are checked-in attendees with Open to Meet enabled, including existing connections, excluding self, blocks in either direction, and the viewer's own declines. Only users with radio evidence in the last 60 seconds appear; filter before limiting, ordered immediate/near/far. `score: 0`, `highlight: false`, `why: []` are not recommendation rankings. Never consult the other person's decline. 403 if viewer is not checked in or has Open to Meet off; 404 event missing. Mock: `get-events-nearby.json`.
+- `POST /proximity/token`: explicit consent on the phone before sending `{latitude, longitude, accuracy, timestamp, mocked}`. Coordinates use degrees, accuracy metres (0–25), timestamp Unix seconds (no older than 60s, max 5s clock lead), mocked defaults false and must be false. Returns `{code, expires_at}`. Show `fcgps1:<code>` as QR. Code is authenticated encrypted with a domain-separated key derived from QR_SIGNING_KEY, valid for 60s. No coordinates are persisted in the database or returned as plaintext. Mock: `post-proximity-token.json` (illustrative only, never accepts mock verification).
+- `POST /proximity/verify`: `{code, location: <same fix shape>, event_id?: number}`. Both fixes must be fresh, accuracy <=25m, and centre distance plus both uncertainties <=50m. Returns the existing `/qr/verify` response and consumes its single-use nonce. Reuses the QR conversation method and bilateral private feedback; does not directly create a connection. Event association requires both attendees checked in, otherwise shared event or null. Mock: `post-proximity-verify.json`.
+
+GPS errors: 400 stale/mocked location, invalid/expired code, self scan, missing code-owner profile (`invalid_signature`), or proximity cannot be confirmed; 422 invalid fix bounds/non-finite/accuracy or body; 403 unavailable profile (including blocks); 409 already-used nonce. Raw bodies/codes must not be logged. GPS is device-reported co-location, not hardware attestation or proof a conversation happened. Both users explicitly opt in by creating/scanning a GPS code; regular QR and phone-tap remain separate choices. Expo Go supports foreground GPS/QR, but native Bluetooth requires a development build on physical phones. Nearby polls every 3s; radio uploads every 5s (plus network latency).

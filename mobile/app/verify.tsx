@@ -1,6 +1,7 @@
 import { AppIcon } from '@/components/AppIcon';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
-import { Stack } from 'expo-router';
+import { GpsConnect } from '@/features/verification/GpsConnect';
+import { Stack, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Vibration } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
@@ -23,24 +24,25 @@ import { env } from '@/lib/env';
 // Always available, so the demo survives if Bluetooth verification doesn't.
 const REFRESH_MS = 30_000; // docs/api.md 19: refresh every 30 s (server tokens live 60 s)
 
-type Mode = 'tap' | 'show' | 'scan';
-const MODE_LABEL: Record<Mode, string> = { tap: 'Tap phones', show: 'Show code', scan: 'Scan code' };
+type Mode = 'tap' | 'show' | 'scan' | 'gps';
+const MODE_LABEL: Record<Mode, string> = { tap: 'Tap phones', show: 'Show code', scan: 'Scan code', gps: 'GPS' };
 
 export default function VerifyScreen() {
+  const params = useLocalSearchParams<{ mode?: string }>();
   const tint = useThemeColor({}, 'tint');
   // Tap is the quick path when Bluetooth is available; the QR code always works.
-  const [mode, setMode] = useState<Mode>(() => (bleAvailable() || env.useMocks ? 'tap' : 'show'));
+  const [mode, setMode] = useState<Mode>(() => params.mode === 'gps' ? 'gps' : (bleAvailable() || env.useMocks ? 'tap' : 'show'));
   const [verified, setVerified] = useState<QrVerifyResponse | null>(null);
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Verify with QR' }} />
+      <Stack.Screen options={{ title: 'Connect in person' }} />
       {verified ? (
         <Verified result={verified} onAgain={() => setVerified(null)} />
       ) : (
         <View style={styles.flex}>
           <View style={styles.tabs} accessibilityRole="tablist">
-            {(['tap', 'show', 'scan'] as const).map((m) => (
+            {(['tap', 'show', 'scan', 'gps'] as const).map((m) => (
               <Pressable
                 key={m}
                 onPress={() => setMode(m)}
@@ -53,7 +55,9 @@ export default function VerifyScreen() {
               </Pressable>
             ))}
           </View>
-          {mode === 'tap' ? (
+          {mode === 'gps' ? (
+            <GpsConnect onVerified={setVerified} />
+          ) : mode === 'tap' ? (
             <TapPhones onVerified={setVerified} onUseQr={() => setMode('show')} />
           ) : mode === 'show' ? (
             <ShowCode />

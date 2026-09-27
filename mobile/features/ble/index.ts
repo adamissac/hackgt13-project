@@ -1,12 +1,13 @@
 // Bluetooth proximity: Akshar owns this folder (MASTER_SPEC 7, tasks AK1, AK2, AK5).
 // The phone only ever knows rotating tokens; the server maps sightings to people and returns
-// each match's proximity band in GET /events/{id}/matches. This hook runs the radio (when the dev
-// build has Bluetooth) and polls those matches, so the Nearby tab shows real people, as bands only.
+// each person's proximity band in GET /events/{id}/nearby. This hook runs the radio (when the dev
+// build has Bluetooth) and polls nearby attendees, including connections, as bands only.
 
 import { useEffect, useState } from 'react';
 
 import { api, type Match } from '@/lib/api';
 import { getCurrentEventId } from '@/lib/currentEvent';
+import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { env } from '@/lib/env';
 
 import { startEngine, stopEngine, subscribe, type EngineSnapshot } from './engine';
@@ -37,7 +38,7 @@ export interface ProximityState {
   heardCount: number; // phones heard by this phone right now (debug; not people)
 }
 
-const POLL_MS = 15_000;
+const POLL_MS = 3_000;
 const BAND_FOR_PROXIMITY: Record<NonNullable<Match['proximity']>, DistanceBand> = {
   immediate: 'very close',
   near: 'nearby',
@@ -60,6 +61,7 @@ function toPeers(matches: Match[]): Peer[] {
 
 /** People nearby, as distance bands. Starts Bluetooth while `enabled`. */
 export function useProximity(enabled: boolean): ProximityState {
+  const eventId = useCurrentEventId();
   const [peers, setPeers] = useState<Peer[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [engine, setEngine] = useState<EngineSnapshot | null>(null);
@@ -68,13 +70,13 @@ export function useProximity(enabled: boolean): ProximityState {
   useEffect(() => {
     if (!enabled) return;
     const unsub = subscribe(setEngine);
-    if (bleAvailable()) startEngine({ eventId: getCurrentEventId(), owner: 'nearby' });
+    if (bleAvailable()) startEngine({ eventId, owner: 'nearby' });
     return () => {
       unsub();
       stopEngine('nearby');
       setEngine(null);
     };
-  }, [enabled]);
+  }, [enabled, eventId]);
 
   // People: the server resolves tokens and ranks matches.
   useEffect(() => {
@@ -85,7 +87,7 @@ export function useProximity(enabled: boolean): ProximityState {
       if (inFlight) return;
       inFlight = true;
       api
-        .matches(getCurrentEventId())
+        .nearby(eventId)
         .then((r) => {
           if (cancelled) return;
           setPeers(toPeers(r.matches));
@@ -104,7 +106,7 @@ export function useProximity(enabled: boolean): ProximityState {
       cancelled = true;
       clearInterval(t);
     };
-  }, [enabled]);
+  }, [enabled, eventId]);
 
   const radioError = !enabled ? null : !bleAvailable() ? (env.useMocks ? null : BLE_UNAVAILABLE_MESSAGE) : (engine?.error ?? null);
 

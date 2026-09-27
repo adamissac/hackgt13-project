@@ -9,7 +9,7 @@ from fastapi import APIRouter, Depends
 from psycopg.errors import UniqueViolation
 from pydantic import BaseModel, Field, model_validator
 
-from .. import conversations, db, matching, qr
+from .. import conversations, db, gps, matching, qr
 from ..auth import User, current_user
 from ..errors import ApiError
 from ..users import ensure_profile
@@ -127,3 +127,24 @@ def simulate(body: SimulateBody, user: User = Depends(current_user)):
     cid = synthetic.simulate_conversation(user.id, body.user_id)
     return next((p for p in conversations.pending(user.id) if p["conversation_id"] == cid),
                 {"conversation_id": cid})
+
+
+# Explicit opt-in exchange; neither endpoint persists or returns raw coordinates.
+
+
+@router.post("/proximity/token")
+def proximity_token(body: gps.Fix, user: User = Depends(current_user)):
+    return gps.issue(user.id, body)
+
+
+class ProximityVerifyBody(BaseModel):
+    code: str = Field(min_length=1, max_length=4096)
+    location: gps.Fix
+    event_id: int | None = None
+
+
+@router.post("/proximity/verify")
+def proximity_verify(body: ProximityVerifyBody, user: User = Depends(current_user)):
+    signed = gps.check(body.code, body.location)
+    return verify(VerifyBody(payload=signed["payload"], signature=signed["signature"],
+                             event_id=body.event_id), user)

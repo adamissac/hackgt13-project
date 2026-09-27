@@ -17,15 +17,15 @@ def table_exists(name: str) -> bool:
     return db.fetchone("select to_regclass(%s) is not null as ok", (f"public.{name}",))["ok"]
 
 
-def excluded_ids(viewer: str) -> set[str]:
+def excluded_ids(viewer: str, include_connections: bool = True) -> set[str]:
     """Everyone the viewer must not see as a match right now: blocks (either direction), existing
     connections, and people the viewer declined. Another person's "no" is never used here."""
     out = {r["id"] for r in db.fetchall(
         "select blocked_id::text as id from blocks where blocker_id = %s "
         "union select blocker_id::text from blocks where blocked_id = %s "
         "union select case when user_a = %s then user_b else user_a end::text from connections "
-        "where user_a = %s or user_b = %s",
-        (viewer, viewer, viewer, viewer, viewer))}
+        "where (user_a = %s or user_b = %s) and %s",
+        (viewer, viewer, viewer, viewer, viewer, include_connections))}
     if table_exists("suggestions"):
         # only the VIEWER's own "no": hiding people who declined the viewer would reveal their "no"
         out |= {r["id"] for r in db.fetchall(

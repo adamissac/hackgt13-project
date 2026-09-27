@@ -104,6 +104,7 @@ export async function startEngine(opts: { eventId: number | null; owner?: string
       const state = await waitForPoweredOn();
       if (state !== 'PoweredOn') throw new Error(bluetoothStateMessage(state));
       await advertiseCurrent();
+      if (owners.size === 0) return;
       startScan(
         (p) => onSeen(p.localName, p.rssi, p.lastSeenAt),
         (msg) => publish({ error: msg }),

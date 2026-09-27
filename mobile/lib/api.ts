@@ -585,6 +585,8 @@ export const api = {
   getInterests: () => call(demo.interests, () => request<InterestsResponse>('GET', '/profile/interests')),
   patchInterests: (body: InterestsPatch) =>
     call(() => demo.patchInterests(body), () => request<InterestsResponse>('PATCH', '/profile/interests', body)),
+  nearby: (eventId: number) =>
+    call(() => { const r = demo.matches(); return { ...r, model: 'proximity', matches: r.matches.filter(m => m.proximity).map(m => ({ ...m, score: 0, highlight: false, why: [] })) }; }, () => request<MatchesResponse>('GET', `/events/${eventId}/nearby`)),
   matches: (eventId: number, limit = 20) =>
     call(demo.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
   checkin: (eventId: number) => call(demo.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
@@ -656,6 +658,9 @@ export const api = {
     call(mocks.handshake, () => request<HandshakeResponse>('POST', '/handshake', body)),
   feedback: (body: FeedbackRequest) => call(mocks.feedback, () => request<FeedbackResponse>('POST', '/feedback', body)),
   connections: () => call(demo.connections, () => request<ConnectionsResponse>('GET', '/connections')),
+  gpsToken: (location: GpsFix) => request<{ code: string; expires_at: string }>('POST', '/proximity/token', location),
+  gpsVerify: (code: string, location: GpsFix, eventId: number) =>
+    request<QrVerifyResponse>('POST', '/proximity/verify', { code, location, event_id: eventId }),
   verifyToken: () => call(mocks.qr, () => request<QrToken>('GET', '/qr/verify-token')),
   qrVerify: (body: { payload: string; signature: string; event_id?: number }) =>
     call(mocks.qrVerify, () => request<QrVerifyResponse>('POST', '/qr/verify', body)),
@@ -897,3 +902,5 @@ export const api = {
         ),
     ),
 };
+
+export interface GpsFix { latitude: number; longitude: number; accuracy: number; timestamp: number; mocked: boolean }

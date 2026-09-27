@@ -45,6 +45,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [ ] (from alan) AR10 web mentions: `raw_documents.source` has no `'web'` value, so `/profile/ingest {"source":"web"}` returns 400 until a /contract-change adds it.
 
 ## akshar
+- [ ] (from arjun) Phone smoke test new Constellation → Connect in person GPS and QR/tap; test connected and unconnected attendees in Quick Scan with Open to Meet on. New api.md §47 nearby and transient GPS endpoints deploy with ml; no migration.
 - [ ] (from arjun) FYI Event Mode is no longer a user switch at events: `lib/eventSession.ts` calls `enableEventMode()` when someone scans a company QR (consent) and `disableEventMode()` on Leave event; `components/EventBar.tsx` keeps it on while the session lasts (resumes after restart). `EventModeCard` is no longer shown on the event page.
 - [ ] (from arjun) FYI `/qr/verify` and `/tap/claim` now call `matching.conversation_event()`: a client `event_id` is kept only if both people are checked in to that event (company events = registered + scanned QR), else it falls back to a shared attended event or none. No response change.
 - [ ] (from arjun) FYI `EventModeCard` moved from Nearby to the event page `mobile/app/attend/[id].tsx` (shown only after the attendee scanned the company QR). Nearby no longer has an Event Mode section. No change inside `features/ble`.
