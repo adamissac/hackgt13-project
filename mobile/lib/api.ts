@@ -543,10 +543,15 @@ export const api = {
       () => demo.removeSource(source),
       () => request<InterestsResponse & { removed: ProfileSource }>('DELETE', `/profile/sources/${source}`),
     ),
-  githubStart: () =>
+  /** returnTo: where GitHub's callback sends the browser back to (Expo Go and builds differ). */
+  githubStart: (returnTo?: string) =>
     call(
       () => ({ url: 'https://github.com/login/oauth/authorize?mock=1' }),
-      () => request<{ url: string }>('GET', '/connect/github/start'),
+      () =>
+        request<{ url: string }>(
+          'GET',
+          `/connect/github/start${returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : ''}`,
+        ),
     ),
   /** Reuse the consent given at "Continue with GitHub" so the user isn't asked to authorize twice.
    *  Supabase hands us provider_token once, in the session right after sign-in. */

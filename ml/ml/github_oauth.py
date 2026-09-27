@@ -68,10 +68,26 @@ def decrypt_token(token_enc):
 
 
 # ---------------------------------------------------------------- signed state
-def make_state(user_id, now=None):
+def allowed_return(url):
+    """The app's own return address, or None. Only the app's deep links are accepted (no open redirect):
+    the dev/production build's `formalconnect://connect/github`, or Expo Go's `exp://<host>/--/connect/github`
+    (Expo Go can't open formalconnect://, which made the browser say it couldn't reach the page)."""
+    if not url or len(url) > 300:
+        return None
+    if url == DEFAULT_APP_REDIRECT:
+        return url
+    p = urllib.parse.urlparse(url)
+    if p.scheme == "exp" and p.netloc and p.path == "/--/connect/github" and not p.query and not p.fragment:
+        return url
+    return None
+
+
+def make_state(user_id, now=None, return_to=None):
     now = int(now if now is not None else time.time())
-    body = _b64(json.dumps({"u": user_id, "exp": now + STATE_TTL_S, "n": secrets.token_urlsafe(8)},
-                           separators=(",", ":")).encode())
+    data = {"u": user_id, "exp": now + STATE_TTL_S, "n": secrets.token_urlsafe(8)}
+    if allowed_return(return_to):
+        data["r"] = return_to        # signed below, so the callback can trust it
+    body = _b64(json.dumps(data, separators=(",", ":")).encode())
     sig = _b64(hmac.new(_subkey("oauth-state:github"), body.encode(), hashlib.sha256).digest())
     return f"{body}.{sig}"
 
@@ -85,10 +101,22 @@ def verify_state(state, now=None):
     want = _b64(hmac.new(_subkey("oauth-state:github"), body.encode(), hashlib.sha256).digest())
     if not hmac.compare_digest(sig, want):
         raise OAuthError("invalid state signature")
+    return state_data(state, now)["u"]
+
+
+def state_data(state, now=None):
+    """Verified state payload: {"u": user_id, "exp", "n", optional "r": app return address}."""
+    try:
+        body, sig = state.split(".", 1)
+    except (AttributeError, ValueError):
+        raise OAuthError("malformed state")
+    want = _b64(hmac.new(_subkey("oauth-state:github"), body.encode(), hashlib.sha256).digest())
+    if not hmac.compare_digest(sig, want):
+        raise OAuthError("invalid state signature")
     data = json.loads(_unb64(body))
     if int(now if now is not None else time.time()) > data["exp"]:
         raise OAuthError("state expired")
-    return data["u"]
+    return data
 
 
 # ---------------------------------------------------------------- URLs and exchange
@@ -96,9 +124,9 @@ def callback_url():
     return _env("ML_API_URL").rstrip("/") + CALLBACK_PATH
 
 
-def authorize_url(user_id):
+def authorize_url(user_id, return_to=None):
     q = {"client_id": _env("GITHUB_CLIENT_ID"), "redirect_uri": callback_url(), "scope": SCOPE,
-         "state": make_state(user_id), "allow_signup": "false"}
+         "state": make_state(user_id, return_to=return_to), "allow_signup": "false"}
     return f"{AUTHORIZE_URL}?{urllib.parse.urlencode(q)}"
 
 
@@ -117,9 +145,10 @@ def exchange_code(code):
     return out
 
 
-def app_redirect(status, reason=None):
-    """Deep link back into the app after the callback: status 'ok' or 'error' (+ short reason)."""
-    base = os.getenv("APP_GITHUB_REDIRECT") or DEFAULT_APP_REDIRECT
+def app_redirect(status, reason=None, return_to=None):
+    """Deep link back into the app after the callback: status 'ok' or 'error' (+ short reason).
+    return_to: the app's own address from the signed state (Expo Go), else the configured default."""
+    base = allowed_return(return_to) or os.getenv("APP_GITHUB_REDIRECT") or DEFAULT_APP_REDIRECT
     q = {"status": status, **({"reason": reason} if reason else {})}
     return f"{base}?{urllib.parse.urlencode(q)}"
 

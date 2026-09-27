@@ -23,27 +23,33 @@ router = APIRouter()
 
 
 @router.get("/connect/github/start")
-def github_start(user: User = Depends(current_user)):
+def github_start(return_to: str = "", user: User = Depends(current_user)):
+    """return_to: the app's own deep link (Expo Go differs from the build); unknown values are ignored."""
     try:
-        return {"url": github_oauth.authorize_url(user.id)}
+        return {"url": github_oauth.authorize_url(user.id, return_to=return_to or None)}
     except github_oauth.OAuthError as e:
         raise ApiError(500, f"GitHub connect is not configured: {e}")
 
 
 @router.get("/connect/github/callback")
 def github_callback(background: BackgroundTasks, code: str = "", state: str = "", error: str = ""):
+    back = None
+    try:
+        back = github_oauth.state_data(state).get("r")
+    except github_oauth.OAuthError:
+        pass
     if error:  # user pressed Cancel on GitHub
-        return RedirectResponse(github_oauth.app_redirect("error", reason="denied"), status_code=302)
+        return RedirectResponse(github_oauth.app_redirect("error", reason="denied", return_to=back), status_code=302)
     try:
         user_id = github_oauth.verify_state(state)
         token = github_oauth.exchange_code(code)
         login = github_ingest.get_user(token["access_token"])["login"]
     except (github_oauth.OAuthError, github_ingest.GitHubError, KeyError) as e:
         log.warning("github callback failed: %s", e)
-        return RedirectResponse(github_oauth.app_redirect("error", reason="oauth"), status_code=302)
+        return RedirectResponse(github_oauth.app_redirect("error", reason="oauth", return_to=back), status_code=302)
     _store_token(user_id, token, login)
     background.add_task(ingest_github, user_id)
-    return RedirectResponse(github_oauth.app_redirect("ok"), status_code=302)
+    return RedirectResponse(github_oauth.app_redirect("ok", return_to=back), status_code=302)
 
 
 def _store_token(user_id: str, token: dict, login: str) -> None:

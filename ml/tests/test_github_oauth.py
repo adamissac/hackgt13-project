@@ -49,3 +49,15 @@ def test_authorize_url_minimal_scope():
     assert q["scope"] == ["read:user"]
     assert q["redirect_uri"] == ["https://ml.example.com/connect/github/callback"]
     assert go.verify_state(q["state"][0]) == "user-1"
+
+
+def test_return_address_is_signed_into_state_and_only_app_links_allowed():
+    from ml import github_oauth as g
+    expo = "exp://abc-anonymous-8082.exp.direct/--/connect/github"
+    assert g.state_data(g.make_state("u1", return_to=expo))["r"] == expo
+    assert g.app_redirect("ok", return_to=expo) == expo + "?status=ok"
+    for bad in ("https://evil.example/connect/github", "exp://x/--/other", "javascript:alert(1)",
+                "exp://x/--/connect/github?next=https://evil.example"):
+        assert "r" not in g.state_data(g.make_state("u1", return_to=bad))
+        assert g.app_redirect("ok", return_to=bad).startswith(g.DEFAULT_APP_REDIRECT)
+    assert g.app_redirect("error", reason="denied").startswith("formalconnect://connect/github?")

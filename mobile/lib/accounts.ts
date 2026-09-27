@@ -32,7 +32,7 @@ export async function connectGithub(): Promise<ConnectResult> {
     demo.addSource('github');
     return 'connected';
   }
-  const { url } = await api.githubStart();
+  const { url } = await api.githubStart(githubReturnUrl);
   const result = await WebBrowser.openAuthSessionAsync(url, githubReturnUrl);
   if (result.type !== 'success') return 'cancelled';
   return parseGithubReturn(result.url);
