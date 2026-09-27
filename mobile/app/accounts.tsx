@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { AppearancePicker } from '@/components/AppearancePicker';
 import { ErrorState, Loading } from '@/components/States';
 import { LoginConnections } from '@/components/LoginConnections';
 import { ResumePreview } from '@/features/resume/ResumePreview';
@@ -86,6 +87,8 @@ export default function AccountsScreen() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <AppearancePicker />
+
         <SectionTitle>Signed in</SectionTitle>
         <Card>
           <Text style={[styles.body, { color: c.text }]}>
