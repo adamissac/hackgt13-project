@@ -7,6 +7,8 @@ import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, useColors } from '@/components/ui';
 import { EventConnect } from '@/features/ble/EventConnect';
 import { api } from '@/lib/api';
+import { disableEventMode } from '@/features/ble/eventMode';
+import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { setCurrentEventId } from '@/lib/currentEvent';
 import { useAsync } from '@/lib/useAsync';
 
@@ -43,6 +45,25 @@ export default function EventScreen() {
   if (events.state.status === 'error') return <ErrorState message={events.state.message} onRetry={events.reload} />;
   const event = events.state.data.events.find((e) => e.id === id);
   if (!event) return <ErrorState message="Event not found." onRetry={events.reload} />;
+
+  // Leave: back to roaming (the general HackGT space). Registration stays, so scanning in again works.
+  const leave = async () => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await disableEventMode().catch(() => undefined);
+      await api.leaveEvent(id);
+      await setCurrentEventId(HACKGT_EVENT_ID);
+      await api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
+      events.reload();
+      matches.reload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const enter = async () => {
     if (busy) return;
@@ -124,6 +145,10 @@ export default function EventScreen() {
           </View>
           <EventConnect />
           <Button label="See who’s close on the map" variant="ghost" onPress={() => router.push('/nearby')} />
+          <Button label="Leave event" variant="danger" onPress={leave} loading={busy} />
+          <Text style={[styles.body, { color: c.muted }]}>
+            Leaving takes you back to roaming. You stay registered, so you can scan back in.
+          </Text>
         </View>
       )}
       {token.state.status === 'ready' && token.state.data ? (

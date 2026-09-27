@@ -364,6 +364,11 @@ export function registerEvent(eventId: number) {
   if (e) e.registered = true;
   return { ok: true as const };
 }
+export function leaveEvent(eventId: number) {
+  const e = DEMO_LIVE_EVENTS.find((x) => x.id === eventId);
+  if (e) e.checked_in = false; // registration stays: scan back in later
+  return { ok: true as const };
+}
 export function eventJoinToken(eventId: number = DEMO_EVENT.id) {
   // Like the server: only the company that owns the event gets its check-in QR.
   if (!DEMO_LIVE_EVENTS.find((x) => x.id === eventId)?.mine) throw new Error('organizers only');

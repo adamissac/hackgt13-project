@@ -19,7 +19,7 @@ import { StageTracker } from "@/features/relationship/StageTracker";
 import { stageLabel, type Relationship } from "@/features/relationship/stage";
 import { api, type Facet, type QuickProfile } from "@/lib/api";
 import { emitChange } from "@/lib/changes";
-import { HACKGT_EVENT_ID } from "@/lib/constants";
+import { getCurrentEventId } from "@/lib/currentEvent";
 import { env } from "@/lib/env";
 import { useAsync } from "@/lib/useAsync";
 
@@ -49,7 +49,7 @@ export default function MatchScreen() {
   const band = useAsync(
     () =>
       api
-        .matches(HACKGT_EVENT_ID)
+        .matches(getCurrentEventId())
         .then(
           (r) => r.matches.find((m) => m.user_id === id)?.proximity ?? null,
         ),

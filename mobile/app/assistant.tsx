@@ -6,7 +6,7 @@ import { ChatMark } from '@/components/Brand';
 import { RichText } from '@/components/RichText';
 import { Button, useColors } from '@/components/ui';
 import { api, type AssistantMessage } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId } from '@/lib/currentEvent';
 
 const PROMPTS = [
   'Who should I meet first?',
@@ -36,7 +36,7 @@ export default function AssistantScreen() {
     setSending(true);
     setError(null);
     try {
-      const res = await api.assistantChat(next, HACKGT_EVENT_ID);
+      const res = await api.assistantChat(next, getCurrentEventId());
       setMessages([...next, { role: 'assistant', content: res.reply }]);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));

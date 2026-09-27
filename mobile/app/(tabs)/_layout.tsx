@@ -7,7 +7,8 @@ import { HeaderActions } from '@/components/HeaderActions';
 import { Brand } from '@/components/Brand';
 import Colors from '@/constants/Colors';
 import { api } from '@/lib/api';
-import { getCurrentEventId, loadCurrentEvent } from '@/lib/currentEvent';
+import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId, loadCurrentEvent, setCurrentEventId } from '@/lib/currentEvent';
 import { useAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
 
@@ -27,10 +28,21 @@ function useAutoCheckin() {
   useEffect(() => {
     if (!userId || env.useMocks || checkedIn.has(userId)) return;
     checkedIn.add(userId);
-    loadCurrentEvent().then((eventId) => api.checkin(eventId || getCurrentEventId())).catch((e) => {
-      checkedIn.delete(userId);
-      console.warn("[api] auto check-in failed:", e instanceof Error ? e.message : e);
-    });
+    loadCurrentEvent()
+      .then(async (eventId) => {
+        const id = eventId || getCurrentEventId();
+        if (id === HACKGT_EVENT_ID) return api.checkin(id);
+        // A company event only lets you in by scanning its QR. If you're no longer checked in there
+        // (you left, or it ended), go back to roaming instead of showing "check in first" everywhere.
+        const mine = (await api.listEvents()).events.find((e) => e.id === id);
+        if (mine?.checked_in) return;
+        await setCurrentEventId(HACKGT_EVENT_ID);
+        return api.checkin(HACKGT_EVENT_ID);
+      })
+      .catch((e) => {
+        checkedIn.delete(userId);
+        console.warn("[api] auto check-in failed:", e instanceof Error ? e.message : e);
+      });
   }, [userId]);
 }
 

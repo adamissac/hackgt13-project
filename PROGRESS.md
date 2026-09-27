@@ -1,3 +1,15 @@
+## 2026-09-27 02:57 | adam | coding agent
+**Task:** Company events: isolated event session + leave event
+**Status:** done
+**What I did:**
+- Checked what exists (company QR + join code, register, scan in, event page listing only checked-in people). Added `POST /events/{id}/leave` (attendance removed, pending suggestions from it expire, registration kept) and a "Leave event" button in the session on `app/attend/[id].tsx` (turns off Event Mode, switches back to roaming = HackGT event).
+- Constellation graph, match screen, assistant and QR/tap verification now use the current event (`lib/currentEvent`) instead of the hardcoded HackGT id, so after scanning into a company event everything shows only that event's people.
+- Startup falls back to roaming if the remembered company event no longer has me checked in.
+**How to run/test it:** `cd ml && pytest -q tests/test_events.py`; mobile `npx tsc --noEmit && npm run test:demo`. Live: company creates event → shows QR; attendee registers, scans, sees only that event in Constellation/Nearby; Leave event → back to everyone.
+**Next step for whoever continues:** Walk through it on two phones (company + attendee).
+**Known issues / blockers:** none known.
+**Contract changes:** `docs/api.md` 45a `POST /events/{event_id}/leave` (new).
+
 ## 2026-09-27 02:16 | akshar | Claude Code (Opus 5.5)
 **Task:** AK3/AK2 phone testing fixes: tap-to-verify feedback, "nothing was sent" after connecting
 **Status:** done (server fix goes live with the Railway auto-deploy of this push)

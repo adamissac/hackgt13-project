@@ -575,6 +575,11 @@ Checks in a person who already registered. Registered but not scanned = not chec
 Errors: `400 invalid_signature`, `400 expired`, `403 organizers only` (join-token), `403 register for this event first` (join), `404 event not found`, `404 code not found`.
 Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory. Organizers see registration and check-in counts, never attendee names.
 
+### 45a. POST /events/{event_id}/leave
+Leave an event and go back to roaming: removes my attendance (I drop out of its matches, graph and Nearby) and
+expires my pending suggestions from it. Registration stays, so I can scan the QR again. `{ "ok": true }`;
+`404 event not found`. The app then switches its current event back to the default event (roaming).
+
 ## 46. Company accounts   owner: Adam   ⚠️ POST /orgs/signup is public (no JWT; documented exception)
 Separate company login from attendee LinkedIn/email. Demo does **not** verify the work email: the service creates a confirmed Auth user.
 

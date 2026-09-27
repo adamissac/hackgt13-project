@@ -9,7 +9,7 @@ import { PersonSheet } from '@/features/graph/PersonSheet';
 import { Atom, groupByTopic } from '@/features/graph/Atom';
 import { useColorScheme } from '@/components/useColorScheme';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
 
 // Connection Graph (MASTER_SPEC 3.12), native. Built by Arjun. One job: show the handful of people you
@@ -46,7 +46,8 @@ export default function GraphScreen() {
   const size = Math.min(width - 34, 440);
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<GraphMode>('matches');
-  const { state, reload } = useAsync(() => api.graph(mode, HACKGT_EVENT_ID), [mode]);
+  const eventId = useCurrentEventId(); // the event you're in (a company event after scanning in), else roaming
+  const { state, reload } = useAsync(() => api.graph(mode, eventId), [mode, eventId]);
   const [extra, setExtra] = useState<{ mode: GraphMode; data: GraphResponse } | null>(null);
   const [topic, setTopic] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -83,7 +84,7 @@ export default function GraphScreen() {
     setExpanding(true);
     setNote(null);
     try {
-      const add = await api.graphExpand(topicObj.id, mode, HACKGT_EVENT_ID);
+      const add = await api.graphExpand(topicObj.id, mode, eventId);
       const before = new Set(graph.nodes.map((n) => n.id));
       const n = add.nodes.filter((x) => x.type === 'person' && !before.has(x.id)).length;
       setExtra({ mode, data: extra?.mode === mode ? merge(extra.data, add) : add });

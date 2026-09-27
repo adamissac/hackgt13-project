@@ -14,7 +14,7 @@ import { decodeVerifyCode, encodeVerifyCode, handshakeErrorMessage } from '@/fea
 import { Button, useColors } from '@/components/ui';
 import { ChecklistForm } from '@/features/checklist/ChecklistForm';
 import { api, type QrToken, type QrVerifyResponse } from '@/lib/api';
-import { HACKGT_EVENT_ID } from '@/lib/constants';
+import { getCurrentEventId } from '@/lib/currentEvent';
 import { env } from '@/lib/env';
 
 // AK3: verification fallback (MASTER_SPEC 3.5). One person shows a short-lived signed code, the
@@ -87,7 +87,7 @@ function TapPhones({ onVerified, onUseQr }: { onVerified: (r: QrVerifyResponse) 
     let claiming = false;
     let done = false;
     let firstClaimAt: number | null = null;
-    startEngine({ eventId: HACKGT_EVENT_ID, owner: 'tap' });
+    startEngine({ eventId: getCurrentEventId(), owner: 'tap' });
     const unsub = subscribe(async (snap) => {
       if (snap.error) setError(snap.error);
       const now = Date.now();
@@ -101,7 +101,7 @@ function TapPhones({ onVerified, onUseQr }: { onVerified: (r: QrVerifyResponse) 
       claiming = true; // one claim per engine tick (~1 s)
       firstClaimAt ??= now;
       try {
-        const r = await api.tapClaim({ token: d.token, rssi: Math.round(d.rssi!), event_id: HACKGT_EVENT_ID });
+        const r = await api.tapClaim({ token: d.token, rssi: Math.round(d.rssi!), event_id: getCurrentEventId() });
         if (r.status === 'verified' && !done) {
           done = true;
           Vibration.vibrate(120);
@@ -240,7 +240,7 @@ function ScanCode({ onVerified }: { onVerified: (r: QrVerifyResponse) => void })
       busy.current = true;
       setStatus({ kind: 'checking' });
       try {
-        onVerified(await api.qrVerify({ ...code, event_id: HACKGT_EVENT_ID }));
+        onVerified(await api.qrVerify({ ...code, event_id: getCurrentEventId() }));
       } catch (e) {
         setStatus({ kind: 'error', message: handshakeErrorMessage(e instanceof Error ? e.message : String(e)) });
         busy.current = false;

@@ -177,6 +177,19 @@ def checkin(event_id: int, user: User = Depends(current_user)):
     return {"ok": True}
 
 
+@router.post("/events/{event_id}/leave")
+def leave(event_id: int, user: User = Depends(current_user)):
+    """Leave an event: back to roaming. I disappear from its attendee list and matches, and its open suggestions
+    for me end. My registration stays, so I can scan back in later."""
+    _event_or_404(event_id)
+    with db.conn() as c:
+        c.execute("delete from attendance where event_id = %s and user_id = %s", (event_id, user.id))
+        c.execute("update suggestions set status = 'expired' where event_id = %s and status = 'pending' "
+                  "and (user_a = %s or user_b = %s)", (event_id, user.id, user.id))
+    population.invalidate()
+    return {"ok": True}
+
+
 @router.get("/events/{event_id}/matches")
 def matches(event_id: int, limit: int = Query(20, ge=1, le=100), user: User = Depends(current_user)):
     _event_or_404(event_id)

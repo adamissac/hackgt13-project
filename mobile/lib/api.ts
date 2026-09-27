@@ -643,6 +643,16 @@ export const api = {
     call(() => demo.createOrg(name), () => request<{ org: { id: number; name: string } }>('POST', '/orgs', { name })),
   createEvent: (body: { name: string; location?: string; starts_at?: string; ends_at?: string }) =>
     call(() => demo.createEvent(body), () => request<{ event: LiveEvent }>('POST', '/events', body)),
+  /** Leave an event (api.md 45a): back to roaming; registration stays so you can scan back in. */
+  leaveEvent: (eventId: number) =>
+    call(
+      () => demo.leaveEvent(eventId),
+      () =>
+        request<{ ok: true }>('POST', `/events/${eventId}/leave`, {}).then((r) => {
+          emitChange('relationships', 'profile');
+          return r;
+        }),
+    ),
   registerEvent: (eventId: number) =>
     call(() => demo.registerEvent(eventId), () => request<{ ok: true }>('POST', `/events/${eventId}/register`, {})),
   eventJoinToken: (eventId: number) =>
