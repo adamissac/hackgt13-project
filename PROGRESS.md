@@ -11,6 +11,20 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 + matching / match scores spread out (everyone was ~50%), common skills in Constellation list
+**Status:** done (needs Railway redeploy to go live)
+**What I did:**
+- Cause: bge-small cosine similarity is compressed. On the 80-person HackGT population (SYNTHETIC data), raw facet similarities sat at p10 0.67-0.77 and p90 0.85-0.90 for everyone, while real shared interests (`idf_overlap`, median 0.03) had only 20% weight. So 80% of V1 scores fell between 0.50 and 0.60.
+- `ml/ml/config.py` + `ml/ml/scoring.py` (Alan's area, noted): features are calibrated before weighting. Facet sims are rescaled from `SIM_RANGE` (0.60, 0.95) to 0..1, complementarity from `COMPLEMENT_RANGE` (0.45, 0.85), and `idf_overlap / OVERLAP_FULL` (0.20), capped at 1. V1 weights now favor shared niche interests (0.30).
+- Evaluation on SYNTHETIC data (80 people, teammates as ground truth): teammate hit@5 0.994 before and after; teammate-vs-rest AUC 0.998 before, 0.992 after; score std 0.047 before, 0.113 after; range 0.35-0.79 before, 0.16-0.84 after (median 0.37). Ranking quality is unchanged, and the percentages are now meaningful.
+- Suggestions use per-user percentile cutoffs, so they're unaffected. A trained `ranker_lr.pkl` (only if `MATCH_MODEL=lr`) was trained on the old uncalibrated features: retrain with `python scripts/train_ranker.py --source auto` before serving it.
+- `mobile/app/(tabs)/graph.tsx`: rows in "More people you could meet" show up to 4 common skills as light-blue chips plus the "why you matched" sentence (`explanation.summary` from the graph edge).
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests` (130 passed; the ranker_job test needs libomp locally, see AGENTS.md). Redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Next step for whoever continues:** Redeploy ml to Railway (this laptop isn't logged in to Railway). Then check that /graph scores for a real account vary.
+**Known issues / blockers:** Accounts with very few interests will still score low and flat against everyone (nothing to match on). The fix there is a richer profile (GitHub/resume), not the formula.
+**Contract changes:** none (score stays 0..1; values are distributed differently)
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / Events: My calendar opens as its own page
 **Status:** done
 **What I did:**

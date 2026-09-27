@@ -28,9 +28,18 @@ CONFIRM_BOOST = 1.15        # user confirmed the interest in review screen
 # ---- Profile vector blend ----
 TAG_WEIGHT, SUMMARY_WEIGHT = 0.7, 0.3
 
+# ---- Feature calibration ----
+# bge-small cosine similarity is compressed: two unrelated profiles still score ~0.75 and near-twins ~0.95,
+# so raw cosines made every match land at 49-60%. Features are rescaled from these (floor, ceiling) ranges
+# to 0..1 before weighting (measured on the 80-person HackGT population: p10 ~0.7, p90 ~0.9).
+SIM_RANGE = (0.60, 0.95)            # facet similarity
+COMPLEMENT_RANGE = (0.45, 0.85)     # seeking vs offering similarity
+OVERLAP_FULL = 0.20                 # sharing a quarter of your weighted, IDF-scaled interests = full overlap
+
 # ---- V1 hand-tuned score weights ----
-V1_WEIGHTS = {"sim_technical": 0.20, "sim_career": 0.15, "sim_personal": 0.10,
-              "sim_academic": 0.10, "idf_overlap": 0.20, "complementarity": 0.20,
+# Shared niche interests are the clearest signal of real common ground, so they carry the most weight.
+V1_WEIGHTS = {"sim_technical": 0.18, "sim_career": 0.12, "sim_personal": 0.08,
+              "sim_academic": 0.07, "idf_overlap": 0.30, "complementarity": 0.20,
               "bridge": 0.05}
 HIGHLIGHT_PERCENTILE = 80   # green dot = above this user's 80th percentile
 

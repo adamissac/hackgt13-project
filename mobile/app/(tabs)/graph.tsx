@@ -220,11 +220,23 @@ export default function GraphScreen() {
                     accessibilityRole="button"
                     style={[styles.row, i < listed.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: c.border }]}>
                     <Avatar name={p.name} size={36} />
-                    <View style={{ flex: 1 }}>
+                    <View style={{ flex: 1, gap: 6 }}>
                       <Text style={[styles.rowName, { color: c.text }]}>{p.name}</Text>
-                      <Text style={[styles.small, { color: c.muted }]} numberOfLines={1}>
-                        {p.shared.slice(0, 2).join(' · ') || 'Profiles overlap'}
-                      </Text>
+                      {p.shared.length > 0 ? (
+                        <View style={styles.skillChips}>
+                          {p.shared.slice(0, 4).map((s) => (
+                            <View key={s} style={[styles.skillChip, { backgroundColor: c.tintSoft }]}>
+                              <Text style={[styles.skillText, { color: c.tint }]} numberOfLines={1}>{s}</Text>
+                            </View>
+                          ))}
+                          {p.shared.length > 4 && <Text style={[styles.small, { color: c.muted }]}>+{p.shared.length - 4}</Text>}
+                        </View>
+                      ) : (
+                        <Text style={[styles.small, { color: c.muted }]}>No skills in common yet</Text>
+                      )}
+                      {!!p.explanation?.summary && (
+                        <Text style={[styles.small, { color: c.muted }]} numberOfLines={3}>{p.explanation.summary}</Text>
+                      )}
                     </View>
                     <Text style={[styles.rowRight, { color: c.muted }]}>
                       {mode === 'network' && p.metAt
@@ -259,6 +271,9 @@ export default function GraphScreen() {
 }
 
 const styles = StyleSheet.create({
+  skillChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, alignItems: 'center' },
+  skillChip: { borderRadius: 10, paddingHorizontal: 8, paddingVertical: 3, maxWidth: 170 },
+  skillText: { fontSize: 12, fontWeight: '600' },
   headline: { fontSize: 30, lineHeight: 35, fontWeight: '800', letterSpacing: -1 },
   stats: { flexDirection: 'row', gap: 10 },
   stat: { flex: 1, borderRadius: 16, paddingVertical: 12, paddingHorizontal: 12, gap: 2 },

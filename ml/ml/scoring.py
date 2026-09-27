@@ -1,6 +1,6 @@
 """Pairwise features, V1 hand-tuned score, explanations, checklist, ranking."""
 import numpy as np
-from .config import FACETS, V1_WEIGHTS, HIGHLIGHT_PERCENTILE
+from .config import COMPLEMENT_RANGE, FACETS, HIGHLIGHT_PERCENTILE, OVERLAP_FULL, SIM_RANGE, V1_WEIGHTS
 
 FEATURES = [f"sim_{f}" for f in FACETS] + ["idf_overlap", "complementarity", "bridge", "role_pair"]
 
@@ -24,6 +24,11 @@ def _cos(u, v):
     return float(u @ v)
 
 
+def _scale(x, lo, hi):
+    """Map x from [lo, hi] onto [0, 1], clipped (see SIM_RANGE in config for why)."""
+    return float(min(1.0, max(0.0, (x - lo) / (hi - lo))))
+
+
 def idf_overlap(a, b, idf):
     A, B = a["interests"], b["interests"]
     num = sum(min(A[i]["weight"], B[i]["weight"]) * idf[i] for i in A.keys() & B.keys())
@@ -33,15 +38,16 @@ def idf_overlap(a, b, idf):
 
 
 def complementarity(a, b):
-    return 0.5 * (_cos(a["seek_vec"], b["offer_vec"]) + _cos(b["seek_vec"], a["offer_vec"]))
+    raw = 0.5 * (_cos(a["seek_vec"], b["offer_vec"]) + _cos(b["seek_vec"], a["offer_vec"]))
+    return _scale(raw, *COMPLEMENT_RANGE) if raw else 0.0
 
 
 def pair_features(a, b, index, cluster=None):
-    f = {f"sim_{fc}": _cos(a["vec"][fc], b["vec"][fc]) for fc in FACETS}
-    f["idf_overlap"] = idf_overlap(a, b, index.idf)
+    f = {f"sim_{fc}": _scale(_cos(a["vec"][fc], b["vec"][fc]), *SIM_RANGE) for fc in FACETS}
+    f["idf_overlap"] = min(1.0, idf_overlap(a, b, index.idf) / OVERLAP_FULL)
     f["complementarity"] = complementarity(a, b)
     if cluster is not None and cluster.get(a["id"], -1) != cluster.get(b["id"], -1):
-        f["bridge"] = max(f[f"sim_{fc}"] for fc in FACETS) * (1 - _cos(a["combined"], b["combined"]))
+        f["bridge"] = max(f[f"sim_{fc}"] for fc in FACETS) * (1 - _scale(_cos(a["combined"], b["combined"]), *SIM_RANGE))
     else:
         f["bridge"] = 0.0
     roles = {a.get("role"), b.get("role")}
