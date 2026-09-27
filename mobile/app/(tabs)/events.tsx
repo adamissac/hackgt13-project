@@ -71,12 +71,13 @@ export default function EventsScreen() {
    {event.tags.includes('Hiring')&&<View style={styles.row}><Chip label="Hiring" tone="success"/></View>}
   </Pressable>
    {event.companyEventId ? (
-    !event.registered ? <Button label="Register" onPress={()=>register(event)} loading={registering===event.id}/>
-    : !event.checkedIn ? <View style={{gap:8}}>
-      <Text style={[styles.small,{color:c.success,fontWeight:'700'}]}>Registered · on your calendar</Text>
-      <Button label="Scan QR code" onPress={()=>router.push({pathname:'/join-event',params:{event:String(event.companyEventId)}})}/>
+    // Company events: "Attending" registers you (it goes on your calendar), then the QR scan unlocks the session.
+    event.checkedIn ? <Button label="Enter session" onPress={()=>openEvent(event)}/>
+    : <View style={{gap:10}}>
+      <RsvpPicker value={rsvps[event.id]} disabled={busy||registering===event.id}
+       onChange={(s)=>{ if(s==='attending'&&!event.registered) void register(event); else if(!(s==='attending'&&event.registered)) void choose(event,s); }}/>
+      {event.registered&&<Button label="Scan company QR code" onPress={()=>router.push({pathname:'/join-event',params:{event:String(event.companyEventId)}})}/>}
      </View>
-    : <Button label="Enter session" onPress={()=>openEvent(event)}/>
    ) : <RsvpPicker value={rsvps[event.id]} disabled={busy} onChange={(s)=>choose(event,s)}/>}
  </Card>;
 

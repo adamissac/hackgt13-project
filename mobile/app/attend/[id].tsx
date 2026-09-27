@@ -5,7 +5,7 @@ import QRCode from 'react-native-qrcode-svg';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, useColors } from '@/components/ui';
-import { EventModeCard } from '@/features/ble/EventModeCard';
+import { EventConnect } from '@/features/ble/EventConnect';
 import { api } from '@/lib/api';
 import { setCurrentEventId } from '@/lib/currentEvent';
 import { useAsync } from '@/lib/useAsync';
@@ -89,15 +89,16 @@ export default function EventScreen() {
       ) : null}
       {!event.registered ? (
         <Card>
-          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Register to attend</Text>
+          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Going to this event?</Text>
           <Text style={[styles.body, { color: c.muted }]}>
-            Registering adds this event to your calendar. At the event, you’ll scan the company’s QR code to enter the session.
+            Mark yourself attending to register and add it to your calendar. At the event, you’ll scan the company’s QR code
+            to enter the session.
           </Text>
-          <Button label="Register" onPress={enter} loading={busy} />
+          <Button label="I’m attending" onPress={enter} loading={busy} />
         </Card>
       ) : !event.checked_in ? (
         <View style={[styles.scanCard, { backgroundColor: c.tint }]}>
-          <Text style={styles.scanEyebrow}>REGISTERED · ON YOUR CALENDAR</Text>
+          <Text style={styles.scanEyebrow}>ATTENDING · ON YOUR CALENDAR</Text>
           <Text style={styles.scanTitle}>At the event? Scan in.</Text>
           <Text style={styles.scanBody}>
             Scan the QR code the company shows at the entrance to enter the session. Until you do, other attendees can’t
@@ -107,7 +108,7 @@ export default function EventScreen() {
             onPress={() => router.push({ pathname: '/join-event', params: { event: String(id) } })}
             accessibilityRole="button"
             style={({ pressed }) => [styles.scanButton, { opacity: pressed ? 0.85 : 1 }]}>
-            <Text style={[styles.scanButtonText, { color: c.tint }]}>Scan QR code</Text>
+            <Text style={[styles.scanButtonText, { color: c.tint }]}>Scan company QR code</Text>
           </Pressable>
         </View>
       ) : (
@@ -121,8 +122,8 @@ export default function EventScreen() {
               Everyone below registered and scanned in, just like you. Turn on Event Mode to find them in the room.
             </Text>
           </View>
-          <EventModeCard />
-          <Button label="See who’s close on the map" variant="secondary" onPress={() => router.push('/nearby')} />
+          <EventConnect />
+          <Button label="See who’s close on the map" variant="ghost" onPress={() => router.push('/nearby')} />
         </View>
       )}
       {token.state.status === 'ready' && token.state.data ? (

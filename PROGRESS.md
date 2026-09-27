@@ -10,6 +10,20 @@
 **Contract changes:** none
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / test event starting now, Attending then Scan company QR, Bluetooth connect inside the session
+**Status:** done
+**What I did:**
+- Demo backend: "Demo test event" (id 777, Demo Company) always starts at app load and runs 3 hours, so the full flow can be tried without accounts. `/join-event?event=<id>` shows "Simulate scanning the QR (demo)" in demo mode only.
+- Company new-event form (`app/(company)/new.tsx`, Adam's; noted): start defaults to now, end to +3h, and times are sent as ISO with the phone's offset (before, "2026-09-27 18:00" would have been read as UTC).
+- Events list: company events use the Attending / Interested / Not attending picker. Attending = `POST /events/{id}/register` (on your calendar), and then a "Scan company QR code" button appears under the picker. Once checked in, "Enter session". Event page: "I'm attending", then "Scan company QR code", then the session.
+- New `mobile/features/ble/EventConnect.tsx` in the session: "Connect with people here" with Event Mode (Akshar's `EventModeCard`), the checked-in attendees your phone hears (bands only), and "Just talked with someone? Verify to connect" (`/verify`). The scan screen puts the camera first, the join code below, and scrolls.
+- Browser-tested in demo: Events, Demo test event, Attending, "Scan company QR code", simulated scan, `/attend/777` session with the connect section.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. Demo mode: Events, "Demo test event", Attending, Scan company QR code, Simulate scanning.
+**Next step for whoever continues:** Live test on two phones: a company account creates an event (defaults to now) and shows its QR; an attendee marks Attending, scans, and both turn on Event Mode in the session.
+**Known issues / blockers:** I did not create a live test event. Creating a company account on the live server needs a person to sign up (Profile, Company? Separate login, or /company-sign-in); the event form now defaults to now.
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / event sessions: register, scan the company QR on the event page, then Event Mode inside the session
 **Status:** done
 **What I did:**

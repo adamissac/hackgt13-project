@@ -1,11 +1,12 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { setCurrentEventId } from '@/lib/currentEvent';
+import { env } from '@/lib/env';
 
 function parseJoin(raw: string): { payload: string; signature: string } | null {
   const [payload, signature] = raw.trim().split('.');
@@ -20,6 +21,8 @@ export default function JoinEventScreen() {
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
   const [code, setCode] = useState('');
+  // Set when opened from an event page ("Scan company QR code"); used for the demo-only simulated scan.
+  const eventParam = Number(useLocalSearchParams<{ event?: string }>().event) || null;
 
   // Checked in: go straight into that event's session (its page), which focuses on the people who also scanned in.
   const finish = async (eventId: number, name: string) => {
@@ -89,12 +92,27 @@ export default function JoinEventScreen() {
   }
 
   return (
-    <View style={styles.wrap}>
-      <Text style={[styles.title, { color: c.text }]}>Join a company event</Text>
+    <ScrollView contentContainerStyle={styles.wrap} keyboardShouldPersistTaps="handled">
+      <Text style={[styles.title, { color: c.text }]}>Scan the company QR code</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Enter the join code the company sent (registers you and checks you in), or scan their QR after you register.
-        Neither one connects you to a person.
+        Point your camera at the QR code the company shows at the entrance. This checks you in to the event session. It
+        doesn’t connect you to anyone.
       </Text>
+      {!permission?.granted ? (
+        <Button label="Allow camera" onPress={() => void request()} />
+      ) : (
+        <View style={styles.camera}>
+          <CameraView
+            style={StyleSheet.absoluteFill}
+            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+            onBarcodeScanned={busy ? undefined : ({ data }) => void joinQr(data)}
+          />
+        </View>
+      )}
+      {env.useMocks && eventParam ? (
+        <Button label="Simulate scanning the QR (demo)" variant="secondary" onPress={() => void joinQr(`demo-event-${eventParam}.demo`)} loading={busy} />
+      ) : null}
+      <Text style={[styles.body, { color: c.muted }]}>No camera? Enter the join code instead.</Text>
       <Card>
         <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Join code</Text>
         <TextInput
@@ -108,31 +126,19 @@ export default function JoinEventScreen() {
         />
         <Button label="Enter code" onPress={() => void joinCode()} loading={busy} disabled={code.trim().length < 4} />
       </Card>
-      <Text style={[styles.body, { color: c.muted }]}>Or scan the QR</Text>
-      {!permission?.granted ? (
-        <Button label="Allow camera" onPress={() => void request()} />
-      ) : (
-        <View style={styles.camera}>
-          <CameraView
-            style={StyleSheet.absoluteFill}
-            barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={busy ? undefined : ({ data }) => void joinQr(data)}
-          />
-        </View>
-      )}
       {error ? (
         <Card>
           <Text style={{ color: c.danger }}>{error}</Text>
         </Card>
       ) : null}
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, padding: 20, gap: 12 },
+  wrap: { padding: 20, gap: 12, paddingBottom: 40 },
   title: { fontSize: 24, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 22 },
   input: { minHeight: 52, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, fontSize: 20, letterSpacing: 2, marginVertical: 8 },
-  camera: { flex: 1, minHeight: 220, borderRadius: 16, overflow: 'hidden' },
+  camera: { height: 300, borderRadius: 16, overflow: 'hidden' },
 });

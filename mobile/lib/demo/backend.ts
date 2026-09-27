@@ -234,6 +234,20 @@ const DEMO_LIVE_EVENTS: LiveEvent[] = [
     description: 'The main HackGT 13 event.',
     promo: 'Talks start at 2. Booth 14 is hiring.',
   },
+  // A company event that always starts "now" (for 3 hours), to try Attending -> scan QR -> session in demo mode.
+  {
+    id: 777,
+    name: 'Demo test event',
+    host: 'Demo Company',
+    location: 'Klaus atrium',
+    starts_at: new Date().toISOString(),
+    ends_at: new Date(Date.now() + 3 * 3600_000).toISOString(),
+    registered: false,
+    checked_in: false,
+    mine: false,
+    description: 'A live test event. Mark yourself Attending, then scan the company QR code to enter the session.',
+    promo: 'Starts now. Scan in at the entrance.',
+  },
 ];
 
 export function listEvents() {
