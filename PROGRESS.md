@@ -1,3 +1,16 @@
+## 2026-09-27 04:05 | arjun | Codex
+**Task:** AD9 / AD11 — finish Adam's automatic refresh and others-only feed handoff
+**Status:** done
+**What I did:**
+- Confirmed Adam's full 20-file change already landed as bd9e8b4; audited current main rather than duplicating or reverting later event-scoping changes. Events refresh every 3s, Feed every 5s after requests settle, focused/foreground only. Own post/activity/summary filtering remains in client and server.
+- Found the remaining red mobile CI check: Calendar RSVP animation mutated shared `.value`, rejected by react-hooks/immutability. Switched to Reanimated's compiler-compatible get/set API; ignored generated .expo files in ESLint. Cross-owner mobile/CI changes explicitly requested by user.
+- Added the existing own-feed visibility regression to CI. Repository privacy-check audit found no blockers in inherited or final changes.
+- Verified current main's full server/pgvector tests succeeded on GitHub Actions run 36304824214; the formal-connection ML Railway deployment on 32697e0 is successful and production /health returns ok=true, db=true. Separate resourceful-inspiration service is failing, outside this app's ML service.
+**How to run/test it:** `cd mobile && npm run typecheck && npx eslint . && node --experimental-strip-types --test features/feed/visibility.test.mjs && npm run test:demo` — pass, including 19 demo checks. Local DB tests skip without TEST_DATABASE_URL; used the successful GitHub server job for real DB verification.
+**Next step for whoever continues:** Follow the new CI run after this push. On two live phones, create an organizer event and a connection's post with the attendee screens open to verify the 3s/5s refresh experience. No manual ML deploy needed for the inherited changes: the configured service already deployed 32697e0 successfully.
+**Known issues / blockers:** No physical two-account Expo Go test performed. Railway CLI here is signed out, but public GitHub deployment status and production health independently confirm the existing deployment. Polling is near-live, not instantaneous push; Expo Go must load the updated JS once.
+**Contract changes:** none in this follow-up; inherited docs/api.md 29 specifies others-only feed.
+
 
 
 ## 2026-09-27 | arjun | Claude Code

@@ -100,12 +100,12 @@ function RsvpOption({ label, status, on, disabled, onPress }: {
 }) {
   const c = useColors();
   const scale = useSharedValue(1);
-  const bounce = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const bounce = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
   const tone = status === 'attending' ? c.success : status === 'interested' ? c.ai : c.muted;
   return (
     <Pressable disabled={disabled} accessibilityRole="radio" accessibilityState={{ checked: on, disabled }} accessibilityLabel={label}
-      onPressIn={() => { scale.value = withTiming(0.93, { duration: 70 }); }}
-      onPressOut={() => { scale.value = withSpring(1, { damping: 11, stiffness: 340 }); }}
+      onPressIn={() => { scale.set(withTiming(0.93, { duration: 70 })); }}
+      onPressOut={() => { scale.set(withSpring(1, { damping: 11, stiffness: 340 })); }}
       onPress={() => { void Haptics.selectionAsync().catch(() => undefined); onPress(); }}
       style={{ flex: label.length }}>
       <Animated.View style={[styles.option, { borderColor: on ? tone : c.border, backgroundColor: on ? tone : c.surface }, bounce]}>

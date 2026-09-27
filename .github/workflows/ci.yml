@@ -51,4 +51,5 @@ jobs:
       - run: npm ci
       - run: npx tsc --noEmit
       - run: npx eslint .
+      - run: node --experimental-strip-types --test features/feed/visibility.test.mjs
       - run: npm run test:demo
