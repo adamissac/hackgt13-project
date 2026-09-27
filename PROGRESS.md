@@ -13,6 +13,18 @@
 **Known issues / blockers:** The summary is template-built, not an LLM call — deliberate, so it is deterministic, free, offline, and cannot invent facts. MASTER_SPEC 6.9's LLM icebreaker path is separate and untouched. `role_pair` has weight 0.0 in `V1_WEIGHTS`, so a student/recruiter pair scores nothing extra for it; the sentence still calls it out, which is the right behaviour but worth knowing if anyone tunes the weights.
 **Contract changes:** `docs/api.md` §26 — `match` and `connection` edges in the Connection Graph gain an `explanation` object (`summary`, `basis`, `factors[]`, `shared_topics[]`); `docs/mocks/graph.json` updated to match. Additive, nothing renamed, existing fields untouched. Affects Arjun (graph rendering) and Adam (mobile graph WebView).
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Events tab: real Georgia Tech Handshake events
+**Status:** done
+**What I did:**
+- Replaced the made-up sample events with 29 real GT events Arjun pasted from Handshake on 2026-09-26: employer info sessions, networking, workshops, and club meetings. Left out one non-career listing (an anime club meeting).
+- `mobile/features/events/catalog.ts`: new shape with `host`, `tags` (Hiring, Employer info, and so on), `format`, optional `endsAt`/`lat`/`lng`, `allDay`, and a Handshake `url`. `whenLabel()` formats times. Only fields Handshake showed are used; there are no made-up rooms, end times, or descriptions.
+- Event sheet: tags, "Open in Handshake" (opens the event page), and the Attending/Interested/Not attending picker. Near you skips the virtual event; All events filters are Info session, Networking, Workshop, and Club meeting.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
+**Next step for whoever continues:** To refresh, paste the GT Handshake events page into chat and regenerate `rows` in `mobile/features/events/catalog.ts` (id, host, title, category, tags, start). There is no Handshake API for students, and we don't scrape it.
+**Known issues / blockers:** A snapshot, not live. Every in-person event is pinned to the GT campus center, because Handshake's list view doesn't show rooms. Non-GT users see GT events.
+**Contract changes:** none
+
 ## 2026-09-26 15:40 | adam | Codex
 **Task:** AD9 / AD11 / AR5 / AK5 — user-requested Home, Nearby and graph polish (cross-owner presentation changes)
 **Status:** done

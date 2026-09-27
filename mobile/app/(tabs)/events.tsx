@@ -6,7 +6,7 @@ import { ConstellationMark } from '@/components/Brand';
 import { Button, Card, Chip, useColors } from '@/components/ui';
 import { ErrorState, Loading } from '@/components/States';
 import { Calendar, RsvpPicker } from '@/features/events/Calendar';
-import { eventCatalog, eventDate, eventTime, zoneLabel, type NetworkingEvent } from '@/features/events/catalog';
+import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
 import { RSVP_OPTIONS, dayKey, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
 import { useArea } from '@/features/events/useArea';
 import { useAsync } from '@/lib/useAsync';
@@ -16,8 +16,8 @@ type Section = 'calendar' | 'local' | 'all';
 const SECTIONS: { id: Section; label: string }[] = [
  {id:'calendar',label:'My calendar'},{id:'local',label:'Near you'},{id:'all',label:'All events'},
 ];
-const CATEGORIES = ['All','Career fair','Club meeting','Expo','Mixer','Careers','Conference','Founders','Hackathon','Tech meetup'];
-const when = (e: NetworkingEvent) => `${eventTime(e.startsAt, e.tz)} ${zoneLabel(e.startsAt, e.tz)}`;
+const CATEGORIES = ['All', ...EVENT_CATEGORIES];
+const hasPlace = (e: NetworkingEvent): e is NetworkingEvent & { lat: number; lng: number } => e.lat !== undefined && e.lng !== undefined;
 
 export default function EventsScreen() {
  const c=useColors(); const insets=useSafeAreaInsets(); const {session}=useAuth();
@@ -45,21 +45,22 @@ export default function EventsScreen() {
 
  const card=(event:NetworkingEvent,km?:number)=><Pressable key={event.id} onPress={()=>{setSelected(event);setError(null);}} accessibilityRole="button" accessibilityLabel={`View ${event.name}`} style={({pressed})=>({opacity:pressed?0.85:1})}>
   <Card>
-   <View style={styles.row}><View style={[styles.date,{backgroundColor:c.tintSoft}]}><Text style={{color:c.tint,fontSize:16,fontWeight:'700'}}>{eventDate(event.startsAt,event.tz)}</Text></View><View style={{flex:1,gap:6}}><Chip label={event.category} tone="ai"/><Text style={[styles.title,{color:c.text}]}>{event.name}</Text></View></View>
-   <View style={styles.row}><AppIcon name="event" size={18}/><Text style={[styles.small,{color:c.muted}]}>{when(event)} · {event.location}{km!==undefined?` · ${milesLabel(km)}`:''}</Text></View>
+   <View style={styles.row}><View style={[styles.date,{backgroundColor:c.tintSoft}]}><Text style={{color:c.tint,fontSize:16,fontWeight:'700'}}>{eventDate(event.startsAt,event.tz)}</Text></View><View style={{flex:1,gap:6}}><Chip label={event.category} tone="ai"/><Text style={[styles.title,{color:c.text}]}>{event.name}</Text><Text style={[styles.small,{color:c.muted}]}>{event.host}</Text></View></View>
+   <View style={styles.row}><AppIcon name="event" size={18}/><Text style={[styles.small,{color:c.muted}]}>{whenLabel(event)} · {event.location}{km!==undefined?` · ${milesLabel(km)}`:''}</Text></View>
+   {event.tags.includes('Hiring')&&<View style={styles.row}><Chip label="Hiring" tone="success"/></View>}
    <RsvpPicker value={rsvps[event.id]} disabled={busy} onChange={(s)=>choose(event,s)}/>
   </Card>
  </Pressable>;
 
  const planned=events.filter(e=>isPlanned(rsvps[e.id])).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
  const onDay=planned.filter(e=>dayKey(e.startsAt,e.tz)===day);
- const isUpcoming=(e:NetworkingEvent)=>dayKey(e.endsAt,e.tz)>=todayKey;
+ const isUpcoming=(e:NetworkingEvent)=>dayKey(e.endsAt??e.startsAt,e.tz)>=todayKey;
  const upcoming=planned.filter(isUpcoming);
- const kmTo=(e:NetworkingEvent)=>area.status==='ready'?eventsNear([e],area.point,Infinity)[0].km:undefined;
+ const kmTo=(e:NetworkingEvent)=>area.status==='ready'&&hasPlace(e)?eventsNear([e],area.point,Infinity)[0].km:undefined;
  const statusLabel=(e:NetworkingEvent)=>RSVP_OPTIONS.find(o=>o.value===rsvps[e.id])?.label ?? '';
  const planRow=(e:NetworkingEvent)=><Pressable key={e.id} onPress={()=>{setSelected(e);setError(null);}} accessibilityRole="button" accessibilityLabel={`${e.name}, ${statusLabel(e)}`} style={[styles.planRow,{borderColor:c.border,backgroundColor:c.surface}]}>
   <View style={[styles.bar,{backgroundColor:rsvps[e.id]==='attending'?c.success:c.ai}]}/>
-  <View style={{flex:1,gap:2}}><Text style={{color:c.text,fontWeight:'700',fontSize:15}}>{e.name}</Text><Text style={[styles.small,{color:c.muted}]}>{eventDate(e.startsAt,e.tz)} · {when(e)} · {e.location}</Text></View>
+  <View style={{flex:1,gap:2}}><Text style={{color:c.text,fontWeight:'700',fontSize:15}}>{e.name}</Text><Text style={[styles.small,{color:c.muted}]}>{whenLabel(e)} · {e.location}</Text></View>
   <Text style={{color:rsvps[e.id]==='attending'?c.success:c.ai,fontSize:12,fontWeight:'700'}}>{statusLabel(e)}</Text>
  </Pressable>;
 
@@ -77,7 +78,7 @@ a new connection.</Text>
      <Text numberOfLines={1} style={{color:section===s.id?c.text:c.muted,fontWeight:'700',fontSize:14}}>{s.label}</Text>
     </Pressable>)}
    </View>
-   <Text style={[styles.small,{color:c.muted}]}>Sample events · RSVPs are saved on this device, not sent to organizers.</Text>
+   <Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>
    {catalog.state.status==='loading'&&<Loading label="Finding events…"/>}
    {catalog.state.status==='error'&&<ErrorState message={catalog.state.message} onRetry={catalog.reload}/>}
 
@@ -103,17 +104,17 @@ a new connection.</Text>
      <Button label={area.canAskAgain?'Allow location':'Open settings'} onPress={()=>area.canAskAgain?retry():Linking.openSettings()}/>
     </Card>}
     {area.status==='ready'&&(()=>{
-     const near=eventsNear(events.filter(isUpcoming),area.point);
+     const near=eventsNear(events.filter(isUpcoming).filter(hasPlace),area.point);
      return near.length?near.map(e=>card(e,e.km)):<Card>
       <Text style={[styles.body,{color:c.text,fontWeight:'700'}]}>No events near you yet</Text>
-      <Text style={[styles.body,{color:c.muted}]}>There aren’t any professional events within 25 miles right now. Browse events in other cities instead.</Text>
+      <Text style={[styles.body,{color:c.muted}]}>There aren’t any in-person events within 25 miles right now. Virtual events are under All events.</Text>
       <Button label="See all events" variant="secondary" onPress={()=>open('all')}/>
      </Card>;
     })()}
    </>}
 
    {catalog.state.status==='ready'&&section==='all'&&<>
-    <View style={{gap:4}}><Text style={[styles.title,{color:c.text}]}>All events</Text><Text style={[styles.body,{color:c.muted}]}>Career fairs, club meetings, expos, mixers, and conferences, near and far.</Text></View>
+    <View style={{gap:4}}><Text style={[styles.title,{color:c.text}]}>All events</Text><Text style={[styles.body,{color:c.muted}]}>Info sessions, networking, workshops, and club meetings, in person and virtual.</Text></View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>
      {CATEGORIES.map(category=><Pressable key={category} onPress={()=>setFilter(category)} accessibilityRole="button" accessibilityState={{selected:filter===category}} style={[styles.filter,{backgroundColor:filter===category?c.tint:c.surface,borderColor:c.border}]}><Text style={{color:filter===category?c.onTint:c.text,fontWeight:'600'}}>{category}</Text></Pressable>)}
     </ScrollView>
@@ -130,14 +131,14 @@ a new connection.</Text>
       <View style={styles.row}><Chip label={selected.category} tone="ai"/><View style={{flex:1}}/><Button label="Close" variant="ghost" onPress={()=>setSelected(null)}/></View>
       <Text style={{color:c.text,fontSize:30,lineHeight:36,fontWeight:'700',letterSpacing:-0.8}}>{selected.name}</Text>
       <Text style={[styles.body,{color:c.muted}]}>Hosted by {selected.host}</Text>
-      <Card highlight><Text style={{color:c.text,fontWeight:'700'}}>{eventDate(selected.startsAt,selected.tz)} · {eventTime(selected.startsAt,selected.tz)}–{eventTime(selected.endsAt,selected.tz)} {zoneLabel(selected.startsAt,selected.tz)}</Text><Text style={[styles.body,{color:c.text}]}>{selected.location}{kmTo(selected)!==undefined?` · ${milesLabel(kmTo(selected)!)}`:''}</Text></Card>
-      <Text style={[styles.body,{color:c.text}]}>{selected.description}</Text>
-      <Text style={[styles.title,{color:c.text}]}>What to expect</Text>
-      {selected.agenda.map((item,i)=><View key={item} style={styles.row}><Text style={{color:c.ai,fontWeight:'700'}}>0{i+1}</Text><Text style={[styles.body,{color:c.text,flex:1}]}>{item}</Text></View>)}
+      <Card highlight><Text style={{color:c.text,fontWeight:'700'}}>{whenLabel(selected)}</Text><Text style={[styles.body,{color:c.text}]}>{selected.location}{kmTo(selected)!==undefined?` · ${milesLabel(kmTo(selected)!)}`:''}</Text></Card>
+      <View style={[styles.row,{flexWrap:'wrap',gap:8}]}>{selected.tags.map(t=><Chip key={t} label={t} tone={t==='Hiring'?'success':'neutral'}/>)}</View>
+      <Text style={[styles.body,{color:c.muted}]}>The room, full description, and registration are on Handshake.</Text>
+      <Button label="Open in Handshake" variant="secondary" onPress={()=>{void Linking.openURL(selected.url);}}/>
       <Text style={[styles.title,{color:c.text}]}>Are you going?</Text>
       <RsvpPicker value={rsvps[selected.id]} disabled={busy} onChange={(s)=>choose(selected,s)}/>
       {error&&<Text accessibilityRole="alert" style={{color:c.danger}}>{error}</Text>}
-      <Text style={[styles.small,{color:c.muted,textAlign:'center'}]}>{isPlanned(rsvps[selected.id])?'On your calendar. ':''}This is a sample event. No ticket or real registration is created.</Text>
+      <Text style={[styles.small,{color:c.muted,textAlign:'center'}]}>{isPlanned(rsvps[selected.id])?'On your calendar. ':''}This only updates your calendar here. Register on Handshake to save your spot.</Text>
      </ScrollView>}
     </View>
    </View>

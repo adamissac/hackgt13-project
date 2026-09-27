@@ -1,49 +1,73 @@
-// Sample opportunities, not live listings. Replace this adapter when an events API lands.
-// RSVPs stay on this device; nothing is sent to organizers.
+// Georgia Tech career events from Handshake, copied from the student events page on 2026-09-26.
+// This is a snapshot, not a live feed: Handshake has no public API for student apps. To refresh,
+// paste the Handshake events page again and regenerate the list below. Only fields Handshake showed
+// are used (employer, title, start time, format, tags); room, end time, and details live on Handshake.
+// Non-career listings are left out. RSVPs here stay on this device; register on Handshake itself.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { parseRsvps, type RsvpMap } from './plan';
 
-// Every event is professional: career fairs, club meetings, expos, mixers, conferences, founder and tech meetups. "Near you" filters these by distance from the user.
+export type EventCategory = 'Info session' | 'Networking' | 'Workshop' | 'Club meeting';
 export interface NetworkingEvent {
- id: string; name: string; category: string; startsAt: string; endsAt: string; tz: string;
- location: string; lat: number; lng: number; host: string; description: string; agenda: string[];
+ id: string; name: string; host: string; category: EventCategory; tags: string[];
+ startsAt: string; endsAt?: string; allDay?: boolean; tz: string;
+ format: 'in_person' | 'virtual'; location: string; lat?: number; lng?: number; url: string;
 }
+export const CATEGORIES: EventCategory[] = ['Info session', 'Networking', 'Workshop', 'Club meeting'];
+
 const ATL = 'America/New_York';
-export const sampleEvents: NetworkingEvent[] = [
- // Atlanta
- {id:'build', name:'Build something that matters', category:'Hackathon', startsAt:'2026-09-27T10:00:00-04:00', endsAt:'2026-09-27T13:00:00-04:00', tz:ATL, location:'Georgia Tech · Atlanta', lat:33.7756, lng:-84.3963, host:'Campus builders', description:'Meet fellow builders, swap project ideas, and find a collaborator for your next experiment.', agenda:['Structured introductions','Small-group project demos','Team formation']},
- {id:'founders', name:'The next big thing starts here', category:'Founders', startsAt:'2026-10-01T18:00:00-04:00', endsAt:'2026-10-01T20:00:00-04:00', tz:ATL, location:'Midtown · Atlanta', lat:33.7838, lng:-84.3830, host:'Student founder circle', description:'An evening of early ideas and honest conversations with student founders. Bring a problem you care about.', agenda:['Founder stories','Idea exchange in small groups','Open networking']},
- {id:'careers', name:'Beyond the résumé', category:'Careers', startsAt:'2026-10-03T11:00:00-04:00', endsAt:'2026-10-03T14:00:00-04:00', tz:ATL, location:'Georgia Tech · Atlanta', lat:33.7756, lng:-84.3963, host:'Campus career community', description:'Practice your introduction and connect with peers exploring their next career chapter.', agenda:['Introduction workshop','Peer career conversations','Portfolio feedback']},
- {id:'ai', name:'AI after hours', category:'Tech meetup', startsAt:'2026-10-06T18:30:00-04:00', endsAt:'2026-10-06T20:30:00-04:00', tz:ATL, location:'Tech Square · Atlanta', lat:33.7766, lng:-84.3893, host:'Atlanta AI community', description:'Talks and roundtables for engineers and researchers working in machine learning.', agenda:['Lightning talks','Research and industry roundtables','Structured networking']},
- {id:'portfolio', name:'Engineering portfolio review', category:'Careers', startsAt:'2026-10-09T18:00:00-04:00', endsAt:'2026-10-09T20:00:00-04:00', tz:ATL, location:'Midtown · Atlanta', lat:33.7810, lng:-84.3866, host:'Atlanta engineering managers', description:'Walk a hiring manager through one project and get direct feedback on how you present your work.', agenda:['Five-minute project walkthroughs','One-on-one feedback','Hiring manager Q&A']},
- {id:'fintech', name:'Fintech careers breakfast', category:'Careers', startsAt:'2026-10-13T08:00:00-04:00', endsAt:'2026-10-13T09:30:00-04:00', tz:ATL, location:'Buckhead · Atlanta', lat:33.8480, lng:-84.3700, host:'Atlanta fintech network', description:'Meet engineers, analysts, and recruiters from payments and banking teams based in Atlanta.', agenda:['Panel: breaking into fintech','Table conversations by role','Recruiter office hours']},
- {id:'climate', name:'Climate tech founder mixer', category:'Mixer', startsAt:'2026-10-14T17:30:00-04:00', endsAt:'2026-10-14T19:30:00-04:00', tz:ATL, location:'Old Fourth Ward · Atlanta', lat:33.7640, lng:-84.3720, host:'Southeast climate founders', description:'Founders, researchers, and students working on energy, water, and materials.', agenda:['Three founder spotlights','Problem-first roundtables','Structured introductions']},
- {id:'womentech', name:'Women in engineering leadership', category:'Conference', startsAt:'2026-10-20T09:00:00-04:00', endsAt:'2026-10-20T16:00:00-04:00', tz:ATL, location:'Downtown · Atlanta', lat:33.7590, lng:-84.3880, host:'Southeast engineering leaders', description:'A one-day conference on technical leadership, mentorship, and career growth.', agenda:['Keynote on technical leadership','Mentorship circles','Career growth workshops']},
- {id:'acm', name:'ACM chapter meeting: industry night', category:'Club meeting', startsAt:'2026-09-30T19:00:00-04:00', endsAt:'2026-09-30T20:30:00-04:00', tz:ATL, location:'Klaus Advanced Computing Building · Atlanta', lat:33.7771, lng:-84.3963, host:'Georgia Tech ACM', description:'Monthly chapter meeting with engineers from local companies talking about their teams and internships.', agenda:['Chapter updates','Engineer talks on internships','Meet the speakers']},
- {id:'consulting', name:'Consulting club case night', category:'Club meeting', startsAt:'2026-10-07T18:30:00-04:00', endsAt:'2026-10-07T20:00:00-04:00', tz:ATL, location:'Scheller College of Business · Atlanta', lat:33.7765, lng:-84.3877, host:'Consulting club', description:'Practice a case interview in pairs, then hear from consultants about recruiting timelines.', agenda:['Case practice in pairs','Consultant panel','Recruiting timeline Q&A']},
- {id:'swe', name:'Society of Women Engineers general meeting', category:'Club meeting', startsAt:'2026-10-12T18:00:00-04:00', endsAt:'2026-10-12T19:30:00-04:00', tz:ATL, location:'Student Center · Atlanta', lat:33.7740, lng:-84.3983, host:'SWE chapter', description:'Chapter meeting with a sponsor company presentation and small-group mentoring.', agenda:['Sponsor presentation','Mentoring groups','Chapter announcements']},
- {id:'product', name:'Product management club: PM interview workshop', category:'Club meeting', startsAt:'2026-10-19T18:30:00-04:00', endsAt:'2026-10-19T20:00:00-04:00', tz:ATL, location:'Tech Square · Atlanta', lat:33.7766, lng:-84.3893, host:'Product management club', description:'Mock product interviews with feedback from working product managers.', agenda:['Product sense practice','Feedback from PMs','Networking with members']},
- {id:'fairgt', name:'Fall engineering career fair', category:'Career fair', startsAt:'2026-10-05T10:00:00-04:00', endsAt:'2026-10-05T16:00:00-04:00', tz:ATL, location:'McCamish Pavilion · Atlanta', lat:33.7807, lng:-84.3928, host:'Campus career center', description:'Employers recruiting for internships, co-ops, and full-time engineering roles.', agenda:['Employer booths','Resume review','Interview sign-ups']},
- {id:'capstone', name:'Capstone design expo', category:'Expo', startsAt:'2026-10-16T10:00:00-04:00', endsAt:'2026-10-16T15:00:00-04:00', tz:ATL, location:'McCamish Pavilion · Atlanta', lat:33.7807, lng:-84.3928, host:'College of Engineering', description:'Senior teams present their capstone projects to industry sponsors, recruiters, and faculty.', agenda:['Project booths','Sponsor judging','Recruiter walkthroughs']},
- {id:'startupexpo', name:'Atlanta startup expo', category:'Expo', startsAt:'2026-10-23T11:00:00-04:00', endsAt:'2026-10-23T17:00:00-04:00', tz:ATL, location:'Tech Square · Atlanta', lat:33.7766, lng:-84.3893, host:'Atlanta startup community', description:'Local startups showcase their products and meet students looking for internships and early roles.', agenda:['Startup booths','Hiring founders meet students','Pitch stage']},
- {id:'alumni', name:'Alumni and student networking mixer', category:'Mixer', startsAt:'2026-10-10T18:00:00-04:00', endsAt:'2026-10-10T20:00:00-04:00', tz:ATL, location:'Alumni House · Atlanta', lat:33.7735, lng:-84.3923, host:'Alumni association', description:'Meet alumni working in software, consulting, finance, and research. Business casual.', agenda:['Welcome remarks','Industry tables','Open networking']},
- {id:'recruiter', name:'Tech recruiter mixer', category:'Mixer', startsAt:'2026-10-21T17:30:00-04:00', endsAt:'2026-10-21T19:30:00-04:00', tz:ATL, location:'Midtown · Atlanta', lat:33.7838, lng:-84.3830, host:'Atlanta tech recruiters network', description:'Recruiters from Atlanta tech companies meet students and early-career engineers.', agenda:['Company introductions','Recruiter conversations','Resume drop']},
- // Farther away
- {id:'charlotte', name:'Southeast career fair for engineers', category:'Career fair', startsAt:'2026-10-08T10:00:00-04:00', endsAt:'2026-10-08T15:00:00-04:00', tz:ATL, location:'Uptown · Charlotte, NC', lat:35.2271, lng:-80.8431, host:'Carolinas tech employers', description:'Over 40 employers hiring interns and new graduates in software, data, and hardware.', agenda:['Employer booths','Resume review lounge','On-site first-round interviews']},
- {id:'nashville', name:'Health tech builders summit', category:'Conference', startsAt:'2026-10-15T09:00:00-05:00', endsAt:'2026-10-15T17:00:00-05:00', tz:'America/Chicago', location:'The Gulch · Nashville, TN', lat:36.1520, lng:-86.7890, host:'Nashville health tech council', description:'Engineers, clinicians, and founders on building software for healthcare.', agenda:['Keynotes from product leaders','Founder pitch session','Structured networking']},
- {id:'austin', name:'Founders and funders forum', category:'Founders', startsAt:'2026-10-22T13:00:00-05:00', endsAt:'2026-10-22T18:00:00-05:00', tz:'America/Chicago', location:'Downtown · Austin, TX', lat:30.2672, lng:-97.7431, host:'Austin startup alliance', description:'Early-stage founders meet angel investors and operators in small, curated groups.', agenda:['Investor panel','Curated small-group meetings','Evening reception']},
- {id:'nyc', name:'New grad software engineering summit', category:'Careers', startsAt:'2026-10-24T10:00:00-04:00', endsAt:'2026-10-24T16:00:00-04:00', tz:ATL, location:'Midtown Manhattan · New York, NY', lat:40.7549, lng:-73.9840, host:'NYC engineering hiring council', description:'Talks and panels on landing and succeeding in your first engineering role.', agenda:['Interview prep workshops','Panel with recent new grads','Company tables']},
- {id:'chicago', name:'Data science and analytics conference', category:'Conference', startsAt:'2026-10-29T09:00:00-05:00', endsAt:'2026-10-29T17:00:00-05:00', tz:'America/Chicago', location:'The Loop · Chicago, IL', lat:41.8837, lng:-87.6325, host:'Midwest data community', description:'Applied machine learning and analytics talks from industry teams, plus a hiring hall.', agenda:['Technical talks','Hiring hall','Birds-of-a-feather lunches']},
- {id:'dallasexpo', name:'Southwest technology expo', category:'Expo', startsAt:'2026-11-03T09:00:00-06:00', endsAt:'2026-11-03T17:00:00-06:00', tz:'America/Chicago', location:'Convention Center · Dallas, TX', lat:32.7746, lng:-96.8010, host:'Texas technology council', description:'Hundreds of companies exhibit products and recruit engineers and business students.', agenda:['Exhibit hall','Career pavilion','Industry talks']},
- {id:'sf', name:'AI engineering meetup', category:'Tech meetup', startsAt:'2026-11-05T18:00:00-08:00', endsAt:'2026-11-05T20:30:00-08:00', tz:'America/Los_Angeles', location:'SoMa · San Francisco, CA', lat:37.7785, lng:-122.3950, host:'Bay Area AI engineers', description:'Engineers shipping language model products share what worked in production.', agenda:['Three production case studies','Open Q&A','Networking by focus area']},
- {id:'seattle', name:'Cloud infrastructure career night', category:'Career fair', startsAt:'2026-11-12T17:30:00-08:00', endsAt:'2026-11-12T20:00:00-08:00', tz:'America/Los_Angeles', location:'South Lake Union · Seattle, WA', lat:47.6230, lng:-122.3370, host:'Seattle cloud engineering group', description:'Meet infrastructure and platform teams hiring early-career engineers.', agenda:['Team lightning intros','Recruiter tables','Engineer Q&A']},
+const GT = { lat: 33.7756, lng: -84.3963 };
+const COC = 'Georgia Tech College of Computing';
+const TAG: Record<string, string> = { H: 'Hiring', E: 'Employer info', G: 'Career guidance', N: 'Networking', X: 'General' };
+
+// [Handshake id, host, title, category, tags (H/E/G/N/X), start in Atlanta time]
+const rows: [number, string, string, EventCategory, string, string][] = [
+ [2006711, 'Bloomberg', 'Women @ CC & SHPE Host Bloomberg', 'Networking', 'EN', '2026-09-28T17:00'],
+ [2026548, COC, 'Sequence Holdings/BankSouth Info Session', 'Info session', 'G', '2026-09-28T17:00'],
+ [2025285, COC, 'JPMorgan Chase Investment Banking Recruiting Kick-Off', 'Info session', 'G', '2026-09-28T18:00'],
+ [2019641, 'Roblox', 'Roblox Assessment Prep: Kaiju Cats', 'Workshop', 'G', '2026-09-29T10:00'],
+ [2025519, 'American Express', 'Inside Tech at American Express', 'Info session', 'HE', '2026-09-29T14:00'],
+ [2025518, 'American Express', 'An Evening with American Express', 'Networking', 'HE', '2026-09-29T17:00'],
+ [2017526, 'American Express', 'Inside American Express: Careers & Conversations', 'Info session', 'EG', '2026-09-29T17:15'],
+ [2003589, COC, 'Big Data Bi-Weekly Meeting (Tue)', 'Club meeting', 'NX', '2026-09-29T18:30'],
+ [1990191, COC, 'Evaluating & Negotiating Offers', 'Workshop', 'G', '2026-09-30T11:00'],
+ [2019647, 'Roblox', 'Roblox Large Scale Tech Talk Event: Innovation Spotlight', 'Info session', 'E', '2026-09-30T17:30'],
+ [1983666, COC, 'Entrepreneurship & Innovation Workshop Series', 'Workshop', 'G', '2026-09-30T18:00'],
+ [2026544, COC, 'Verkada PhD Lunch @ GT', 'Networking', 'G', '2026-10-01T12:00'],
+ [2027049, COC, 'Avanos Health - Coffee Chats', 'Networking', 'G', '2026-10-01T13:00'],
+ [2027623, COC, 'Verkada Tech Talk @ GT (Info Session)', 'Info session', 'G', '2026-10-01T17:30'],
+ [2027252, 'Equifax', 'BDBI x Equifax', 'Networking', 'EN', '2026-10-01T18:30'],
+ [2003902, COC, 'Big Data Bi-Weekly Meeting (Thu)', 'Club meeting', 'NX', '2026-10-01T18:30'],
+ [1997903, 'Salesforce', 'Salesforce Futureforce Info Session - FT and Internships', 'Info session', 'H', '2026-10-07T11:00'],
+ [1983688, COC, 'Entrepreneurship & Innovation Workshop Series', 'Workshop', 'G', '2026-10-07T18:00'],
+ [1990641, COC, 'COC Catalyst x IRP Writing and Speaking w/ Workplace Clarity', 'Workshop', 'GX', '2026-10-08T15:00'],
+ [2027975, 'Advanced Micro Devices', 'Supercomputing x AMD', 'Networking', 'EN', '2026-10-08T17:00'],
+ [2003908, COC, 'Big Data Bi-Weekly Meeting (Thu)', 'Club meeting', 'G', '2026-10-08T18:30'],
+ [1983603, COC, 'Conversations with Alumni', 'Networking', 'N', '2026-10-09T11:00'],
+ [2026985, COC, 'Morgan Stanley - MS Technology Info Session', 'Info session', 'G', '2026-10-12T11:00'],
+ [2027164, 'Google', 'Google Technical Interview Workshop', 'Workshop', 'G', '2026-10-12T17:00'],
+ [2003620, COC, 'Big Data Bi-Weekly Meeting (Tue)', 'Club meeting', 'NX', '2026-10-13T18:30'],
+ [2022550, 'Voloridge Investment Management', 'Get to Know Voloridge Investment Management', 'Info session', 'HE', '2026-10-14T11:30'],
+ [1983713, COC, 'Entrepreneurship & Innovation Workshop Series', 'Workshop', 'G', '2026-10-14T18:00'],
+ [2003910, COC, 'Big Data Bi-Weekly Meeting (Thu)', 'Club meeting', 'NX', '2026-10-15T18:30'],
 ];
+
+const url = (id: number) => `https://gatech.joinhandshake.com/stu/events/${id}`;
+export const handshakeEvents: NetworkingEvent[] = [
+ // Virtual and multi-day, so it has no place on the map and no single start time.
+ { id: 'hs-2015596', name: "Learn from Local MA Legends! Info Session and Panel with some of Veeva's Engineers", host: 'Veeva Systems', category: 'Info session', tags: [TAG.H, TAG.E],
+   startsAt: '2026-09-20T00:00:00-04:00', endsAt: '2026-10-20T23:59:00-04:00', allDay: true, tz: ATL, format: 'virtual', location: 'Virtual', url: url(2015596) },
+ ...rows.map(([id, host, name, category, tags, start]): NetworkingEvent => ({
+   id: `hs-${id}`, name, host, category, tags: [...tags].map((t) => TAG[t]),
+   startsAt: `${start}:00-04:00`, tz: ATL, format: 'in_person', location: 'Georgia Tech campus · Atlanta', ...GT, url: url(id),
+ })),
+];
+
 const legacyKey = (scope: string) => `constellation:event-rsvps:v1:${scope}`;
 const key = (scope: string) => `constellation:event-rsvps:v2:${scope}`;
-const ids = sampleEvents.map((e) => e.id);
+const ids = handshakeEvents.map((e) => e.id);
 export const eventCatalog = {
- list: async () => sampleEvents,
+ list: async () => handshakeEvents,
  rsvps: async (scope: string): Promise<RsvpMap> => {
   const raw = (await AsyncStorage.getItem(key(scope))) ?? (await AsyncStorage.getItem(legacyKey(scope)));
   if (!raw) return {};
@@ -61,4 +85,10 @@ export function eventTime(iso: string, tz = ATL) {
 export function zoneLabel(iso: string, tz = ATL) {
  const name = new Intl.DateTimeFormat('en-US', {timeZone:tz, timeZoneName:'short'}).formatToParts(new Date(iso)).find((p) => p.type === 'timeZoneName')?.value ?? '';
  return name.replace(/^([A-Z])[DS]T$/, '$1T');
+}
+/** "Tue, Sep 29 · 5:00 PM ET", or a date range for multi-day events. */
+export function whenLabel(e: NetworkingEvent) {
+ if (e.allDay) return e.endsAt ? `${eventDate(e.startsAt, e.tz)} – ${eventDate(e.endsAt, e.tz)}` : eventDate(e.startsAt, e.tz);
+ const weekday = new Date(e.startsAt).toLocaleDateString('en-US', {weekday:'short', timeZone:e.tz});
+ return `${weekday}, ${eventDate(e.startsAt, e.tz)} · ${eventTime(e.startsAt, e.tz)} ${zoneLabel(e.startsAt, e.tz)}`;
 }
