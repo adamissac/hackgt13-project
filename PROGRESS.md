@@ -11,6 +11,19 @@
 **Known issues / blockers:** No physical-phone verification claimed. Existing Node module-type and Expo color-environment warnings persist. Dependency installation reports 16 moderate advisories; dependency upgrades are outside this UI increment. Local mock web preview is on port 8086, not continuously monitored after handoff.
 **Contract changes:** none
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Events tab: calendar, RSVP statuses, near-you and professional sections
+**Status:** done
+**What I did:**
+- `mobile/app/(tabs)/events.tsx`: three sections, My calendar, Near you, and Professional (the default). Every event card and the detail sheet have an Attending / Interested / Not attending picker; tapping the current choice clears it.
+- `features/events/Calendar.tsx`: a month grid. A filled green dot means attending, a ring means interested. Tapping a day lists that day's plans, followed by a "Coming up" list.
+- `features/events/useArea.ts`: the user's area comes from expo-location (coarse accuracy, 1 km updates, only while the Events tab uses it) plus reverse geocoding for the city name. Coordinates stay on the device and are never uploaded. It has denied, error, and empty states.
+- `features/events/catalog.ts`: events now have `kind` (professional or local) and coordinates. Added 2 professional and 6 local sample events around Atlanta. RSVPs moved to a v2 status map in AsyncStorage; old v1 id lists migrate to "attending". Pure logic lives in `features/events/plan.ts`, with tests in `plan.test.mjs`.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`. In the app: Events tab, mark events, then open My calendar.
+**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real events source (e.g. an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (kind, lat, lng).
+**Known issues / blockers:** Sample events only, all in Atlanta. Outside Atlanta, Near you shows its empty state. Browser preview has no geolocation, so it shows the "Location is off" card.
+**Contract changes:** none
+
 ## 2026-09-26 12:20 | alan | Claude Code (Opus 5)
 **Task:** Chase the Railway-vs-laptop clustering split; make both silent ML fallbacks visible
 **Status:** done — 96 passed, 118 skipped. Clustering split diagnosed as numerical instability, not a broken deploy.
