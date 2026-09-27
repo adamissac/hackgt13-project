@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/AppIcon';
@@ -44,7 +44,9 @@ export default function EventsScreen() {
   try { await eventCatalog.saveRsvps(scope,map);setSaved({scope,map}); }
   catch {setError('Could not save your RSVP. Please try again.');} finally {setBusy(false);}
  };
- const open=(s:Section)=>{setSection(s);if(s==='local')setAreaWanted(true);};
+ const scroller=useRef<ScrollView>(null);
+ // Each section is its own page: switching jumps back to the top so the change is visible immediately.
+ const open=(s:Section)=>{setSection(s);if(s==='local')setAreaWanted(true);scroller.current?.scrollTo({y:0,animated:false});};
 
  const card=(event:NetworkingEvent,km?:number)=><Pressable key={event.id} onPress={()=>{setSelected(event);setError(null);}} accessibilityRole="button" accessibilityLabel={`View ${event.name}`} style={({pressed})=>({opacity:pressed?0.85:1})}>
   <Card>
@@ -68,15 +70,15 @@ export default function EventsScreen() {
  </Pressable>;
 
  return <>
-  <ScrollView style={{backgroundColor:c.background}} contentContainerStyle={styles.container}>
-   <TabHero eyebrow={area.status==='ready'&&area.place?area.place.toUpperCase():'PROFESSIONAL EVENTS'} title={'Make room for\na new connection.'} body="Info sessions, networking, and club meetings for your career."/>
+  <ScrollView ref={scroller} style={{backgroundColor:c.background}} contentContainerStyle={styles.container}>
+   {section!=='calendar'&&<TabHero eyebrow={area.status==='ready'&&area.place?area.place.toUpperCase():'PROFESSIONAL EVENTS'} title={'Make room for\na new connection.'} body="Info sessions, networking, and club meetings for your career."/>}
    <View style={[styles.segments,{backgroundColor:c.surfaceAlt}]} accessibilityRole="tablist">
     {SECTIONS.map(s=><Pressable key={s.id} onPress={()=>open(s.id)} accessibilityRole="tab" accessibilityState={{selected:section===s.id}} style={[styles.segment,section===s.id&&{backgroundColor:c.surface,borderColor:c.border}]}>
      <Text numberOfLines={1} style={{color:section===s.id?c.text:c.muted,fontWeight:'700',fontSize:14}}>{s.label}</Text>
     </Pressable>)}
    </View>
-   <Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>
-   {live.state.status==='ready'&&live.state.data.events.length>0&&<Card>
+   {section!=='calendar'&&<Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>}
+   {section==='all'&&live.state.status==='ready'&&live.state.data.events.length>0&&<Card>
     <Text style={[styles.title,{color:c.text}]}>Live company events</Text>
     <Text style={[styles.body,{color:c.muted}]}>Register or scan a check-in QR. Nearby then shows people at that event.</Text>
     {live.state.data.events.slice(0,6).map(e=><Pressable key={e.id} onPress={()=>router.push({pathname:'/event/[id]',params:{id:String(e.id)}})} accessibilityRole="button" style={{paddingVertical:8}}>

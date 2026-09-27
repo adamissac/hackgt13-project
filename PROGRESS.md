@@ -11,6 +11,16 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Events: My calendar opens as its own page
+**Status:** done
+**What I did:**
+- `mobile/app/(tabs)/events.tsx`: on My calendar, the navy banner, the Handshake note, and the Live company events card are hidden, so the month grid sits directly under the section switcher. Switching sections scrolls back to the top (`scroller.scrollTo`). The Live company events card now only shows on All events.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. In the app: Events, then My calendar; the calendar is visible without scrolling.
+**Next step for whoever continues:** none for this.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR2 / preview of the uploaded resume or LinkedIn PDF
 **Status:** done
 **What I did:**
