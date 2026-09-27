@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useColors } from '@/components/ui';
 
-import { RSVP_OPTIONS, dayKey, monthGrid, shiftMonth, type RsvpMap, type RsvpStatus } from './plan';
+import { RSVP_OPTIONS, dayKey, eventDays, monthGrid, shiftMonth, type RsvpMap, type RsvpStatus } from './plan';
 import type { NetworkingEvent } from './catalog';
 
 const WEEKDAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -19,8 +19,7 @@ export function Calendar({ year, month, onMonth, events, rsvps, selectedDay, onS
     const s = rsvps[e.id];
     if (e.dateless) continue;
     if (s !== 'attending' && s !== 'interested') continue;
-    const k = dayKey(e.startsAt, e.tz);
-    byDay.set(k, [...(byDay.get(k) ?? []), s]);
+    for (const k of eventDays(e.startsAt, e.endsAt, e.tz)) byDay.set(k, [...(byDay.get(k) ?? []), s]);
   }
   const title = new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
 

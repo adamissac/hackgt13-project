@@ -10,6 +10,18 @@
 **Contract changes:** none
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / calendar: events on the right days and sections
+**Status:** done
+**What I did:**
+- New `eventDays(start, end, tz)` in `mobile/features/events/plan.ts` (+test): every day an event covers. Multi-day events (e.g. Veeva Sep 20 - Oct 20) mark each day on the calendar and list under any selected day in range. An end at exactly midnight doesn't spill into the next day.
+- `app/(tabs)/events.tsx` My calendar: the selected day shows "Today ·" when it's today. "Coming up" now only has events that START after today (the all-day Sep 27 demo event was wrongly listed there). A "Today" block appears when another day is selected. Events with no date get a "Date not set yet" section.
+- Browser-checked in demo: Demo test event under "Today · Sunday, September 27" with a dot on the 27th; HackGT 13 (no date) under "Date not set yet".
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
+**Next step for whoever continues:** none for this.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / only registered + scanned attendees meet at an event; all-day Sep 27 demo event
 **Status:** done
 **What I did:**

@@ -43,6 +43,23 @@ export function dayKey(iso: string | Date, tz = TZ): string {
   return d.toLocaleDateString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
+/** Every calendar day (YYYY-MM-DD, event time zone) an event covers, so multi-day events mark each day. An end at
+ * exactly midnight doesn't spill into the next day. Capped at `maxDays`. */
+export function eventDays(startIso: string, endIso?: string, tz = TZ, maxDays = 62): string[] {
+  const first = dayKey(startIso, tz);
+  const endMs = endIso ? Date.parse(endIso) : NaN;
+  const last = Number.isFinite(endMs) && endMs > Date.parse(startIso) ? dayKey(new Date(endMs - 60_000), tz) : first;
+  const out: string[] = [];
+  let d = Date.parse(`${first}T12:00:00Z`);
+  while (out.length < maxDays) {
+    const k = new Date(d).toISOString().slice(0, 10);
+    out.push(k);
+    if (k >= last) break;
+    d += 86_400_000;
+  }
+  return out;
+}
+
 /** Weeks (Sunday first) for a month; days outside it are null. month is 1-12. */
 export function monthGrid(year: number, month: number): (string | null)[][] {
   const first = new Date(Date.UTC(year, month - 1, 1)).getUTCDay();

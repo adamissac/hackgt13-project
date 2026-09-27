@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { dayKey, eventsNear, isPlanned, milesLabel, monthGrid, nextRsvps, parseRsvps, shiftMonth } from './plan.ts';
+import { dayKey, eventDays, eventsNear, isPlanned, milesLabel, monthGrid, nextRsvps, parseRsvps, shiftMonth } from './plan.ts';
 
 test('old RSVP list becomes attending; unknown ids and bad statuses are dropped', () => {
   assert.deepEqual(parseRsvps(['a', 'zzz', 3], ['a', 'b']), { a: 'attending' });
@@ -50,4 +50,14 @@ test('near filter keeps events in radius, closest first', () => {
 test('day keys follow the event city, so a late San Francisco event stays on its local day', () => {
   assert.equal(dayKey('2026-11-05T22:00:00-08:00', 'America/Los_Angeles'), '2026-11-05');
   assert.equal(dayKey('2026-11-05T22:00:00-08:00'), '2026-11-06');
+});
+
+test('event days: all-day event is one day; multi-day spans each day; midnight end stays put', () => {
+  assert.deepEqual(eventDays('2026-09-27T00:00:00-04:00', '2026-09-27T23:59:00-04:00'), ['2026-09-27']);
+  assert.deepEqual(eventDays('2026-09-27T18:00:00-04:00'), ['2026-09-27']);
+  assert.deepEqual(eventDays('2026-09-30T22:00:00-04:00', '2026-10-01T00:00:00-04:00'), ['2026-09-30']);
+  const veeva = eventDays('2026-09-20T00:00:00-04:00', '2026-10-20T23:59:00-04:00');
+  assert.equal(veeva[0], '2026-09-20');
+  assert.equal(veeva.at(-1), '2026-10-20');
+  assert.equal(veeva.length, 31);
 });

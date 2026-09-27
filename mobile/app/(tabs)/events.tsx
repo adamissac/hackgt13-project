@@ -8,7 +8,7 @@ import { ErrorState, Loading } from '@/components/States';
 import { TabHero } from '@/components/TabHero';
 import { Calendar, RsvpPicker } from '@/features/events/Calendar';
 import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, fromLiveEvent, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
-import { RSVP_OPTIONS, dayKey, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
+import { RSVP_OPTIONS, dayKey, eventDays, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
 import { useArea } from '@/features/events/useArea';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -82,9 +82,14 @@ export default function EventsScreen() {
  </Card>;
 
  const planned=events.filter(e=>isPlanned(rsvps[e.id])).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
- const onDay=planned.filter(e=>!e.dateless&&dayKey(e.startsAt,e.tz)===day);
+ // A multi-day event belongs to every day it covers; "Coming up" is only what starts after today (today's and
+ // ongoing events are listed under Today instead). Events without a date yet get their own section.
+ const covers=(e:NetworkingEvent,k:string)=>!e.dateless&&eventDays(e.startsAt,e.endsAt,e.tz).includes(k);
+ const onDay=planned.filter(e=>covers(e,day));
+ const today=planned.filter(e=>covers(e,todayKey));
+ const comingUp=planned.filter(e=>!e.dateless&&dayKey(e.startsAt,e.tz)>todayKey);
+ const undated=planned.filter(e=>e.dateless);
  const isUpcoming=(e:NetworkingEvent)=>e.dateless||dayKey(e.endsAt??e.startsAt,e.tz)>=todayKey;
- const upcoming=planned.filter(isUpcoming);
  const kmTo=(e:NetworkingEvent)=>area.status==='ready'&&hasPlace(e)?eventsNear([e],area.point,Infinity)[0].km:undefined;
  const statusLabel=(e:NetworkingEvent)=>RSVP_OPTIONS.find(o=>o.value===rsvps[e.id])?.label ?? '';
  const planRow=(e:NetworkingEvent)=><Pressable key={e.id} onPress={()=>openEvent(e)} accessibilityRole="button" accessibilityLabel={`${e.name}, ${statusLabel(e)}`} style={[styles.planRow,{borderColor:c.border,backgroundColor:c.surface}]}>
@@ -107,14 +112,22 @@ export default function EventsScreen() {
 
    {catalog.state.status==='ready'&&section==='calendar'&&<>
     <Calendar year={month.year} month={month.month} onMonth={setMonth} events={events} rsvps={rsvps} selectedDay={day} onSelectDay={setDay}/>
-    <Text style={[styles.title,{color:c.text}]}>{new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'})}</Text>
+    <Text style={[styles.title,{color:c.text}]}>{day===todayKey?'Today · ':''}{new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',timeZone:'UTC'})}</Text>
     {onDay.length?onDay.map(planRow):<Text style={[styles.body,{color:c.muted}]}>Nothing planned this day.</Text>}
+    {day!==todayKey&&today.length>0&&<>
+     <Text style={[styles.title,{color:c.text,marginTop:6}]}>Today</Text>
+     {today.map(planRow)}
+    </>}
     <Text style={[styles.title,{color:c.text,marginTop:6}]}>Coming up</Text>
-    {upcoming.length?upcoming.map(planRow):<Card>
+    {comingUp.length?comingUp.map(planRow):planned.length?<Text style={[styles.body,{color:c.muted}]}>Nothing else planned after today.</Text>:<Card>
      <Text style={[styles.body,{color:c.text,fontWeight:'700'}]}>Your calendar is open</Text>
      <Text style={[styles.body,{color:c.muted}]}>Mark events as Attending or Interested and they’ll show up here.</Text>
      <View style={styles.row}><Button label="Events near you" variant="secondary" onPress={()=>open('local')}/><Button label="All events" variant="ghost" onPress={()=>open('all')}/></View>
     </Card>}
+    {undated.length>0&&<>
+     <Text style={[styles.title,{color:c.text,marginTop:6}]}>Date not set yet</Text>
+     {undated.map(planRow)}
+    </>}
    </>}
 
    {catalog.state.status==='ready'&&section==='local'&&<>
