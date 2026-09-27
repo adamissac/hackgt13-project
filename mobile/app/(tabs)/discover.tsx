@@ -1,3 +1,4 @@
+import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
@@ -10,6 +11,7 @@ import { listChats } from '@/features/chat/store';
 import { NearbySection, VerifyLinks } from '@/features/nearby/NearbySection';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
+import { useAuth } from '@/lib/auth';
 import { useEventSession } from '@/lib/eventSession';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
@@ -17,11 +19,14 @@ import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 const BAND = { immediate: 'Very close', near: 'Nearby', far: 'Farther away' } as const;
 
-// Home: the core loop at a glance. 1) Open to Meet + scan who's nearby, 2) the one thing to do next, 3) best matches.
+// Home: the core loop at a glance. 1) a greeting, 2) one "Meet people here" card with the two
+// separate choices (look around = Bluetooth scan; be findable = Open to Meet), 3) the one thing to do
+// next, 4) best matches.
 export default function HomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
   const presence = useOpenToMeet();
+  const [scan, setScan] = useState(false);
   const eventId = useCurrentEventId();
   const eventSession = useEventSession(); // inside a company event, Home shows only its attendees
   const matches = useAsync(() => api.matches(eventId), [eventId], ['relationships', 'profile']);
@@ -52,18 +57,15 @@ export default function HomeScreen() {
       contentContainerStyle={[styles.container, { paddingTop: insets.top + 8 }]}
       refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}>
       <View style={styles.header}>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.eyebrow, { color: c.tint }]}>{eventSession ? eventSession.name : 'HackGT 13'}</Text>
-          <Text style={[styles.title, { color: c.text }]}>Find your people.</Text>
-        </View>
+        <Greeting eyebrow={eventSession ? eventSession.name : 'HackGT 13'} />
         <HeaderActions />
       </View>
 
       <FinishProfileBanner />
 
-      <OpenToMeetCard presence={presence} />
+      <MeetCard presence={presence} scan={scan} onScan={setScan} />
 
-      <NearbySection />
+      <NearbySection scan={scan} onScan={setScan} />
 
       <UpNext state={next.state} onRetry={next.reload} />
 
@@ -118,15 +120,71 @@ function FinishProfileBanner() {
   );
 }
 
-function OpenToMeetCard({ presence }: { presence: ReturnType<typeof useOpenToMeet> }) {
+function greetingFor(hour: number) {
+  return hour < 5 ? 'Hey' : hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+}
+
+/** "Good evening, Akshar": the name from your profile, else from sign-in, else just the greeting. */
+function Greeting({ eyebrow }: { eyebrow: string }) {
+  const c = useColors();
+  const { session } = useAuth();
+  const accounts = useAsync(() => api.accounts(), [], ['profile']);
+  const full =
+    (accounts.state.status === 'ready' ? accounts.state.data.profile.name : null) ||
+    (session?.user.user_metadata?.name as string | undefined) ||
+    (session?.user.user_metadata?.full_name as string | undefined);
+  const first = firstName(full, '');
+  const name = /^you$/i.test(first) ? '' : first; // the demo profile is literally named "You"
+
+  const hello = greetingFor(new Date().getHours());
+  return (
+    <View style={{ flex: 1, gap: 2 }}>
+      <Text style={[styles.eyebrow, { color: c.tint }]} numberOfLines={1}>{eyebrow}</Text>
+      <Text style={[styles.title, { color: c.text }]} numberOfLines={2}>
+        {name ? `${hello}, ${name}` : 'Welcome back'}
+      </Text>
+    </View>
+  );
+}
+
+/** The two ways to meet people, as two plain questions in one card. Each works on its own. */
+function MeetCard({ presence, scan, onScan }: { presence: ReturnType<typeof useOpenToMeet>; scan: boolean; onScan: (on: boolean) => void }) {
   const c = useColors();
   const on = presence.on;
   return (
     <View style={[styles.hero, { backgroundColor: c.surface, borderColor: c.border }]}>
-      <View style={styles.heroRow}>
-        <View style={{ flex: 1, gap: 4 }}>
-          <Text style={[styles.heroLabel, { color: c.muted }]}>{on ? 'AVAILABLE' : 'PAUSED'}</Text>
-          <Text style={[styles.heroTitle, { color: c.text }]}>Open to meet</Text>
+      <Text style={[styles.heroTitle, { color: c.text }]}>Meet people here</Text>
+
+      <View style={styles.meetRow}>
+        <RowIcon name={{ ios: 'dot.radiowaves.left.and.right', android: 'radar', web: 'radar' }} active={scan} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[styles.rowTitle, { color: c.text }]}>See who’s nearby</Text>
+          <Text style={[styles.small, { color: c.muted }]}>
+            {scan ? 'Scanning. Your matches nearby appear below.' : 'Find your matches close by with Bluetooth.'}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => onScan(!scan)}
+          accessibilityRole="button"
+          accessibilityLabel={scan ? 'Stop scanning' : 'Scan for people nearby'}
+          style={({ pressed }) => [
+            styles.pill,
+            { backgroundColor: scan ? c.surfaceAlt : c.tint },
+            pressed && { opacity: 0.8 },
+          ]}>
+          <Text style={[styles.pillText, { color: scan ? c.text : '#FFFFFF' }]}>{scan ? 'Stop' : 'Scan'}</Text>
+        </Pressable>
+      </View>
+
+      <View style={[styles.divider, { backgroundColor: c.border }]} />
+
+      <View style={styles.meetRow}>
+        <RowIcon name={{ ios: 'hand.wave', android: 'waving_hand', web: 'waving_hand' }} active={on} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[styles.rowTitle, { color: c.text }]}>Let people find you</Text>
+          <Text style={[styles.small, { color: on ? c.tint : c.muted }]}>
+            {on ? 'You’re open to meet. Your exact location stays private.' : 'Turn on so your matches here can suggest meeting you.'}
+          </Text>
         </View>
         <Switch
           value={on}
@@ -136,12 +194,16 @@ function OpenToMeetCard({ presence }: { presence: ReturnType<typeof useOpenToMee
           accessibilityLabel="Open to Meet"
         />
       </View>
-      <Text style={[styles.body, { color: c.muted }]}>
-        {on
-          ? 'Available for nearby introductions. Your exact location stays private.'
-          : 'Turn on when you’re ready for nearby introductions.'}
-      </Text>
       {presence.error && <Text style={[styles.small, { color: c.danger }]}>{presence.error}</Text>}
+    </View>
+  );
+}
+
+function RowIcon({ name, active }: { name: SymbolViewProps['name']; active: boolean }) {
+  const c = useColors();
+  return (
+    <View style={[styles.rowIcon, { backgroundColor: active ? c.tint : c.tintSoft }]}>
+      <SymbolView name={name} tintColor={active ? '#FFFFFF' : c.tint} size={20} />
     </View>
   );
 }
@@ -299,14 +361,18 @@ const styles = StyleSheet.create({
   container: { padding: 20, gap: 16, paddingBottom: 110, width: '100%', maxWidth: 640, alignSelf: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12 },
   eyebrow: { fontSize: 13, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase' },
-  title: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5, marginTop: 2 },
+  title: { fontSize: 26, fontWeight: '800', letterSpacing: -0.6 },
   bell: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   badge: { position: 'absolute', top: -2, right: -2, minWidth: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '800' },
   hero: { borderRadius: 18, borderWidth: 1, padding: 18, gap: 12 },
-  heroRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  heroLabel: { fontSize: 13, fontWeight: '800', letterSpacing: 1 },
-  heroTitle: { fontSize: 22, fontWeight: '600', letterSpacing: -0.5 },
+  heroTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.4 },
+  meetRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 56 },
+  rowIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  rowTitle: { fontSize: 16, fontWeight: '700' },
+  pill: { minWidth: 72, minHeight: 40, borderRadius: 20, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center' },
+  pillText: { fontSize: 15, fontWeight: '800' },
+  divider: { height: StyleSheet.hairlineWidth },
   heroButton: { minHeight: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },

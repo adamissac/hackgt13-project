@@ -4,7 +4,6 @@ import { Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
-import Svg, { Circle } from 'react-native-svg';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
@@ -15,11 +14,10 @@ import { useLiveRefresh } from '@/lib/useLiveRefresh';
 
 // Nearby (MASTER_SPEC 3.4), as a section of Home (Home and Nearby were two tabs doing one job).
 // Bluetooth decides eligibility; this browse map never reveals a match's actual position.
-// Mutual temporary meetup sharing is handled on /meetup/[id]. The map only shows while scanning,
-// so Home stays short until you ask for it.
-export function NearbySection() {
+// Mutual temporary meetup sharing is handled on /meetup/[id]. Home owns the scan switch (its
+// "Meet people here" card); this renders the results, and only while scanning so Home stays short.
+export function NearbySection({ scan, onScan }: { scan: boolean; onScan: (on: boolean) => void }) {
   const c = useColors();
-  const [scan, setScan] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const destination = useRef<Href | null>(null);
@@ -55,24 +53,6 @@ export function NearbySection() {
 
   return (
     <>
-      <View style={styles.scanRow}>
-        <Pressable onPress={() => setScan(!scan)} accessibilityRole="switch" accessibilityState={{ checked: scan }} accessibilityLabel="Scan for people nearby" style={styles.scanWrap}>
-          <Svg width={132} height={132} style={StyleSheet.absoluteFill} pointerEvents="none">
-            {[64, 52].map((r, i) => (
-              <Circle key={r} cx={66} cy={66} r={r} stroke={c.tint} strokeOpacity={scan ? 0.35 - i * 0.12 : 0.14} strokeWidth={1.5} fill="none" />
-            ))}
-          </Svg>
-          <View style={[styles.scanButton, { backgroundColor: scan ? c.tint : c.surface, borderColor: c.tint }]}>
-            <Text style={{ color: scan ? '#FFFFFF' : c.tint, fontSize: 15, fontWeight: '800' }}>{scan ? 'ON' : 'SCAN'}</Text>
-          </View>
-        </Pressable>
-        <View style={{ flex: 1, gap: 6 }}>
-          <Text style={[styles.radarTitle, { color: c.text }]}>Find your matches <Text style={{ color: c.tint }}>nearby</Text></Text>
-          <Text style={[styles.small, { color: c.muted }]}>
-            {scan ? 'Scanning with Bluetooth. Only your matches show up. Tap to stop.' : 'Tap scan to see which of your matches are close by.'}
-          </Text>
-        </View>
-      </View>
       {scan && (
         <>
           <SectionTitle right={<Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} />}>Around you</SectionTitle>
@@ -91,7 +71,7 @@ export function NearbySection() {
           <Button label="Scan event QR code" onPress={() => router.push('/join-event')} />
         </Card>
       ) : fetchError && !radioError ? (
-        <ErrorState message={fetchError} onRetry={() => setScan(true)} />
+        <ErrorState message={fetchError} onRetry={() => onScan(true)} />
       ) : scan ? (
         <>
           {radioNote ? (
@@ -208,10 +188,6 @@ export function VerifyLinks() {
 }
 
 const styles = StyleSheet.create({
-  scanRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  scanWrap: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
-  scanButton: { width: 84, height: 84, borderRadius: 42, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  radarTitle: { fontSize: 24, lineHeight: 29, fontWeight: '800', letterSpacing: -0.6 },
   toggleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   h1: { fontSize: 18, fontWeight: '800' },
   h2: { fontSize: 18, fontWeight: '800' },

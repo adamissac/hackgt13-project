@@ -1,5 +1,17 @@
 
 
+## 2026-09-27 03:55 | akshar | Claude Code (Opus 5.5)
+**Task:** AK1/Home polish: simpler Home screen (greeting + one "Meet people here" card)
+**Status:** done
+**What I did:**
+- Home header is now a greeting: "Good evening, <first name>" (profile name, else sign-in name, else "Welcome back"); event name stays as the eyebrow.
+- Replaced the separate "Open to meet" card and the big SCAN radar ("Find your matches nearby") with one "Meet people here" card holding two plain rows: "See who's nearby" (Scan/Stop button, Bluetooth) and "Let people find you" (Open to Meet switch). They were two unrelated controls that read like duplicates.
+- `NearbySection` is now controlled (`scan`, `onScan` props) and only renders results (map, people, selected card); Home owns the scan state.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo start --web`, "Try the demo", Skip, tap Scan on Home.
+**Next step for whoever continues:** check the new card in light mode on a phone; if "See who's nearby" wraps on small iPhones, shorten the copy in `MeetCard` in `mobile/app/(tabs)/discover.tsx`.
+**Known issues / blockers:** none new. The web preview's map area is blank (map is native-only), same as before.
+**Contract changes:** none
+
 ## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / "inside an event" mode: auto Event Mode after scanning, app limited to attendees, Leave event (confirmed)
 **Status:** done
