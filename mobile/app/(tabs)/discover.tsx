@@ -7,6 +7,7 @@ import { HeaderActions } from '@/components/HeaderActions';
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, firstName, SectionTitle, useColors } from '@/components/ui';
 import { listChats } from '@/features/chat/store';
+import { NearbySection, VerifyLinks } from '@/features/nearby/NearbySection';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
@@ -14,7 +15,7 @@ import { useAsync } from '@/lib/useAsync';
 
 const BAND = { immediate: 'Very close', near: 'Nearby', far: 'Farther away' } as const;
 
-// Home: the core loop at a glance. 1) Open to Meet, 2) the one thing to do next, 3) best matches.
+// Home: the core loop at a glance. 1) Open to Meet + scan who's nearby, 2) the one thing to do next, 3) best matches.
 export default function HomeScreen() {
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -56,6 +57,8 @@ export default function HomeScreen() {
 
       <OpenToMeetCard presence={presence} />
 
+      <NearbySection />
+
       <UpNext state={next.state} onRetry={next.reload} />
 
       <SectionTitle right={<AiBadge label="AI ranked" />}>Your best matches</SectionTitle>
@@ -73,12 +76,10 @@ export default function HomeScreen() {
             {matches.state.data.matches.slice(0, 3).map((m, i) => (
               <MatchRow key={m.user_id} match={m} divider={i > 0} />
             ))}
-            <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.more, { borderTopColor: c.border }]}>
-              <Text style={{ color: c.tint, fontWeight: '700', fontSize: 15 }}>See everyone nearby →</Text>
-            </Pressable>
           </Card>
         ))}
 
+      <VerifyLinks />
     </ScrollView>
   );
 }
@@ -135,11 +136,6 @@ function OpenToMeetCard({ presence }: { presence: ReturnType<typeof useOpenToMee
           : 'Turn on when you’re ready for nearby introductions.'}
       </Text>
       {presence.error && <Text style={[styles.small, { color: c.danger }]}>{presence.error}</Text>}
-      {on && (
-        <Pressable onPress={() => router.push('/nearby')} accessibilityRole="button" style={[styles.heroButton, { backgroundColor: c.surfaceAlt }]}>
-          <Text style={{ color: c.tint, fontWeight: '800', fontSize: 16 }}>Find people nearby</Text>
-        </Pressable>
-      )}
     </View>
   );
 }

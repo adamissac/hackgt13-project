@@ -63,7 +63,7 @@ export default function TabLayout() {
   <Tabs.Screen name="index" options={{title:'Home', headerShown:false, tabBarIcon:icon({ios:'house.fill',android:'home',web:'home'})}}/>
   <Tabs.Screen name="feed" options={{title:'Feed', headerTitle:()=> <Brand/>, tabBarIcon:icon({ios:'newspaper',android:'dynamic_feed',web:'dynamic_feed'})}}/>
   <Tabs.Screen name="graph" options={{title:'Constellation',tabBarLabelStyle:{fontSize:10,fontWeight:'700',marginTop:3},tabBarIcon:icon({ios:'point.3.connected.trianglepath.dotted',android:'hub',web:'hub'})}}/>
-  <Tabs.Screen name="nearby" options={{title:'Nearby',tabBarIcon:icon({ios:'dot.radiowaves.left.and.right',android:'wifi_tethering',web:'wifi_tethering'})}}/>
+  <Tabs.Screen name="nearby" options={{href:null,title:'Nearby'}}/>
   <Tabs.Screen name="events" options={{title:'Events',tabBarIcon:icon({ios:'calendar',android:'event',web:'event'})}}/>
   <Tabs.Screen name="me" options={{title:'Profile',tabBarIcon:icon({ios:'person.crop.circle',android:'account_circle',web:'account_circle'})}}/>
   <Tabs.Screen name="discover" options={{href:null,title:'Meeting activity',headerShown:false}}/>
