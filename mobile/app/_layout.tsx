@@ -9,6 +9,7 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
+import { loadAppearance } from '@/lib/appearance';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/lib/useOnboarding';
 import { useOrg } from '@/lib/useOrg';
@@ -41,16 +42,27 @@ export default function RootLayout() {
     }
   }, [loaded]);
 
+  // Read the saved light/dark choice once. Until it resolves we follow the phone setting, so the
+  // splash screen is still up for most of it.
+  useEffect(() => {
+    loadAppearance();
+  }, []);
+
   if (!loaded) {
     return null;
   }
 
   return (
     <AuthProvider>
-      <StatusBar style="dark" />
+      <ThemedStatusBar />
       <RootLayoutNav />
     </AuthProvider>
   );
+}
+
+/** Status bar glyphs invert with the theme; a "dark" bar is invisible on a dark background. */
+function ThemedStatusBar() {
+  return <StatusBar style={useColorScheme() === 'dark' ? 'light' : 'dark'} />;
 }
 
 function RootLayoutNav() {
