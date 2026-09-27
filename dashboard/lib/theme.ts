@@ -85,6 +85,70 @@ export const FACET_GLYPH: Record<Facet, string> = {
   academic: "▲",
 };
 
+/* ------------------------------------------------------------------ theme choice
+ * Three states, not two: the CSS was written with `:root:not([data-theme="light"])` inside the
+ * prefers-color-scheme block, which only makes sense if an explicit light choice can override a
+ * dark system. A two-way toggle would strand people off "follow system" permanently.
+ *
+ * "system" is stored as the absence of data-theme, so CSS needs no fourth case.
+ */
+export type Theme = "light" | "dark" | "system";
+
+export const THEME_KEY = "fc.theme";
+
+export function readTheme(): Theme {
+  try {
+    const v = localStorage.getItem(THEME_KEY);
+    return v === "light" || v === "dark" ? v : "system";
+  } catch {
+    return "system";            // Safari private mode throws on localStorage
+  }
+}
+
+const themeListeners = new Set<() => void>();
+
+export function applyTheme(t: Theme): void {
+  const root = document.documentElement;
+  if (t === "system") delete root.dataset.theme;
+  else root.dataset.theme = t;
+  try {
+    if (t === "system") localStorage.removeItem(THEME_KEY);
+    else localStorage.setItem(THEME_KEY, t);
+  } catch {
+    /* choice still applies for this page; it just will not persist */
+  }
+  themeListeners.forEach((l) => l());
+}
+
+function subscribeTheme(cb: () => void) {
+  themeListeners.add(cb);
+  window.addEventListener("storage", cb);   // another tab changed it
+  return () => {
+    themeListeners.delete(cb);
+    window.removeEventListener("storage", cb);
+  };
+}
+
+/**
+ * The chosen theme, and a setter. useSyncExternalStore rather than useState+useEffect: the source
+ * of truth is localStorage, which is external to React, and reading it in an effect trips
+ * react-hooks/set-state-in-effect. The server snapshot is "system" because localStorage does not
+ * exist there; the inline head script has already applied the real colors, so only this button's
+ * icon settles at hydration.
+ */
+export function useTheme(): [Theme, (t: Theme) => void] {
+  const theme = useSyncExternalStore(subscribeTheme, readTheme, () => "system" as Theme);
+  return [theme, applyTheme];
+}
+
+/**
+ * Runs synchronously in <head>, before first paint, so a dark-mode user never sees a white flash.
+ * Inlined as a string because a bundled module would load too late. Kept tiny and total-failure
+ * safe: if anything throws we simply fall through to the prefers-color-scheme default.
+ */
+export const THEME_INIT_SCRIPT = `try{var t=localStorage.getItem(${JSON.stringify(THEME_KEY)});`
+  + `if(t==="light"||t==="dark")document.documentElement.dataset.theme=t}catch(e){}`;
+
 function currentDark(): boolean {
   const t = document.documentElement.dataset.theme;
   if (t === "dark") return true;

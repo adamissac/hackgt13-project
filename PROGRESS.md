@@ -23,6 +23,21 @@
 **Known issues / blockers:** The "said yes, waiting" memory for real suggestions is per app session (server never reveals the other side).
 **Contract changes:** `docs/api.md` 18a `POST /suggestions/demo` (new, demo attendees only) + `docs/mocks/suggestions_demo.json`; 29: GitHub items are one "working on" brief per person. `.env.example`: `ASSISTANT_EFFORT`. No schema change (demo requests are marked `suggestions.building_id = 'demo-request'`).
 
+## 2026-09-27 10:05 | alan | Claude Code (Opus 5)
+**Task:** Dark mode toggle for the dashboard — **edits in Arjun's folder**
+**Status:** done — typecheck, lint, 11 tests, build all pass; verified in a browser in both themes
+**What I did:**
+- Found most of it already built: `globals.css` already had `:root` variables, a `prefers-color-scheme` block, and a `:root[data-theme="dark"]` override, and `lib/theme.ts` already bridged the CSS theme to the canvas palette with a `MutationObserver` on `data-theme`. **Nothing set `data-theme`** — the system had no switch. So this was wiring, not a refactor.
+- **Three states, not two** (`system -> light -> dark -> system`). The existing CSS used `:root:not([data-theme="light"])` inside the media query, which only makes sense if an explicit light choice can beat a dark system — the original author clearly intended three. A two-way toggle would strand people off "follow system" permanently. "system" is stored as the *absence* of `data-theme`, so the CSS needed no fourth case.
+- **No flash of the wrong theme:** an inline script in `<head>` (`THEME_INIT_SCRIPT`) applies the stored choice synchronously before first paint. Verified with the system set to dark and the stored choice light: on load `data-theme="light"` is already present and the body paints light. A bundled module would run too late.
+- `useTheme()` uses `useSyncExternalStore`, not `useState` + `useEffect`. localStorage is external to React, and reading it in an effect trips `react-hooks/set-state-in-effect` (it did — that is how I caught it). Bonus: subscribing to the `storage` event gives cross-tab sync for free.
+- **The only genuinely hardcoded colors were two shadows** (`rgba(0,0,0,.15)` and `rgba(0,0,0,.25)`), which read as mud on a dark background. Added `--shadow` to all three theme blocks and replaced them. Everything else was already variable-driven.
+- Toggle lives in the root layout, fixed bottom-right: the four pages use four different header classes (`.topbar`, `.map-head`, `.page-head`, …) so there is no shared nav, and bottom-right avoids both the existing top-right controls and the status bar in the app's WebView.
+**How to run/test it:** `cd dashboard && npm run typecheck && npm run lint && npm test && npm run build`. Visually: `npm --prefix dashboard run dev -- --port 3100`, click the sun/moon bottom-right; reload to confirm the choice survives.
+**Next step for whoever continues:** The mobile app embeds these pages in a WebView and has its own theme. Worth deciding whether the in-WebView toggle should be hidden so it cannot disagree with the app's own appearance — one CSS rule if so.
+**Known issues / blockers:** `dashboard/` is Arjun's folder (`app/globals.css`, `app/layout.tsx`, `lib/theme.ts`, new `components/ThemeToggle.tsx`) — Arjun, revert freely. `usePalette()`'s server snapshot returns dark unconditionally (pre-existing); harmless today because the graph is client-only, but it would mismatch if that ever server-renders.
+**Contract changes:** none
+
 ## 2026-09-27 01:17 | adam | coding agent
 **Task:** AD11 + AR8 feed: GitHub updates say what they actually built
 **Status:** done
