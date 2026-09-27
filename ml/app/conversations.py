@@ -84,9 +84,14 @@ def submit_feedback(conversation_id: int, viewer: str, talked_about: list[int], 
         c = conn.execute("select id, user_a::text as user_a, user_b::text as user_b from conversations "
                          "where id = %s for update", (conversation_id,)).fetchone()
         other = c["user_b"] if c["user_a"] == viewer else c["user_a"]
+        # Your latest answer counts: re-verifying the same person within the dedupe window reuses this
+        # conversation, and a first "no" (or an abandoned attempt) must not silently swallow a later "yes".
+        # Changing your own answer never signals anything to the other person.
         conn.execute(
             "insert into feedback (conversation_id, rater_id, talked_about, other_topic, wants_connect) "
-            "values (%s, %s, %s, %s, %s) on conflict (conversation_id, rater_id) do nothing",
+            "values (%s, %s, %s, %s, %s) on conflict (conversation_id, rater_id) do update set "
+            "talked_about = excluded.talked_about, other_topic = excluded.other_topic, "
+            "wants_connect = excluded.wants_connect",
             (conversation_id, viewer, talked_about, other_topic, wants_connect))
         mine = conn.execute("select wants_connect from feedback where conversation_id = %s and rater_id = %s",
                             (conversation_id, viewer)).fetchone()
@@ -94,14 +99,16 @@ def submit_feedback(conversation_id: int, viewer: str, talked_about: list[int], 
                               (conversation_id, other)).fetchone()
         if not mine["wants_connect"]:
             return {"status": "no_connection"}
-        if theirs and theirs["wants_connect"]:
-            lo, hi = sorted([viewer, other])
-            conn.execute("insert into connections (user_a, user_b, how_met, conversation_id) values (%s, %s, 'in_person', %s) "
-                         "on conflict (user_a, user_b) do nothing", (lo, hi, conversation_id))
+        lo, hi = sorted([viewer, other])
+        already = conn.execute("select 1 as ok from connections where user_a = %s and user_b = %s", (lo, hi)).fetchone()
+        if (theirs and theirs["wants_connect"]) or already:
+            new = conn.execute("insert into connections (user_a, user_b, how_met, conversation_id) values (%s, %s, 'in_person', %s) "
+                               "on conflict (user_a, user_b) do nothing returning user_a", (lo, hi, conversation_id)).fetchone()
             chat_id = social.ensure_chat(conn, lo, hi, "connection")
-            for u, o in ((lo, hi), (hi, lo)):
-                social.notify(conn, u, "connected", {"conversation_id": conversation_id, "other_user_id": o,
-                                                    "chat_id": chat_id})
+            if new:  # notify once, not every time two existing connections re-verify
+                for u, o in ((lo, hi), (hi, lo)):
+                    social.notify(conn, u, "connected", {"conversation_id": conversation_id, "other_user_id": o,
+                                                        "chat_id": chat_id})
             name = conn.execute("select name from profiles where id = %s", (other,)).fetchone()["name"]
             return {"status": "connected", "connection": {"user_id": other, "name": name}, "chat_id": chat_id}
     return {"status": "waiting"}

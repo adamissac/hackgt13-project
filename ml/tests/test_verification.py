@@ -128,6 +128,40 @@ def test_mutual_yes_connects(dbclient, db, pair):
     assert dbclient.get("/conversations/pending", headers=auth(a)).json() == {"conversations": []}
 
 
+def test_latest_answer_counts_when_the_same_pair_reverifies(dbclient, db, pair):
+    """Re-tapping within the dedupe window reuses the conversation: an earlier "no" must not swallow a later "yes"."""
+    ev, a, b = pair
+    cid = scan(dbclient, a, b).json()["conversation_id"]
+    assert fb(dbclient, cid, a, False) == {"status": "no_connection"}
+    assert scan(dbclient, b, a).json()["conversation_id"] == cid              # same conversation, reused
+    assert fb(dbclient, cid, b, True) == {"status": "waiting"}              # still silent about a's earlier no
+    out = fb(dbclient, cid, a, True)                                         # a changes their mind
+    assert out["status"] == "connected" and out["connection"]["user_id"] == b
+    assert db.fetchone("select count(*) n from connections")["n"] == 1
+
+
+def test_both_must_say_yes_even_if_someone_changes_to_no(dbclient, db, pair):
+    """Only a mutual yes connects: a yes that is later changed to no never connects, whatever the other says."""
+    ev, a, b = pair
+    cid = scan(dbclient, a, b).json()["conversation_id"]
+    assert fb(dbclient, cid, a, True) == {"status": "waiting"}
+    assert fb(dbclient, cid, a, False) == {"status": "no_connection"}       # a changes their mind
+    assert fb(dbclient, cid, b, True) == {"status": "waiting"}              # b is never told, and not connected
+    assert db.fetchone("select count(*) n from connections")["n"] == 0
+    assert db.fetchone("select count(*) n from notifications where kind = 'connected'")["n"] == 0
+    assert dbclient.get("/connections", headers=auth(b)).json() == {"connections": []}
+
+
+def test_already_connected_pair_sees_connected_and_is_notified_once(dbclient, db, pair):
+    ev, a, b = pair
+    cid = scan(dbclient, a, b).json()["conversation_id"]
+    fb(dbclient, cid, a, True)
+    assert fb(dbclient, cid, b, True)["status"] == "connected"
+    # Tapping again (same conversation) and saying yes shows "connected", not "nothing was sent".
+    assert fb(dbclient, cid, a, True)["status"] == "connected"
+    assert db.fetchone("select count(*) n from notifications where kind = 'connected'")["n"] == 2   # one each, once
+
+
 def test_connections_are_private(dbclient, db, pair):
     ev, a, b = pair
     cid = scan(dbclient, a, b).json()["conversation_id"]
