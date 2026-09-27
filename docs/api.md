@@ -328,12 +328,29 @@ An author with 3+ items in 24 h appears as one `summary` entry instead.
 { "items": [
     { "type": "item", "item_id": 5, "author": { "user_id": "uuid", "name": "Sam Lee", "photo_url": null },
       "kind": "post", "title": null, "body": "Wrote up my robotics notes", "url": null,
-      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.61, "talked_about": ["robotics"] },
+      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.61, "talked_about": ["robotics"], "details": null },
+    { "type": "item", "item_id": 11, "author": { "user_id": "uuid", "name": "Daniel Kim", "photo_url": null },
+      "kind": "github", "title": "started working on lob-alpha", "body": "Short-horizon price prediction from order book data",
+      "url": "https://github.com/dkim-quant/lob-alpha", "created_at": "2026-09-26T16:20:00+00:00", "score": 0.66,
+      "talked_about": [],
+      "details": { "summary": "Daniel started lob-alpha, a model that predicts the next few seconds of price movement from limit order book snapshots.",
+                   "highlights": ["Small LSTM over order book imbalance and spread features",
+                                  "Walk-forward backtest that charges fees and slippage"],
+                   "ask": "How are you keeping the backtest from seeing future order book data?",
+                   "stack": ["Python", "C++", "PyTorch"], "ai": true } },
     { "type": "summary", "author": { "user_id": "uuid", "name": "Priya S.", "photo_url": null },
       "summary": "Priya launched a new app and is hiring a frontend intern.", "item_ids": [7, 8, 9],
-      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.55 } ],
+      "created_at": "2026-09-26T15:04:05+00:00", "score": 0.55,
+      "items": [ { "type": "item", "item_id": 9, "...": "same shape as a feed item" } ] } ],
   "next_cursor": "MjA=" }
 ```
+`details` (additive) is a brief on a GitHub item, written from the repo's public data only (description, topics,
+languages, frameworks from manifests, recent commit messages, release notes, README) and never from private repos
+or forks: `summary` (1-2 sentences on what they built), `highlights` (up to 4 concrete bullets), `ask` (a question
+to ask them next time), `stack` (up to 6 chips), `ai` (false when the facts-only template wrote it because the model
+was unavailable or not grounded). It is `null` for posts, updates, and GitHub items not briefed yet: the AR8 poller
+briefs new items within ~10 minutes and rewrites a brief when the repo gets new pushes. `items` (additive) on a
+`summary` entry lists the collapsed items, newest first, in the feed-item shape, so the app can expand them.
 
 ## 30. POST /feed/posts
 Request `{ "kind": "post" | "update", "body": "Started a new role at ...", "title": null, "url": null }`

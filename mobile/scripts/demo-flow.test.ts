@@ -6,6 +6,8 @@ import { demoAssistantReply } from '../lib/demo/assistant';
 import * as demo from '../lib/demo/backend';
 import { DEMO_PEOPLE } from '../lib/demo/people';
 import { buildView, whySentence } from '../features/graph/model';
+import type { FeedResponse } from '../lib/api';
+import feedMock from '../../docs/mocks/feed.json';
 
 demo.timing.reactionMs = 0;
 demo.timing.replyMs = 0;
@@ -165,6 +167,20 @@ step('Graph: explanations survive the view model; legacy graphs still work', () 
   assert.equal(whySentence(person), edge.explanation.summary);
   assert.equal(person.explanation?.basis, 'v1_proxy');
   assert.equal(person.explanation?.factors[0].share, 0.5);
+});
+
+step('Feed: GitHub updates say what they built and what to ask; bursts expand', () => {
+  const feed = feedMock as FeedResponse;
+  const github = feed.items.find((e) => e.type === 'item' && e.kind === 'github');
+  assert.ok(github && github.type === 'item' && github.details);
+  assert.ok(github.details.summary.length > 40 && github.details.highlights.length >= 2 && github.details.ask);
+  assert.ok(DEMO_PEOPLE.some((p) => p.user_id === github.author.user_id));
+  const burst = feed.items.find((e) => e.type === 'summary');
+  assert.ok(burst && burst.type === 'summary' && burst.items);
+  assert.deepEqual(burst.items.map((i) => i.item_id).sort(), [...burst.item_ids].sort());
+  assert.ok(burst.items.every((i) => i.details && i.details.ask));
+  const post = feed.items.find((e) => e.type === 'item' && e.kind === 'post');
+  assert.ok(post && post.type === 'item' && post.details === null);
 });
 
 console.log(`\n${passed} demo-flow checks passed`);

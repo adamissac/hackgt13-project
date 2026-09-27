@@ -76,7 +76,9 @@ TOOLS = [
      "input_schema": {"type": "object", "additionalProperties": False, "required": ["user_id"],
                       "properties": {"user_id": {"type": "string"}}}},
     {"name": "get_connections_activity",
-     "description": "Recent feed items (GitHub activity, posts, updates) from the user's own connections.",
+     "description": "Recent feed items (GitHub activity, posts, updates) from the user's own connections. "
+                    "GitHub items may carry a brief: what the project is and what they built, useful for "
+                    "catching up before meeting them.",
      "strict": True,
      "input_schema": {"type": "object", "additionalProperties": False, "required": ["days"],
                       "properties": {"days": {"type": "integer", "description": "1 to 14"}}}},
@@ -160,9 +162,13 @@ class Tools:
     def get_connections_activity(self, days: int) -> dict:
         days = max(1, min(14, int(days)))
         rows = feed.visible_items(self.viewer, days=days, include_own=False)[:30]
-        return {"days": days, "items": [{"author": (r["name"] or "").split(" ")[0], "kind": r["kind"],
-                                         "title": r["title"], "body": (r["body"] or "")[:400],
-                                         "date": r["created_at"].date().isoformat()} for r in rows]}
+        items = []
+        for r in rows:
+            d = feed.details_of(r)
+            items.append({"author": (r["name"] or "").split(" ")[0], "kind": r["kind"], "title": r["title"],
+                          "body": (r["body"] or "")[:400], "date": r["created_at"].date().isoformat(),
+                          **({"brief": " ".join([d["summary"], *d["highlights"]])[:600]} if d else {})})
+        return {"days": days, "items": items}
 
     def get_my_profile(self) -> dict:
         p = profile_store.get_interests(self.viewer)

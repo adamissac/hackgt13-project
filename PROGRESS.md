@@ -1,3 +1,17 @@
+## 2026-09-27 01:17 | adam | coding agent
+**Task:** AD11 + AR8 feed: GitHub updates say what they actually built
+**Status:** done
+**What I did:**
+- Every GitHub feed item gets a brief in `payload.details`: 1-2 sentences on what they built, up to 4 concrete highlights, one question to ask them next time, and stack chips. Written by LLM_SMART from the repo's public data only (description, topics, languages, manifest frameworks, their recent commit subjects, release notes, README). Any number not in those facts is dropped; the facts-only `template_brief` is used when the model is unavailable. No gendered pronouns.
+- The AR8 poller (`ml/app/github_activity.py` `refresh_briefs`) writes up to 4 briefs per user per 10-minute cycle, which also backfills existing items. A brief is rewritten when the repo gets new pushes: right away if the first one was thin (empty new repo), else at most every 6 h. Private, forked, or deleted repos get no brief.
+- `GET /feed` items carry `details`; burst `summary` entries carry their `items` so the app can expand them. Reply suggestions and the assistant's `get_connections_activity` use the brief too.
+- Mobile feed card shows the brief (summary, bullets, stack chips, "Ask <name> next time"); bursts expand into the individual updates. The demo feed mock has a quant-finance example (Daniel) and an expandable burst (Sara).
+- Edited Arjun's `ml/app/github_activity.py` (AR8) and Alan's `ml/app/feed.py` (AL10), additively, with their tests extended.
+**How to run/test it:** `cd ml && TEST_DATABASE_URL=<empty pgvector db> .venv/bin/python -m pytest -q tests` (263 pass). `cd mobile && npm run test:demo && npx tsc --noEmit`. Demo: Try the demo, then Feed. Live: a connection links GitHub; within 10 minutes their recent GitHub items show a brief.
+**Next step for whoever continues:** After the next live poll, open Feed on an account connected to someone with GitHub linked and read one brief; `railway logs` shows `github briefs: N written for <user>`.
+**Known issues / blockers:** Briefs cover GitHub items from the last 14 days (LOOKBACK). Only public repos are read.
+**Contract changes:** `docs/api.md` 29 (additive): feed items gain `details` `{summary, highlights, ask, stack, ai}` (null for posts, updates, and not-yet-briefed items); `summary` entries gain `items`. `docs/mocks/feed.json` updated. No schema change (`feed_items.payload` jsonb). Affects the mobile feed (updated here); the dashboard does not read `/feed`.
+
 ## 2026-09-27 01:11 | adam | Cursor Grok 4.7
 **Task:** Nearby map restore (user request)
 **Status:** done

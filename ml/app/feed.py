@@ -28,8 +28,20 @@ _summary_cache: dict[str, str] = {}
 _lock = threading.Lock()
 
 
+def details_of(r: dict) -> dict | None:
+    """The public shape of a GitHub item's brief (github_activity.refresh_briefs), or None."""
+    d = (r.get("payload") or {}).get("details") if r.get("kind") == "github" else None
+    if not isinstance(d, dict) or not d.get("summary"):
+        return None
+    return {"summary": d["summary"], "highlights": [h for h in d.get("highlights") or [] if h][:4],
+            "ask": d.get("ask") or None, "stack": [x for x in d.get("stack") or [] if x][:6],
+            "ai": d.get("source") == "ai"}
+
+
 def item_text(r: dict) -> str:
-    return " ".join(x for x in (r.get("title"), r.get("body")) if x).strip()
+    d = details_of(r) or {}
+    parts = (r.get("title"), r.get("body"), d.get("summary"), *d.get("highlights", []))
+    return " ".join(x for x in parts if x).strip()
 
 
 def visible_items(viewer: str, days: int = WINDOW_DAYS, include_own: bool = True) -> list[dict]:
@@ -113,7 +125,8 @@ def _summary(author_first: str, items: list[dict]) -> str:
         if key in _summary_cache:
             return _summary_cache[key]
     try:
-        text = generation.feed_summary(author_first, items)
+        text = generation.feed_summary(author_first, [{**i, "body": (details_of(i) or {}).get("summary") or i["body"]}
+                                                      for i in items])
     except Exception as e:
         log.warning("feed summary fell back to template: %s", e)
         return generation.template_summary(author_first, items)
@@ -129,7 +142,7 @@ def author_card(r: dict) -> dict:
 def shape_item(r: dict) -> dict:
     return {"type": "item", "item_id": r["id"], "author": author_card(r), "kind": r["kind"], "title": r["title"],
             "body": r["body"], "url": r["url"], "created_at": r["created_at"].isoformat(),
-            "score": round(r["score"], 4), "talked_about": r["mentions"]}
+            "score": round(r["score"], 4), "talked_about": r["mentions"], "details": details_of(r)}
 
 
 def build_feed(viewer: str, now: datetime | None = None) -> list[dict]:
@@ -153,7 +166,7 @@ def build_feed(viewer: str, now: datetime | None = None) -> list[dict]:
             items = sorted(bursts[a], key=lambda x: x["created_at"])
             out.append({"type": "summary", "author": author_card(r), "summary": _summary(_first(r["name"]), items),
                         "item_ids": [i["id"] for i in items], "created_at": items[-1]["created_at"].isoformat(),
-                        "score": round(r["score"], 4)})
+                        "score": round(r["score"], 4), "items": [shape_item(i) for i in reversed(items)]})
         else:
             out.append(shape_item(r))
     return out

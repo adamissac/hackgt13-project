@@ -3,9 +3,10 @@ import { ConstellationMark } from '@/components/Brand';
 import { useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
+import { AppIcon } from '@/components/AppIcon';
 import { ErrorState, Loading } from '@/components/States';
-import { AiBadge, Avatar, Button, Card, Chip, useColors } from '@/components/ui';
-import { api, type FeedEntry, type FeedPostResponse } from '@/lib/api';
+import { AiBadge, Avatar, Button, Card, Chip, firstName, useColors } from '@/components/ui';
+import { api, type FeedEntry, type FeedItemEntry, type FeedPostResponse } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 
 // AD11. Ranked feed from the ML server. Summaries and reply drafts are written there.
@@ -106,20 +107,75 @@ function postedEntry(created: FeedPostResponse): FeedEntry {
     created_at: created.created_at,
     score: 1,
     talked_about: [],
+    details: null,
   };
 }
 
 function FeedCard({ item }: { item: FeedEntry }) {
   const c = useColors();
+  const [open, setOpen] = useState(false);
+  const date = new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+  if (item.type === 'summary') {
+    const parts = item.items ?? [];
+    return (
+      <Card style={{ backgroundColor: c.tintSoft, borderColor: c.tintSoft }}>
+        <View style={styles.row}>
+          <Avatar name={item.author.name} photoUrl={item.author.photo_url} />
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.title, { color: c.text }]}>{item.author.name}</Text>
+            <Text style={[styles.meta, { color: c.muted }]}>Highlights · {date}</Text>
+          </View>
+          <AiBadge label="Summary" />
+        </View>
+        <Text style={[styles.body, { color: c.text }]}>{item.summary}</Text>
+        {parts.length > 0 && (
+          <Pressable onPress={() => setOpen(!open)} accessibilityRole="button" accessibilityState={{ expanded: open }}
+            style={({ pressed }) => [styles.expand, { opacity: pressed ? 0.7 : 1 }]}>
+            <Text style={{ color: c.tint, fontWeight: '700', fontSize: 15 }}>
+              {open ? 'Hide the updates' : `See all ${parts.length} updates`}
+            </Text>
+          </Pressable>
+        )}
+        {open && parts.map((part) => (
+          <View key={part.item_id} style={[styles.nested, { backgroundColor: c.surface }]}>
+            <ItemContent item={part} />
+          </View>
+        ))}
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <View style={styles.row}>
+        <Avatar name={item.author.name} photoUrl={item.author.photo_url} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: c.text }]}>{item.author.name}</Text>
+          <Text style={[styles.meta, { color: c.muted }]}>{item.kind === 'github' ? 'Building on GitHub' : 'Shared with connections'} · {date}</Text>
+        </View>
+        {item.details?.ai && <AiBadge label="AI brief" />}
+      </View>
+      <ItemContent item={item} />
+    </Card>
+  );
+}
+
+// One item's content. GitHub items with a brief show what they built: summary, highlights, stack, and a
+// question to ask them next time. Also used inside an expanded summary card.
+function ItemContent({ item }: { item: FeedItemEntry }) {
+  const c = useColors();
   const [reply, setReply] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const brief = item.details ?? null;
+  const title = item.kind === 'github' && item.title ? item.title.charAt(0).toUpperCase() + item.title.slice(1) : item.title;
 
-  const suggest = async (itemId: number) => {
+  const suggest = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.replySuggestion(itemId);
+      const res = await api.replySuggestion(item.item_id);
       setReply(res.reply);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -128,30 +184,53 @@ function FeedCard({ item }: { item: FeedEntry }) {
     }
   };
 
-  const summary = item.type === 'summary';
   return (
-    <Card style={summary ? { backgroundColor: c.tintSoft, borderColor: c.tintSoft } : undefined}>
-      <View style={styles.row}>
-        <Avatar name={item.author.name} photoUrl={item.author.photo_url} />
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: c.text }]}>{item.author.name}</Text>
-          <Text style={[styles.meta, { color: c.muted }]}>{item.type === 'summary' ? 'Weekly highlights' : item.kind === 'github' ? 'Building on GitHub' : 'Shared with connections'} · {new Date(item.created_at).toLocaleDateString([], { month: 'short', day: 'numeric' })}</Text>
-        </View>
-        {item.type === 'summary' && <AiBadge label="Summary" />}
-      </View>
-      {item.type === 'item' && !!item.title && <Text style={[styles.title, { color: c.text }]}>{item.title}</Text>}
-      <Text style={[styles.body, { color: c.text }]}>{item.type === 'summary' ? item.summary : item.body}</Text>
-      {item.type === 'item' && !!item.url && /^https?:\/\//i.test(item.url) && <Button label="Explore project" variant="secondary" onPress={() => { void Linking.openURL(item.url!).catch(() => setError('Could not open this link.')); }} />}
-      {item.type === 'item' && item.talked_about.length > 0 && (
+    <View style={{ gap: 12 }}>
+      {!!title && <Text style={[styles.title, { color: c.text }]}>{title}</Text>}
+      {brief ? (
+        <>
+          <Text style={[styles.body, { color: c.text }]}>{brief.summary}</Text>
+          {brief.highlights.length > 0 && (
+            <View style={{ gap: 8 }} accessibilityLabel="Highlights">
+              {brief.highlights.map((line) => (
+                <View key={line} style={styles.bullet}>
+                  <View style={[styles.dot, { backgroundColor: c.tint }]} />
+                  <Text style={[styles.bulletText, { color: c.text }]}>{line}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+          {brief.stack.length > 0 && (
+            <View style={styles.chips}>
+              {brief.stack.map((name) => <Chip key={name} label={name} />)}
+            </View>
+          )}
+          {!!brief.ask && (
+            <View style={[styles.ask, { backgroundColor: c.aiSoft }]}>
+              <View style={styles.askLabel}>
+                <AppIcon name="chat" color={c.ai} size={15} />
+                <Text style={{ color: c.ai, fontWeight: '700', fontSize: 13 }}>Ask {firstName(item.author.name)} next time</Text>
+              </View>
+              <Text style={[styles.bulletText, { color: c.text }]}>{brief.ask}</Text>
+            </View>
+          )}
+        </>
+      ) : (
+        !!item.body && <Text style={[styles.body, { color: c.text }]}>{item.body}</Text>
+      )}
+      {item.talked_about.length > 0 && (
         <View style={styles.chips}>
           {item.talked_about.map((topic) => (
             <Chip key={topic} label={topic} tone="tint" />
           ))}
         </View>
       )}
-      {item.type === 'item' && item.author.user_id !== 'me' && reply === null && (
-        <Button label="Suggest a reply" variant="secondary" onPress={() => suggest(item.item_id)} loading={loading} />
-      )}
+      <View style={styles.actions}>
+        {!!item.url && /^https?:\/\//i.test(item.url) && <Button label={item.kind === 'github' ? 'Explore project' : 'Open link'} variant="secondary" style={styles.action} onPress={() => { void Linking.openURL(item.url!).catch(() => setError('Could not open this link.')); }} />}
+        {item.author.user_id !== 'me' && reply === null && (
+          <Button label="Suggest a reply" variant="secondary" style={styles.action} onPress={suggest} loading={loading} />
+        )}
+      </View>
       {reply !== null && (
         <>
           <Text style={[styles.meta, { color: c.muted }]}>Suggested reply. Edit it before you send it.</Text>
@@ -165,7 +244,7 @@ function FeedCard({ item }: { item: FeedEntry }) {
         </>
       )}
       {error && <Text style={{ color: c.danger }}>{error}</Text>}
-    </Card>
+    </View>
   );
 }
 
@@ -184,4 +263,13 @@ const styles = StyleSheet.create({
   meta: { fontSize: 13 },
   body: { fontSize: 16, lineHeight: 22 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  bullet: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
+  dot: { width: 6, height: 6, borderRadius: 3, marginTop: 8 },
+  bulletText: { flex: 1, fontSize: 15, lineHeight: 21 },
+  ask: { borderRadius: 14, padding: 14, gap: 6 },
+  askLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  expand: { minHeight: 44, justifyContent: 'center' },
+  nested: { borderRadius: 16, padding: 16 },
+  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  action: { flexGrow: 1, flexBasis: 140 },
 });

@@ -63,7 +63,8 @@ def test_ranking_relevance_recency_and_talked_topic(dbclient, db, people):
     assert items[relevant]["score"] > items[old]["score"]
     assert items[talked]["talked_about"] == ["robotics"]
     assert set(items[relevant]) == {"type", "item_id", "author", "kind", "title", "body", "url", "created_at", "score",
-                                    "talked_about"}
+                                    "talked_about", "details"}
+    assert items[relevant]["details"] is None                  # briefs are for GitHub items only
     assert db.fetchone("select count(*) n from feed_items where embedding is null")["n"] == 0   # embedded on read
 
 
@@ -77,6 +78,9 @@ def test_burst_becomes_summary(dbclient, db, people, monkeypatch):
     assert len(summaries) == 1 and summaries[0]["summary"] == "Sam shipped 3 things."
     assert sorted(summaries[0]["item_ids"]) == sorted(ids)
     assert not any(e["type"] == "item" and e["item_id"] in ids for e in entries)
+    # the summary carries its items (newest first) so the app can expand it
+    assert [i["item_id"] for i in summaries[0]["items"]] == ids
+    assert all(i["type"] == "item" and i["author"]["name"] == "Sam Lee" for i in summaries[0]["items"])
 
 
 def test_pagination(dbclient, db, people):
@@ -117,3 +121,44 @@ def test_insights(dbclient, db, people):
     assert {"name": "pottery", "count": 1} in out["trending_topics"]
     assert len(out["activity"]) == 7 and sum(d["count"] for d in out["activity"]) == 3
     assert out["by_kind"] == {"github": 0, "post": 2, "update": 1}
+
+
+BRIEF = {"summary": "Ivy started lob-alpha, a model that predicts short-term price moves from order book data.",
+         "highlights": ["Walk-forward backtest that charges fees", "LSTM over order book imbalance features"],
+         "ask": "How do you keep the backtest from seeing future data?", "stack": ["Python", "PyTorch"],
+         "source": "ai", "pushed_at": "2026-09-26T12:00:00Z", "at": "2026-09-26T12:05:00Z", "thin": False}
+
+
+def github_item(db, author, details, hours_ago=1):
+    from psycopg.types.json import Jsonb
+    return db.fetchone("insert into feed_items (author_id, kind, title, body, url, payload, created_at) "
+                       "values (%s, 'github', 'started working on lob-alpha', '', 'https://github.com/ivy/lob-alpha', "
+                       "%s, now() - make_interval(hours => %s)) returning id",
+                       (author, Jsonb({"repo": "ivy/lob-alpha", "type": "new_repo", "details": details}), hours_ago))["id"]
+
+
+def test_github_items_carry_their_brief(dbclient, db, people, monkeypatch):
+    from ml import generation
+    me, friend, other, stranger = people
+    gid = github_item(db, other, BRIEF)
+    pending = github_item(db, other, None, hours_ago=40)          # not briefed yet
+    skipped = github_item(db, other, {"skipped": True, "at": "2026-09-26T12:00:00Z"}, hours_ago=50)
+    items = {i["item_id"]: i for i in feed_of(dbclient, me)["items"]}
+    assert items[gid]["details"] == {"summary": BRIEF["summary"], "highlights": BRIEF["highlights"],
+                                     "ask": BRIEF["ask"], "stack": ["Python", "PyTorch"], "ai": True}
+    assert items[pending]["details"] is None and items[skipped]["details"] is None
+    # internal bookkeeping never leaves the server
+    assert "pushed_at" not in str(items[gid]) and "thin" not in str(items[gid])
+    # a stranger never sees it; the brief is part of the item and follows its visibility
+    assert gid not in {i["item_id"] for i in feed_of(dbclient, stranger)["items"]}
+    # no LLM: the suggested reply falls back to the brief's question
+    monkeypatch.setattr(generation, "client", lambda: (_ for _ in ()).throw(RuntimeError("no key")))
+    reply = dbclient.post(f"/feed/{gid}/reply-suggestion", headers=auth(me)).json()["reply"]
+    assert reply == f"Nice one, Ivy. {BRIEF['ask']}"
+
+
+def test_brief_text_counts_for_talked_topics(dbclient, db, people):
+    me, friend, other, stranger = people
+    gid = github_item(db, friend, {**BRIEF, "summary": "Sam started lob-alpha, a robotics control stack."})
+    item_ = next(i for i in feed_of(dbclient, me)["items"] if i["item_id"] == gid)
+    assert item_["talked_about"] == ["robotics"]          # the title alone never says "robotics"; the brief does

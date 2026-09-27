@@ -256,19 +256,29 @@ export interface FeedInsights {
   by_kind: { github: number; post: number; update: number };
 }
 export interface FeedAuthor { user_id: string; name: string; photo_url: string | null }
+// Brief on a GitHub item (api.md 29): what they built, from the repo's public data only.
+export interface FeedDetails {
+  summary: string;
+  highlights: string[];
+  ask: string | null;
+  stack: string[];
+  ai: boolean;
+}
+export interface FeedItemEntry {
+  type: 'item';
+  item_id: number;
+  author: FeedAuthor;
+  kind: 'github' | 'post' | 'update';
+  title: string | null;
+  body: string | null;
+  url: string | null;
+  created_at: string;
+  score: number;
+  talked_about: string[];
+  details?: FeedDetails | null;
+}
 export type FeedEntry =
-  | {
-      type: 'item';
-      item_id: number;
-      author: FeedAuthor;
-      kind: 'github' | 'post' | 'update';
-      title: string | null;
-      body: string | null;
-      url: string | null;
-      created_at: string;
-      score: number;
-      talked_about: string[];
-    }
+  | FeedItemEntry
   | {
       type: 'summary';
       author: FeedAuthor;
@@ -276,6 +286,7 @@ export type FeedEntry =
       item_ids: number[];
       created_at: string;
       score: number;
+      items?: FeedItemEntry[];
     };
 export interface FeedResponse { items: FeedEntry[]; next_cursor: string | null }
 export interface FeedPostResponse {
