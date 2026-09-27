@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from ml.embed import embed
 
-from .. import db, feed
+from .. import db, feed, matching
 from ..auth import User, current_user
 from ..errors import ApiError
 from ..users import ensure_profile
@@ -25,10 +25,16 @@ def _decode(cursor: str | None) -> int:
 
 
 @router.get("")
-def get_feed(cursor: str | None = None, limit: int = Query(feed.PAGE, ge=1, le=50),
+def get_feed(cursor: str | None = None, limit: int = Query(feed.PAGE, ge=1, le=50), event_id: int | None = None,
              user: User = Depends(current_user)):
     start = _decode(cursor)
     entries = feed.build_feed(user.id)
+    if event_id is not None:
+        # Inside an event: only updates from people also checked in there (you must be checked in yourself).
+        if not matching.is_checked_in(user.id, event_id):
+            raise ApiError(403, "check in to this event first")
+        here = {r["id"] for r in db.fetchall("select user_id::text as id from attendance where event_id = %s", (event_id,))}
+        entries = [e for e in entries if (e.get("author") or {}).get("user_id") in here]
     page = entries[start:start + limit]
     nxt = start + limit
     return {"items": page,

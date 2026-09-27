@@ -7,6 +7,7 @@ import { AppIcon } from '@/components/AppIcon';
 import { ErrorState, Loading } from '@/components/States';
 import { AiBadge, Avatar, Button, Card, Chip, firstName, useColors } from '@/components/ui';
 import { api, type FeedEntry, type FeedItemEntry } from '@/lib/api';
+import { useEventSession } from '@/lib/eventSession';
 import { useAsync } from '@/lib/useAsync';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
 import { useAuth } from '@/lib/auth';
@@ -18,7 +19,8 @@ export default function FeedScreen() {
   const c = useColors();
   const { session, guest } = useAuth();
   const viewer = guest ? DEMO_ME : session?.user.id;
-  const feed = useAsync(() => api.feed(), [viewer]);
+  const inEvent = useEventSession()?.eventId; // inside a company event: only people there
+  const feed = useAsync(() => api.feed(undefined, inEvent), [viewer, inEvent]);
   useLiveRefresh(feed.refresh, 5000);
   const [published, setPublished] = useState(false);
   const [kind, setKind] = useState<'post' | 'update'>('update');
@@ -91,8 +93,8 @@ export default function FeedScreen() {
       {feed.state.status === 'error' && <ErrorState message={feed.state.message} onRetry={feed.reload} />}
       {feed.state.status === 'ready' && items.length === 0 && (
         <Card>
-          <ConstellationMark size={48} /><Text style={[styles.title, { color: c.text }]}>Your constellation starts with a conversation.</Text>
-          <Text style={[styles.body, { color: c.muted }]}>Posts and GitHub updates from your connections show up here.</Text><Button label="Discover your people" onPress={() => router.push('/discover')} />
+          <ConstellationMark size={48} /><Text style={[styles.title, { color: c.text }]}>{inEvent ? 'No updates from people at this event yet.' : 'Your constellation starts with a conversation.'}</Text>
+          <Text style={[styles.body, { color: c.muted }]}>{inEvent ? 'While you’re in this event, the feed only shows people who are here too. Leave the event to see everyone.' : 'Posts and GitHub updates from your connections show up here.'}</Text><Button label="Discover your people" onPress={() => router.push('/discover')} />
         </Card>
       )}
       {items.map((item) => (

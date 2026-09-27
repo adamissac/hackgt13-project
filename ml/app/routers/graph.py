@@ -33,7 +33,9 @@ def get_graph(mode: Literal["matches", "network", "event"] = "matches", event_id
     if mode == "event":
         raise ApiError(400, "the organizer event map is GET /dashboard/{event_id}")
     if mode == "network":
-        return graph.network_graph(user.id, max_people, min_score, facet)
+        # event_id in network mode = "I'm inside this event": only connections who are also there.
+        scope = _event_for(user.id, event_id) if event_id is not None else None
+        return graph.network_graph(user.id, max_people, min_score, facet, scope)
     return graph.matches_graph(user.id, _event_for(user.id, event_id), depth, max_people, min_score, facet)
 
 

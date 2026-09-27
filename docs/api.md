@@ -271,6 +271,7 @@ My connection only (else `404 connection not found`): the 11 row plus `"shared_t
 shared interests; the user edits and sends it in chat). Connections only.
 
 ## 26. GET /graph?mode=matches|network&event_id=1&depth=1&max_people=30&min_score=0&facet=all
+`mode=network&event_id=X` (optional, additive): only your connections who are also checked in to X. You must be checked in to X (`403 check in to this event first`). The app sends it only while you are inside a company event.
 Connection Graph data (MASTER_SPEC 3.12). Full sample: `docs/mocks/graph.json`.
 ```json
 {
@@ -329,6 +330,7 @@ kept with the reference cleared), other people's raw Bluetooth sightings of thei
 `storage_objects_deleted` / `auth_user_deleted` are `null` if the server has no service key. The app should sign out after this.
 
 ## 29. GET /feed?cursor=&limit=20
+`event_id=X` (optional, additive): only updates from people also checked in to X; you must be checked in (`403 check in to this event first`). Sent while you are inside a company event.
 My connections' items, excluding my own posts and activity (only kinds each author allows in `feed_prefs`), ranked by
 0.6 x relevance to my interests + 0.3 x recency (48 h decay) + 0.1 x "mentions a topic I checked as discussed with them".
 An author with 3+ items in 24 h appears as one `summary` entry instead.

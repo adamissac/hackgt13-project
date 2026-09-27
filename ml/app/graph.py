@@ -174,8 +174,13 @@ def my_connections(viewer: str) -> list[dict]:
         "where user_a = %s or user_b = %s order by created_at", (viewer, viewer, viewer))
 
 
-def network_graph(viewer: str, max_people: int, min_score: float, facet: str) -> dict:
+def network_graph(viewer: str, max_people: int, min_score: float, facet: str, event_id: int | None = None) -> dict:
+    """Your connections. With event_id (you're inside that event), only connections also checked in there."""
     conns = my_connections(viewer)
+    if event_id is not None:
+        here = {r["id"] for r in db.fetchall(
+            "select user_id::text as id from attendance where event_id = %s", (event_id,))}
+        conns = [c for c in conns if c["id"] in here]
     people, index = population.build([viewer] + [c["id"] for c in conns])
     by_id = {p["id"]: p for p in people}
     me = by_id.get(viewer)

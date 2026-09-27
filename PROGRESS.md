@@ -1,5 +1,19 @@
 
 
+## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / inside an event, Feed and Constellation "My network" show only people at the event
+**Status:** done (live needs a Railway redeploy)
+**What I did:**
+- Confirmed the flow Arjun described is what 3a67f70 does: scanning in returns to the normal app (Home, Feed, Constellation, Events, Profile) with "✕ Leave event" top-left, and matches, Home, and the map follow the event.
+- Closed the remaining gaps: `GET /graph?mode=network&event_id=X` (`ml/app/graph.py` `network_graph(..., event_id)`, `ml/app/routers/graph.py`) and `GET /feed?event_id=X` (`ml/app/routers/feed.py`) filter to people checked in to X; the caller must be checked in (403 otherwise). App: `graph.tsx` sends the event only for network mode while in a session; `feed.tsx` sends it while in a session, with an event-specific empty state. `api.feed(cursor, eventId)`.
+- Fixed `lib/eventSession.ts` loading: one shared read of the saved session notifies every screen, so the Leave event bar comes back after an app restart.
+- Test: `ml/tests/test_event_checkin_qr.py::test_inside_an_event_network_and_feed_show_only_people_there` (DB, CI).
+- The local Expo server crashed with "JavaScript heap out of memory" after about 5 hours. Restarted it with `NODE_OPTIONS=--max-old-space-size=6144`.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_checkin_qr.py` (CI runs DB tests). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`.
+**Next step for whoever continues:** Redeploy ml so the live server has the event filters, demo event, unregister and leave: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Known issues / blockers:** Demo mode (mocks) doesn't filter the feed or network by event; live does.
+**Contract changes:** docs/api.md 26 (`mode=network&event_id`) and 29 (`/feed?event_id`), both optional and additive; no response shape change.
+
 ## 2026-09-27 03:55 | akshar | Claude Code (Opus 5.5)
 **Task:** AK1/Home polish: simpler Home screen (greeting + one "Meet people here" card)
 **Status:** done

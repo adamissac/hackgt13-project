@@ -19,7 +19,7 @@ export interface EventSession {
 
 const KEY = 'fc.event-session';
 let session: EventSession | null = null;
-let loaded = false;
+let loading: Promise<EventSession | null> | null = null;
 const listeners = new Set<(s: EventSession | null) => void>();
 
 function publish(next: EventSession | null) {
@@ -28,16 +28,19 @@ function publish(next: EventSession | null) {
   (next ? AsyncStorage.setItem(KEY, JSON.stringify(next)) : AsyncStorage.removeItem(KEY)).catch(() => undefined);
 }
 
-async function load(): Promise<EventSession | null> {
-  if (loaded) return session;
-  loaded = true;
-  try {
-    const raw = await AsyncStorage.getItem(KEY);
-    session = raw ? (JSON.parse(raw) as EventSession) : null;
-  } catch {
-    session = null;
-  }
-  return session;
+// One shared read of the saved session; every screen waiting on it gets the result.
+function load(): Promise<EventSession | null> {
+  loading ??= AsyncStorage.getItem(KEY)
+    .then((raw) => (raw ? (JSON.parse(raw) as EventSession) : null))
+    .catch(() => null)
+    .then((saved) => {
+      if (session === null && saved) {
+        session = saved;
+        listeners.forEach((l) => l(saved));
+      }
+      return session;
+    });
+  return loading;
 }
 
 export const getEventSession = () => session;

@@ -9,6 +9,7 @@ import { PersonSheet } from '@/features/graph/PersonSheet';
 import { Atom, groupByTopic } from '@/features/graph/Atom';
 import { useColorScheme } from '@/components/useColorScheme';
 import { api, type GraphMode, type GraphResponse } from '@/lib/api';
+import { useEventSession } from '@/lib/eventSession';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
 import { useLiveRefresh } from '@/lib/useLiveRefresh';
@@ -48,7 +49,9 @@ export default function GraphScreen() {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState<GraphMode>('matches');
   const eventId = useCurrentEventId(); // the event you're in (a company event after scanning in), else roaming
-  const { state, reload, refresh } = useAsync(() => api.graph(mode, eventId), [mode, eventId]);
+  // Inside a company event, "My network" also narrows to connections who are at the event.
+  const inEvent = useEventSession()?.eventId;
+  const { state, reload, refresh } = useAsync(() => api.graph(mode, mode === 'network' ? inEvent : eventId), [mode, eventId, inEvent]);
   useLiveRefresh(refresh, 5000);
   const [extra, setExtra] = useState<{ mode: GraphMode; data: GraphResponse } | null>(null);
   const [topic, setTopic] = useState<string | null>(null);

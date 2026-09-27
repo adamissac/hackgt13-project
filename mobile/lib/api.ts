@@ -734,8 +734,12 @@ export const api = {
     ),
   meDashboard: (days = 30) => call(mocks.meDashboard, () => request<MeDashboard>('GET', `/me/dashboard?days=${days}`)),
   feedInsights: (days = 7) => call(mocks.feedInsights, () => request<FeedInsights>('GET', `/feed/insights?days=${days}`)),
-  feed: (cursor?: string) =>
-    call(mocks.feed, () => request<FeedResponse>('GET', `/feed${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ''}`)),
+  /** eventId: inside a company event, only updates from people checked in there. */
+  feed: (cursor?: string, eventId?: number) =>
+    call(mocks.feed, () => {
+      const q = [cursor ? `cursor=${encodeURIComponent(cursor)}` : '', eventId ? `event_id=${eventId}` : ''].filter(Boolean).join('&');
+      return request<FeedResponse>('GET', `/feed${q ? `?${q}` : ''}`);
+    }),
   createPost: (body: { kind: 'post' | 'update'; body: string; title?: string | null; url?: string | null }) =>
     call(
       () =>

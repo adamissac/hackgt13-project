@@ -113,3 +113,26 @@ def test_unregister_leaves_the_session(dbclient, db):
     assert card["registered"] is False and card["checked_in"] is False
     assert dbclient.get(f"/events/{eid}/matches", headers=auth(ana)).status_code == 403
     assert dbclient.post(f"/events/{eid}/unregister", headers=auth(ana)).status_code == 200   # idempotent
+
+
+def test_inside_an_event_network_and_feed_show_only_people_there(dbclient, db):
+    owner = add_user(db, name="Org Owner")
+    eid = _company_event(db, owner)
+    ana = seed_person(db, "Ana", [("robotics", "technical", 0.9)])
+    ben = seed_person(db, "Ben", [("robotics", "technical", 0.9)])      # connection, at the event
+    cal = seed_person(db, "Cal", [("robotics", "technical", 0.9)])      # connection, not at the event
+    for other in (ben, cal):
+        lo, hi = sorted([ana, other])
+        db.execute("insert into connections (user_a, user_b) values (%s, %s)", (lo, hi))
+    everyone = dbclient.get("/graph?mode=network", headers=auth(ana)).json()
+    assert {n["id"] for n in everyone["nodes"] if n["type"] == "person"} >= {f"u_{ben}", f"u_{cal}"}
+    # Not checked in yet: the event-scoped views refuse.
+    assert dbclient.get(f"/graph?mode=network&event_id={eid}", headers=auth(ana)).status_code == 403
+    assert dbclient.get(f"/feed?event_id={eid}", headers=auth(ana)).status_code == 403
+    for u in (ana, ben):
+        dbclient.post(f"/events/{eid}/register", headers=auth(u))
+        assert _scan(dbclient, u, eid).status_code == 200
+    scoped = dbclient.get(f"/graph?mode=network&event_id={eid}", headers=auth(ana)).json()
+    people = {n["id"] for n in scoped["nodes"] if n["type"] == "person"}
+    assert f"u_{ben}" in people and f"u_{cal}" not in people
+    assert dbclient.get(f"/feed?event_id={eid}", headers=auth(ana)).status_code == 200
