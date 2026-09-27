@@ -164,11 +164,12 @@ export default function GraphScreen() {
           <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
             <View style={styles.chartHeading}>
               <Text style={[styles.small, { color: c.muted }]}>{mode === 'matches' ? 'Your closest matches' : 'Your connections'}</Text>
-              <Text style={[styles.small, { color: c.muted }]}>{featured.length} people</Text>
+              <Pressable onPress={() => setPaused(!paused)} accessibilityRole="button" accessibilityLabel={paused ? 'Resume rotation' : 'Pause rotation'} style={{ minWidth: 64, minHeight: 44, justifyContent: 'center', alignItems: 'flex-end' }}>
+                <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{paused ? 'Play ▷' : 'Pause Ⅱ'}</Text>
+              </Pressable>
             </View>
             <Atom size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} paused={paused} />
             <Text style={[styles.howToText, { color: c.muted }]}>Tap a node to explore</Text>
-            <Button label={paused ? 'Resume rotation' : 'Pause rotation'} variant="ghost" onPress={() => setPaused(!paused)} />
           </View>
           <Disclosure title="Reading your graph" subtitle="Colors show shared interests">
             <View style={styles.legend}>
@@ -246,7 +247,7 @@ export default function GraphScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1, padding: 16, gap: 12 },
   container: { padding: 16, gap: 16, paddingBottom: 110, width: '100%', maxWidth: 560, alignSelf: 'center' },
-  chartHeading: { flexDirection: 'row', justifyContent: 'space-between', alignSelf: 'stretch', paddingHorizontal: 18, paddingTop: 18 },
+  chartHeading: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', alignSelf: 'stretch', paddingHorizontal: 18, paddingTop: 4 },
   modalBackdrop: { flex: 1, backgroundColor: '#0007', justifyContent: 'flex-end', alignItems: 'center' },
   sheet: { width: '100%', maxWidth: 560, borderTopLeftRadius: 24, borderTopRightRadius: 24, overflow: 'hidden' },
   seg: { flexDirection: 'row', borderRadius: 12, padding: 4 },

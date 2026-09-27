@@ -1,3 +1,16 @@
+## 2026-09-26 20:49 | adam | Codex
+**Task:** AD9 / AR5 — user-requested lightweight 3D atom constellation
+**Status:** done
+**What I did:**
+- Replaced flat rotating initials with shaded spheres around a central nucleus, three tilted orbital paths and three moving particles; kept the current palette and facet meanings.
+- Projected a tilted 3D ring with depth-based size/opacity and curved self-only connections. Precomputed 73 motion samples; native transform/opacity interpolation avoids per-frame React state, physics, WebGL and new dependencies.
+- Kept upright labels, six-node limit, profile selection, pause/resume and reduced-motion/background/focus cleanup. Moved Pause to the chart header for easy access on phones.
+- Added full-orbit bounds/label-separation tests across phone/tablet widths and 1–6 people, plus depth and seamless-wrap checks.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint 'app/(tabs)/graph.tsx' features/graph/Atom.tsx features/graph/atomLayout.ts && node --experimental-strip-types --test features/*/*.test.mjs && npm run test:demo`; `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`. Passed before integration: 25 unit tests, 15 demo checks, all three exports. Browser at 390x844 verified rendering, animation, pause and person-sheet opening. 120-frame desktop sample: median/p95 16.7ms, zero intervals over 50ms (not a phone benchmark).
+**Next step for whoever continues:** Reload Expo Go and open Constellation; check orbit smoothness, tap targets and system Reduce Motion on a physical iPhone/Android. Pure projection lives in `mobile/features/graph/atomLayout.ts`; renderer in `Atom.tsx`.
+**Known issues / blockers:** Physical-phone performance not measured. This is lightweight projected 3D, not an interactive WebGL scene. Changes to Arjun's graph area explicitly requested by the user; contracts unchanged.
+**Contract changes:** none
+
 ## 2026-09-26 13:10 | alan | Claude Code (Opus 5)
 **Task:** AL3 "why you matched" (MASTER_SPEC 6.9) — decompose the match score into the features that produced it
 **Status:** done — 110 passed, 118 skipped (12 new). Wired into `rank_candidates` and the Connection Graph.
