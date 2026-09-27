@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
+import { HERO_TEXT } from '@/components/TabHero';
 import { AiBadge, Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { api, type AccountsResponse, type Facet, type Interest, type InterestsResponse, type SkillProfile } from '@/lib/api';
 import { useAuth } from '@/lib/auth';
@@ -91,11 +92,11 @@ export default function ProfileScreen() {
         </View>
       )}
 
-      <Card style={styles.headerCard}>
+      <View style={[styles.headerCard, { backgroundColor: c.tint }]}>
         <Avatar name={name} size={76} />
         <View style={{ alignItems: 'center', gap: 6 }}>
-          <Text style={[styles.name, { color: c.text }]}>{name}</Text>
-          {!!headline && <Text style={[styles.body, { color: c.muted, textAlign: 'center' }]}>{headline}</Text>}
+          <Text style={[styles.name, { color: HERO_TEXT.title }]}>{name}</Text>
+          {!!headline && <Text style={[styles.body, { color: HERO_TEXT.body, textAlign: 'center' }]}>{headline}</Text>}
           <View style={[styles.chips, { justifyContent: 'center' }]}>
             {guest && <Chip label="Demo" tone="ai" />}
             <Chip label={`${visible.length} skills & interests`} tone="tint" />
@@ -103,7 +104,7 @@ export default function ProfileScreen() {
           </View>
         </View>
         <Button label="Edit profile" variant="secondary" onPress={() => router.push('/accounts')} style={{ alignSelf: 'stretch' }} />
-      </Card>
+      </View>
 
       {data && (!!data.seeking || !!data.offering) && (
         <>
@@ -311,7 +312,7 @@ function SourceRow({ icon, title, detail, ok, divider }: { icon: string; title: 
 const styles = StyleSheet.create({
   container: { padding: 20, gap: 14, paddingBottom: 100, width: '100%', maxWidth: 640, alignSelf: 'center' },
   warning: { borderRadius: 12, padding: 12 },
-  headerCard: { alignItems: 'center', gap: 14, paddingVertical: 22 },
+  headerCard: { alignItems: 'center', gap: 14, paddingVertical: 24, paddingHorizontal: 20, borderRadius: 26 },
   name: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   cardTitle: { fontSize: 18, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 21 },

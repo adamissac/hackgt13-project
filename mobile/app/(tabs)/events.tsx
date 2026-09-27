@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/AppIcon';
-import { ConstellationMark } from '@/components/Brand';
 import { Button, Card, Chip, useColors } from '@/components/ui';
 import { ErrorState, Loading } from '@/components/States';
+import { TabHero } from '@/components/TabHero';
 import { Calendar, RsvpPicker } from '@/features/events/Calendar';
 import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
 import { RSVP_OPTIONS, dayKey, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
@@ -69,13 +69,7 @@ export default function EventsScreen() {
 
  return <>
   <ScrollView style={{backgroundColor:c.background}} contentContainerStyle={styles.container}>
-   <View style={[styles.hero,{backgroundColor:c.tint}]}>
-    <ConstellationMark color="#B6C9FA" size={44}/>
-    <Text style={styles.eyebrow}>{area.status==='ready'&&area.place?area.place.toUpperCase():'PROFESSIONAL EVENTS'}</Text>
-    <Text style={styles.heroTitle}>Make room for
-a new connection.</Text>
-    <Text style={styles.heroBody}>Shared interests. Real conversations. Your next career connection.</Text>
-   </View>
+   <TabHero eyebrow={area.status==='ready'&&area.place?area.place.toUpperCase():'PROFESSIONAL EVENTS'} title={'Make room for\na new connection.'} body="Info sessions, networking, and club meetings for your career."/>
    <View style={[styles.segments,{backgroundColor:c.surfaceAlt}]} accessibilityRole="tablist">
     {SECTIONS.map(s=><Pressable key={s.id} onPress={()=>open(s.id)} accessibilityRole="tab" accessibilityState={{selected:section===s.id}} style={[styles.segment,section===s.id&&{backgroundColor:c.surface,borderColor:c.border}]}>
      <Text numberOfLines={1} style={{color:section===s.id?c.text:c.muted,fontWeight:'700',fontSize:14}}>{s.label}</Text>
@@ -159,8 +153,6 @@ a new connection.</Text>
 }
 const styles=StyleSheet.create({
  container:{padding:20,gap:18,paddingBottom:100,maxWidth:640,width:'100%',alignSelf:'center'},
- hero:{borderRadius:26,padding:26,gap:14},eyebrow:{color:'#B6C9FA',fontSize:10,fontWeight:'700',letterSpacing:2},
- heroTitle:{color:'#FFFFFF',fontSize:31,lineHeight:37,fontWeight:'700',letterSpacing:-1},heroBody:{color:'#D3DEF2',fontSize:15,lineHeight:23},
  title:{fontSize:20,fontWeight:'700',letterSpacing:-0.4},body:{fontSize:15,lineHeight:23},small:{fontSize:12,lineHeight:18,flexShrink:1},
  row:{flexDirection:'row',alignItems:'center',gap:12},date:{padding:12,borderRadius:16},
  segments:{flexDirection:'row',borderRadius:16,padding:4,gap:4},

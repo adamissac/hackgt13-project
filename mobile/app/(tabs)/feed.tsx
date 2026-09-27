@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Linking, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ErrorState, Loading } from '@/components/States';
+import { TabHero } from '@/components/TabHero';
 import { AiBadge, Avatar, Button, Card, Chip, useColors } from '@/components/ui';
 import { api, type FeedEntry, type FeedPostResponse } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -42,11 +43,7 @@ export default function FeedScreen() {
 
   return (
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container} refreshControl={<RefreshControl refreshing={false} onRefresh={feed.reload} tintColor={c.tint} />}>
-      <View style={{ gap: 6, paddingVertical: 8 }}>
-        <Text style={{ color: c.muted, fontSize: 11, fontWeight: '600', letterSpacing: 1.5 }}>YOUR CIRCLE</Text>
-        <Text style={{ color: c.text, fontSize: 32, fontWeight: '600', letterSpacing: -1 }}>Stay in the loop.</Text>
-        <Text style={[styles.lead, { color: c.muted }]}>The latest from people you know.</Text>
-      </View>
+      <TabHero eyebrow="YOUR CIRCLE" title="Stay in the loop." body="The latest from people you know." />
       <Card>
         <Pressable onPress={() => setComposing(!composing)} accessibilityRole="button" accessibilityState={{ expanded: composing }} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }}>
           <Text style={{ flex: 1, marginRight: 12, color: c.text, fontSize: 16, fontWeight: '500' }}>{body.trim() ? 'Continue your draft' : 'Share something with your circle'}</Text>

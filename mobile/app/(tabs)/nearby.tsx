@@ -4,6 +4,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
+import { TabHero } from '@/components/TabHero';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
 import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
@@ -38,18 +39,13 @@ export default function NearbyScreen() {
   return (
     <>
     <ScrollView style={{ backgroundColor: c.background }} contentContainerStyle={styles.container}>
+      <TabHero
+        eyebrow={scan ? 'SCANNING' : 'NEARBY'}
+        title="Find your matches nearby"
+        body={scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
+        right={<Switch value={scan} onValueChange={setScan} trackColor={{ true: '#4F7BE8', false: '#FFFFFF33' }} thumbColor="#FFFFFF" ios_backgroundColor="#FFFFFF33" accessibilityLabel="Scan for people nearby" />}
+      />
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
-      <Card>
-        <View style={styles.toggleRow}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.h1, { color: c.text }]}>Find your matches nearby</Text>
-            <Text style={[styles.small, { color: c.muted }]}>
-              {scan ? 'Scanning with Bluetooth. Only your matches show up.' : 'Turn on to see which of your matches are close by.'}
-            </Text>
-          </View>
-          <Switch value={scan} onValueChange={setScan} trackColor={{ true: c.tint, false: c.surfaceAlt }} accessibilityLabel="Scan for people nearby" />
-        </View>
-      </Card>
 
       {fetchError && !radioError ? (
         <ErrorState message={fetchError} onRetry={() => setScan(true)} />

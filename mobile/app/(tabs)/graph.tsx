@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
+import { TabHero } from '@/components/TabHero';
 import { Avatar, Button, Card, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { buildView } from '@/features/graph/model';
 import { PersonSheet } from '@/features/graph/PersonSheet';
@@ -133,10 +134,7 @@ export default function GraphScreen() {
         </Card>
       ) : (
         <>
-          <View>
-            <Text style={[styles.h1, { color: c.text }]}>{topic ? `Top people into ${topic}` : COPY[mode].title}</Text>
-            <Text style={[styles.body, { color: c.muted }]}>{COPY[mode].explain}</Text>
-          </View>
+          <TabHero mark={false} eyebrow={mode === 'matches' ? 'YOUR MATCHES' : 'YOUR CONNECTIONS'} title={topic ? `Top people into ${topic}` : COPY[mode].title} body={COPY[mode].explain} />
 
           {view.topics.length > 0 && (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>

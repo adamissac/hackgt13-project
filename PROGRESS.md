@@ -10,6 +10,18 @@
 **Known issues / blockers:** Event list needs `events.org_id` / `location_text` (already in schema). Scanning a person QR still does not auto-connect; both must say yes.
 **Contract changes:** docs/api.md 45 (company events); docs/mocks/get-events.json. Alan: new routes live in `ml/app/routers/events.py`.
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / navy brand color on every tab
+**Status:** done
+**What I did:**
+- New `mobile/components/TabHero.tsx`: the navy banner from Events, now used at the top of Feed, Constellation, Nearby (the scan switch sits in the banner), and Events. The Profile header card is navy too.
+- `components/ui.tsx` Button `secondary`: light blue (`tintSoft`) with navy text instead of warm gray, so secondary actions across the app carry the brand color.
+- Edited Adam's `app/(tabs)/feed.tsx`, `app/profile.tsx`, and `components/ui.tsx` (styling only, no logic), noted here.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`, then reload Expo Go and check each tab.
+**Next step for whoever continues:** New main tabs should start with `<TabHero eyebrow=... title=... body=... />` to match.
+**Known issues / blockers:** none
+**Contract changes:** none
+
 ## 2026-09-26 21:10 | adam | Codex
 **Task:** AD9 / AK5 — Nearby cleanup and reciprocal Maps navigation
 **Status:** done in code; backend test environment unavailable locally

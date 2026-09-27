@@ -75,8 +75,8 @@ export function Button({
   style?: ViewStyle;
 }) {
   const c = useColors();
-  const bg = { primary: c.tint, secondary: c.surfaceAlt, ghost: 'transparent', danger: 'transparent' }[variant];
-  const fg = { primary: c.onTint, secondary: c.text, ghost: c.tint, danger: c.danger }[variant];
+  const bg = { primary: c.tint, secondary: c.tintSoft, ghost: 'transparent', danger: 'transparent' }[variant];
+  const fg = { primary: c.onTint, secondary: c.tint, ghost: c.tint, danger: c.danger }[variant];
   return (
     <Pressable
       onPress={onPress}
