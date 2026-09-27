@@ -12,6 +12,16 @@
 **Known issues / blockers:** Briefs cover GitHub items from the last 14 days (LOOKBACK). Only public repos are read.
 **Contract changes:** `docs/api.md` 29 (additive): feed items gain `details` `{summary, highlights, ask, stack, ai}` (null for posts, updates, and not-yet-briefed items); `summary` entries gain `items`. `docs/mocks/feed.json` updated. No schema change (`feed_items.payload` jsonb). Affects the mobile feed (updated here); the dashboard does not read `/feed`.
 
+## 2026-09-27 | arjun | Claude Code
+**Task:** AD2 support / sign-in layout: email first, providers below
+**Status:** done
+**What I did:**
+- `mobile/app/sign-in.tsx` (Adam's screen, noted): the usual order. Email address, "Continue with email" (the one filled navy button), the sign-in code option, then an "or" divider, then Continue with LinkedIn / GitHub / Google as outlined buttons. Company login, demo, and disclosure are unchanged below. Sign-in logic is untouched.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then sign out (or open the sign-in screen) and check the order.
+**Next step for whoever continues:** none for this.
+**Known issues / blockers:** none
+**Contract changes:** none
+
 ## 2026-09-27 01:11 | adam | Cursor Grok 4.7
 **Task:** Nearby map restore (user request)
 **Status:** done

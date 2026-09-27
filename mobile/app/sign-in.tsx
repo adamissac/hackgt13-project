@@ -105,58 +105,6 @@ export default function SignInScreen() {
           <Text style={styles.formTitle}>Welcome to Constellation</Text>
           <Text style={[styles.formSubtitle, { color: muted }]}>Sign in or create your account.</Text>
 
-          {providers.linkedin_oidc && (
-            <Pressable
-              style={[styles.button, { backgroundColor: tint }]}
-              onPress={() => run("linkedin", signInWithLinkedIn)}
-              disabled={busy !== null}
-              accessibilityRole="button"
-            >
-              {busy === "linkedin" ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.buttonTextLight}>
-                  Continue with LinkedIn
-                </Text>
-              )}
-            </Pressable>
-          )}
-
-          {providers.github && (
-            <Pressable
-              style={[styles.button, styles.outline, { borderColor: tint }]}
-              onPress={() => run("github", signInWithGitHub)}
-              disabled={busy !== null}
-              accessibilityRole="button"
-            >
-              {busy === "github" ? (
-                <ActivityIndicator />
-              ) : (
-                <Text style={[styles.buttonText, { color: tint }]}>
-                  Continue with GitHub
-                </Text>
-              )}
-            </Pressable>
-          )}
-
-          {providers.google && (
-            <Pressable
-              style={[styles.button, styles.outline, { borderColor: tint }]}
-              onPress={() => run("google", signInWithGoogle)}
-              disabled={busy !== null}
-              accessibilityRole="button"
-            >
-              {busy === "google" ? (
-                <ActivityIndicator />
-              ) : (
-                <Text style={[styles.buttonText, { color: tint }]}>
-                  Continue with Google
-                </Text>
-              )}
-            </Pressable>
-          )}
-
-          {(providers.linkedin_oidc || providers.github) && <Text style={[styles.or, { color: muted }]}>or continue with email</Text>}
           <Text style={styles.label}>Email address</Text>
           <TextInput
             style={[styles.input, { color: text, borderColor: "#DDE2EA" }]}
@@ -229,6 +177,59 @@ export default function SignInScreen() {
             )}
           </Pressable>
           </>}
+
+          {(providers.linkedin_oidc || providers.github || providers.google) && <Text style={[styles.or, { color: muted }]}>or</Text>}
+
+          {providers.linkedin_oidc && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("linkedin", signInWithLinkedIn)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "linkedin" ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={[styles.buttonText, { color: tint }]}>
+                  Continue with LinkedIn
+                </Text>
+              )}
+            </Pressable>
+          )}
+
+          {providers.github && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("github", signInWithGitHub)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "github" ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={[styles.buttonText, { color: tint }]}>
+                  Continue with GitHub
+                </Text>
+              )}
+            </Pressable>
+          )}
+
+          {providers.google && (
+            <Pressable
+              style={[styles.button, styles.outline, { borderColor: tint }]}
+              onPress={() => run("google", signInWithGoogle)}
+              disabled={busy !== null}
+              accessibilityRole="button"
+            >
+              {busy === "google" ? (
+                <ActivityIndicator />
+              ) : (
+                <Text style={[styles.buttonText, { color: tint }]}>
+                  Continue with Google
+                </Text>
+              )}
+            </Pressable>
+          )}
 
           {message && (
             <Text
