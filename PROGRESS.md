@@ -1,3 +1,15 @@
+## 2026-09-27 01:11 | adam | Cursor Grok 4.7
+**Task:** Nearby map restore (user request)
+**Status:** done
+**What I did:**
+- Nearby shows a street map as soon as the tab opens, in `mobile/app/(tabs)/nearby.tsx` (`NearbyScreen`).
+- Phone map (`mobile/features/nearby/NearbyMap.tsx`) is Apple/Google Maps again, with the 3/8/16 m rings. Match pins still appear only after Scan.
+- Website map (`mobile/features/nearby/NearbyMap.web.tsx`) is an OpenStreetMap embed centered on you, or Georgia Tech if location is off.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`. Web: open `/nearby` (verified at http://127.0.0.1:8081/nearby, map of campus). Phone: Expo Go on this Mac’s tunnel, Nearby tab.
+**Next step for whoever continues:** On a phone, open Nearby in Expo Go and confirm the Apple Maps blue dot and distance rings. Scan, then tap a pin and confirm it selects that person in the list.
+**Known issues / blockers:** The website map cannot draw match pins (no MapView on web). Pins stay on the phone map only, and they are browse slots, not real positions.
+**Contract changes:** none
+
 ## 2026-09-26 22:22 | adam | Cursor Grok 4.6
 **Task:** Company tools verification
 **Status:** done

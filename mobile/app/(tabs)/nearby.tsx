@@ -59,6 +59,10 @@ export default function NearbyScreen() {
       </View>
       <Button label="Meeting activity & Open to Meet" variant="secondary" onPress={() => router.push('/discover')} />
 
+      <SectionTitle right={scan ? <Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} /> : undefined}>Around you</SectionTitle>
+      {!expanded && <NearbyMap peers={scan ? peers : []} selectedId={selectedId} onSelect={setSelectedId} />}
+      <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
+
       {fetchError && !radioError && /check in/i.test(fetchError) ? (
         <Card>
           <Text style={[styles.h2, { color: c.text }]}>Check in to see who’s here</Text>
@@ -72,17 +76,12 @@ export default function NearbyScreen() {
         <ErrorState message={fetchError} onRetry={() => setScan(true)} />
       ) : scan ? (
         <>
-          <SectionTitle right={<Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} />}>Around you</SectionTitle>
           {radioNote ? (
             <Card>
               <Text style={[styles.h2, { color: c.text }]}>Bluetooth is off</Text>
               <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text>
             </Card>
           ) : null}
-          {!expanded && <NearbyMap peers={peers} selectedId={selectedId} onSelect={setSelectedId} />}
-          <Text style={[styles.small, { color: c.muted }]}>
-            {mapNote}
-          </Text>
 
           {scanning && !radioError && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
 
