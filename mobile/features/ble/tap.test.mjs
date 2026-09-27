@@ -39,3 +39,14 @@ test('charging port to port (~-55 dBm) counts; 30 cm (~-62) does not', () => {
 test('nothing heard means no progress', () => {
   assert.deepEqual(new TapDetector().update([], 0), { token: null, rssi: null, progress: 0 });
 });
+
+test('a server "too far" raises the bar and restarts the hold', () => {
+  const d = new TapDetector();
+  d.update([{ token: 'aaaaaaaa', rssi: -54 }], 0);
+  assert.equal(d.update([{ token: 'aaaaaaaa', rssi: -54 }], 2000).token, 'aaaaaaaa');
+  d.serverTooFar(-54);
+  assert.equal(d.threshold, -53);
+  assert.equal(d.update([{ token: 'aaaaaaaa', rssi: -54 }], 2500).progress, 0, 'no longer counts as touching');
+  d.update([{ token: 'aaaaaaaa', rssi: -45 }], 3000);
+  assert.equal(d.update([{ token: 'aaaaaaaa', rssi: -45 }], 5000).token, 'aaaaaaaa');
+});

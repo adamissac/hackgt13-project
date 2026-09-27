@@ -54,7 +54,7 @@ export default function VerifyScreen() {
             ))}
           </View>
           {mode === 'tap' ? (
-            <TapPhones onVerified={setVerified} />
+            <TapPhones onVerified={setVerified} onUseQr={() => setMode('show')} />
           ) : mode === 'show' ? (
             <ShowCode />
           ) : (
@@ -68,11 +68,16 @@ export default function VerifyScreen() {
 
 // "Hold your phones together": both phones advertise their rotating token; once each hears the other at
 // touching range for 2 s it claims it, and the server verifies when both claims arrive (api.md 38).
-function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }) {
+function TapPhones({ onVerified, onUseQr }: { onVerified: (r: QrVerifyResponse) => void; onUseQr: () => void }) {
   const c = useColors();
   const [progress, setProgress] = useState(0);
   const [signal, setSignal] = useState<number | null>(null); // strongest phone heard, dBm (for calibration)
-  const [phase, setPhase] = useState<'looking' | 'holding' | 'waiting'>('looking');
+  const [threshold, setThreshold] = useState(TAP_RSSI_DBM);
+  // What the phones are doing, and what the SERVER last said (previously hidden, so a rejected claim looked
+  // exactly like "waiting for their phone" forever).
+  const [phase, setPhase] = useState<'looking' | 'holding' | 'claiming'>('looking');
+  const [server, setServer] = useState<'none' | 'waiting' | 'too_far' | 'not_found'>('none');
+  const [stuck, setStuck] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const available = bleAvailable();
 
@@ -81,26 +86,41 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
     const detector = new TapDetector();
     let claiming = false;
     let done = false;
+    let firstClaimAt: number | null = null;
     startEngine({ eventId: HACKGT_EVENT_ID, owner: 'tap' });
     const unsub = subscribe(async (snap) => {
       if (snap.error) setError(snap.error);
-      const d = detector.update(snap.heard, Date.now());
+      const now = Date.now();
+      const d = detector.update(snap.heard, now);
       setProgress(d.progress);
       setSignal(d.rssi == null ? null : Math.round(d.rssi));
-      setPhase(d.token ? 'waiting' : d.progress > 0 ? 'holding' : 'looking');
+      setPhase(d.token ? 'claiming' : d.progress > 0 ? 'holding' : 'looking');
+      // Offer QR if a tap hasn't completed ~10 s after this phone first claimed.
+      if (firstClaimAt !== null && now - firstClaimAt > 10_000) setStuck(true);
       if (!d.token || claiming || done) return;
       claiming = true; // one claim per engine tick (~1 s)
+      firstClaimAt ??= now;
       try {
         const r = await api.tapClaim({ token: d.token, rssi: Math.round(d.rssi!), event_id: HACKGT_EVENT_ID });
         if (r.status === 'verified' && !done) {
           done = true;
           Vibration.vibrate(120);
           onVerified(r);
+        } else {
+          setServer('waiting'); // our claim is in; the other phone hasn't claimed us yet
         }
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        // too_far / not_found are normal while phones move; keep holding.
-        if (msg !== 'too_far' && msg !== 'not_found') setError(handshakeErrorMessage(msg));
+        if (msg === 'too_far') {
+          // The live server's floor is stricter than the app's: adopt it so we only claim what it accepts.
+          detector.serverTooFar(d.rssi!);
+          setThreshold(detector.threshold);
+          setServer('too_far');
+        } else if (msg === 'not_found') {
+          setServer('not_found');
+        } else {
+          setError(handshakeErrorMessage(msg));
+        }
       } finally {
         claiming = false;
       }
@@ -111,6 +131,19 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
       stopEngine('tap');
     };
   }, [available, onVerified]);
+
+  const status =
+    phase === 'looking'
+      ? 'Looking for the other phone…'
+      : phase === 'holding'
+        ? 'Keep holding…'
+        : server === 'too_far'
+          ? 'Hold the backs of the phones flat together: the server needs a stronger signal.'
+          : server === 'not_found'
+            ? 'Their phone isn’t recognized yet. Both phones need to be signed in (not the demo), online, and on this screen.'
+            : server === 'waiting'
+              ? 'Your phone is confirmed. Waiting for their phone to confirm you…'
+              : 'Checking with the server…';
 
   if (!available) {
     return (
@@ -136,14 +169,18 @@ function TapPhones({ onVerified }: { onVerified: (r: QrVerifyResponse) => void }
       <Text style={styles.title}>Hold your phones together</Text>
       <Text style={styles.muted}>Both of you open this screen, then touch the backs of your phones.</Text>
       <View style={[styles.meter, { backgroundColor: c.surfaceAlt }]}>
-        <View style={[styles.meterFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: phase === 'waiting' ? c.success : c.tint }]} />
+        <View style={[styles.meterFill, { width: `${Math.round(progress * 100)}%`, backgroundColor: phase === 'claiming' && server === 'waiting' ? c.success : c.tint }]} />
       </View>
-      <Text style={styles.body}>
-        {phase === 'looking' ? 'Looking for the other phone…' : phase === 'holding' ? 'Keep holding…' : 'Almost there. Waiting for their phone…'}
-      </Text>
+      <Text style={styles.body}>{status}</Text>
       <Text style={styles.muted}>
-        {signal == null ? 'No phone heard yet' : `Signal ${signal} dBm (touching counts at ${TAP_RSSI_DBM} or stronger)`}
+        {signal == null ? 'No phone heard yet' : `Signal ${signal} dBm (touching counts at ${threshold} or stronger)`}
       </Text>
+      {stuck ? (
+        <>
+          <Text style={styles.muted}>Taking too long? A QR code always works.</Text>
+          <Button label="Use QR instead" variant="secondary" onPress={onUseQr} />
+        </>
+      ) : null}
       {error ? <Text style={[styles.body, styles.error]}>{error}</Text> : null}
     </View>
   );
