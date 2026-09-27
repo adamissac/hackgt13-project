@@ -221,20 +221,15 @@ def test_demo_meet_request_only_with_demo_attendees(dbclient, db, demo_pair, mon
 
     monkeypatch.setattr(synthetic, "shy", lambda s: False)
     r = dbclient.post("/suggestions/demo", headers=auth(me), json={"user_id": syn}).json()
-    assert r["status"] == "waiting"
+    assert r["status"] == "matched" and r["chat_id"]
     s = suggestion_between(db, me, syn)
     assert s["id"] == r["suggestion_id"] and s["building_id"] == synthetic.DEMO_MARK and s["context"] == "event"
-    assert "yes" in (s["a_response"], s["b_response"]) and s["shared_topics"][0]["name"] == "reinforcement learning"
+    assert s["a_response"] == "yes" and s["b_response"] == "yes"
+    assert s["shared_topics"][0]["name"] == "reinforcement learning"
+    assert s["status"] == "matched"
+    assert db.fetchone("select open_to_meet from profiles where id = %s", (syn,))["open_to_meet"] is True
     # asking again reuses the same request
     assert dbclient.post("/suggestions/demo", headers=auth(me), json={"user_id": syn}).json()["suggestion_id"] == s["id"]
-
-    monkeypatch.setattr(synthetic, "answer_after_s", lambda sid: 10_000)
-    synthetic.accept_pending_suggestions()
-    assert suggestion_between(db, me, syn)["status"] == "pending"          # answers after a short pause
-    monkeypatch.setattr(synthetic, "answer_after_s", lambda sid: 0)
-    synthetic.accept_pending_suggestions()
-    assert suggestion_between(db, me, syn)["status"] == "matched"
-    assert db.fetchone("select open_to_meet from profiles where id = %s", (syn,))["open_to_meet"] is True
 
     # location: once I share, they share a made-up point near me
     here = {"lat": 33.7774, "lng": -84.3973}
@@ -245,20 +240,19 @@ def test_demo_meet_request_only_with_demo_attendees(dbclient, db, demo_pair, mon
     assert 5 < d_m < 200
 
 
-def test_shy_demo_attendee_never_answers(dbclient, db, demo_pair, monkeypatch):
+def test_demo_attendee_always_says_yes(dbclient, db, demo_pair, monkeypatch):
     from app import synthetic
     ev, me, syn = demo_pair
-    monkeypatch.setattr(synthetic, "shy", lambda s: True)
-    monkeypatch.setattr(synthetic, "answer_after_s", lambda sid: 0)
-    assert dbclient.post("/suggestions/demo", headers=auth(me), json={"user_id": syn}).json()["status"] == "waiting"
-    synthetic.accept_pending_suggestions()
+    monkeypatch.setattr(synthetic, "shy", lambda s: True)   # ignored: demo people approve
+    r = dbclient.post("/suggestions/demo", headers=auth(me), json={"user_id": syn}).json()
+    assert r["status"] == "matched"
     s = suggestion_between(db, me, syn)
-    assert s["status"] == "pending" and "no" not in (s["a_response"], s["b_response"])   # a no is never shown
+    assert s["status"] == "matched" and "no" not in (s["a_response"], s["b_response"])
 
 
 def test_fake_location_walks_toward_you():
     from app import synthetic
     far = synthetic.approach_point(33.7774, -84.3973, "syn-1", 0)
-    near = synthetic.approach_point(33.7774, -84.3973, "syn-1", 600)
+    near = synthetic.approach_point(33.7774, -84.3973, "syn-1", 30)
     dist = lambda p: ((p[0] - 33.7774) ** 2 + (p[1] + 84.3973) ** 2) ** 0.5 * 111_000  # noqa: E731
-    assert 120 < dist(far) < 180 and dist(near) < 20
+    assert 40 < dist(far) < 60 and dist(near) < 20

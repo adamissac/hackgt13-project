@@ -101,7 +101,7 @@ export const DEMO_PEOPLE: DemoPerson[] = [
       'Daniel built his own backtester. Ask what he’d do differently if he started over.',
     ],
     replies: ['Hey! Sounds good, I’m at the quant sponsor booth.', 'Nice meeting you!'],
-    saysYes: false,
+    saysYes: true,
   },
   {
     user_id: '00000000-0000-4000-8000-00000000d103',

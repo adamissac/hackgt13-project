@@ -14,10 +14,10 @@ creates the verified conversation for a mutual match with a synthetic attendee o
 
 Demo shortcuts (only ever with a synthetic attendee; the real flows above stay in place for real people):
 - POST /suggestions/demo: the real person asks to meet a synthetic attendee without waiting for both to be
-  "around". Most answer yes after a few seconds; about 1 in 5 never answers (a "no" is never shown, so it
-  just stays waiting until it expires), like real people.
+  "around". The attendee says yes immediately (and is open to meet), so the match and chat open on that request.
+- After a verified conversation, the attendee also says yes to connecting on the same pass, before any chat reply.
 - Location: once the real person shares their location on a matched meetup, the synthetic attendee shares a
-  made-up point about 150 m away that walks toward them.
+  made-up point about 48 m away that walks toward them.
 """
 import hashlib
 import logging
@@ -45,9 +45,8 @@ def is_synthetic(user_id: str) -> bool:
 
 # ---------------------------------------------------------------- suggestions
 DEMO_MARK = "demo-request"     # suggestions.building_id of a meet request started with POST /suggestions/demo
-SHY_ONE_IN = 5
-APPROACH_START_M = 150.0
-WALK_M_PER_S = 1.2
+APPROACH_START_M = 48.0
+WALK_M_PER_S = 3.0
 CLOSEST_M = 12.0
 
 
@@ -56,12 +55,12 @@ def _h(*parts) -> int:
 
 
 def shy(syn: str) -> bool:
-    """Some demo attendees never answer a demo meet request (deterministic per person)."""
-    return _h("shy", syn) % SHY_ONE_IN == 0
+    """Demo attendees always answer. Kept so older callers can still ask."""
+    return False
 
 
 def answer_after_s(suggestion_id: int) -> int:
-    return 3 + suggestion_id % 6
+    return 0
 
 
 def request_meet(viewer: str, other: str) -> dict:
@@ -81,7 +80,9 @@ def request_meet(viewer: str, other: str) -> dict:
     open_s = db.fetchone("select id from suggestions where user_a = %s and user_b = %s and status in ('pending', 'matched') "
                          "and (expires_at is null or expires_at > now()) order by created_at desc limit 1", (lo, hi))
     if open_s:
-        return {"suggestion_id": open_s["id"], **respond(open_s["id"], Respond(response="yes"), User(id=viewer))}
+        respond(open_s["id"], Respond(response="yes"), User(id=viewer))
+        _accept_rows(_pending_rows(open_s["id"]))
+        return _meet_status(open_s["id"])
     people, index = population.build([lo, hi])
     by_id = {p["id"]: p for p in people}
     score, shared = 0.0, []
@@ -96,12 +97,21 @@ def request_meet(viewer: str, other: str) -> dict:
         f"insert into suggestions (user_a, user_b, context, event_id, building_id, score, shared_topics, {mine}, expires_at) "
         "values (%s, %s, %s, %s, %s, %s, %s, 'yes', now() + interval '30 minutes') returning id",
         (lo, hi, "event" if event_id else "public", event_id, DEMO_MARK, float(score), Jsonb(shared)))["id"]
-    return {"suggestion_id": sid, "status": "waiting"}
+    _accept_rows(_pending_rows(sid))
+    return _meet_status(sid)
 
 
-def accept_pending_suggestions() -> int:
-    """Synthetic side says yes after the real side said yes. Goes through the real respond endpoint."""
-    rows = db.fetchall(
+def _meet_status(suggestion_id: int) -> dict:
+    s = db.fetchone("select user_a, user_b, status from suggestions where id = %s", (suggestion_id,))
+    if not s or s["status"] != "matched":
+        return {"suggestion_id": suggestion_id, "status": "waiting"}
+    chat = db.fetchone("select id from chats where user_a = %s and user_b = %s", (s["user_a"], s["user_b"]))
+    return {"suggestion_id": suggestion_id, "status": "matched", "chat_id": chat["id"] if chat else None}
+
+
+def _pending_rows(suggestion_id: int | None = None) -> list:
+    """Real person already said yes; the synthetic side has not."""
+    sql = (
         "select s.id, s.building_id, extract(epoch from now() - s.created_at) as age, "
         "case when pa.is_synthetic then s.user_a else s.user_b end::text as syn "
         "from suggestions s join profiles pa on pa.id = s.user_a join profiles pb on pb.id = s.user_b "
@@ -110,10 +120,15 @@ def accept_pending_suggestions() -> int:
         "      and s.a_response = 'pending' and s.b_response = 'yes') "
         "  or (coalesce(pb.is_synthetic, false) and not coalesce(pa.is_synthetic, false) "
         "      and s.b_response = 'pending' and s.a_response = 'yes'))")
+    if suggestion_id is None:
+        return db.fetchall(sql)
+    return db.fetchall(sql + " and s.id = %s", (suggestion_id,))
+
+
+def _accept_rows(rows: list) -> int:
+    """Synthetic side says yes. Goes through the real respond endpoint."""
     from .auth import User
     from .routers.suggestions import Respond, respond
-    rows = [r for r in rows if r["building_id"] != DEMO_MARK
-            or (not shy(r["syn"]) and r["age"] >= answer_after_s(r["id"]))]
     for r in rows:
         try:
             if r["building_id"] == DEMO_MARK:   # they said yes to meeting: they're open to meet (location sharing needs it)
@@ -122,6 +137,10 @@ def accept_pending_suggestions() -> int:
         except Exception:
             log.exception("synthetic accept failed for suggestion %s", r["id"])
     return len(rows)
+
+
+def accept_pending_suggestions() -> int:
+    return _accept_rows(_pending_rows())
 
 
 # ---------------------------------------------------------------- chat
@@ -208,7 +227,7 @@ def agree_to_connect() -> int:
 
 # ---------------------------------------------------------------- location (made up)
 def approach_point(lat: float, lng: float, syn: str, elapsed_s: float) -> tuple[float, float]:
-    """A point that starts ~150 m from the real person and walks toward them, from a direction fixed per person."""
+    """A point that starts ~48 m from the real person and walks toward them, from a direction fixed per person."""
     d = max(CLOSEST_M, APPROACH_START_M - WALK_M_PER_S * max(0.0, elapsed_s))
     bearing = math.radians(_h("bearing", syn) % 360)
     dlat = d * math.cos(bearing) / 111_320
@@ -236,7 +255,8 @@ def share_locations() -> int:
 
 
 def tick() -> dict:
-    return {"accepted": accept_pending_suggestions(), "replied": reply_to_chats(), "connected": agree_to_connect(),
+    # Connect before chat replies: a slow model call must not hold up "yes, let's connect".
+    return {"accepted": accept_pending_suggestions(), "connected": agree_to_connect(), "replied": reply_to_chats(),
             "located": share_locations()}
 
 
@@ -253,4 +273,5 @@ def simulate_conversation(viewer: str, other: str) -> int:
         raise ApiError(403, "you can simulate meeting only after you both said yes")
     with db.conn() as c:
         cid, _ = create_conversation(c, viewer, other, "qr", event_id=s["event_id"], suggestion_id=s["id"], minutes=8.0)
+    agree_to_connect()
     return cid

@@ -78,10 +78,10 @@ step('Want to Meet is silent until both say yes, then chat unlocks', () => {
   assert.ok(demo.notifications().some((n) => n.kind === 'mutual_meet'));
 });
 
-step('Daniel never says yes: stays pending, nothing reveals a no', () => {
-  demo.respond(demo.relationship(daniel.user_id).suggestion_id!, 'yes');
-  assert.equal(demo.relationship(daniel.user_id).stage, 'MEET_INTEREST_PENDING');
-  assert.equal(demo.listChats().some((c) => c.other_user_id === daniel.user_id), false);
+step('Daniel also says yes right away, and a no is still never shown', () => {
+  assert.deepEqual(demo.respond(demo.relationship(daniel.user_id).suggestion_id!, 'yes'), { status: 'waiting' });
+  assert.equal(demo.relationship(daniel.user_id).stage, 'MUTUAL_MEET');
+  assert.ok(demo.relationship(daniel.user_id).chat_id);
 });
 
 step('Messaging: send, and Maya replies in the same chat', () => {

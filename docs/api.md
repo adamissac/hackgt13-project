@@ -224,9 +224,10 @@ Errors: `404 suggestion not found` (not a participant).
 Request `{ "user_id": "uuid" }`. Says yes to meeting a demo attendee (`profiles.is_synthetic`) right away instead of
 waiting until both are around. Creates the suggestion (or reuses the open one) with my yes recorded and answers like
 `/respond`: `{ "suggestion_id": 42, "status": "waiting" }` or `{ "suggestion_id": 42, "status": "matched", "chat_id": 7 }`.
-Most demo attendees say yes a few seconds later (the app sees it as a normal match); about 1 in 5 never answer
-(silent, like a "no"). Once I share my location on the match, the demo attendee shares a made-up point ~150 m away
-that walks toward me. Errors: `403 only available with demo attendees`, `404 person not found`.
+The demo attendee says yes on that same request (a normal match and chat; they are also open to meet). After a
+verified conversation they say yes to connecting before any chat reply, so the real person's yes completes it
+without a wait. Once I share my location on the match, the demo attendee shares a made-up point ~48 m away that
+walks toward me. Errors: `403 only available with demo attendees`, `404 person not found`.
 
 ## 19. GET /qr/verify-token
 The verification QR the other person scans at the end of a conversation. Same shape as 8. Server-signed (HMAC-SHA256, `QR_SIGNING_KEY`), 60-second expiry, single-use nonce.

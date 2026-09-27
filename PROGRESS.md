@@ -1,3 +1,15 @@
+## 2026-09-27 05:34 | adam | Cursor Grok 4.7
+**Task:** Demo synthetic attendees approve meet and connect quickly
+**Status:** done
+**What I did:**
+- `ml/app/synthetic.py` `request_meet`: a demo attendee says yes on the same Want to meet request (match + chat, and they are open to meet). Nobody stays silent.
+- Their connect yes is recorded in `simulate_conversation` and at the start of `tick`, before chat replies, so a slow model call does not hold it up.
+- They start about 48 m away and walk faster. The in-app demo (`mobile/lib/demo/people.ts`, Daniel included) also says yes in about a second.
+**How to run/test it:** `cd mobile && npm run test:demo` (19 passed). Live path is `POST /suggestions/demo` then the checklist Yes, connect.
+**Next step for whoever continues:** After Railway finishes deploying this commit, open a synthetic person, tap Want to meet, and confirm the chat opens without a long wait. Then simulate the meeting and tap Yes, connect.
+**Known issues / blockers:** Live attendees use the Railway `ml` service. This behavior starts when that deploy of this commit is up.
+**Contract changes:** docs/api.md §18a wording only (demo attendees say yes immediately; no new fields).
+
 ## 2026-09-27 05:30 | adam | coding agent
 **Task:** Pre-Xcode check of the iOS dev build and the whole Bluetooth path
 **Status:** done

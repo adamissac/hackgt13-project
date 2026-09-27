@@ -103,7 +103,7 @@ let state: State = fresh();
 let saver: ((json: string) => void) | null = null;
 
 /** How long the simulated person takes to respond. Tests set this to 0. */
-export const timing = { reactionMs: 2500, replyMs: 2200, verifyAfterCloseMs: 6000 };
+export const timing = { reactionMs: 1200, replyMs: 1200, verifyAfterCloseMs: 2000 };
 
 export function hydrate(json: string | null) {
   if (!json) return;
@@ -641,11 +641,12 @@ export function locationShare(sid: number): LocationShareState {
   const base = { suggestion_id: sid, other: { user_id: p.user_id, name: p.name } };
   if (r.sharing_since === null || !state.myPoint) return { ...base, sharing: false, expires_at: null, their_location: null };
   const elapsed = (Date.now() - r.sharing_since) / 1000;
-  const meters = Math.max(3, 40 - elapsed * 1.5);
+  const meters = Math.max(3, 24 - elapsed * 3);
   const bearing = (60 * Math.PI) / 180;
   const dLat = (meters * Math.cos(bearing)) / 111_320;
   const dLng = (meters * Math.sin(bearing)) / (111_320 * Math.cos((state.myPoint.lat * Math.PI) / 180));
-  if (meters <= 4 && elapsed * 1000 > (40 - 4) / 1.5 * 1000 + timing.verifyAfterCloseMs) verifyConversation(p.user_id, 'ble');
+  const closeAfterS = (24 - 4) / 3;
+  if (meters <= 4 && elapsed > closeAfterS + timing.verifyAfterCloseMs / 1000) verifyConversation(p.user_id, 'ble');
   return {
     ...base,
     sharing: true,
