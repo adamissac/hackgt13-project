@@ -1418,3 +1418,14 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Reload the app and open Constellation; check the starfield and tap a named star on a physical phone. Rendering lives in `mobile/features/graph/Atom.tsx`.
 **Known issues / blockers:** Physical-device visual/performance verification remains unmeasured.
 **Contract changes:** none
+## 2026-09-26 22:15 | adam | Codex
+**Task:** AD9 / AR5 — irregular constellation spacing
+**Status:** done
+**What I did:**
+- Gave each featured star a different radius and a small angular offset so the constellation no longer forms an evenly spaced ring.
+- Reduced the projection tilt to preserve name separation on small phones throughout the animation. Kept deterministic positions and existing motion performance.
+- User requested this refinement in Arjun's graph area.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/graph/atomLayout.test.mjs && npx tsc --noEmit && npx eslint features/graph/atomLayout.ts`; passed, including full-orbit bounds and label separation at widths 286–440 for 1–6 stars.
+**Next step for whoever continues:** Reload Constellation and inspect varied star distances; layout parameters are in `mobile/features/graph/atomLayout.ts`.
+**Known issues / blockers:** No physical-device visual check this increment.
+**Contract changes:** none
