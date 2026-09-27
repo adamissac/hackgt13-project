@@ -10,6 +10,7 @@ import { listChats } from '@/features/chat/store';
 import { NearbySection, VerifyLinks } from '@/features/nearby/NearbySection';
 import { useOpenToMeet } from '@/features/presence/openToMeet';
 import { api, type Match, type Meetup, type PendingConversation, type Suggestion } from '@/lib/api';
+import { useEventSession } from '@/lib/eventSession';
 import { useCurrentEventId } from '@/lib/useCurrentEvent';
 import { useAsync } from '@/lib/useAsync';
 
@@ -21,6 +22,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const presence = useOpenToMeet();
   const eventId = useCurrentEventId();
+  const eventSession = useEventSession(); // inside a company event, Home shows only its attendees
   const matches = useAsync(() => api.matches(eventId), [eventId], ['relationships', 'profile']);
   const next = useAsync(
     async () => {
@@ -47,7 +49,7 @@ export default function HomeScreen() {
       refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.eyebrow, { color: c.tint }]}>HackGT 13</Text>
+          <Text style={[styles.eyebrow, { color: c.tint }]}>{eventSession ? eventSession.name : 'HackGT 13'}</Text>
           <Text style={[styles.title, { color: c.text }]}>Find your people.</Text>
         </View>
         <HeaderActions />

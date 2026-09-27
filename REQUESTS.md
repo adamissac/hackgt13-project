@@ -6,6 +6,7 @@ Add asks to someone else's section as `- [ ] (from <you>) <ask>`. Keep each item
 These are notes between equals, not approval requests: nobody (Adam included) signs off on anyone's work.
 
 ## adam
+- [ ] (from arjun) FYI `app/(tabs)/_layout.tsx` now wraps Tabs in a View with `EventBar` on top while the user is inside a company event (and passes top inset 0 to the tabs). Home (`discover.tsx`) shows the event name instead of HackGT 13 then. Leave event is top-left with a confirm.
 - [ ] (from arjun) FYI new `POST /events/{event_id}/unregister` in `ml/app/routers/events.py` (api.md 45): removes registration + check-in. The Events tab uses it when someone switches a company event from Attending to Interested / Not attending. Needs the ml redeploy.
 - [ ] (from arjun) Please redeploy ml (`cd ml && npx @railway/cli up --detach --path-as-root .`). On startup it now creates the shared "Demo test event" (Demo Company, all day Sep 27, join code DEMO-927; `ml/app/demo_event.py`). To get a company login that shows its QR, set `DEMO_COMPANY_EMAIL` and `DEMO_COMPANY_PASSWORD` in Railway first and share them with the team (never commit them).
 - [ ] (from arjun) FYI the attendee event page moved `app/event/[id].tsx` to `app/attend/[id].tsx`: your `app/(company)/event/[id].tsx` has the same URL, so pushes to `/event/[id]` from attendee screens resolved to the protected company route and did nothing. Links in org.tsx, join-event.tsx, and events.tsx are updated; use `/attend/[id]` for attendees.
@@ -43,6 +44,7 @@ These are notes between equals, not approval requests: nobody (Adam included) si
 - [ ] (from alan) AR10 web mentions: `raw_documents.source` has no `'web'` value, so `/profile/ingest {"source":"web"}` returns 400 until a /contract-change adds it.
 
 ## akshar
+- [ ] (from arjun) FYI Event Mode is no longer a user switch at events: `lib/eventSession.ts` calls `enableEventMode()` when someone scans a company QR (consent) and `disableEventMode()` on Leave event; `components/EventBar.tsx` keeps it on while the session lasts (resumes after restart). `EventModeCard` is no longer shown on the event page.
 - [ ] (from arjun) FYI `/qr/verify` and `/tap/claim` now call `matching.conversation_event()`: a client `event_id` is kept only if both people are checked in to that event (company events = registered + scanned QR), else it falls back to a shared attended event or none. No response change.
 - [ ] (from arjun) FYI `EventModeCard` moved from Nearby to the event page `mobile/app/attend/[id].tsx` (shown only after the attendee scanned the company QR). Nearby no longer has an Event Mode section. No change inside `features/ble`.
 - [ ] (from arjun) FYI `features/ble/eventMode.ts`: `enableEventMode()` no longer calls `api.checkin`; it refuses (status `needsCheckIn: true`) unless the current event's `checked_in` is true from `GET /events`. Company events check in only by scanning the organizer QR (`/join-event`). `EventModeCard` shows a "Scan event QR code" button in that case.

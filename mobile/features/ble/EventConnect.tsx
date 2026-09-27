@@ -9,14 +9,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Avatar, Button, useColors } from '@/components/ui';
 import { BAND_HINT } from '@/features/nearby/geo';
 
-import { EventModeCard } from './EventModeCard';
-import { subscribeEventMode } from './eventMode';
+import { enableEventMode, subscribeEventMode, type EventModeStatus } from './eventMode';
 import { useProximity } from './index';
 
 export function EventConnect() {
   const c = useColors();
-  const [on, setOn] = useState(false);
-  useEffect(() => subscribeEventMode((s) => setOn(s.on)), []);
+  const [status, setStatus] = useState<EventModeStatus | null>(null);
+  useEffect(() => subscribeEventMode(setStatus), []);
+  const on = status?.on ?? false;
   const { peers, radioError } = useProximity(on);
   const near = radioError ? [] : peers.filter((p) => p.band);
 
@@ -24,10 +24,17 @@ export function EventConnect() {
     <View style={[styles.wrap, { borderColor: c.border, backgroundColor: c.surface }]}>
       <Text style={[styles.title, { color: c.text }]}>Connect with people here</Text>
       <Text style={[styles.small, { color: c.muted }]}>
-        Turn on Event Mode so your phone finds other checked-in attendees over Bluetooth. After you talk with someone, you
-        both confirm to connect. Nobody sees a “no”.
+        Event Mode turned on when you scanned in, so your phone finds other checked-in attendees over Bluetooth. After you
+        talk with someone, you both confirm to connect. Nobody sees a “no”.
       </Text>
-      <EventModeCard />
+      {/* No switch: scanning in was consent. It stays on until you leave the event (top-left). */}
+      <View style={[styles.status, { backgroundColor: on ? c.successSoft : c.surfaceAlt }]}>
+        <View style={[styles.dot, { backgroundColor: on ? c.success : status?.error ? c.danger : c.muted }]} />
+        <Text style={[styles.small, { color: c.text, flex: 1 }]}>
+          {on ? 'Event Mode is on. Keep the app open to be found.' : status?.error ?? 'Starting Event Mode…'}
+        </Text>
+        {!on && status?.error ? <Button label="Retry" variant="ghost" onPress={() => void enableEventMode()} /> : null}
+      </View>
       {on && !radioError && (
         near.length === 0 ? (
           <Text style={[styles.small, { color: c.muted }]}>Looking for attendees near you…</Text>
@@ -58,4 +65,6 @@ const styles = StyleSheet.create({
   small: { fontSize: 13, lineHeight: 18 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, borderBottomWidth: StyleSheet.hairlineWidth },
   name: { fontSize: 15, fontWeight: '700' },
+  status: { flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: 12, padding: 12 },
+  dot: { width: 10, height: 10, borderRadius: 5 },
 });

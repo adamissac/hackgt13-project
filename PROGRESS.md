@@ -1,5 +1,18 @@
 
 
+## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / "inside an event" mode: auto Event Mode after scanning, app limited to attendees, Leave event (confirmed)
+**Status:** done
+**What I did:**
+- New `mobile/lib/eventSession.ts` (persisted in AsyncStorage). `enterEventSession(id, name, endsAt)` sets the current event (Home, Nearby, Constellation, matches, assistant, verify all already follow `getCurrentEventId`, so they show only that event's registered + scanned attendees) and turns on Event Mode. Scanning the company QR is the consent, so there is no switch. `leaveEventSession()` turns Event Mode off, calls `POST /events/{id}/leave` (Alan's checkout), goes back to HackGT roaming (everyone), and clears the session.
+- New `mobile/components/EventBar.tsx`, rendered on top of every tab by `app/(tabs)/_layout.tsx` (Adam's; noted) while in an event. Top-left "✕ Leave event" opens a confirm dialog (Alert on phones, `confirm` on web), then leaves. The right side shows the event name, "Event Mode on", and "only people at this event", or "Event ended" after `ends_at`. It keeps Event Mode running (resumes after restart). The tabs below get top inset 0 via `SafeAreaInsetsContext.Provider`.
+- `app/join-event.tsx`: a successful QR or join code enters the session and returns to Home. `app/attend/[id].tsx`: the Event Mode switch is replaced by a status line in `features/ble/EventConnect.tsx` (on, starting, or the error with Retry); Leave uses the same confirmed flow; "Go to this event" re-enters if you're checked in but not in the session. Home's eyebrow shows the event name. The Events tab refetches company events when the session changes.
+- Browser-tested in demo: Attending, Scan, simulated scan, Home with the bar; Leave, confirm, bar gone and everyone back; scan again, back in.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. Demo: Events, Demo test event, Attending, Scan company QR code, Simulate scanning, then Home with the Leave event bar.
+**Next step for whoever continues:** On phones with the dev build (Bluetooth), confirm Event Mode starts automatically after scanning and stops after Leave event. Redeploy ml for the demo event, unregister, and leave.
+**Known issues / blockers:** In Expo Go the bar says "Bluetooth unavailable" (expected). An event ending doesn't auto-leave; the bar says "Event ended" and Leave is one tap.
+**Contract changes:** none
+
 ## 2026-09-27 03:27 | akshar | Claude Code (Opus 5.5)
 **Task:** Simplify navigation: merge Nearby into Home (Akshar's request)
 **Status:** done

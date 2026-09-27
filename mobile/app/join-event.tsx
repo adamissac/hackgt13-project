@@ -5,7 +5,7 @@ import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
-import { setCurrentEventId } from '@/lib/currentEvent';
+import { enterEventSession } from '@/lib/eventSession';
 import { env } from '@/lib/env';
 
 function parseJoin(raw: string): { payload: string; signature: string } | null {
@@ -24,11 +24,15 @@ export default function JoinEventScreen() {
   // Set when opened from an event page ("Scan company QR code"); used for the demo-only simulated scan.
   const eventParam = Number(useLocalSearchParams<{ event?: string }>().event) || null;
 
-  // Checked in: go straight into that event's session (its page), which focuses on the people who also scanned in.
+  // Checked in: the whole app now runs inside this event (only people who registered and scanned in), Event Mode
+  // turns on (scanning in is consent to Bluetooth proximity), and you land back on Home. "Leave event" undoes it.
   const finish = async (eventId: number, name: string) => {
-    await setCurrentEventId(eventId);
+    const endsAt = await api.listEvents().then((r) => r.events.find((e) => e.id === eventId)?.ends_at ?? null).catch(() => null);
+    await enterEventSession(eventId, name, endsAt);
     setDone(name);
-    router.replace({ pathname: '/attend/[id]', params: { id: String(eventId) } });
+    // Close the scanner, then switch the tab bar to Home (a single replace keeps whichever tab was open).
+    if (router.canDismiss()) router.dismissAll();
+    setTimeout(() => router.navigate('/'), 50);
   };
   const friendly = (e: unknown) => {
     const msg = e instanceof Error ? e.message : String(e);

@@ -13,6 +13,7 @@ import { useArea } from '@/features/events/useArea';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
 import { useAuth } from '@/lib/auth';
+import { useEventSession } from '@/lib/eventSession';
 
 type Section = 'calendar' | 'local' | 'all';
 const SECTIONS: { id: Section; label: string }[] = [
@@ -25,7 +26,8 @@ export default function EventsScreen() {
  const c=useColors(); const insets=useSafeAreaInsets(); const {session}=useAuth();
  const scope=session?.user.id ?? 'demo';
  const catalog=useAsync(async()=>({events:await eventCatalog.list(),rsvps:await eventCatalog.rsvps(scope)}),[scope]);
- const live=useAsync(()=>api.listEvents().catch(()=>({events:[]})),[scope]);
+ const eventSession=useEventSession(); // refetch company events when you enter or leave one
+ const live=useAsync(()=>api.listEvents().catch(()=>({events:[]})),[scope,eventSession?.eventId]);
  const [section,setSection]=useState<Section>('all');
  const [areaWanted,setAreaWanted]=useState(false);
  const {area,retry}=useArea(areaWanted);

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
@@ -7,9 +7,9 @@ import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, useColors } from '@/components/ui';
 import { EventConnect } from '@/features/ble/EventConnect';
 import { api } from '@/lib/api';
-import { disableEventMode } from '@/features/ble/eventMode';
+import { confirmLeave } from '@/components/EventBar';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
-import { setCurrentEventId } from '@/lib/currentEvent';
+import { enterEventSession, leaveEventSession, useEventSession } from '@/lib/eventSession';
 import { useAsync } from '@/lib/useAsync';
 
 export default function EventScreen() {
@@ -36,26 +36,21 @@ export default function EventScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const checkedIn = events.state.status === 'ready' && !!events.state.data.events.find((e) => e.id === id)?.checked_in;
-  // In the session, Event Mode, Nearby and matches all use this event.
-  useEffect(() => {
-    if (checkedIn) void setCurrentEventId(id);
-  }, [checkedIn, id]);
+  const session = useEventSession();
+  const inThisEvent = session?.eventId === id;
 
   if (events.state.status === 'loading') return <Loading label="Loading event…" />;
   if (events.state.status === 'error') return <ErrorState message={events.state.message} onRetry={events.reload} />;
   const event = events.state.data.events.find((e) => e.id === id);
   if (!event) return <ErrorState message="Event not found." onRetry={events.reload} />;
 
-  // Leave: back to roaming (the general HackGT space). Registration stays, so scanning in again works.
+  // Leave (confirmed): check out, Event Mode off, the app goes back to everyone. Registration stays.
   const leave = async () => {
-    if (busy) return;
+    if (busy || !(await confirmLeave(event.name))) return;
     setBusy(true);
     setError(null);
     try {
-      await disableEventMode().catch(() => undefined);
-      await api.leaveEvent(id);
-      await setCurrentEventId(HACKGT_EVENT_ID);
-      await api.checkin(HACKGT_EVENT_ID).catch(() => undefined);
+      await leaveEventSession();
       events.reload();
       matches.reload();
     } catch (e) {
@@ -140,14 +135,17 @@ export default function EventScreen() {
               <Text style={[styles.body, { color: c.tint, fontWeight: '800' }]}>You’re in the session</Text>
             </View>
             <Text style={[styles.body, { color: c.ai }]}>
-              Everyone below registered and scanned in, just like you. Turn on Event Mode to find them in the room.
+              Everyone below registered and scanned in, just like you. The whole app now shows only people at this event.
             </Text>
           </View>
+          {id !== HACKGT_EVENT_ID && !inThisEvent ? (
+            <Button label="Go to this event" onPress={() => void enterEventSession(id, event.name, event.ends_at).then(() => router.navigate('/'))} />
+          ) : null}
           <EventConnect />
           <Button label="See who’s close on the map" variant="ghost" onPress={() => router.push('/nearby')} />
           <Button label="Leave event" variant="danger" onPress={leave} loading={busy} />
           <Text style={[styles.body, { color: c.muted }]}>
-            Leaving takes you back to roaming. You stay registered, so you can scan back in.
+            Leaving takes the app back to everyone. You stay registered, so you can scan back in.
           </Text>
         </View>
       )}

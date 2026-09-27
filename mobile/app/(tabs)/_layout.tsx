@@ -1,16 +1,18 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Tabs } from 'expo-router';
 import { useEffect } from 'react';
 import { View, type ColorValue } from 'react-native';
 import { HeaderActions } from '@/components/HeaderActions';
 import { Brand } from '@/components/Brand';
+import { EventBar } from '@/components/EventBar';
 import { useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { getCurrentEventId, loadCurrentEvent, setCurrentEventId } from '@/lib/currentEvent';
 import { useAuth } from '@/lib/auth';
 import { env } from '@/lib/env';
+import { clearEventSession, useEventSession } from '@/lib/eventSession';
 
 function icon(name: SymbolViewProps['name']) {
  return function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
@@ -37,6 +39,7 @@ function useAutoCheckin() {
         // (you left, or it ended), go back to roaming instead of showing "check in first" everywhere.
         const mine = (await api.listEvents()).events.find((e) => e.id === id);
         if (mine?.checked_in) return;
+        clearEventSession();
         await setCurrentEventId(HACKGT_EVENT_ID);
         return api.checkin(HACKGT_EVENT_ID);
       })
@@ -51,7 +54,12 @@ export default function TabLayout() {
  useAutoCheckin();
  const c = useColors();
  const insets = useSafeAreaInsets();
- return <Tabs initialRouteName="index" screenOptions={{
+ const session = useEventSession();
+ // Inside an event: the event bar sits on top and already covers the status bar, so the tabs below get no top inset.
+ return <View style={{ flex: 1, backgroundColor: c.background }}>
+  {session && <EventBar session={session} />}
+  <SafeAreaInsetsContext.Provider value={session ? { ...insets, top: 0 } : insets}>
+ <Tabs initialRouteName="index" screenOptions={{
   animation: 'shift', sceneStyle: { backgroundColor: c.background },
   tabBarActiveTintColor: c.tint, tabBarInactiveTintColor: c.tabIconDefault,
   tabBarLabelStyle: { fontSize: 11, fontWeight: '700', marginTop: 3 },
@@ -69,5 +77,7 @@ export default function TabLayout() {
   <Tabs.Screen name="discover" options={{href:null,title:'Meeting activity',headerShown:false}}/>
   <Tabs.Screen name="ai" options={{href:null}}/>
   <Tabs.Screen name="chats" options={{href:null,title:'Messages'}}/>
- </Tabs>;
+ </Tabs>
+  </SafeAreaInsetsContext.Provider>
+ </View>;
 }
