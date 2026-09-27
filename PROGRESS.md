@@ -1,5 +1,17 @@
 
 
+## 2026-09-27 03:27 | akshar | Claude Code (Opus 5.5)
+**Task:** Simplify navigation: merge Nearby into Home (Akshar's request)
+**Status:** done
+**What I did:**
+- Home and Nearby were two tabs for one job (finding people in the room), and Home already linked to Nearby twice. The Nearby content moved to `features/nearby/NearbySection.tsx` and sits on Home under Open to Meet: Scan button, then "Around you" map + everyone nearby once scanning (the map stays hidden until you scan, so Home stays short), then Up next, best matches, and "Verify with QR" + developer tools at the bottom.
+- Bottom bar: Home, Feed, Constellation, Events, Profile (was 6 tabs). `/nearby` is a hidden route that redirects to Home, so join-event, chats, attend and notification links keep working.
+- Removed Home's two "go to Nearby" buttons (same page now).
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint .`; app: Home -> Scan -> map + nearby matches appear.
+**Next step for whoever continues:** Check on a phone with Bluetooth that scanning from Home shows people and the expanded map opens/closes.
+**Known issues / blockers:** none known.
+**Contract changes:** none
+
 ## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / Events: instant Attending / Interested / Not attending with a tap animation; switch away from Attending
 **Status:** done
