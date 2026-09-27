@@ -13,6 +13,16 @@
 **Contract changes:** `docs/api.md` 29 (additive): feed items gain `details` `{summary, highlights, ask, stack, ai}` (null for posts, updates, and not-yet-briefed items); `summary` entries gain `items`. `docs/mocks/feed.json` updated. No schema change (`feed_items.payload` jsonb). Affects the mobile feed (updated here); the dashboard does not read `/feed`.
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AD2 support / sign-in layout reverted
+**Status:** done
+**What I did:**
+- Per Arjun, restored `mobile/app/sign-in.tsx` to its state before 31b16d1: LinkedIn/GitHub/Google first (LinkedIn filled navy, GitHub/Google navy outline), then "or continue with email" and the email form. No logic change.
+**How to run/test it:** `cd mobile && npx tsc --noEmit`, then open the sign-in screen.
+**Next step for whoever continues:** Keep this order; Arjun prefers providers on top.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AD2 support / sign-in layout: email first, providers below
 **Status:** done
 **What I did:**
