@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect } from 'expo-router';
 import { AccessibilityInfo, Animated, AppState, Easing, Platform, Pressable, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, Path, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Circle, Defs, Path, RadialGradient, Stop } from 'react-native-svg';
 import { atomLayout } from './atomLayout';
 import type { Person } from './model';
 
@@ -10,21 +10,22 @@ const LABELS = { technical: 'Technology', career: 'Career & entrepreneurship', p
 const PHASES = Array.from({ length: 73 }, (_, i) => i / 72);
 const ORBIT_ANGLES = [-58, 8, 66];
 
-/** Static vector lighting, not a blur/shadow filter or a WebGL material. */
+/** A soft halo and a crisp stellar core, rendered without expensive blur filters. */
 function Sphere({ size, color, id }: { size: number; color: string; id: string }) {
   return (
     <Svg width={size} height={size} pointerEvents="none">
       <Defs>
-        <RadialGradient id={id} cx="32%" cy="25%" rx="80%" ry="80%">
-          <Stop offset="0" stopColor="#FFFFFF" stopOpacity={0.92} />
-          <Stop offset="0.28" stopColor={color} stopOpacity={0.6} />
-          <Stop offset="0.66" stopColor={color} />
-          <Stop offset="1" stopColor="#25272B" />
+        <RadialGradient id={id}>
+          <Stop offset="0" stopColor="#FFFFFF" />
+          <Stop offset="0.12" stopColor="#E8EEFF" />
+          <Stop offset="0.24" stopColor={color} stopOpacity={0.65} />
+          <Stop offset="0.55" stopColor={color} stopOpacity={0.16} />
+          <Stop offset="1" stopColor={color} stopOpacity={0} />
         </RadialGradient>
       </Defs>
-      <Circle cx={size / 2} cy={size / 2} r={size / 2 - 1} fill={color} />
       <Circle cx={size / 2} cy={size / 2} r={size / 2 - 1} fill={`url(#${id})`} />
-      <Ellipse cx={size * 0.35} cy={size * 0.23} rx={size * 0.15} ry={size * 0.07} fill="#FFFFFF" opacity={0.28} transform={`rotate(-25 ${size * 0.35} ${size * 0.23})`} />
+      <Path d={`M ${size / 2} ${size * .18} L ${size / 2} ${size * .82} M ${size * .18} ${size / 2} L ${size * .82} ${size / 2}`} stroke="#DDE7FF" strokeOpacity={0.65} strokeWidth={0.7} />
+      <Circle cx={size / 2} cy={size / 2} r={size * .045} fill="#FFFFFF" />
     </Svg>
   );
 }
@@ -37,13 +38,13 @@ export function groupByTopic(people: Person[], _topicOrder: string[], _dark: boo
 
 // A slow orbit with counter-rotating labels. Stop while selected, off-screen,
 // backgrounded, or when the system requests reduced motion.
-export function Atom({ size, people, colorOf, selectedId, onSelect, colors, paused = false }: {
+export function Atom({ size, people, colorOf, selectedId, onSelect, paused = false }: {
   size: number; people: Person[]; colorOf: (p: Person) => string;
   selectedId: string | null; onSelect: (id: string | null) => void;
   paused?: boolean;
   colors: { text: string; muted: string; border: string; surface: string; tint: string; tintSoft: string; onTint: string };
 }) {
-  const { height, center, radius } = atomLayout(size, people.length);
+  const { height, center } = atomLayout(size, people.length);
   const [rotation] = useState(() => new Animated.Value(0));
   const [reduced, setReduced] = useState(true);
   const [active, setActive] = useState(AppState.currentState === 'active');
@@ -105,29 +106,28 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors, paus
     <View style={{ width: size, height }}>
       <Svg width={size} height={height} style={{ position: 'absolute' }} pointerEvents="none">
         <Defs><RadialGradient id="nucleusHalo">
-          <Stop offset="0" stopColor={colors.tint} stopOpacity={0.12} />
-          <Stop offset="1" stopColor={colors.tint} stopOpacity={0} />
+          <Stop offset="0" stopColor="#526DAA" stopOpacity={0.22} />
+          <Stop offset="1" stopColor="#526DAA" stopOpacity={0} />
         </RadialGradient></Defs>
-        <Circle cx={center.x} cy={center.y} r={size * 0.36} fill="url(#nucleusHalo)" />
-        <Ellipse cx={center.x} cy={center.y + 57} rx={44} ry={8} fill={colors.tint} opacity={0.04} />
-        {ORBIT_ANGLES.map((angle, i) => <Ellipse key={angle} cx={center.x} cy={center.y} rx={radius} ry={size * 0.15}
-          transform={`rotate(${angle} ${center.x} ${center.y})`} fill="none" stroke={Object.values(FACET_COLORS)[i]} strokeOpacity={0.2} strokeWidth={1} />)}
+        <Circle cx={center.x} cy={center.y} r={size * 0.55} fill="url(#nucleusHalo)" />
+        {Array.from({ length: 76 }, (_, i) => (
+          <Circle key={i} cx={((i * 137.508) % 100) / 100 * size} cy={((i * 73.31 + 17) % 100) / 100 * height}
+            r={i % 11 === 0 ? 1.3 : .55} fill={i % 3 === 0 ? '#B7C7EF' : '#FFFFFF'} opacity={.16 + (i % 5) * .1} />
+        ))}
       </Svg>
       {tracks.map((track, i) => (
         <Animated.View key={`thread-${people[i].id}`} pointerEvents="none" style={{ position: 'absolute', left: center.x - 50, top: center.y - 12, width: 100, height: 24, opacity: track.opacity,
           transform: [{ translateX: track.threadX }, { translateY: track.threadY }, { rotate: track.angle }, { scaleX: track.threadScale }] }}>
           <Svg width={100} height={24} pointerEvents="none">
-            <Path d={`M 0 12 Q 48 ${i % 2 ? 22 : 2} 100 12`} fill="none" stroke={colorOf(people[i])} strokeOpacity={0.32} strokeWidth={1 + Math.max(0, Math.min(1, people[i].score))} />
+            <Path d="M 0 12 L 100 12" fill="none" stroke="#ADBEDF" strokeOpacity={0.25 + Math.max(0, Math.min(1, people[i].score)) * .35} strokeWidth={0.75} />
           </Svg>
         </Animated.View>
       ))}
       <View pointerEvents="none" style={{ position: 'absolute', left: center.x - 43, top: center.y - 43, width: 86, height: 86, alignItems: 'center', justifyContent: 'center' }}>
-        <Sphere size={86} color={colors.tint} id="coreSphere" />
-        <View style={{ position: 'absolute', left: 9, top: 12, opacity: 0.7 }}><Sphere size={19} color={FACET_COLORS.technical} id="coreSatelliteA" /></View>
-        <View style={{ position: 'absolute', right: 7, bottom: 12, opacity: 0.55 }}><Sphere size={15} color={FACET_COLORS.personal} id="coreSatelliteB" /></View>
-        <Text style={{ position: 'absolute', color: colors.onTint, fontSize: 15, fontWeight: '600' }}>You</Text>
+        <Sphere size={86} color="#B7CFFF" id="coreSphere" />
+        <Text style={{ position: 'absolute', top: 64, color: '#EAF0FF', fontSize: 10, fontWeight: '600', letterSpacing: 3 }}>YOU</Text>
       </View>
-      {electrons.map((track, i) => <Animated.View key={i} pointerEvents="none" style={{ position: 'absolute', left: center.x - 5, top: center.y - 5, width: 10, height: 10, borderRadius: 5, backgroundColor: Object.values(FACET_COLORS)[i], borderWidth: 2, borderColor: colors.surface, opacity: track.opacity,
+      {electrons.map((track, i) => <Animated.View key={i} pointerEvents="none" style={{ position: 'absolute', left: center.x - 1, top: center.y - 1, width: 2, height: 2, borderRadius: 1, backgroundColor: '#D9E4FF', opacity: track.opacity,
         transform: [{ translateX: track.x }, { translateY: track.y }, { scale: track.scale }] }} />)}
       {tracks.map((track, i) => {
         const p = people[i];
@@ -140,9 +140,8 @@ export function Atom({ size, people, colorOf, selectedId, onSelect, colors, paus
             style={({ pressed }) => ({ width: 64, minHeight: 64, alignItems: 'center', gap: 3, opacity: pressed ? 0.7 : 1 })}>
             <View style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
               <Sphere size={44} color={colorOf(p)} id={`personSphere${i}`} />
-              <Text style={{ position: 'absolute', color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>{(p.name || '?').split(/\s+/).slice(0, 2).map((s) => s[0]).join('')}</Text>
             </View>
-            <Text numberOfLines={1} style={{ maxWidth: 56, color: colors.text, fontSize: 11, fontWeight: '600', backgroundColor: colors.surface, paddingHorizontal: 3 }}>{p.first}</Text>
+            <Text numberOfLines={1} style={{ maxWidth: 64, color: selected ? '#FFFFFF' : '#C7D2E8', fontSize: 11, fontWeight: '500', paddingHorizontal: 3 }}>{p.first}</Text>
           </Pressable>
           </Animated.View>
         );

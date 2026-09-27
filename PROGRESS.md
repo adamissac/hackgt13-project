@@ -1288,3 +1288,14 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 - `npm install` in `mobile/` currently needs `--legacy-peer-deps` — an unrelated peer-dependency conflict between `expo-router`'s bundled `@expo/ui` (which pulls in `vaul`/`radix-ui` for web) and the React version this Expo SDK ships. Not caused by anything BLE-related.
 
 **Contract changes:** none (`docs/schema.sql` and `docs/api.md` untouched).
+## 2026-09-26 22:00 | adam | Codex
+**Task:** AD9 / AR5 — space constellation visual refinement
+**Status:** done
+**What I did:**
+- Restyled the constellation as a near-black night sky with a deterministic starfield, soft blue haze, glowing stellar cores, and thin straight connection lines.
+- Replaced the atom spheres and orbital rings with stars; retained subtle facet colors, upright names, profile selection, pause, and reduced-motion handling.
+- Kept native-driven animation and static SVG lighting with no new dependencies. User requested changes to Arjun's visualization area.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint features/graph/Atom.tsx 'app/(tabs)/graph.tsx' && node --experimental-strip-types --test features/graph/atomLayout.test.mjs`; all passed. Expo export: `EXPO_PUBLIC_USE_MOCKS=1 npx expo export --platform ios --platform android --platform web`.
+**Next step for whoever continues:** Reload the app and open Constellation; check the starfield and tap a named star on a physical phone. Rendering lives in `mobile/features/graph/Atom.tsx`.
+**Known issues / blockers:** Physical-device visual/performance verification remains unmeasured.
+**Contract changes:** none

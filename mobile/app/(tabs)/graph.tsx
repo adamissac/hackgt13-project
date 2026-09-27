@@ -161,15 +161,15 @@ export default function GraphScreen() {
             </ScrollView>
           )}
 
-          <View style={[styles.chartCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View style={[styles.chartCard, { backgroundColor: '#080D18', borderColor: '#202C42', overflow: 'hidden' }]}>
             <View style={styles.chartHeading}>
-              <Text style={[styles.small, { color: c.muted }]}>{mode === 'matches' ? 'Your closest matches' : 'Your connections'}</Text>
+              <Text style={{ color: '#93A6C8', fontSize: 10, letterSpacing: 2, fontWeight: '600' }}>{mode === 'matches' ? 'YOUR CONSTELLATION' : 'YOUR UNIVERSE'}</Text>
               <Pressable onPress={() => setPaused(!paused)} accessibilityRole="button" accessibilityLabel={paused ? 'Resume rotation' : 'Pause rotation'} style={{ minWidth: 64, minHeight: 44, justifyContent: 'center', alignItems: 'flex-end' }}>
-                <Text style={{ color: c.text, fontSize: 12, fontWeight: '600' }}>{paused ? 'Play ▷' : 'Pause Ⅱ'}</Text>
+                <Text style={{ color: '#CBD6EA', fontSize: 12, fontWeight: '600' }}>{paused ? 'Play ▷' : 'Pause Ⅱ'}</Text>
               </Pressable>
             </View>
             <Atom size={size} people={featured} colorOf={colorOf} selectedId={selectedId} onSelect={setSelectedId} colors={c} paused={paused} />
-            <Text style={[styles.howToText, { color: c.muted }]}>Tap a node to explore</Text>
+            <Text style={[styles.howToText, { color: '#93A6C8' }]}>Every star, a connection. Tap to explore.</Text>
           </View>
           <Disclosure title="Reading your graph" subtitle="Colors show shared interests">
             <View style={styles.legend}>
