@@ -83,7 +83,7 @@ export default function EventsScreen() {
      <Text style={{color:c.text,fontWeight:'700'}}>{e.name}</Text>
      <Text style={[styles.small,{color:c.muted}]}>{e.host||'Event'}{e.registered?' · You’re in':''}</Text>
     </Pressable>)}
-    <View style={styles.row}><Button label="Scan event QR" variant="secondary" onPress={()=>router.push('/join-event')}/><Button label="Company account" variant="ghost" onPress={()=>router.push('/org')}/></View>
+    <View style={styles.row}><Button label="Enter join code" variant="secondary" onPress={()=>router.push('/join-event')}/><Button label="All company events" variant="ghost" onPress={()=>router.push('/org')}/></View>
    </Card>}
    {catalog.state.status==='loading'&&<Loading label="Finding events…"/>}
    {catalog.state.status==='error'&&<ErrorState message={catalog.state.message} onRetry={catalog.reload}/>}

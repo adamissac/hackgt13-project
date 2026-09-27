@@ -231,25 +231,108 @@ const DEMO_LIVE_EVENTS: LiveEvent[] = [
     registered: true,
     checked_in: true,
     mine: false,
+    description: 'The main HackGT 13 event.',
+    promo: 'Talks start at 2. Booth 14 is hiring.',
   },
 ];
 
 export function listEvents() {
   return { events: DEMO_LIVE_EVENTS };
 }
-let demoOrg: { id: number; name: string } | null = null;
+let demoCompany: { org: import('../api').CompanyOrg; events: import('../api').CompanyEventStudio[] } | null = null;
+
 export function myOrg() {
-  return { org: demoOrg };
+  if (demoCompany) return { account: 'company' as const, org: demoCompany.org, events: demoCompany.events };
+  return { account: 'person' as const, org: null, events: [] };
+}
+export function companySignup(body: import('../api').CompanySignup) {
+  demoCompany = {
+    org: {
+      id: 1,
+      name: body.company_name,
+      website: body.website ?? '',
+      industry: body.industry ?? 'Other',
+      about: body.about ?? '',
+      city: body.city ?? '',
+      contact_name: body.contact_name,
+      contact_email: body.contact_email,
+      size_band: body.size_band ?? '',
+    },
+    events: [],
+  };
+  return { ok: true as const, org: demoCompany.org };
+}
+export function patchOrg(body: Partial<import('../api').CompanyOrg>) {
+  if (!demoCompany) throw new Error('company account required');
+  demoCompany.org = { ...demoCompany.org, ...body };
+  return { org: demoCompany.org };
+}
+export function createOrgEvent(body: { name: string; location?: string; description?: string; promo?: string }) {
+  if (!demoCompany) throw new Error('company account required');
+  const event = {
+    id: 800 + demoCompany.events.length,
+    name: body.name,
+    location: body.location ?? '',
+    starts_at: null,
+    ends_at: null,
+    description: body.description ?? '',
+    promo: body.promo ?? '',
+    join_code: 'ABC-123',
+    registered: 0,
+    checked_in: 0,
+  };
+  demoCompany.events.unshift(event);
+  emitChange('profile');
+  return { event };
+}
+export function eventStudio(eventId: number) {
+  const event = demoCompany?.events.find((e) => e.id === eventId) ?? {
+    id: eventId, name: 'Demo event', location: '', starts_at: null, ends_at: null,
+    description: '', promo: '', join_code: 'ABC-123', registered: 0, checked_in: 0,
+  };
+  return {
+    event,
+    join: { payload: 'demo', signature: 'demo', expires_at: new Date().toISOString(), qr_payload: 'demo.demo' },
+    posts: [] as { id: number; body: string; created_at: string }[],
+  };
+}
+export function rotateJoinCode(eventId: number) {
+  const code = 'NEW-001';
+  const ev = demoCompany?.events.find((e) => e.id === eventId);
+  if (ev) ev.join_code = code;
+  return { join_code: code };
+}
+export function promoteEvent(eventId: number, body: string) {
+  const ev = demoCompany?.events.find((e) => e.id === eventId);
+  if (ev) ev.promo = body;
+  return { post: { id: 1, body, created_at: new Date().toISOString() } };
+}
+export function enterEventCode(_code: string) {
+  return { event_id: DEMO_EVENT.id, name: DEMO_EVENT.name };
+}
+export function eventUpdates(eventId: number) {
+  const ev = DEMO_LIVE_EVENTS.find((e) => e.id === eventId);
+  return {
+    event_id: eventId,
+    promo: ev?.promo ?? '',
+    description: ev?.description ?? '',
+    posts: ev?.promo ? [{ id: 1, body: ev.promo, created_at: new Date().toISOString() }] : [],
+  };
 }
 export function createOrg(name: string) {
-  demoOrg ??= { id: 1, name };
-  return { org: demoOrg };
+  const { org } = companySignup({
+    company_name: name,
+    contact_name: 'Demo',
+    contact_email: 'demo@company.test',
+    password: 'password1',
+  });
+  return { org: { id: org.id, name: org.name } };
 }
 export function createEvent(body: { name: string; location?: string }) {
   const event: LiveEvent = {
     id: 900 + DEMO_LIVE_EVENTS.length,
     name: body.name,
-    host: demoOrg?.name ?? 'Your company',
+    host: demoCompany?.org.name ?? 'Your company',
     location: body.location ?? '',
     starts_at: null,
     ends_at: null,

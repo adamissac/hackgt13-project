@@ -39,6 +39,8 @@ def _event_card(row: dict, user_id: str) -> dict:
         "location": row.get("location_text") or row.get("venue") or "",
         "starts_at": row.get("starts_at"),
         "ends_at": row.get("ends_at"),
+        "description": row.get("description") or "",
+        "promo": row.get("promo") or "",
         "registered": registered,
         "checked_in": checked_in,
         "mine": mine,
@@ -62,10 +64,6 @@ def _check_in(event_id: int, user_id: str) -> None:
     population.invalidate()
 
 
-class OrgBody(BaseModel):
-    name: str = Field(min_length=1, max_length=120)
-
-
 class CreateEventBody(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     location: str = Field(default="", max_length=200)
@@ -78,37 +76,12 @@ class JoinBody(BaseModel):
     signature: str = Field(max_length=200)
 
 
-@router.get("/me/org")
-def my_org(user: User = Depends(current_user)):
-    ensure_profile(user.id)
-    row = db.fetchone(
-        "select o.id, o.name from organizations o join org_members m on m.org_id = o.id "
-        "where m.user_id = %s order by o.id limit 1", (user.id,))
-    return {"org": {"id": row["id"], "name": row["name"]} if row else None}
-
-
-@router.post("/orgs")
-def create_org(body: OrgBody, user: User = Depends(current_user)):
-    ensure_profile(user.id)
-    existing = db.fetchone(
-        "select o.id, o.name from organizations o join org_members m on m.org_id = o.id "
-        "where m.user_id = %s order by o.id limit 1", (user.id,))
-    if existing:
-        return {"org": {"id": existing["id"], "name": existing["name"]}}
-    with db.conn() as c:
-        org = c.execute(
-            "insert into organizations (name, owner_id) values (%s, %s) returning id, name",
-            (body.name.strip(), user.id)).fetchone()
-        c.execute("insert into org_members (org_id, user_id, role) values (%s, %s, 'admin')",
-                  (org["id"], user.id))
-    return {"org": {"id": org["id"], "name": org["name"]}}
-
-
 @router.get("/events")
 def list_events(user: User = Depends(current_user)):
     ensure_profile(user.id)
     rows = db.fetchall(
-        "select e.id, e.name, e.venue, e.location_text, e.starts_at, e.ends_at, e.org_id, o.name as host "
+        "select e.id, e.name, e.venue, e.location_text, e.starts_at, e.ends_at, e.description, e.promo, "
+        "e.org_id, o.name as host "
         "from events e left join organizations o on o.id = e.org_id "
         "order by e.starts_at desc nulls last, e.id")
     return {"events": [_event_card(r, user.id) for r in rows]}
@@ -142,6 +115,34 @@ def join_event(body: JoinBody, user: User = Depends(current_user)):
     return {"event_id": event_id, "name": e["name"]}
 
 
+@router.get("/events/{event_id}/updates")
+def event_updates(event_id: int, user: User = Depends(current_user)):
+    """Organizer posts for people already registered. Not a group chat and no attendee names."""
+    ensure_profile(user.id)
+    _event_or_404(event_id)
+    allowed = db.fetchone(
+        "select 1 as ok from event_registrations where event_id = %s and user_id = %s",
+        (event_id, user.id),
+    ) or db.fetchone(
+        "select 1 as ok from events e join org_members m on m.org_id = e.org_id "
+        "where e.id = %s and m.user_id = %s",
+        (event_id, user.id),
+    )
+    if not allowed:
+        raise ApiError(403, "register for this event first")
+    ev = db.fetchone("select promo, description from events where id = %s", (event_id,))
+    posts = db.fetchall(
+        "select id, body, created_at from event_posts where event_id = %s order by id desc limit 20",
+        (event_id,),
+    )
+    return {
+        "event_id": event_id,
+        "promo": (ev or {}).get("promo") or "",
+        "description": (ev or {}).get("description") or "",
+        "posts": posts,
+    }
+
+
 @router.post("/events/{event_id}/register")
 def register(event_id: int, user: User = Depends(current_user)):
     ensure_profile(user.id)
@@ -170,8 +171,8 @@ def checkin(event_id: int, user: User = Depends(current_user)):
     if not e:
         raise ApiError(404, "event not found")
     if e.get("org_id"):
-        # Company events: only the organizer's join QR checks people in (POST /events/join).
-        raise ApiError(403, "scan the event QR code to check in")
+        # Company events: only the organizer's join QR or printed join code check people in.
+        raise ApiError(403, "scan the event QR or enter the join code")
     _check_in(event_id, user.id)
     return {"ok": True}
 

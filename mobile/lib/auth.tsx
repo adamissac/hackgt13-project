@@ -162,6 +162,12 @@ export async function enabledProviders(): Promise<Record<string, boolean>> {
   }
 }
 
+/** Company login. Demo accounts skip email verification; the server already confirmed them. */
+export async function signInWithPassword(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+  if (error) throw error;
+}
+
 /** Fallback: email magic link that returns through the same deep link. */
 export async function sendMagicLink(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({

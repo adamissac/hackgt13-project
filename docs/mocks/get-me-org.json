@@ -1,0 +1,28 @@
+{
+  "account": "company",
+  "org": {
+    "id": 3,
+    "name": "Acme",
+    "website": "https://acme.com",
+    "industry": "Technology",
+    "about": "Campus recruiting",
+    "city": "Atlanta",
+    "contact_name": "Jordan Lee",
+    "contact_email": "jordan@acme.com",
+    "size_band": "11-50"
+  },
+  "events": [
+    {
+      "id": 9,
+      "name": "Fall fair",
+      "location": "Klaus",
+      "starts_at": null,
+      "ends_at": null,
+      "description": "Talk to three teams.",
+      "promo": "Hiring SWE interns",
+      "join_code": null,
+      "registered": 12,
+      "checked_in": 4
+    }
+  ]
+}

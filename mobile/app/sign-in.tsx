@@ -20,6 +20,8 @@ import {
   verifyEmailCode,
 } from "@/lib/auth";
 
+import { router } from "expo-router";
+
 import { Brand } from '@/components/Brand';
 
 type SignInKind = "linkedin" | "github" | "email" | "code";
@@ -199,6 +201,16 @@ export default function SignInScreen() {
               {message.text}
             </Text>
           )}
+
+          <Pressable
+            onPress={() => router.push("/company-sign-in")}
+            style={styles.guest}
+            accessibilityRole="button"
+          >
+            <Text style={[styles.guestText, { opacity: 0.85 }]}>
+              Company? Separate login
+            </Text>
+          </Pressable>
 
           <Pressable
             onPress={continueAsGuest}

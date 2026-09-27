@@ -52,7 +52,8 @@ class Settings:
     # dashboard->API response (the request still returns 200, just with no allow-origin header).
     cors_origins: list[str] = field(default_factory=lambda: _list(
         "CORS_ORIGINS",
-        "http://localhost:3000,http://localhost:3100,http://localhost:8081,http://localhost:19006"))
+        "http://localhost:3000,http://localhost:3100,http://localhost:8081,http://localhost:8087,"
+        "http://localhost:8090,http://localhost:19006"))
     # Set RUN_WORKERS=0 to disable background loops (tests, a second replica).
     run_workers: bool = field(default_factory=lambda: _env("RUN_WORKERS", "1") == "1")
     # Set LOAD_EMBEDDER=0 to skip loading bge-small at startup (tests; falls back lazily).

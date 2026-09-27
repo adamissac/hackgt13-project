@@ -1,3 +1,40 @@
+## 2026-09-26 21:53 | adam | Cursor Grok 4.6
+**Task:** Company separate login + organizer studio (events, join codes, promote)
+**Status:** in progress
+**What I did:**
+- Companies have a separate sign-in (`mobile/app/company-sign-in.tsx`): company name, contact, work email, password, industry, size, city, about. Demo does not verify email (`POST /orgs/signup` creates a confirmed Auth user).
+- Company accounts skip student onboarding and land on `(company)` tabs: event list, create event, studio (join code + QR + share + promote), company profile.
+- People join with a typed code (`POST /events/enter`) or the event QR. Organizers see counts only. Promote writes `event_posts`, updates `events.promo`, and notifies registrants.
+- Live migration `20260926220000_company_accounts.sql` applied to project `mwfzgkikbmnghueolfnw`.
+**How to run/test it:** Sign-in → Company? Separate login → create company → New event → share code. Attendee: Events → Enter join code. `cd mobile && npx tsc --noEmit`. Redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Next step for whoever continues:** Confirm Railway `/orgs/signup` is live (`curl -s https://ml-production-04c0.up.railway.app/openapi.json | python3 -c 'import sys,json; print("/orgs/signup" in json.load(sys.stdin)["paths"])'`). Then create a company on the Expo app and mint a join code.
+**Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
+**Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
+
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / a different blue design on each tab
+**Status:** done
+**What I did:**
+- Per Arjun, each tab uses the navy in its own way (Events keeps `TabHero`, and only Events uses it now). Feed: an edge-to-edge navy band with rounded bottom, and the composer card overlapping it. Constellation: a large navy headline plus three light-blue stat tiles (people, shared topics, best match %). Nearby: a light-blue "radar" card with navy concentric rings (react-native-svg) and the scan switch. Profile: a navy cover strip with a faint constellation mark and the avatar overlapping it, in a white card.
+- Styling only, in `app/(tabs)/feed.tsx` and `app/profile.tsx` (Adam's; noted), plus `app/(tabs)/graph.tsx` and `app/(tabs)/nearby.tsx`. Checked each tab in the browser at phone size.
+- The local Expo server had crashed (Abort trap in phone-qr.sh). Restarted it with the same URL, exp://hshigw0-arjunk91-8081.exp.direct.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`, then reload Expo Go.
+**Next step for whoever continues:** Keep the tabs visually distinct. Don't add `TabHero` to them.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / company events: check in only by QR, Event Mode gated on check-in
+**Status:** done
+**What I did:**
+- Product rule from Arjun: for a company event, a person is "at" the event only after registering in the app AND scanning the organizer's check-in QR (which our app generates for the company). Only checked-in people appear to each other (matches, Nearby, event page), and Event Mode stays off until then.
+- Server (`ml/app/routers/events.py`, Adam/Alan's file, noted): `register` only inserts `event_registrations`; `POST /events/join` verifies the QR, requires registration (`403 register for this event first`), then inserts `attendance`; `POST /events/{id}/checkin` returns `403 scan the event QR code to check in` for events with `org_id`. Events without a company (HackGT 13 demo, id 1) keep open check-in, so the demo and the 80 seeded attendees still work. New `ml/tests/test_event_checkin_qr.py` (4 DB tests: register is not check-in, QR needs registration, plain check-in blocked, a registered-but-unscanned person is hidden and gets 403 on matches).
+- App: `features/ble/eventMode.ts` (Akshar's) checks `checked_in` from `GET /events` before starting, with a "Scan event QR code" button on `EventModeCard`. `app/event/[id].tsx` shows Register, then "You're registered, scan the QR", with no auto check-in. The Nearby "check in first" state offers the QR scanner. `lib/api.ts`' auto check-in retry returns the original error when the server refuses. The demo backend mirrors the rules and demo companies now persist. The contract-keeper check found one drift (the api.ts retry), now fixed.
+**How to run/test it:** `cd ml && .venv/bin/python -m pytest -q tests/test_event_join_qr.py tests/test_event_checkin_qr.py` (the DB tests need TEST_DATABASE_URL; CI runs them). `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`. In the app: Profile, Company events, create a company, create an event (its page shows the check-in QR), Register, "You're registered" card, then scan the QR on a second phone.
+**Next step for whoever continues:** Redeploy ml to Railway (`cd ml && npx @railway/cli up --detach --path-as-root .`). GitHub pushes don't deploy it, and until then the live server still checks people in on register.
+**Known issues / blockers:** Not verified on a live DB locally (no Postgres on this laptop); CI covers it. The camera scan wasn't tested in the browser. The join QR is a 7-day static code, so a shared screenshot works, but only for people who registered.
+**Contract changes:** docs/api.md 6 (checkin 403 for company events) and 45 (register does not check in; join requires registration, new 403). Response shapes unchanged; mocks unchanged. Affects Adam (company event UI, updated), Akshar (Event Mode, updated), Alan (events router). REQUESTS.md notes added.
+
 ## 2026-09-26 21:15 | adam | Adam
 **Task:** Web home-screen app + extra add-people paths + company events
 **Status:** in progress

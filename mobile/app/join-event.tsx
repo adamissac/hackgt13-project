@@ -1,7 +1,7 @@
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { Button, Card, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -19,16 +19,35 @@ export default function JoinEventScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
+  const [code, setCode] = useState('');
 
-  const join = async (raw: string) => {
-    const code = parseJoin(raw);
-    if (!code || busy) return;
+  const finish = async (eventId: number, name: string) => {
+    await setCurrentEventId(eventId);
+    setDone(name);
+  };
+
+  const joinQr = async (raw: string) => {
+    const token = parseJoin(raw);
+    if (!token || busy) return;
     setBusy(true);
     setError(null);
     try {
-      const r = await api.joinEvent(code);
-      await setCurrentEventId(r.event_id);
-      setDone(r.name);
+      const r = await api.joinEvent(token);
+      await finish(r.event_id, r.name);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const joinCode = async () => {
+    if (busy || code.trim().length < 4) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await api.enterEventCode(code.trim());
+      await finish(r.event_id, r.name);
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(
@@ -50,7 +69,7 @@ export default function JoinEventScreen() {
       <View style={styles.wrap}>
         <Text style={[styles.title, { color: c.text }]}>You’re checked in to {done}</Text>
         <Text style={[styles.body, { color: c.muted }]}>
-          Other checked-in attendees can now see you, and you can turn on Event Mode in Nearby.
+          Other checked-in attendees can now see you. You are not connected to anyone yet.
         </Text>
         <Button label="Go to Nearby" onPress={() => router.replace('/nearby')} />
       </View>
@@ -59,11 +78,25 @@ export default function JoinEventScreen() {
 
   return (
     <View style={styles.wrap}>
-      <Text style={[styles.title, { color: c.text }]}>Check in to an event</Text>
+      <Text style={[styles.title, { color: c.text }]}>Join a company event</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Scan the QR code the organizers show at the entrance. You need to have registered for the event first. This
-        checks you in; it doesn’t connect you to anyone.
+        Enter the join code the company sent (registers you and checks you in), or scan their QR after you register.
+        Neither one connects you to a person.
       </Text>
+      <Card>
+        <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Join code</Text>
+        <TextInput
+          value={code}
+          onChangeText={setCode}
+          placeholder="ABC-123"
+          placeholderTextColor={c.muted}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          style={[styles.input, { color: c.text, borderColor: c.border }]}
+        />
+        <Button label="Enter code" onPress={() => void joinCode()} loading={busy} disabled={code.trim().length < 4} />
+      </Card>
+      <Text style={[styles.body, { color: c.muted }]}>Or scan the QR</Text>
       {!permission?.granted ? (
         <Button label="Allow camera" onPress={() => void request()} />
       ) : (
@@ -71,7 +104,7 @@ export default function JoinEventScreen() {
           <CameraView
             style={StyleSheet.absoluteFill}
             barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
-            onBarcodeScanned={busy ? undefined : ({ data }) => void join(data)}
+            onBarcodeScanned={busy ? undefined : ({ data }) => void joinQr(data)}
           />
         </View>
       )}
@@ -88,5 +121,6 @@ const styles = StyleSheet.create({
   wrap: { flex: 1, padding: 20, gap: 12 },
   title: { fontSize: 24, fontWeight: '700' },
   body: { fontSize: 15, lineHeight: 22 },
-  camera: { flex: 1, minHeight: 280, borderRadius: 16, overflow: 'hidden' },
+  input: { minHeight: 52, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, fontSize: 20, letterSpacing: 2, marginVertical: 8 },
+  camera: { flex: 1, minHeight: 220, borderRadius: 16, overflow: 'hidden' },
 });

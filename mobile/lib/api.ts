@@ -45,6 +45,40 @@ export interface Match {
   proximity: Proximity;
 }
 export interface MatchesResponse { event_id: number; model: string; matches: Match[] }
+export interface CompanyOrg {
+  id: number;
+  name: string;
+  website: string;
+  industry: string;
+  about: string;
+  city: string;
+  contact_name: string;
+  contact_email: string;
+  size_band: string;
+}
+export interface CompanyEventStudio {
+  id: number;
+  name: string;
+  location: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  description: string;
+  promo: string;
+  join_code: string | null;
+  registered: number;
+  checked_in: number;
+}
+export interface CompanySignup {
+  company_name: string;
+  contact_name: string;
+  contact_email: string;
+  password: string;
+  website?: string;
+  industry?: string;
+  city?: string;
+  about?: string;
+  size_band?: string;
+}
 export interface LiveEvent {
   id: number;
   name: string;
@@ -52,6 +86,8 @@ export interface LiveEvent {
   location: string;
   starts_at: string | null;
   ends_at: string | null;
+  description?: string;
+  promo?: string;
   registered: boolean;
   checked_in: boolean;
   mine: boolean;
@@ -532,7 +568,44 @@ export const api = {
     call(demo.matches, () => request<MatchesResponse>('GET', `/events/${eventId}/matches?limit=${limit}`)),
   checkin: (eventId: number) => call(demo.checkin, () => request<{ ok: true }>('POST', `/events/${eventId}/checkin`, {})),
   listEvents: () => call(demo.listEvents, () => request<{ events: LiveEvent[] }>('GET', '/events')),
-  myOrg: () => call(demo.myOrg, () => request<{ org: { id: number; name: string } | null }>('GET', '/me/org')),
+  myOrg: () =>
+    call(demo.myOrg, () => request<{ account: 'person' | 'company'; org: CompanyOrg | null; events: CompanyEventStudio[] }>('GET', '/me/org')),
+  companySignup: (body: CompanySignup) =>
+    call(() => demo.companySignup(body), () =>
+      request<{ ok: true; org: CompanyOrg }>('POST', '/orgs/signup', body).then((r) => {
+        emitChange('profile');
+        return r;
+      })),
+  patchOrg: (body: Partial<CompanyOrg>) =>
+    call(() => demo.patchOrg(body), () => request<{ org: CompanyOrg }>('PATCH', '/orgs', body).then((r) => {
+      emitChange('profile');
+      return r;
+    })),
+  createOrgEvent: (body: { name: string; location?: string; starts_at?: string; ends_at?: string; description?: string; promo?: string }) =>
+    call(() => demo.createOrgEvent(body), () =>
+      request<{ event: CompanyEventStudio }>('POST', '/orgs/events', body).then((r) => {
+        emitChange('profile');
+        return r;
+      })),
+  eventStudio: (eventId: number) =>
+    call(() => demo.eventStudio(eventId), () =>
+      request<{ event: CompanyEventStudio; join: QrToken & { qr_payload: string }; posts: { id: number; body: string; created_at: string }[] }>(
+        'GET',
+        `/orgs/events/${eventId}`,
+      )),
+  rotateJoinCode: (eventId: number) =>
+    call(() => demo.rotateJoinCode(eventId), () => request<{ join_code: string }>('POST', `/orgs/events/${eventId}/rotate-code`, {})),
+  promoteEvent: (eventId: number, body: string) =>
+    call(() => demo.promoteEvent(eventId, body), () =>
+      request<{ post: { id: number; body: string; created_at: string } }>('POST', `/orgs/events/${eventId}/promote`, { body })),
+  enterEventCode: (code: string) =>
+    call(() => demo.enterEventCode(code), () => request<{ event_id: number; name: string }>('POST', '/events/enter', { code })),
+  eventUpdates: (eventId: number) =>
+    call(() => demo.eventUpdates(eventId), () =>
+      request<{ event_id: number; promo: string; description: string; posts: { id: number; body: string; created_at: string }[] }>(
+        'GET',
+        `/events/${eventId}/updates`,
+      )),
   createOrg: (name: string) =>
     call(() => demo.createOrg(name), () => request<{ org: { id: number; name: string } }>('POST', '/orgs', { name })),
   createEvent: (body: { name: string; location?: string; starts_at?: string; ends_at?: string }) =>

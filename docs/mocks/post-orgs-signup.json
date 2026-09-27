@@ -1,0 +1,14 @@
+{
+  "ok": true,
+  "org": {
+    "id": 3,
+    "name": "Acme",
+    "website": "https://acme.com",
+    "industry": "Technology",
+    "about": "Campus recruiting",
+    "city": "Atlanta",
+    "contact_name": "Jordan Lee",
+    "contact_email": "jordan@acme.com",
+    "size_band": "11-50"
+  }
+}

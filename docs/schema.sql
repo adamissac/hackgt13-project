@@ -394,6 +394,21 @@ alter table profiles add column onboarding_status text not null default 'pending
   check (onboarding_status in ('pending', 'partial', 'complete'));
 -- trigger on user_interests insert sets 'complete' (first successful profile build)
 
+-- ========== Company accounts (supabase/migrations/20260926220000_company_accounts.sql) ==========
+alter table profiles add column account_kind text not null default 'person'
+  check (account_kind in ('person', 'company'));
+alter table organizations
+  add column website text not null default '',
+  add column industry text not null default '',
+  add column about text not null default '',
+  add column city text not null default '',
+  add column contact_name text not null default '',
+  add column contact_email text not null default '',
+  add column size_band text not null default '';
+alter table events
+  add column join_code_hash text unique,
+  add column promo text not null default '';
+
 -- ========== Skill profiles (supabase/migrations/20260926200000_skill_profiles_and_on_create_account.sql) ==========
 -- on_create_account(): trigger on auth.users insert, the single account-creation hook for every auth provider
 create table resumes (

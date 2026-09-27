@@ -22,6 +22,7 @@ export default function EventScreen() {
     [id],
     ['relationships'],
   );
+  const updates = useAsync(() => api.eventUpdates(id).catch(() => ({ event_id: id, promo: '', description: '', posts: [] })), [id]);
   const token = useAsync(async () => {
     try {
       return await api.eventJoinToken(id);
@@ -57,6 +58,29 @@ export default function EventScreen() {
       <Text style={[styles.title, { color: c.text }]}>{event.name}</Text>
       <Text style={[styles.body, { color: c.muted }]}>{event.host ? `Hosted by ${event.host}` : 'Company event'}</Text>
       <Text style={[styles.body, { color: c.muted }]}>{event.location || 'Location on site'}</Text>
+      {(event.description || (updates.state.status === 'ready' && updates.state.data.description)) ? (
+        <Text style={[styles.body, { color: c.text }]}>
+          {event.description || (updates.state.status === 'ready' ? updates.state.data.description : '')}
+        </Text>
+      ) : null}
+      {(event.promo || (updates.state.status === 'ready' && updates.state.data.promo)) ? (
+        <Card>
+          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>From the host</Text>
+          <Text style={[styles.body, { color: c.text }]}>
+            {event.promo || (updates.state.status === 'ready' ? updates.state.data.promo : '')}
+          </Text>
+        </Card>
+      ) : null}
+      {updates.state.status === 'ready' && updates.state.data.posts.length > 0 ? (
+        <Card>
+          <Text style={[styles.body, { color: c.text, fontWeight: '700' }]}>Event updates</Text>
+          {updates.state.data.posts.map((p) => (
+            <Text key={p.id} style={[styles.body, { color: c.muted, marginTop: 8 }]}>
+              {p.body}
+            </Text>
+          ))}
+        </Card>
+      ) : null}
       {!event.registered ? (
         <Button label="Register" onPress={enter} loading={busy} />
       ) : !event.checked_in ? (
@@ -66,7 +90,7 @@ export default function EventScreen() {
             At the event, scan the QR code from the organizers to check in. Until then, other attendees can’t see you and
             Event Mode stays off.
           </Text>
-          <Button label="Scan event QR code" onPress={() => router.push('/join-event')} />
+          <Button label="Scan QR or enter join code" onPress={() => router.push('/join-event')} />
         </Card>
       ) : (
         <Button
@@ -89,7 +113,7 @@ export default function EventScreen() {
       ) : null}
       <Text style={[styles.section, { color: c.text }]}>People at this event</Text>
       <Text style={[styles.body, { color: c.muted }]}>
-        Only people who checked in here with the event QR code, ranked for you. Not a searchable list of every attendee.
+        Only people who checked in with the event QR or join code, ranked for you. Not a searchable list of every attendee.
       </Text>
       {matches.state.status === 'loading' && <Loading label="Finding people…" />}
       {matches.state.status === 'ready' && matches.state.data === null && (

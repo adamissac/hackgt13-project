@@ -1,0 +1,14 @@
+{
+  "event": {
+    "id": 9,
+    "name": "Fall fair",
+    "location": "Klaus",
+    "starts_at": null,
+    "ends_at": null,
+    "description": "Talk to three teams.",
+    "promo": "Hiring SWE interns",
+    "join_code": "ABC-123",
+    "registered": 0,
+    "checked_in": 0
+  }
+}

@@ -80,7 +80,7 @@ Only people checked in to the event.
 ## 6. POST /events/{event_id}/checkin
 Request: `{}`   Response: `{ "ok": true }`
 Only for events with no company (`org_id` null, e.g. the HackGT demo event). Company events check people in by QR
-(45, `POST /events/join`): `403 scan the event QR code to check in`.
+(45, `POST /events/join`) or printed join code (`POST /events/enter`): `403 scan the event QR or enter the join code`.
 
 ## 7. GET /matches/{other_user_id}/starters
 Same access rule as 15 (current match, open suggestion, or connection; otherwise `403 {"error": "this profile isn't available"}`).
@@ -516,10 +516,12 @@ Demo attendees also answer on their own (ml/app/synthetic.py): they say yes afte
 in character, and say yes to connecting. Suggestions never pair two demo attendees.
 
 ## 45. Company events   owner: Adam (web + company check-in)
-`GET /events` → `{ "events": [ { "id": 1, "name": "HackGT 13", "host": "", "location": "", "starts_at": null, "ends_at": null, "registered": true, "checked_in": true, "mine": false } ] }`
+`GET /events` → `{ "events": [ { "id": 1, "name": "HackGT 13", "host": "", "location": "", "starts_at": null, "ends_at": null, "description": "", "promo": "", "registered": true, "checked_in": true, "mine": false } ] }`
 
-`GET /me/org` → `{ "org": { "id": 3, "name": "Acme" } | null }`
-`POST /orgs` ← `{ "name": "Acme" }` → `{ "org": { "id": 3, "name": "Acme" } }` (returns the existing org if the caller already has one)
+`GET /me/org` → `{ "account": "person" | "company", "org": { "id": 3, "name": "Acme", "website": "", "industry": "", "about": "", "city": "", "contact_name": "", "contact_email": "", "size_band": "" } | null, "events": [] }`
+`account` is `company` only when `profiles.account_kind = company` (separate company login). A person who happens to sit on an org stays `person` and does not get organizer tools.
+
+`POST /orgs` ← `{ "name": "Acme" }` → `{ "org": { "id": 3, "name": "Acme" } }` (legacy; new companies use 46)
 
 `POST /events` ← `{ "name": "Fall fair", "location": "Klaus", "starts_at": null, "ends_at": null }` (org members only; else `403 create a company first`)
 → `{ "event": { ...same card as GET /events } }`
@@ -527,10 +529,31 @@ in character, and say yes to connecting. Suggestions never pair two demo attende
 `POST /events/{event_id}/register` → `{ "ok": true }` (signs up only; does NOT check in. `checked_in` stays false)
 `GET /events/{event_id}/join-token` (organizers only) → `{ "payload", "signature", "expires_at", "event_id", "qr_payload" }` (7-day join QR)
 `POST /events/join` ← `{ "payload", "signature" }` → `{ "event_id": 3, "name": "Fall fair" }`
-Checks in a person who already registered (the only way to check in to a company event). Registered but not
-scanned = not checked in = invisible to other attendees, and the app keeps Event Mode off.
-Errors: `400 invalid_signature`, `400 expired`, `403 organizers only` (join-token), `403 register for this event first` (join), `404 event not found`.
-Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory.
+Checks in a person who already registered. Registered but not scanned = not checked in = invisible to other attendees.
+`POST /events/enter` ← `{ "code": "ABC-123" }` → `{ "event_id": 3, "name": "Fall fair" }` registers **and** checks in (`404 code not found`). Printed join codes are the QR equivalent.
+`GET /events/{event_id}/updates` (registered or organizer) → `{ "event_id": 3, "promo": "", "description": "", "posts": [ { "id": 1, "body": "Talks start at 2", "created_at": "..." } ] }`
+Errors: `400 invalid_signature`, `400 expired`, `403 organizers only` (join-token), `403 register for this event first` (join), `404 event not found`, `404 code not found`.
+Joining an event is not a connection. People at the event appear through 5 `GET /events/{id}/matches` (checked-in attendees, ranked), not a full attendee directory. Organizers see registration and check-in counts, never attendee names.
+
+## 46. Company accounts   owner: Adam   ⚠️ POST /orgs/signup is public (no JWT; documented exception)
+Separate company login from attendee LinkedIn/email. Demo does **not** verify the work email: the service creates a confirmed Auth user.
+
+`POST /orgs/signup` ← `{ "company_name", "contact_name", "contact_email", "password", "website?", "industry?", "city?", "about?", "size_band?" }`
+→ `{ "ok": true, "org": { ...same org object as GET /me/org } }`
+Then the app signs in with email+password. `409 that work email already has an account. Sign in.` `400 enter a work email`. Rate limit 30/hour.
+
+`PATCH /orgs` ← any subset of `{ name, website, industry, city, about, size_band, contact_name }` → `{ "org": { ... } }`
+
+`POST /orgs/events` ← `{ "name", "location?", "starts_at?", "ends_at?", "description?", "promo?" }`
+→ `{ "event": { "id", "name", "location", "starts_at", "ends_at", "description", "promo", "join_code", "registered", "checked_in" } }`
+`join_code` is shown once (hashed at rest). Shape `XXX-XXX`, case-insensitive, dashes ignored.
+
+`GET /orgs/events/{event_id}` (organizers only) → `{ "event": { ...studio, join_code: null }, "join": { "payload", "signature", "expires_at", "qr_payload" }, "posts": [ ... ] }`
+
+`POST /orgs/events/{event_id}/rotate-code` → `{ "join_code": "NEW-001" }` (invalidates the previous code)
+
+`POST /orgs/events/{event_id}/promote` ← `{ "body": "Talks start at 2" }` → `{ "post": { "id", "body", "created_at" } }`
+Writes `event_posts`, updates `events.promo`, and notifies registered people (`notifications.kind = event_update`). Not a group chat.
 
 Additive fields (no breaking changes):
 - `GET /matches/{id}/quick-profile` (15): `"demo_attendee": true|false`.

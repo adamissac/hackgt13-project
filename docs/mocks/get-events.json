@@ -7,6 +7,8 @@
       "location": "Klaus Advanced Computing Building",
       "starts_at": null,
       "ends_at": null,
+      "description": "The main HackGT 13 event.",
+      "promo": "Talks start at 2. Booth 14 is hiring.",
       "registered": true,
       "checked_in": true,
       "mine": false

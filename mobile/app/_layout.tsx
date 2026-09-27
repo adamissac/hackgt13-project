@@ -11,6 +11,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { AuthProvider, useAuth } from '@/lib/auth';
 import { useOnboarding } from '@/lib/useOnboarding';
+import { useOrg } from '@/lib/useOrg';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -57,7 +58,8 @@ function RootLayoutNav() {
   const { session, loading, guest } = useAuth();
   const signedIn = Boolean(session) || guest;
   const onboarding = useOnboarding(signedIn);
-  if (loading || (signedIn && onboarding === 'loading')) return null;
+  const org = useOrg(signedIn);
+  if (loading || (signedIn && (onboarding === 'loading' || org.loading))) return null;
   // ⚠️ IMPORTANT — DO NOT REMOVE:
   // Every new-account creation path, regardless of auth provider, MUST
   // trigger the onboarding flow (GitHub connect + resume upload prompt)
@@ -68,7 +70,8 @@ function RootLayoutNav() {
   // bypasses this.
   // (The hook is the DB trigger public.on_create_account(); it sets onboarding_status = 'pending',
   // and this gate shows onboarding for any signed-in user in that state, whatever the provider.)
-  const needsOnboarding = signedIn && onboarding === 'pending';
+  const isCompany = org.isCompany;
+  const needsOnboarding = signedIn && !isCompany && onboarding === 'pending';
   const c = Colors[colorScheme];
 
   return (
@@ -89,7 +92,10 @@ function RootLayoutNav() {
         <Stack.Protected guard={needsOnboarding}>
           <Stack.Screen name="onboarding" options={{ headerShown: false, animation: 'fade', gestureEnabled: false }} />
         </Stack.Protected>
-        <Stack.Protected guard={signedIn && !needsOnboarding}>
+        <Stack.Protected guard={signedIn && !needsOnboarding && isCompany}>
+          <Stack.Screen name="(company)" options={{ headerShown: false, animation: 'fade' }} />
+        </Stack.Protected>
+        <Stack.Protected guard={signedIn && !needsOnboarding && !isCompany}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false, animation: 'fade' }} />
           <Stack.Screen name="match/[id]" options={{ title: 'Match', headerBackTitle: 'Back' }} />
           <Stack.Screen name="chat/[id]" options={{ title: 'Chat', headerBackTitle: 'Back' }} />
@@ -114,12 +120,13 @@ function RootLayoutNav() {
         </Stack.Protected>
         <Stack.Protected guard={!signedIn}>
           <Stack.Screen name="sign-in" options={{ headerShown: false, animation: 'fade' }} />
+          <Stack.Screen name="company-sign-in" options={{ title: 'Company', headerBackTitle: 'Back' }} />
         </Stack.Protected>
         <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
         {/* Invite links must open signed out too; the screen handles sign-in itself. */}
         <Stack.Screen name="invite/[token]" options={{ title: 'Invite', headerBackTitle: 'Back' }} />
       </Stack>
-      {signedIn && !needsOnboarding && <AiFab />}
+      {signedIn && !needsOnboarding && !isCompany && <AiFab />}
       </View>
     </ThemeProvider>
   );
