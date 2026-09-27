@@ -66,10 +66,10 @@ export default function CompanySignIn() {
             Separate from attendee sign-in. Create events, send join codes, promote. We won’t verify the work email in this demo.
           </Text>
           <View style={styles.switch}>
-            <Pressable onPress={() => setMode('create')} style={[styles.sw, mode === 'create' && { backgroundColor: tint }]}>
+            <Pressable accessibilityRole="button" onPress={() => setMode('create')} style={[styles.sw, mode === 'create' && { backgroundColor: tint }]}>
               <Text style={{ color: mode === 'create' ? '#fff' : text, fontWeight: '700' }}>Create company</Text>
             </Pressable>
-            <Pressable onPress={() => setMode('login')} style={[styles.sw, mode === 'login' && { backgroundColor: tint }]}>
+            <Pressable accessibilityRole="button" onPress={() => setMode('login')} style={[styles.sw, mode === 'login' && { backgroundColor: tint }]}>
               <Text style={{ color: mode === 'login' ? '#fff' : text, fontWeight: '700' }}>Sign in</Text>
             </Pressable>
           </View>
@@ -88,6 +88,7 @@ export default function CompanySignIn() {
               <ChipRow values={SIZES} current={form.size_band} onPick={(v) => set('size_band', v)} tint={tint} text={text} />
               <Field label="Who you hire / about the company" value={form.about} onChange={(v) => set('about', v)} placeholder="SWE and PM interns. Campus recruiting." multiline />
               <Pressable
+                accessibilityRole="button"
                 style={[styles.button, { backgroundColor: tint, opacity: busy ? 0.6 : 1 }]}
                 onPress={create}
                 disabled={busy || form.company_name.length < 2 || form.password.length < 8}>
@@ -101,6 +102,7 @@ export default function CompanySignIn() {
               <Field label="Work email" value={form.contact_email} onChange={(v) => set('contact_email', v)} placeholder="jordan@acme.com" email />
               <Field label="Password" value={form.password} onChange={(v) => set('password', v)} placeholder="••••••••" password />
               <Pressable
+                accessibilityRole="button"
                 style={[styles.button, { backgroundColor: tint, opacity: busy ? 0.6 : 1 }]}
                 onPress={login}
                 disabled={busy || form.password.length < 8}>

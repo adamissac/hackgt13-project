@@ -1,13 +1,13 @@
-## 2026-09-26 21:53 | adam | Cursor Grok 4.6
+## 2026-09-26 22:00 | adam | Cursor Grok 4.6
 **Task:** Company separate login + organizer studio (events, join codes, promote)
-**Status:** in progress
+**Status:** done
 **What I did:**
 - Companies have a separate sign-in (`mobile/app/company-sign-in.tsx`): company name, contact, work email, password, industry, size, city, about. Demo does not verify email (`POST /orgs/signup` creates a confirmed Auth user).
 - Company accounts skip student onboarding and land on `(company)` tabs: event list, create event, studio (join code + QR + share + promote), company profile.
 - People join with a typed code (`POST /events/enter`) or the event QR. Organizers see counts only. Promote writes `event_posts`, updates `events.promo`, and notifies registrants.
 - Live migration `20260926220000_company_accounts.sql` applied to project `mwfzgkikbmnghueolfnw`.
-**How to run/test it:** Sign-in → Company? Separate login → create company → New event → share code. Attendee: Events → Enter join code. `cd mobile && npx tsc --noEmit`. Redeploy: `cd ml && npx @railway/cli up --detach --path-as-root .`
-**Next step for whoever continues:** Confirm Railway `/orgs/signup` is live (`curl -s https://ml-production-04c0.up.railway.app/openapi.json | python3 -c 'import sys,json; print("/orgs/signup" in json.load(sys.stdin)["paths"])'`). Then create a company on the Expo app and mint a join code.
+**How to run/test it:** Sign-in → Company? Separate login → create company → New event → share code. Attendee: Events → Enter join code. `cd mobile && npx tsc --noEmit`. Live API: `/orgs/signup`, `/orgs/events`, `/events/enter` are on Railway.
+**Next step for whoever continues:** On a second attendee phone, enter a printed join code on Events → Enter join code and confirm Nearby uses that event. If Expo web is stale, reload `http://localhost:8081`.
 **Known issues / blockers:** Work email is not verified (demo). Join code plaintext is shown once / after rotate (hashed at rest). `ml/.venv` is Python 3.9 without pytest; org unit tests were not run in that venv.
 **Contract changes:** `docs/schema.sql` + `supabase/migrations/20260926220000_company_accounts.sql` (`profiles.account_kind`, org profile fields, `events.join_code_hash`/`promo`). `docs/api.md` 45–46 and new mocks under `docs/mocks/`.
 
