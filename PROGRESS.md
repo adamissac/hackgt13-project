@@ -12,6 +12,18 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Events tab: professional-only events, near you and all events
+**Status:** done
+**What I did:**
+- Product direction from Arjun: the app is for formal, career-building connections, so every event is professional. Removed the community events (market, trivia, concerts) and the `kind` field.
+- Sections are now My calendar, Near you, and All events (the default). Near you shows professional events within 25 miles of the device location. All events lists every upcoming event, including other cities, sorted by date, with distance once location is known.
+- `mobile/features/events/catalog.ts`: 15 professional sample events: 8 in Atlanta, plus Charlotte, Nashville, Austin, New York, Chicago, San Francisco, and Seattle. New `tz` field; times show in the event's own zone (ET/CT/PT) via `zoneLabel`. `plan.dayKey` takes a zone, so the calendar puts events on their local day (+test).
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
+**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real professional events source (an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (tz, lat, lng).
+**Known issues / blockers:** Sample events only. The browser preview has no geolocation, so Near you shows the "Location is off" card there.
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / Events tab: calendar, RSVP statuses, near-you and professional sections
 **Status:** done
 **What I did:**

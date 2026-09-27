@@ -46,3 +46,8 @@ test('near filter keeps events in radius, closest first', () => {
   assert.deepEqual(near.map((e) => e.id), ['campus', 'decatur']);
   assert.match(milesLabel(near[1].km), /^5\.\d mi away$/);
 });
+
+test('day keys follow the event city, so a late San Francisco event stays on its local day', () => {
+  assert.equal(dayKey('2026-11-05T22:00:00-08:00', 'America/Los_Angeles'), '2026-11-05');
+  assert.equal(dayKey('2026-11-05T22:00:00-08:00'), '2026-11-06');
+});

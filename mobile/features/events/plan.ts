@@ -37,10 +37,10 @@ export const isPlanned = (s: RsvpStatus | undefined) => s === 'attending' || s =
 
 const TZ = 'America/New_York';
 
-/** YYYY-MM-DD of an instant, in the events' time zone. */
-export function dayKey(iso: string | Date): string {
+/** YYYY-MM-DD of an instant in a time zone (the event's own city, Atlanta by default). */
+export function dayKey(iso: string | Date, tz = TZ): string {
   const d = typeof iso === 'string' ? new Date(iso) : iso;
-  return d.toLocaleDateString('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
+  return d.toLocaleDateString('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' });
 }
 
 /** Weeks (Sunday first) for a month; days outside it are null. month is 1-12. */
