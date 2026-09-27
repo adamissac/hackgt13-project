@@ -1462,3 +1462,13 @@ Newest entries at the top. Template and rules: MASTER_SPEC.md Section 0.3.
 **Next step for whoever continues:** Open `/sign-in` to inspect the form; email-link/code handling and visual styles live in `mobile/app/sign-in.tsx`.
 **Known issues / blockers:** No real authentication email sent or physical-device visual check in this increment.
 **Contract changes:** none
+## 2026-09-26 22:45 | adam | Codex
+**Task:** AD2 — flatten login layout
+**Status:** done
+**What I did:**
+- Removed the enclosing rounded white sign-in card and replaced it with spacing and a subtle top divider.
+- Reduced corner rounding on the constellation illustration, fields and buttons so the login no longer stacks bubble-shaped containers.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx eslint app/sign-in.tsx`.
+**Next step for whoever continues:** Reload `/sign-in` to inspect the flatter styling in `mobile/app/sign-in.tsx`.
+**Known issues / blockers:** Styling-only change; no physical-device visual check.
+**Contract changes:** none

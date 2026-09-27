@@ -298,8 +298,8 @@ const styles = StyleSheet.create({
     letterSpacing: -1.5,
   },
   subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 4 },
-  sky: { backgroundColor: '#0C1425', borderRadius: 20, overflow: 'hidden', marginTop: 8, marginBottom: 4 },
-  form: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7ED', borderRadius: 24, padding: 20, gap: 12 },
+  sky: { backgroundColor: '#0C1425', borderRadius: 8, overflow: 'hidden', marginTop: 8, marginBottom: 4 },
+  form: { backgroundColor: 'transparent', borderTopWidth: 1, borderColor: '#E5E7ED', paddingTop: 24, marginTop: 8, gap: 12 },
   formTitle: { fontSize: 19, fontWeight: '600', letterSpacing: -0.4 },
   formSubtitle: { fontSize: 13, lineHeight: 19, marginTop: -6, marginBottom: 6 },
   label: { fontSize: 12, fontWeight: '600', marginTop: 4 },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   codeToggle: { minHeight: 44, justifyContent: 'center', alignItems: 'center' },
   button: {
     minHeight: 56,
-    borderRadius: 14,
+    borderRadius: 8,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   input: {
     minHeight: 56,
     borderWidth: 1,
-    borderRadius: 14,
+    borderRadius: 8,
     paddingHorizontal: 16,
     fontSize: 16,
     backgroundColor: '#FAFBFD',
