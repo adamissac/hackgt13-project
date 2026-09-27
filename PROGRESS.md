@@ -1,3 +1,14 @@
+## 2026-09-27 05:10 | adam | Cursor Grok 4.7
+**Task:** Handoff of untracked local agent folders
+**Status:** done
+**What I did:**
+- The only uncommitted paths were `.agents/` and `.codex/` (20 files). Skills match `.claude/skills/`. `.codex/hooks.json` points at `/Users/adamissac/hackgt13-project/...`, so they stay on this laptop.
+- Added both folders to `.gitignore` so the commit nudge stops without pushing machine-specific hooks.
+**How to run/test it:** `git status --short` should be empty after this commit.
+**Next step for whoever continues:** Shared skills stay in `.claude/skills/`. Do not commit `.agents/` or `.codex/`.
+**Known issues / blockers:** none
+**Contract changes:** none
+
 ## 2026-09-27 04:05 | arjun | Codex
 **Task:** AD9 / AD11 — finish Adam's automatic refresh and others-only feed handoff
 **Status:** done

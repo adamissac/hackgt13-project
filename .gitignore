@@ -26,4 +26,7 @@ ml/data/*
 .claude/owner.local
 .claude/settings.local.json
 CLAUDE.local.md
+# Local Codex copies. Shared skills live in .claude/skills. These hooks use this laptop's paths.
+.agents/
+.codex/
 ml/data/external/
