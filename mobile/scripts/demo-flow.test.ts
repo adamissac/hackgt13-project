@@ -31,6 +31,18 @@ step('New account starts in onboarding; first source completes it', () => {
   assert.equal(demo.onboarding().status, 'complete');
 });
 
+step('Resume: upload, remove (its interests go too), upload again', () => {
+  demo.addSource('resume');
+  assert.equal(demo.onboarding().sources.resume, true);
+  const before = demo.interests().interests.length;
+  demo.removeSource('resume');
+  assert.equal(demo.onboarding().sources.resume, false);
+  assert.ok(demo.interests().interests.length < before);
+  assert.ok(demo.interests().interests.every((i) => i.source !== 'resume'));
+  demo.addSource('resume');
+  assert.equal(demo.interests().interests.length, before);
+});
+
 step('Open to Meet OFF: no suggestions', () => {
   assert.equal(demo.suggestions().suggestions.length, 0);
 });

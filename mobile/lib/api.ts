@@ -488,7 +488,7 @@ export const api = {
     call(mocks.manual, () => request<ManualResponse>('PATCH', '/profile/manual', body)),
   removeSource: (source: ProfileSource) =>
     call(
-      () => ({ removed: source, ...mocks.interests() }),
+      () => demo.removeSource(source),
       () => request<InterestsResponse & { removed: ProfileSource }>('DELETE', `/profile/sources/${source}`),
     ),
   githubStart: () =>

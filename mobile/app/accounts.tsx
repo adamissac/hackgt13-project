@@ -6,6 +6,7 @@ import { LoginConnections } from '@/components/LoginConnections';
 import { AiBadge, Button, Card, Chip, SectionTitle, useColors } from '@/components/ui';
 import { connectGithub, signInLabel, uploadResume, waitForJob } from '@/lib/accounts';
 import { api, type AccountsResponse, type ManualProfile, type ProfileSource } from '@/lib/api';
+import { env } from '@/lib/env';
 import { useAsync } from '@/lib/useAsync';
 
 type Busy = null | 'github' | 'github-sync' | 'resume' | 'manual' | `remove-${ProfileSource}`;
@@ -156,6 +157,11 @@ export default function AccountsScreen() {
               ? `${sources.resume.interests} interests · added ${when(sources.resume.updated_at)}`
               : 'A PDF up to 10 MB. Tip: LinkedIn → your profile → More → Save to PDF.'}
           </Text>
+          {env.useMocks && (
+            <Text style={[styles.small, { color: c.muted }]}>
+              Demo mode: files aren’t really uploaded. Sign in to build your real profile.
+            </Text>
+          )}
           <Button label={sources.resume.added ? 'Replace PDF' : 'Upload PDF'} variant={sources.resume.added ? 'secondary' : 'primary'} onPress={onResume} loading={busy === 'resume'} />
           {sources.resume.added && (
             <Button label="Remove resume" variant="danger" onPress={() => confirmRemove('resume', 'your resume')} loading={busy === 'remove-resume'} />

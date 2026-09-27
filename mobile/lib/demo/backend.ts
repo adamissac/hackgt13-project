@@ -51,6 +51,7 @@ export type OnboardingStatus = 'pending' | 'partial' | 'complete';
 interface State {
   onboarding: OnboardingStatus;
   sources: { github: boolean; resume: boolean };
+  removedSources: string[];
   openToMeet: boolean;
   checkedIn: boolean;
   rel: Record<string, Rel>;
@@ -67,6 +68,7 @@ interface State {
 const fresh = (): State => ({
   onboarding: 'pending',
   sources: { github: false, resume: false },
+  removedSources: [],
   openToMeet: false,
   checkedIn: false,
   rel: {},
@@ -153,9 +155,19 @@ export function setOnboarding(status: OnboardingStatus) {
   emitChange('profile');
   return onboarding();
 }
+/** Removing a source drops it and the interests that came only from it (like DELETE /profile/sources). */
+export function removeSource(source: 'github' | 'resume' | 'manual') {
+  if (source === 'github' || source === 'resume') state.sources[source] = false;
+  state.removedSources = [...new Set([...(state.removedSources ?? []), source])];
+  save();
+  emitChange('profile');
+  return { removed: source, ...interests() };
+}
+
 /** Adding a source runs the (simulated) profile builder; the first success completes onboarding. */
 export function addSource(source: 'github' | 'resume') {
   state.sources[source] = true;
+  state.removedSources = (state.removedSources ?? []).filter((s) => s !== source);
   state.onboarding = 'complete';
   save();
   emitChange('profile');
@@ -272,7 +284,7 @@ export function interests(): InterestsResponse {
     user_id: DEMO_ME,
     seeking: 'An AI/ML internship and people who have shipped RAG systems',
     offering: 'RAG pipelines, Python tooling, React Native',
-    interests: DEMO_MY_INTERESTS.map((i, n) => ({
+    interests: DEMO_MY_INTERESTS.filter((i) => !(state.removedSources ?? []).includes(i.source)).map((i, n) => ({
       interest_id: n + 1,
       ...i,
       confirmed: state.confirmedInterests.includes(i.name),
