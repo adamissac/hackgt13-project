@@ -5,7 +5,7 @@ import { useEffect } from 'react';
 import { View, type ColorValue } from 'react-native';
 import { HeaderActions } from '@/components/HeaderActions';
 import { Brand } from '@/components/Brand';
-import Colors from '@/constants/Colors';
+import { useColors } from '@/components/ui';
 import { api } from '@/lib/api';
 import { HACKGT_EVENT_ID } from '@/lib/constants';
 import { getCurrentEventId, loadCurrentEvent, setCurrentEventId } from '@/lib/currentEvent';
@@ -14,7 +14,8 @@ import { env } from '@/lib/env';
 
 function icon(name: SymbolViewProps['name']) {
  return function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
-  return <View style={{ width: 52, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? Colors.light.tintSoft : 'transparent' }}>
+  const tintSoft = useColors().tintSoft;
+  return <View style={{ width: 52, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: focused ? tintSoft : 'transparent' }}>
    <SymbolView name={name} tintColor={color} size={23}/>
   </View>;
  };
@@ -48,7 +49,7 @@ function useAutoCheckin() {
 
 export default function TabLayout() {
  useAutoCheckin();
- const c = Colors.light;
+ const c = useColors();
  const insets = useSafeAreaInsets();
  return <Tabs initialRouteName="index" screenOptions={{
   animation: 'shift', sceneStyle: { backgroundColor: c.background },

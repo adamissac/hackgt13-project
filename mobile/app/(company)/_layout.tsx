@@ -3,10 +3,11 @@ import { Tabs } from 'expo-router';
 import { View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import Colors from '@/constants/Colors';
+import { useColors } from '@/components/ui';
 
 function icon(name: SymbolViewProps['name']) {
   return function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
+    const tintSoft = useColors().tintSoft;
     return (
       <View
         style={{
@@ -15,7 +16,7 @@ function icon(name: SymbolViewProps['name']) {
           borderRadius: 16,
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: focused ? Colors.light.tintSoft : 'transparent',
+          backgroundColor: focused ? tintSoft : 'transparent',
         }}>
         <SymbolView name={name} tintColor={color} size={23} />
       </View>
@@ -24,7 +25,7 @@ function icon(name: SymbolViewProps['name']) {
 }
 
 export default function CompanyTabs() {
-  const c = Colors.light;
+  const c = useColors();
   const insets = useSafeAreaInsets();
   return (
     <Tabs

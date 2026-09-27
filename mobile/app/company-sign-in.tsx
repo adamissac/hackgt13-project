@@ -13,6 +13,7 @@ export default function CompanySignIn() {
   const tint = useThemeColor({}, 'tint');
   const text = useThemeColor({}, 'text');
   const muted = useThemeColor({}, 'muted');
+  const chipBg = useThemeColor({}, 'surfaceAlt');
   const [mode, setMode] = useState<'login' | 'create'>('create');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,10 +67,10 @@ export default function CompanySignIn() {
             Separate from attendee sign-in. Create events, send join codes, promote. We won’t verify the work email in this demo.
           </Text>
           <View style={styles.switch}>
-            <Pressable accessibilityRole="button" onPress={() => setMode('create')} style={[styles.sw, mode === 'create' && { backgroundColor: tint }]}>
+            <Pressable accessibilityRole="button" onPress={() => setMode('create')} style={[styles.sw, { backgroundColor: chipBg }, mode === 'create' && { backgroundColor: tint }]}>
               <Text style={{ color: mode === 'create' ? '#fff' : text, fontWeight: '700' }}>Create company</Text>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => setMode('login')} style={[styles.sw, mode === 'login' && { backgroundColor: tint }]}>
+            <Pressable accessibilityRole="button" onPress={() => setMode('login')} style={[styles.sw, { backgroundColor: chipBg }, mode === 'login' && { backgroundColor: tint }]}>
               <Text style={{ color: mode === 'login' ? '#fff' : text, fontWeight: '700' }}>Sign in</Text>
             </Pressable>
           </View>
@@ -143,7 +144,7 @@ function Field({
         value={value}
         onChangeText={onChange}
         placeholder={placeholder}
-        placeholderTextColor="#888"
+        placeholderTextColor={muted}
         autoCapitalize="none"
         autoComplete={email ? 'email' : password ? 'password' : 'off'}
         keyboardType={email ? 'email-address' : 'default'}
@@ -168,10 +169,11 @@ function ChipRow({
   tint: string;
   text: string;
 }) {
+  const chipBg = useThemeColor({}, 'surfaceAlt');
   return (
     <View style={styles.chips}>
       {values.map((v) => (
-        <Pressable key={v} onPress={() => onPick(v)} style={[styles.chip, current === v && { backgroundColor: tint }]}>
+        <Pressable key={v} onPress={() => onPick(v)} style={[styles.chip, { backgroundColor: chipBg }, current === v && { backgroundColor: tint }]}>
           <Text style={{ color: current === v ? '#fff' : text, fontWeight: '700', fontSize: 12 }}>{v}</Text>
         </Pressable>
       ))}

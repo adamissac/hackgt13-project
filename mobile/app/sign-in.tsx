@@ -35,6 +35,10 @@ export default function SignInScreen() {
   const tint = useThemeColor({}, "tint");
   const text = useThemeColor({}, "text");
   const muted = useThemeColor({}, "muted");
+  // Sign-in sits on the app background in both themes (was a fixed warm off-white).
+  const background = useThemeColor({}, "background");
+  const border = useThemeColor({}, "border");
+  const field = useThemeColor({}, "surface");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [showCode, setShowCode] = useState(false);
@@ -80,7 +84,7 @@ export default function SignInScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[styles.scroll, { backgroundColor: background, paddingTop: insets.top + 24, paddingBottom: insets.bottom + 24 }]}
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.container}>
@@ -102,7 +106,7 @@ export default function SignInScreen() {
           <Text style={[styles.subtitle, { color: muted }]}>
             Find your people at HackGT 13. Start with something you share.
           </Text>
-          <View style={styles.form}>
+          <View style={[styles.form, { borderColor: border }]}>
           <Text style={styles.formTitle}>Welcome to Constellation</Text>
           <Text style={[styles.formSubtitle, { color: muted }]}>Sign in or create your account.</Text>
 
@@ -160,9 +164,9 @@ export default function SignInScreen() {
           {(providers.linkedin_oidc || providers.github || providers.google) && <Text style={[styles.or, { color: muted }]}>or continue with email</Text>}
           <Text style={styles.label}>Email address</Text>
           <TextInput
-            style={[styles.input, { color: text, borderColor: "#DDE2EA" }]}
+            style={[styles.input, { color: text, borderColor: border, backgroundColor: field }]}
             placeholder="you@gatech.edu"
-            placeholderTextColor="#888"
+            placeholderTextColor={muted}
             autoCapitalize="none"
             autoCorrect={false}
             autoComplete="email"
@@ -201,9 +205,9 @@ export default function SignInScreen() {
           {showCode && <>
           <Text style={styles.label}>Code from your email</Text>
           <TextInput
-            style={[styles.input, { color: text, borderColor: "#DDE2EA", letterSpacing: 3 }]}
+            style={[styles.input, { color: text, borderColor: border, backgroundColor: field, letterSpacing: 3 }]}
             placeholder="6–10 digit code"
-            placeholderTextColor="#888"
+            placeholderTextColor={muted}
             autoCapitalize="none"
             autoComplete="one-time-code"
             keyboardType="number-pad"

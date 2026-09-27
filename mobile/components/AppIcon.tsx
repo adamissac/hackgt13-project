@@ -1,4 +1,6 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+
+import { useColors } from './ui';
 const names: Record<string, SymbolViewProps['name']> = {
  qr: {ios:'qrcode',android:'qr_code',web:'qr_code'},
  bell: {ios:'bell',android:'notifications',web:'notifications'},
@@ -12,6 +14,7 @@ const names: Record<string, SymbolViewProps['name']> = {
  mail: {ios:'envelope',android:'mail',web:'mail'},
  phone: {ios:'iphone',android:'smartphone',web:'smartphone'},
 };
-export function AppIcon({ name, color = '#172D50', size = 22 }: {name:string;color?:string;size?:number}) {
- return <SymbolView name={names[name] ?? {ios:'circle',android:'circle',web:'circle'}} tintColor={color} size={size}/>;
+export function AppIcon({ name, color, size = 22 }: {name:string;color?:string;size?:number}) {
+ const c = useColors(); // default follows light/dark
+ return <SymbolView name={names[name] ?? {ios:'circle',android:'circle',web:'circle'}} tintColor={color ?? c.tabIconSelected} size={size}/>;
 }
