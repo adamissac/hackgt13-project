@@ -10,6 +10,17 @@
 **Known issues / blockers:** Work email is not verified (demo). Printed join code is shown once until you tap Make a code / New code.
 **Contract changes:** none
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / navigation: Open to Meet is Home again, Feed is its own tab
+**Status:** done
+**What I did:**
+- Per Arjun: `app/(tabs)/index.tsx` now re-exports `./discover` (the Open to Meet home: presence toggle, up next, best matches), and the Home tab has `headerShown:false` because discover draws its own header. Feed (`app/(tabs)/feed.tsx`) is a visible tab with a newspaper / dynamic_feed icon. Tabs: Home, Feed, Constellation, Nearby, Events, Profile. Nearby is unchanged.
+- Edited Adam's `app/(tabs)/_layout.tsx` (navigation only), noted here. `/discover` still works for the Nearby "Meeting activity & Open to Meet" button.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo` (17 passed), then reload Expo Go.
+**Next step for whoever continues:** With six tabs the Constellation label truncates on small phones; shorten it to "Graph" if that matters.
+**Known issues / blockers:** none
+**Contract changes:** none
+
 ## 2026-09-26 22:00 | adam | Cursor Grok 4.6
 **Task:** Company separate login + organizer studio (events, join codes, promote)
 **Status:** done

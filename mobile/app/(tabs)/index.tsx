@@ -1,1 +1,1 @@
-export { default } from './feed';
+export { default } from './discover';
