@@ -11,6 +11,17 @@
 **Known issues / blockers:** Physical-phone performance not measured. This is lightweight projected 3D, not an interactive WebGL scene. Changes to Arjun's graph area explicitly requested by the user; contracts unchanged.
 **Contract changes:** none
 
+## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Nearby: keep the map when Bluetooth is unavailable
+**Status:** done
+**What I did:**
+- In live mode on Expo Go, `useProximity` reports `BLE_UNAVAILABLE_MESSAGE`, and `mobile/app/(tabs)/nearby.tsx` replaced the whole map with "Something went wrong". Now the map stays, with a "Bluetooth is off" card explaining Expo Go and pointing to QR verification. No people are pinned without the radio, because nearness can't be known. Only server fetch errors show the error state now.
+- Screen layout is mine; `features/ble` (Akshar) is unchanged.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint`. On a phone in Expo Go, signed in, go to Nearby and turn on scan: the map shows your location plus the note.
+**Next step for whoever continues:** Real proximity needs the dev build: `cd mobile && npx expo run:ios --device` or `npx eas-cli build --profile development`.
+**Known issues / blockers:** Bluetooth never works in Expo Go; that is expected.
+**Contract changes:** none
+
 ## 2026-09-26 13:10 | alan | Claude Code (Opus 5)
 **Task:** AL3 "why you matched" (MASTER_SPEC 6.9) — decompose the match score into the features that produced it
 **Status:** done — 110 passed, 118 skipped (12 new). Wired into `rank_candidates` and the Connection Graph.

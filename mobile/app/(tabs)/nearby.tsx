@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ErrorState, Loading } from '@/components/States';
 import { Avatar, Button, Card, Chip, Disclosure, SectionTitle, useColors } from '@/components/ui';
 import { useProximity } from '@/features/ble';
+import { BLE_UNAVAILABLE_MESSAGE } from '@/features/ble/native';
 import { EventModeCard } from '@/features/ble/EventModeCard';
 import { BAND_HINT, BANDS, mapPreview } from '@/features/nearby/geo';
 import { NearbyMap } from '@/features/nearby/NearbyMap';
@@ -19,7 +20,13 @@ export default function NearbyScreen() {
   const [expanded, setExpanded] = useState(false);
   const [band, setBand] = useState<string>('All');
   const insets = useSafeAreaInsets();
-  const { scanning, peers, error } = useProximity(scan);
+  const { scanning, peers: heard, radioError, fetchError } = useProximity(scan);
+  // Without the Bluetooth radio (Expo Go, radio off, permission denied) nobody can be placed as
+  // nearby, so keep the map but show no people rather than replacing the whole screen with an error.
+  const peers = radioError ? [] : heard;
+  const radioNote = radioError === BLE_UNAVAILABLE_MESSAGE
+    ? 'Bluetooth isn’t available in Expo Go, so people nearby can’t be detected here. The map still shows where you are. Just met someone? Verify with a QR code below.'
+    : radioError;
   const selected = peers.find((p) => p.user_id === selectedId) ?? null;
   const filtered = peers.filter(p => band === 'All' || p.band === band);
   const preview = mapPreview(filtered, selectedId);
@@ -31,7 +38,7 @@ export default function NearbyScreen() {
       </Pressable>)}
     </ScrollView>
   );
-  const mapNote = `${preview.length} of ${filtered.length} matches on the map. ${preview.length < filtered.length ? 'Select anyone from the list to show them. ' : ''}Approximate distance, not actual direction.`;
+  const mapNote = radioError ? 'The blue dot is you. Your location stays on this phone.' : `${preview.length} of ${filtered.length} matches on the map. ${preview.length < filtered.length ? 'Select anyone from the list to show them. ' : ''}Approximate distance, not actual direction.`;
 
   return (
     <>
@@ -49,18 +56,23 @@ export default function NearbyScreen() {
         </View>
       </Card>
 
-      {error ? (
-        <ErrorState message={error} onRetry={() => setScan(true)} />
+      {fetchError && !radioError ? (
+        <ErrorState message={fetchError} onRetry={() => setScan(true)} />
       ) : scan ? (
         <>
           <SectionTitle right={<Button label="Expand map ↗" variant="secondary" onPress={() => setExpanded(true)} />}>Around you</SectionTitle>
-          {filters}
+          {radioNote ? (
+            <Card>
+              <Text style={[styles.h2, { color: c.text }]}>Bluetooth is off</Text>
+              <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text>
+            </Card>
+          ) : filters}
           {!expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} />}
           <Text style={[styles.small, { color: c.muted }]}>
             {mapNote}
           </Text>
 
-          {scanning && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
+          {scanning && !radioError && peers.length === 0 && <Loading label="Looking for your matches nearby…" />}
 
           {selected && (
             <Card highlight>
@@ -156,7 +168,7 @@ export default function NearbyScreen() {
         {expanded && <NearbyMap peers={preview} selectedId={selectedId} onSelect={setSelectedId} expanded />}
         <View style={{ padding: 16, gap: 10 }}>
           <Text style={[styles.small, { color: c.muted }]}>{mapNote}</Text>
-          {error && <Text style={[styles.small, { color: c.danger }]}>{error}</Text>}
+          {radioNote ? <Text style={[styles.small, { color: c.muted }]}>{radioNote}</Text> : fetchError ? <Text style={[styles.small, { color: c.danger }]}>{fetchError}</Text> : null}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {filtered.map(p => <Pressable key={p.user_id} onPress={() => setSelectedId(p.user_id)} accessibilityRole="button" accessibilityState={{ selected: selectedId === p.user_id }}
               style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, borderRadius: 12, borderWidth: 1, borderColor: selectedId === p.user_id ? c.tint : c.border, backgroundColor: c.surface }}>
