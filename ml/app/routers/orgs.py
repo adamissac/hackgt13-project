@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from .. import db, orgs, population, qr, social
 from ..auth import User, current_user
 from ..errors import ApiError
-from ..users import ensure_profile
+from ..users import ensure_profile, on_create_account
 
 router = APIRouter()
 
@@ -73,14 +73,12 @@ def signup(body: SignupBody):
     if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         raise ApiError(400, "enter a work email")
     uid = orgs.create_confirmed_user(email, body.password, body.contact_name.strip())
+    on_create_account(uid)   # profiles are only ever created through the hook
     industry = body.industry if body.industry in orgs.INDUSTRIES else "Other"
     size = body.size_band if body.size_band in orgs.SIZES else ""
     with db.conn() as c:
-        c.execute(
-            "insert into profiles (id, name, onboarding_status, account_kind) values (%s, %s, 'complete', 'company') "
-            "on conflict (id) do update set name = excluded.name, onboarding_status = 'complete', account_kind = 'company'",
-            (uid, body.contact_name.strip()),
-        )
+        c.execute("update profiles set name = %s, onboarding_status = 'complete', account_kind = 'company' where id = %s",
+                  (body.contact_name.strip(), uid))
         org = c.execute(
             "insert into organizations (name, owner_id, website, industry, about, city, contact_name, contact_email, size_band) "
             "values (%s, %s, %s, %s, %s, %s, %s, %s, %s) returning id, name, website, industry, about, city, "

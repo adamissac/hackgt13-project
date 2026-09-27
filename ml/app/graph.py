@@ -23,6 +23,12 @@ MAX_VARIED = 10
 _varied_cache: dict[tuple[str, str], str] = {}      # (person node id, template) -> varied sentence
 
 
+def _vocabulary(index) -> set[str]:
+    """Lowercased interest names. The live index keys names by interest id (dict); the ml/ one is a list."""
+    names = index.names.values() if isinstance(index.names, dict) else index.names
+    return {n.lower() for n in names}
+
+
 def first_name(name: str | None) -> str:
     return (name or "").split(" ")[0] or "Someone"
 
@@ -121,7 +127,7 @@ class Builder:
                   "factors": [f["label"] for f in e["explanation"]["factors"]],
                   "bridge": "different circles" in e["explanation"]["summary"],
                   "recruiter": "hiring" in e["explanation"]["summary"]} for e in todo]
-        varied = generation.vary_why(items, vocabulary={n.lower() for n in self.index.names})
+        varied = generation.vary_why(items, vocabulary=_vocabulary(self.index))
         for e in todo:
             s = varied.get(e["target"])
             if s:

@@ -33,8 +33,8 @@ def test_location_is_reciprocal_after_both_people_share(dbclient, db, meetup):
     dbclient.post(f"/location-shares/{sid}", headers=auth(b), json=HERE)
     seen = dbclient.get(f"/location-shares/{sid}", headers=auth(b)).json()
     assert seen["their_location"]["lat"] == HERE["lat"] and seen["sharing"] is True
-    # A doesn't get their own point back as "theirs"
-    assert dbclient.get(f"/location-shares/{sid}", headers=auth(a)).json()["their_location"] is None
+    # Both shared, so it is reciprocal: A now sees B's point too
+    assert dbclient.get(f"/location-shares/{sid}", headers=auth(a)).json()["their_location"]["lat"] == HERE["lat"]
 
 
 def test_one_shared_30_minute_window(dbclient, db, meetup):

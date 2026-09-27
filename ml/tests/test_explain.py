@@ -241,3 +241,12 @@ def test_rank_candidates_explains_every_row(pop):
         assert r["explanation"]["summary"]
         # `why` must agree with the explanation it was derived from
         assert r["why"] == [t["name"] for t in r["explanation"]["shared_topics"][:3]]
+
+
+def test_graph_variety_works_with_the_live_index_shape(monkeypatch):
+    """Regression: the live app.population.Index keys names by int id; iterating the dict gave ints and
+    `.lower()` 500'd /graph?mode=matches (Constellation)."""
+    from app import graph as G
+    from app.population import Index
+    live = Index({1: "Robotics", 2: "Rock Climbing"}, {}, {}, {})
+    assert G._vocabulary(live) == {"robotics", "rock climbing"}

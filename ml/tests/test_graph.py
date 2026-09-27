@@ -45,7 +45,7 @@ def test_matches_mode_shape(dbclient, world):
     assert set(topic) == {"id", "type", "label", "facet"}
     kinds = {e["kind"] for e in out["edges"]}
     assert kinds == {"match", "has_topic"}
-    assert all(set(e) <= {"source", "target", "kind", "weight", "facet"} for e in out["edges"])
+    assert all(set(e) <= {"source", "target", "kind", "weight", "facet", "explanation"} for e in out["edges"])  # api.md: explanation on match edges
     assert "pottery" not in json.dumps(out)                         # only SHARED topics appear
 
 

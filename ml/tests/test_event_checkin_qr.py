@@ -50,7 +50,7 @@ def test_plain_checkin_blocked_for_company_events(dbclient, db):
     ana = seed_person(db, "Ana", [("robotics", "technical", 0.9)])
     dbclient.post(f"/events/{eid}/register", headers=auth(ana))
     r = dbclient.post(f"/events/{eid}/checkin", headers=auth(ana))
-    assert r.status_code == 403 and r.json()["error"] == "scan the event QR code to check in"
+    assert r.status_code == 403 and r.json()["error"] == "scan the event QR or enter the join code"
     # Events with no company (the HackGT demo event) keep open check-in.
     legacy = add_event(db)
     assert dbclient.post(f"/events/{legacy}/checkin", headers=auth(ana)).status_code == 200
