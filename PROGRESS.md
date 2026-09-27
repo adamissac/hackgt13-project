@@ -14,6 +14,18 @@
 
 
 ## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / Events search bar
+**Status:** done
+**What I did:**
+- `matchesSearch(query, fields)` in `mobile/features/events/plan.ts` (+test): every word must appear in the event's name, host, category, location, or tags; case- and accent-insensitive ("resume" finds "résumé", "american tech" finds AmEx tech sessions).
+- `app/(tabs)/events.tsx`: a search box under the section switcher on All events and Near you (hidden on My calendar), with a clear ✕ and a navy border while active. It works together with the category chips; shows "N events match '…'" and a no-results card with Clear search. The list scroll keeps taps while the keyboard is up and dismisses it on drag.
+- Browser-checked in demo: "american" gives 3 AmEx events, "google workshop" gives 1, "zzz" shows the no-results card, clearing gives all 31.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
+**Next step for whoever continues:** none for this.
+**Known issues / blockers:** none
+**Contract changes:** none
+
+## 2026-09-27 | arjun | Claude Code
 **Task:** AR6 / AI chat: the keyboard covered the input
 **Status:** done
 **What I did:**

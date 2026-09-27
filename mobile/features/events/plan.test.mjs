@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { dayKey, eventDays, eventsNear, isPlanned, milesLabel, monthGrid, nextRsvps, parseRsvps, shiftMonth } from './plan.ts';
+import { dayKey, eventDays, eventsNear, matchesSearch, isPlanned, milesLabel, monthGrid, nextRsvps, parseRsvps, shiftMonth } from './plan.ts';
 
 test('old RSVP list becomes attending; unknown ids and bad statuses are dropped', () => {
   assert.deepEqual(parseRsvps(['a', 'zzz', 3], ['a', 'b']), { a: 'attending' });
@@ -60,4 +60,13 @@ test('event days: all-day event is one day; multi-day spans each day; midnight e
   assert.equal(veeva[0], '2026-09-20');
   assert.equal(veeva.at(-1), '2026-10-20');
   assert.equal(veeva.length, 31);
+});
+
+test('search: every word must match some field, ignoring case and accents', () => {
+  const amex = ['Inside Tech at American Express', 'American Express', 'Info session', 'Georgia Tech campus', 'Hiring'];
+  assert.equal(matchesSearch('', amex), true);
+  assert.equal(matchesSearch('american tech', amex), true);
+  assert.equal(matchesSearch('AMERICAN   hiring', amex), true);
+  assert.equal(matchesSearch('google', amex), false);
+  assert.equal(matchesSearch('resume', ['Beyond the résumé']), true);
 });

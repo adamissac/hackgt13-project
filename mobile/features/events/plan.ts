@@ -101,3 +101,13 @@ export function milesLabel(km: number): string {
   const mi = km * 0.621371;
   return mi < 0.2 ? 'Right by you' : `${mi < 10 ? mi.toFixed(1) : Math.round(mi)} mi away`;
 }
+
+const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+/** Event search: every word in the query must appear somewhere in the fields (case- and accent-insensitive). */
+export function matchesSearch(query: string, fields: (string | null | undefined)[]): boolean {
+  const words = fold(query).split(/\s+/).filter(Boolean);
+  if (!words.length) return true;
+  const hay = fold(fields.filter(Boolean).join(' '));
+  return words.every((w) => hay.includes(w));
+}

@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/AppIcon';
 import { Button, Card, Chip, useColors } from '@/components/ui';
@@ -8,7 +8,7 @@ import { ErrorState, Loading } from '@/components/States';
 import { TabHero } from '@/components/TabHero';
 import { Calendar, RsvpPicker } from '@/features/events/Calendar';
 import { CATEGORIES as EVENT_CATEGORIES, eventCatalog, eventDate, fromLiveEvent, whenLabel, type NetworkingEvent } from '@/features/events/catalog';
-import { RSVP_OPTIONS, dayKey, eventDays, eventsNear, isPlanned, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
+import { RSVP_OPTIONS, dayKey, eventDays, eventsNear, isPlanned, matchesSearch, milesLabel, nextRsvps, type RsvpMap, type RsvpStatus } from '@/features/events/plan';
 import { useArea } from '@/features/events/useArea';
 import { api } from '@/lib/api';
 import { useAsync } from '@/lib/useAsync';
@@ -77,6 +77,13 @@ export default function EventsScreen() {
  const pick=useCallback((id:string,status:RsvpStatus)=>{
   const ev=latest.current.events.find(e=>e.id===id); if(ev) latest.current.choose(ev,status);
  },[]);
+ const [query,setQuery]=useState('');
+ const found=(e:NetworkingEvent)=>matchesSearch(query,[e.name,e.host,e.category,e.location,...e.tags]);
+ const noMatches=(<Card>
+  <Text style={[styles.body,{color:c.text,fontWeight:'700'}]}>No events match “{query.trim()}”</Text>
+  <Text style={[styles.body,{color:c.muted}]}>Try a company, a topic, or a place, like “Google”, “networking”, or “Klaus”.</Text>
+  <Button label="Clear search" variant="secondary" onPress={()=>setQuery('')}/>
+ </Card>);
  const scroller=useRef<ScrollView>(null);
  // Each section is its own page: switching jumps back to the top so the change is visible immediately.
  const open=(s:Section)=>{setSection(s);if(s==='local')setAreaWanted(true);scroller.current?.scrollTo({y:0,animated:false});};
@@ -116,13 +123,19 @@ export default function EventsScreen() {
  </Pressable>;
 
  return <>
-  <ScrollView ref={scroller} style={{backgroundColor:c.background}} contentContainerStyle={styles.container}>
+  <ScrollView ref={scroller} style={{backgroundColor:c.background}} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
    {section!=='calendar'&&<TabHero eyebrow={area.status==='ready'&&area.place?area.place.toUpperCase():'PROFESSIONAL EVENTS'} title={'Make room for\na new connection.'} body="Info sessions, networking, and club meetings for your career."/>}
    <View style={[styles.segments,{backgroundColor:c.surfaceAlt}]} accessibilityRole="tablist">
     {SECTIONS.map(s=><Pressable key={s.id} onPress={()=>open(s.id)} accessibilityRole="tab" accessibilityState={{selected:section===s.id}} style={[styles.segment,section===s.id&&{backgroundColor:c.surface,borderColor:c.border}]}>
      <Text numberOfLines={1} style={{color:section===s.id?c.text:c.muted,fontWeight:'700',fontSize:14}}>{s.label}</Text>
     </Pressable>)}
    </View>
+   {section!=='calendar'&&<View style={[styles.search,{backgroundColor:c.surface,borderColor:query?c.tint:c.border}]}>
+    <Text style={{color:c.muted,fontSize:16}}>⌕</Text>
+    <TextInput value={query} onChangeText={setQuery} placeholder="Search events, companies, topics" placeholderTextColor={c.muted}
+     style={[styles.searchInput,{color:c.text}]} returnKeyType="search" autoCorrect={false} autoCapitalize="none" clearButtonMode="never" accessibilityLabel="Search events"/>
+    {!!query&&<Pressable onPress={()=>setQuery('')} hitSlop={10} accessibilityRole="button" accessibilityLabel="Clear search"><Text style={{color:c.muted,fontSize:16,fontWeight:'700'}}>✕</Text></Pressable>}
+   </View>}
    {section!=='calendar'&&<Text style={[styles.small,{color:c.muted}]}>Georgia Tech events from Handshake (updated Sep 26). Your status here is only for your calendar; register on Handshake.</Text>}
    {catalog.state.status==='loading'&&<Loading label="Finding events…"/>}
    {catalog.state.status==='error'&&<ErrorState message={catalog.state.message} onRetry={catalog.reload}/>}
@@ -153,8 +166,8 @@ export default function EventsScreen() {
      <Button label={area.canAskAgain?'Allow location':'Open settings'} onPress={()=>area.canAskAgain?retry():Linking.openSettings()}/>
     </Card>}
     {area.status==='ready'&&(()=>{
-     const near=eventsNear(events.filter(isUpcoming).filter(hasPlace),area.point);
-     return near.length?near.map(e=>card(e,e.km)):<Card>
+     const near=eventsNear(events.filter(isUpcoming).filter(hasPlace).filter(found),area.point);
+     return near.length?near.map(e=>card(e,e.km)):query.trim()?noMatches:<Card>
       <Text style={[styles.body,{color:c.text,fontWeight:'700'}]}>No events near you yet</Text>
       <Text style={[styles.body,{color:c.muted}]}>There aren’t any in-person events within 25 miles right now. Virtual events are under All events.</Text>
       <Button label="See all events" variant="secondary" onPress={()=>open('all')}/>
@@ -167,8 +180,11 @@ export default function EventsScreen() {
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>
      {CATEGORIES.map(category=><Pressable key={category} onPress={()=>setFilter(category)} accessibilityRole="button" accessibilityState={{selected:filter===category}} style={[styles.filter,{backgroundColor:filter===category?c.tint:c.surface,borderColor:c.border}]}><Text style={{color:filter===category?c.onTint:c.text,fontWeight:'600'}}>{category}</Text></Pressable>)}
     </ScrollView>
-    {(()=>{const list=events.filter(e=>isUpcoming(e)&&(filter==='All'||e.category===filter)).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
-     return list.length?list.map(e=>card(e,kmTo(e))):<Text style={[styles.body,{color:c.muted}]}>No upcoming {filter.toLowerCase()} events.</Text>;})()}
+    {(()=>{const list=events.filter(e=>isUpcoming(e)&&(filter==='All'||e.category===filter)&&found(e)).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
+     return <>
+      {!!query.trim()&&list.length>0&&<Text style={[styles.small,{color:c.muted}]}>{list.length} {list.length===1?'event matches':'events match'} “{query.trim()}”{filter!=='All'?` in ${filter}`:''}</Text>}
+      {list.length?list.map(e=>card(e,kmTo(e))):query.trim()?noMatches:<Text style={[styles.body,{color:c.muted}]}>No upcoming {filter.toLowerCase()} events.</Text>}
+     </>;})()}
    </>}
    {error&&!selected&&<Text accessibilityRole="alert" style={{color:c.danger}}>{error}</Text>}
   </ScrollView>
@@ -201,6 +217,8 @@ const styles=StyleSheet.create({
  segments:{flexDirection:'row',borderRadius:16,padding:4,gap:4},
  segment:{flex:1,minHeight:44,borderRadius:12,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'transparent',paddingHorizontal:4},
  filter:{borderWidth:1,borderRadius:22,paddingHorizontal:16,minHeight:44,justifyContent:'center'},
+ search:{flexDirection:'row',alignItems:'center',gap:10,borderWidth:1.5,borderRadius:16,paddingHorizontal:14,minHeight:50},
+ searchInput:{flex:1,fontSize:16,paddingVertical:12},
  planRow:{flexDirection:'row',alignItems:'center',gap:12,borderWidth:1,borderRadius:16,padding:12},
  bar:{width:4,alignSelf:'stretch',borderRadius:2},
  backdrop:{flex:1,backgroundColor:'#0B173A66',justifyContent:'flex-end'},sheet:{maxHeight:'90%',borderTopLeftRadius:30,borderTopRightRadius:30,width:'100%',maxWidth:640,alignSelf:'center'},
