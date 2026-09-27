@@ -1,5 +1,8 @@
 // Month calendar of the events you're attending (filled dot) or interested in (ring).
+import * as Haptics from 'expo-haptics';
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { useColors } from '@/components/ui';
 
@@ -76,22 +79,44 @@ export function Calendar({ year, month, onMonth, events, rsvps, selectedDay, onS
   );
 }
 
-/** Attending / Interested / Not attending. Tapping the current choice clears it. */
-export function RsvpPicker({ value, onChange, disabled }: { value: RsvpStatus | undefined; onChange: (s: RsvpStatus) => void; disabled?: boolean }) {
-  const c = useColors();
+/** Attending / Interested / Not attending. Tapping the current choice clears it.
+ * Memoized with a stable `onPick(id, status)`, so a tap re-renders only this event's picker. The press bounce runs on
+ * the UI thread (Reanimated) and the change is applied optimistically by the screen, so it never waits on a save. */
+export const RsvpPicker = memo(function RsvpPicker({ id, value, onPick, disabled }: {
+  id: string; value: RsvpStatus | undefined; onPick: (id: string, s: RsvpStatus) => void; disabled?: boolean;
+}) {
   return (
     <View style={styles.picker} accessibilityRole="radiogroup">
-      {RSVP_OPTIONS.map((o) => {
-        const on = value === o.value;
-        const tone = o.value === 'attending' ? c.success : o.value === 'interested' ? c.ai : c.muted;
-        return (
-          <Pressable key={o.value} disabled={disabled} onPress={() => onChange(o.value)} accessibilityRole="radio" accessibilityState={{ checked: on, disabled }}
-            style={({ pressed }) => [styles.option, { flex: o.label.length, borderColor: on ? tone : c.border, backgroundColor: on ? tone : c.surface, opacity: pressed ? 0.7 : 1 }]}>
-            <Text numberOfLines={1} style={[styles.optionText, { color: on ? '#FFFFFF' : c.text }]}>{o.label}</Text>
-          </Pressable>
-        );
-      })}
+      {RSVP_OPTIONS.map((o) => (
+        <RsvpOption key={o.value} label={o.label} status={o.value} on={value === o.value} disabled={disabled}
+          onPress={() => onPick(id, o.value)} />
+      ))}
     </View>
+  );
+});
+
+function RsvpOption({ label, status, on, disabled, onPress }: {
+  label: string; status: RsvpStatus; on: boolean; disabled?: boolean; onPress: () => void;
+}) {
+  const c = useColors();
+  const scale = useSharedValue(1);
+  const bounce = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const tone = status === 'attending' ? c.success : status === 'interested' ? c.ai : c.muted;
+  return (
+    <Pressable disabled={disabled} accessibilityRole="radio" accessibilityState={{ checked: on, disabled }} accessibilityLabel={label}
+      onPressIn={() => { scale.value = withTiming(0.93, { duration: 70 }); }}
+      onPressOut={() => { scale.value = withSpring(1, { damping: 11, stiffness: 340 }); }}
+      onPress={() => { void Haptics.selectionAsync().catch(() => undefined); onPress(); }}
+      style={{ flex: label.length }}>
+      <Animated.View style={[styles.option, { borderColor: on ? tone : c.border, backgroundColor: on ? tone : c.surface }, bounce]}>
+        <Text numberOfLines={1} style={[styles.optionText, { color: on ? '#FFFFFF' : c.text }]}>{label}</Text>
+        {on && (
+          <View style={[styles.check, { borderColor: tone, backgroundColor: c.surface }]}>
+            <Text style={[styles.checkText, { color: tone }]}>✓</Text>
+          </View>
+        )}
+      </Animated.View>
+    </Pressable>
   );
 }
 
@@ -112,5 +137,7 @@ const styles = StyleSheet.create({
   legendText: { fontSize: 12 },
   picker: { flexDirection: 'row', gap: 8 },
   option: { minHeight: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
-  optionText: { fontSize: 13, fontWeight: '600' },
+  optionText: { fontSize: 13, fontWeight: '700' },
+  check: { position: 'absolute', top: -7, right: -3, width: 18, height: 18, borderRadius: 9, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  checkText: { fontSize: 11, fontWeight: '900', lineHeight: 13 },
 });

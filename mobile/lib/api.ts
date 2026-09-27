@@ -655,6 +655,8 @@ export const api = {
     ),
   registerEvent: (eventId: number) =>
     call(() => demo.registerEvent(eventId), () => request<{ ok: true }>('POST', `/events/${eventId}/register`, {})),
+  unregisterEvent: (eventId: number) =>
+    call(() => demo.unregisterEvent(eventId), () => request<{ ok: true }>('POST', `/events/${eventId}/unregister`, {})),
   eventJoinToken: (eventId: number) =>
     call(() => demo.eventJoinToken(eventId), () => request<QrToken & { event_id: number; qr_payload: string }>('GET', `/events/${eventId}/join-token`)),
   joinEvent: (body: { payload: string; signature: string }) =>

@@ -1,5 +1,18 @@
 
 
+## 2026-09-27 | arjun | Claude Code
+**Task:** AR6 / Events: instant Attending / Interested / Not attending with a tap animation; switch away from Attending
+**Status:** done
+**What I did:**
+- Lag fix (`app/(tabs)/events.tsx`): picks are optimistic. The screen updates immediately, AsyncStorage and the server confirm in the background, and a failure rolls back with a message. The global `busy` that disabled every picker is gone. `RsvpPicker` is `memo` with a stable `onPick(id, status)` (ref updated in `useLayoutEffect`), so a tap re-renders only that picker.
+- Animation (`features/events/Calendar.tsx`): each option presses to 0.93 and springs back on the UI thread (Reanimated `withTiming`/`withSpring`), gives a light haptic tick (`expo-haptics`, added via `npx expo install`, bundled in Expo Go), and the choice shows a small ✓ badge on its corner.
+- Company events can switch: Interested / Not attending after Attending calls the new `POST /events/{id}/unregister` (drops registration and any check-in, so you leave the session); Attending re-registers. The scan button shows only while Attending.
+- Server: `ml/app/routers/events.py` unregister + test in `ml/tests/test_event_checkin_qr.py`; docs/api.md 45 + `docs/mocks/post-events-unregister.json`; demo backend `unregisterEvent`.
+**How to run/test it:** `cd mobile && npx tsc --noEmit && npx expo lint && npm run test:demo`; `cd ml && .venv/bin/python -m pytest -q tests/test_event_checkin_qr.py` (DB tests in CI). Restart Expo after pulling (new package).
+**Next step for whoever continues:** Redeploy ml (unregister + demo event): `cd ml && npx @railway/cli up --detach --path-as-root .`
+**Known issues / blockers:** Tap animation verified in the browser; haptics only on a phone.
+**Contract changes:** docs/api.md 45 adds `POST /events/{event_id}/unregister` → `{ "ok": true }` (additive). Affects Adam (company events), noted in REQUESTS.md.
+
 ## 2026-09-27 10:05 | alan | Claude Code (Opus 5)
 **Task:** Dark mode toggle for the dashboard — **edits in Arjun's folder**
 **Status:** done — typecheck, lint, 11 tests, build all pass; verified in a browser in both themes

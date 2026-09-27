@@ -151,6 +151,19 @@ def register(event_id: int, user: User = Depends(current_user)):
     return {"ok": True}
 
 
+@router.post("/events/{event_id}/unregister")
+def unregister(event_id: int, user: User = Depends(current_user)):
+    """Changed your mind (Interested / Not attending): drop the registration and any check-in, so you leave the
+    session and nobody at the event sees you. Idempotent."""
+    ensure_profile(user.id)
+    _event_or_404(event_id)
+    with db.conn() as c:
+        c.execute("delete from event_registrations where event_id = %s and user_id = %s", (event_id, user.id))
+        c.execute("delete from attendance where event_id = %s and user_id = %s", (event_id, user.id))
+    population.invalidate()
+    return {"ok": True}
+
+
 @router.get("/events/{event_id}/join-token")
 def join_token(event_id: int, user: User = Depends(current_user)):
     e = db.fetchone(

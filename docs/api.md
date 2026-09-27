@@ -567,6 +567,7 @@ in character, and say yes to connecting. Suggestions never pair two demo attende
 → `{ "event": { ...same card as GET /events } }`
 
 `POST /events/{event_id}/register` → `{ "ok": true }` (signs up only; does NOT check in. `checked_in` stays false)
+`POST /events/{event_id}/unregister` → `{ "ok": true }` (Interested / Not attending after registering: removes the registration and any check-in, so you leave the session. Idempotent.)
 `GET /events/{event_id}/join-token` (organizers only) → `{ "payload", "signature", "expires_at", "event_id", "qr_payload" }` (7-day join QR)
 `POST /events/join` ← `{ "payload", "signature" }` → `{ "event_id": 3, "name": "Fall fair" }`
 Checks in a person who already registered. Registered but not scanned = not checked in = invisible to other attendees.

@@ -100,3 +100,16 @@ def test_conversation_filed_under_event_only_if_both_checked_in(db):
     assert matching.conversation_event(ana, ben, eid) is None       # Ben never scanned in
     db.execute("insert into attendance (event_id, user_id) values (%s, %s)", (eid, ben))
     assert matching.conversation_event(ana, ben, eid) == eid
+
+
+def test_unregister_leaves_the_session(dbclient, db):
+    owner = add_user(db, name="Org Owner")
+    eid = _company_event(db, owner)
+    ana = seed_person(db, "Ana", [("robotics", "technical", 0.9)])
+    dbclient.post(f"/events/{eid}/register", headers=auth(ana))
+    assert _scan(dbclient, ana, eid).status_code == 200
+    assert dbclient.post(f"/events/{eid}/unregister", headers=auth(ana)).status_code == 200
+    card = _card(dbclient, ana, eid)
+    assert card["registered"] is False and card["checked_in"] is False
+    assert dbclient.get(f"/events/{eid}/matches", headers=auth(ana)).status_code == 403
+    assert dbclient.post(f"/events/{eid}/unregister", headers=auth(ana)).status_code == 200   # idempotent

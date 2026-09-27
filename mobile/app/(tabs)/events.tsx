@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { Linking, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppIcon } from '@/components/AppIcon';
@@ -31,34 +31,48 @@ export default function EventsScreen() {
  const {area,retry}=useArea(areaWanted);
  const [selected,setSelected]=useState<NetworkingEvent|null>(null);
  const [filter,setFilter]=useState('All'); const [saved,setSaved]=useState<{scope:string;map:RsvpMap}|null>(null);
- const [busy,setBusy]=useState(false); const [error,setError]=useState<string|null>(null);
+ const [error,setError]=useState<string|null>(null);
  const todayKey=dayKey(new Date());
  const [month,setMonth]=useState({year:Number(todayKey.slice(0,4)),month:Number(todayKey.slice(5,7))});
  const [day,setDay]=useState(todayKey);
  const savedRsvps:RsvpMap=saved?.scope===scope ? saved.map : catalog.state.status==='ready' ? catalog.state.data.rsvps : {};
  // Company events (created in the app) sit alongside the Handshake list. Registering one puts it on your calendar;
  // at the venue you scan the company's QR on its event page to enter the session.
- const company=live.state.status==='ready'?live.state.data.events.map(fromLiveEvent):[];
+ // Registration changes show instantly (optimistic) and are confirmed by the server in the background.
+ const [regOverride,setRegOverride]=useState<Record<string,boolean>>({});
+ const company=(live.state.status==='ready'?live.state.data.events.map(fromLiveEvent):[]).map(e=>
+  e.id in regOverride?{...e,registered:regOverride[e.id],checkedIn:regOverride[e.id]?e.checkedIn:false}:e);
  const events=[...company,...(catalog.state.status==='ready'?catalog.state.data.events:[])];
- const rsvps:RsvpMap={...savedRsvps,...Object.fromEntries(company.filter(e=>e.registered).map(e=>[e.id,'attending' as RsvpStatus]))};
- const [registering,setRegistering]=useState<string|null>(null);
- const register=async(e:NetworkingEvent)=>{
-  if(!e.companyEventId||registering)return; setRegistering(e.id);setError(null);
-  try{await api.registerEvent(e.companyEventId);live.reload();}
-  catch(err){setError(err instanceof Error?err.message:'Could not register. Please try again.');}
-  finally{setRegistering(null);}
- };
+ // Company events: registered = Attending; otherwise your saved Interested / Not attending choice.
+ const rsvps:RsvpMap={...savedRsvps};
+ for(const e of company){ if(e.registered) rsvps[e.id]='attending'; else if(rsvps[e.id]==='attending') delete rsvps[e.id]; }
  const openEvent=(e:NetworkingEvent)=>{
   if(e.companyEventId){router.push({pathname:'/attend/[id]',params:{id:String(e.companyEventId)}});return;}
   setSelected(e);setError(null);
  };
 
- const choose=async(event:NetworkingEvent,status:RsvpStatus)=>{
-  if(busy)return; setBusy(true);setError(null);
-  const map=nextRsvps(rsvps,event.id,status);
-  try { await eventCatalog.saveRsvps(scope,map);setSaved({scope,map}); }
-  catch {setError('Could not save your RSVP. Please try again.');} finally {setBusy(false);}
+ // One tap handler for every picker. It updates the screen immediately, then saves; on failure it rolls back.
+ const choose=(event:NetworkingEvent,status:RsvpStatus)=>{
+  setError(null);
+  const before=savedRsvps; const map=nextRsvps(rsvps,event.id,status);
+  setSaved({scope,map});
+  eventCatalog.saveRsvps(scope,map).catch(()=>{setSaved({scope,map:before});setError('Could not save that. Please try again.');});
+  const cid=event.companyEventId;
+  if(cid){
+   const want=map[event.id]==='attending';
+   if(want!==!!event.registered){
+    setRegOverride(o=>({...o,[event.id]:want}));
+    (want?api.registerEvent(cid):api.unregisterEvent(cid))
+     .then(()=>live.reload())
+     .catch(err=>{setRegOverride(o=>({...o,[event.id]:!want}));setError(err instanceof Error?err.message:'Could not update. Please try again.');});
+   }
+  }
  };
+ const latest=useRef({events,choose});
+ useLayoutEffect(()=>{latest.current={events,choose};});
+ const pick=useCallback((id:string,status:RsvpStatus)=>{
+  const ev=latest.current.events.find(e=>e.id===id); if(ev) latest.current.choose(ev,status);
+ },[]);
  const scroller=useRef<ScrollView>(null);
  // Each section is its own page: switching jumps back to the top so the change is visible immediately.
  const open=(s:Section)=>{setSection(s);if(s==='local')setAreaWanted(true);scroller.current?.scrollTo({y:0,animated:false});};
@@ -70,15 +84,11 @@ export default function EventsScreen() {
    <View style={styles.row}><AppIcon name="event" size={18}/><Text style={[styles.small,{color:c.muted}]}>{whenLabel(event)} · {event.location}{km!==undefined?` · ${milesLabel(km)}`:''}</Text></View>
    {event.tags.includes('Hiring')&&<View style={styles.row}><Chip label="Hiring" tone="success"/></View>}
   </Pressable>
-   {event.companyEventId ? (
-    // Company events: "Attending" registers you (it goes on your calendar), then the QR scan unlocks the session.
-    event.checkedIn ? <Button label="Enter session" onPress={()=>openEvent(event)}/>
-    : <View style={{gap:10}}>
-      <RsvpPicker value={rsvps[event.id]} disabled={busy||registering===event.id}
-       onChange={(s)=>{ if(s==='attending'&&!event.registered) void register(event); else if(!(s==='attending'&&event.registered)) void choose(event,s); }}/>
-      {event.registered&&<Button label="Scan company QR code" onPress={()=>router.push({pathname:'/join-event',params:{event:String(event.companyEventId)}})}/>}
-     </View>
-   ) : <RsvpPicker value={rsvps[event.id]} disabled={busy} onChange={(s)=>choose(event,s)}/>}
+   <RsvpPicker id={event.id} value={rsvps[event.id]} onPick={pick}/>
+   {/* Company events: Attending registers you; then the company QR unlocks the session. Switching away unregisters. */}
+   {event.companyEventId&&event.registered&&(event.checkedIn
+    ? <Button label="Enter session" onPress={()=>openEvent(event)}/>
+    : <Button label="Scan company QR code" onPress={()=>router.push({pathname:'/join-event',params:{event:String(event.companyEventId)}})}/>)}
  </Card>;
 
  const planned=events.filter(e=>isPlanned(rsvps[e.id])).sort((a,b)=>a.startsAt.localeCompare(b.startsAt));
@@ -171,7 +181,7 @@ export default function EventsScreen() {
       <Text style={[styles.body,{color:c.muted}]}>The room, full description, and registration are on Handshake.</Text>
       <Button label="Open in Handshake" variant="secondary" onPress={()=>{void Linking.openURL(selected.url);}}/>
       <Text style={[styles.title,{color:c.text}]}>Are you going?</Text>
-      <RsvpPicker value={rsvps[selected.id]} disabled={busy} onChange={(s)=>choose(selected,s)}/>
+      <RsvpPicker id={selected.id} value={rsvps[selected.id]} onPick={pick}/>
       {error&&<Text accessibilityRole="alert" style={{color:c.danger}}>{error}</Text>}
       <Text style={[styles.small,{color:c.muted,textAlign:'center'}]}>{isPlanned(rsvps[selected.id])?'On your calendar. ':''}This only updates your calendar here. Register on Handshake to save your spot.</Text>
      </ScrollView>}
