@@ -4,6 +4,19 @@ from .config import FACETS, V1_WEIGHTS, HIGHLIGHT_PERCENTILE
 
 FEATURES = [f"sim_{f}" for f in FACETS] + ["idf_overlap", "complementarity", "bridge", "role_pair"]
 
+# Plain-English name for each feature, used by explain_match(). Kept next to FEATURES so the two
+# never drift; explain_match() asserts every feature has a label.
+FEATURE_LABELS = {
+    "sim_technical": "technical overlap",
+    "sim_career": "career overlap",
+    "sim_personal": "shared personal interests",
+    "sim_academic": "academic background",
+    "idf_overlap": "shared niche interests",
+    "complementarity": "what each of you wants and offers",
+    "bridge": "different circles, same thread",
+    "role_pair": "student and recruiter fit",
+}
+
 
 def _cos(u, v):
     if not u.any() or not v.any():
@@ -52,6 +65,92 @@ def shared_interests(a, b, index, k=5):
 
 def checklist(a, b, index):
     return [s["name"] for s in shared_interests(a, b, index, 5)] + ["something else"]
+
+
+# ------------------------------------------------------------------ why you matched (MASTER_SPEC 6.9)
+def score_contributions(f, model=None):
+    """Split the score this pair actually got into one number per feature.
+
+    Returns (contributions, basis). Nothing is recomputed from scratch: `f` is the same dict the
+    ranker scored, so the parts always sum back to the whole.
+
+      v1  - the score IS sum(weight * value), so contribution = weight * value, exactly.
+      lr  - LogisticRegression on standardised features is linear in the logit, so the logit term
+            coef * (value - mean) / scale is the honest per-feature contribution.
+      other - tree models (LGBMRanker) are not linearly decomposable. Rather than invent numbers we
+            fall back to the v1 weights and say so, so a caller can label the bars as approximate.
+    """
+    pipe = getattr(model, "pipe", None)
+    if pipe is not None:                                   # LRModel: scaler + logistic regression
+        try:
+            scaler, lr = pipe[0], pipe[-1]
+            coef = lr.coef_[0]
+            contributions = {k: float(coef[i] * (f[k] - scaler.mean_[i]) / scaler.scale_[i])
+                             for i, k in enumerate(FEATURES)}
+            return contributions, "lr"
+        except Exception:                                  # not the shape we expected; be honest below
+            pass
+    basis = "v1" if model is None else "v1_proxy"
+    return {k: float(V1_WEIGHTS.get(k, 0.0) * f.get(k, 0.0)) for k in FEATURES}, basis
+
+
+def _summary(factors, topics, a, b):
+    """One or two sentences, built from the factors that actually scored. No LLM, no invented facts."""
+    names = [t["name"] for t in topics[:2]]
+    top = factors[0] if factors else None
+    lead = ""
+    if len(names) >= 2:
+        lead = f"You both work on {names[0]} and {names[1]}."
+    elif names:
+        lead = f"You both work on {names[0]}."
+
+    if top is None or top["contribution"] <= 0:
+        return lead or "Not much overlap yet - this one is a long shot."
+
+    key = top["name"]
+    if key == "bridge" and names:
+        # The interesting case: different communities, one strong shared thread.
+        tail = f"You come from different circles here, which makes the {names[0]} overlap worth a conversation."
+    elif key == "complementarity":
+        tail = "What one of you is looking for lines up with what the other offers."
+    elif key == "role_pair":
+        tail = "One of you is hiring and the other is looking, on overlapping ground."
+    elif key == "idf_overlap" and names:
+        tail = f"{names[0].capitalize()} is niche enough here that sharing it means something."
+    elif key.startswith("sim_"):
+        facet = key[4:]
+        tail = f"Your strongest overlap is {facet}."
+    else:
+        tail = f"Strongest signal: {FEATURE_LABELS.get(key, key)}."
+    return (lead + " " + tail).strip() if lead else tail
+
+
+def explain_match(a, b, index, features=None, model=None, cluster=None, top_k=3):
+    """Why did these two match? Grounded in the features the ranker used, not a generated blurb.
+
+    Pass `features` when the caller already has them (rank_candidates, graph) so we explain the
+    exact numbers that produced the ranking rather than a fresh computation that could differ.
+
+    {"summary": str, "factors": [...], "shared_topics": [...], "basis": "v1"|"lr"|"v1_proxy"}
+    Each factor: name, label, value, contribution, share (fraction of the positive total).
+    """
+    f = features if features is not None else pair_features(a, b, index, cluster)
+    contributions, basis = score_contributions(f, model)
+    total = sum(c for c in contributions.values() if c > 0) or 1.0
+    factors = sorted(
+        ({"name": k, "label": FEATURE_LABELS[k], "value": round(float(f.get(k, 0.0)), 4),
+          "contribution": round(contributions[k], 4), "share": round(max(contributions[k], 0.0) / total, 4)}
+         for k in FEATURES),
+        key=lambda r: -r["contribution"])
+    topics = shared_interests(a, b, index, 5)
+    top = [r for r in factors if r["contribution"] > 0][:top_k]
+    return {"summary": _summary(top, topics, a, b),
+            "factors": top,
+            "all_factors": factors,
+            "shared_topics": [{"id": t["id"], "name": t["name"],
+                               "contribution": round(float(t["contribution"]), 4),
+                               "evidence_a": t["evidence_a"], "evidence_b": t["evidence_b"]} for t in topics],
+            "basis": basis}
 
 
 def rank_candidates(me, others, index, cluster=None, model=None, explore_eps=0.1, rng=None):
