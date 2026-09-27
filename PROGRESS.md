@@ -12,6 +12,18 @@
 **Contract changes:** none
 
 ## 2026-09-26 | arjun | Claude Code
+**Task:** AR6 / Events tab: career-connection event types only
+**Status:** done
+**What I did:**
+- Per Arjun, events are strictly for career connections. Added club meetings (ACM, consulting, SWE, product management), expos (capstone design, startup, and Dallas technology expos), mixers (alumni, recruiter; the climate founder event is now a mixer), and a campus career fair. There are 25 sample events total.
+- New filter chips: Career fair, Club meeting, Expo, Mixer. Made the casual agenda wording more formal.
+- Checked that the served bundle contains no concert or market events. If a phone still shows them, it is running a stale bundle: reload Expo Go.
+**How to run/test it:** `cd mobile && node --experimental-strip-types --test features/events/plan.test.mjs && npx tsc --noEmit && npx expo lint`
+**Next step for whoever continues:** Replace `sampleEvents` in `mobile/features/events/catalog.ts` with a real professional events source (an `/events` endpoint via /contract-change), keeping the `NetworkingEvent` shape (tz, lat, lng).
+**Known issues / blockers:** Sample events only.
+**Contract changes:** none
+
+## 2026-09-26 | arjun | Claude Code
 **Task:** AR6 / Events tab: professional-only events, near you and all events
 **Status:** done
 **What I did:**

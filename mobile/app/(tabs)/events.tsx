@@ -16,7 +16,7 @@ type Section = 'calendar' | 'local' | 'all';
 const SECTIONS: { id: Section; label: string }[] = [
  {id:'calendar',label:'My calendar'},{id:'local',label:'Near you'},{id:'all',label:'All events'},
 ];
-const CATEGORIES = ['All','Careers','Career fair','Conference','Founders','Hackathon','Tech meetup'];
+const CATEGORIES = ['All','Career fair','Club meeting','Expo','Mixer','Careers','Conference','Founders','Hackathon','Tech meetup'];
 const when = (e: NetworkingEvent) => `${eventTime(e.startsAt, e.tz)} ${zoneLabel(e.startsAt, e.tz)}`;
 
 export default function EventsScreen() {
@@ -113,7 +113,7 @@ a new connection.</Text>
    </>}
 
    {catalog.state.status==='ready'&&section==='all'&&<>
-    <View style={{gap:4}}><Text style={[styles.title,{color:c.text}]}>All events</Text><Text style={[styles.body,{color:c.muted}]}>Career fairs, conferences, founder meetups, and hackathons, near and far.</Text></View>
+    <View style={{gap:4}}><Text style={[styles.title,{color:c.text}]}>All events</Text><Text style={[styles.body,{color:c.muted}]}>Career fairs, club meetings, expos, mixers, and conferences, near and far.</Text></View>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8}}>
      {CATEGORIES.map(category=><Pressable key={category} onPress={()=>setFilter(category)} accessibilityRole="button" accessibilityState={{selected:filter===category}} style={[styles.filter,{backgroundColor:filter===category?c.tint:c.surface,borderColor:c.border}]}><Text style={{color:filter===category?c.onTint:c.text,fontWeight:'600'}}>{category}</Text></Pressable>)}
     </ScrollView>
