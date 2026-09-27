@@ -15,7 +15,7 @@ export default function CompanyHome() {
   if (error) return <ErrorState message={error} onRetry={reload} />;
 
   return (
-    <ScrollView contentContainerStyle={[styles.wrap, { paddingTop: insets.top + 12 }]}>
+    <ScrollView contentContainerStyle={[styles.wrap, { paddingTop: insets.top + 12, paddingBottom: 88 + insets.bottom }]}>
       <Text style={[styles.kicker, { color: c.tint }]}>COMPANY</Text>
       <Text style={[styles.title, { color: c.text }]}>{org?.name ?? 'Your company'}</Text>
       <Text style={[styles.body, { color: c.muted }]}>

@@ -1,3 +1,15 @@
+## 2026-09-26 22:22 | adam | Cursor Grok 4.6
+**Task:** Company tools verification
+**Status:** done
+**What I did:**
+- Live API checklist 25/25: signup, duplicate 409, login, patch, create event, studio QR, promote, rotate (old code 404), attendee enter, updates, matches, organizer counts only.
+- Browser: company home, event studio, mint code, save profile, sign out, existing-account login.
+- Company scroll views now pad above the tab bar so Sign out / Create event aren’t covered.
+**How to run/test it:** Company? Separate login → create or sign in → New event → Make a code. Attendee: Events → Enter join code.
+**Next step for whoever continues:** On a second attendee phone, enter a join code and confirm Nearby uses that event.
+**Known issues / blockers:** Work email is not verified (demo). Printed join code is shown once until you tap Make a code / New code.
+**Contract changes:** none
+
 ## 2026-09-26 22:00 | adam | Cursor Grok 4.6
 **Task:** Company separate login + organizer studio (events, join codes, promote)
 **Status:** done

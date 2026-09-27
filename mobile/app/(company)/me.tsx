@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ErrorState, Loading } from '@/components/States';
 import { Button, Card, useColors } from '@/components/ui';
@@ -12,6 +13,7 @@ const SIZES = ['1-10', '11-50', '51-200', '201-1000', '1000+'];
 
 export default function CompanyProfile() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const { loading, error, org, reload } = useOrg();
   const [draft, setDraft] = useState<Record<string, string> | null>(null);
   const [busy, setBusy] = useState(false);
@@ -44,7 +46,7 @@ export default function CompanyProfile() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <ScrollView contentContainerStyle={[styles.wrap, { paddingBottom: 88 + insets.bottom }]}>
       <Text style={[styles.title, { color: c.text }]}>{org.name}</Text>
       <Text style={[styles.body, { color: c.muted }]}>Work email {org.contact_email}. Not verified in this demo.</Text>
       <Card>

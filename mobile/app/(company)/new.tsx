@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, useColors } from '@/components/ui';
 import { api } from '@/lib/api';
@@ -8,6 +9,7 @@ import { rememberJoinCode } from '@/lib/joinCodes';
 
 export default function NewCompanyEvent() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [location, setLocation] = useState('');
   const [startsAt, setStartsAt] = useState('');
@@ -43,7 +45,7 @@ export default function NewCompanyEvent() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <ScrollView contentContainerStyle={[styles.wrap, { paddingBottom: 88 + insets.bottom }]}>
       <Text style={[styles.title, { color: c.text }]}>New event</Text>
       <Text style={[styles.body, { color: c.muted }]}>
         We’ll make a join code and QR. Share those — people who enter the code are in this event, not in your connections.

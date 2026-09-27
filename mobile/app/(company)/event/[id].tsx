@@ -2,6 +2,7 @@ import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 
 import { ErrorState, Loading } from '@/components/States';
@@ -12,6 +13,7 @@ import { useAsync } from '@/lib/useAsync';
 
 export default function CompanyEventStudio() {
   const c = useColors();
+  const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id: string; code?: string }>();
   const id = Number(params.id);
   if (params.code) rememberJoinCode(id, params.code);
@@ -68,7 +70,7 @@ export default function CompanyEventStudio() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.wrap}>
+    <ScrollView contentContainerStyle={[styles.wrap, { paddingBottom: 88 + insets.bottom }]}>
       <Text style={[styles.title, { color: c.text }]}>{event.name}</Text>
       <Text style={[styles.body, { color: c.muted }]}>{event.location || 'Location TBD'}</Text>
       <View style={styles.row}>
