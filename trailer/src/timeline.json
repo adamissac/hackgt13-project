@@ -1,0 +1,504 @@
+{
+ "main": {
+  "duration": 2250,
+  "scenes": [
+   {
+    "id": "opening",
+    "from": 0,
+    "dur": 380,
+    "speed": 1
+   },
+   {
+    "id": "you",
+    "from": 345,
+    "dur": 315,
+    "speed": 1
+   },
+   {
+    "id": "matches",
+    "from": 660,
+    "dur": 300,
+    "speed": 1
+   },
+   {
+    "id": "meet",
+    "from": 960,
+    "dur": 240,
+    "speed": 1
+   },
+   {
+    "id": "proof",
+    "from": 1200,
+    "dur": 300,
+    "speed": 1
+   },
+   {
+    "id": "montage",
+    "from": 1500,
+    "dur": 252,
+    "speed": 1
+   },
+   {
+    "id": "constellation",
+    "from": 1740,
+    "dur": 254,
+    "speed": 1,
+    "props": {
+     "intro": "fade"
+    }
+   },
+   {
+    "id": "finale",
+    "from": 1980,
+    "dur": 270,
+    "speed": 1,
+    "props": {
+     "techBeat": true
+    }
+   }
+  ]
+ },
+ "vertical": {
+  "duration": 1350,
+  "scenes": [
+   {
+    "id": "opening",
+    "from": 0,
+    "dur": 316,
+    "speed": 1.2
+   },
+   {
+    "id": "you",
+    "from": 285,
+    "dur": 255,
+    "speed": 1.2353
+   },
+   {
+    "id": "meet",
+    "from": 540,
+    "dur": 195,
+    "speed": 1.2308
+   },
+   {
+    "id": "proof",
+    "from": 735,
+    "dur": 240,
+    "speed": 1.25
+   },
+   {
+    "id": "constellation",
+    "from": 960,
+    "dur": 240,
+    "speed": 1,
+    "props": {
+     "intro": "circle"
+    }
+   },
+   {
+    "id": "finale",
+    "from": 1200,
+    "dur": 150,
+    "speed": 1,
+    "props": {
+     "techBeat": false
+    },
+    "cueKey": "finale_v"
+   }
+  ]
+ },
+ "cues": {
+  "opening": [
+   [
+    126,
+    "shimmer",
+    1
+   ],
+   [
+    186,
+    "whoosh",
+    0.8
+   ],
+   [
+    238,
+    "rise",
+    1
+   ],
+   [
+    270,
+    "impact",
+    1
+   ]
+  ],
+  "you": [
+   [
+    2,
+    "whoosh",
+    1
+   ],
+   [
+    66,
+    "tap",
+    1
+   ],
+   [
+    80,
+    "swish",
+    0.6
+   ],
+   [
+    112,
+    "tap",
+    1
+   ],
+   [
+    120,
+    "chime_soft",
+    1
+   ],
+   [
+    164,
+    "swish",
+    0.6
+   ],
+   [
+    186,
+    "tick",
+    1
+   ],
+   [
+    195,
+    "tick",
+    1
+   ],
+   [
+    204,
+    "tick",
+    1
+   ],
+   [
+    213,
+    "tick",
+    1
+   ],
+   [
+    222,
+    "tick",
+    1
+   ],
+   [
+    252,
+    "tap",
+    1
+   ],
+   [
+    262,
+    "swish",
+    0.5
+   ]
+  ],
+  "matches": [
+   [
+    12,
+    "tick",
+    1
+   ],
+   [
+    20,
+    "tick",
+    1
+   ],
+   [
+    28,
+    "tick",
+    1
+   ],
+   [
+    80,
+    "tap",
+    1
+   ],
+   [
+    86,
+    "swish",
+    0.6
+   ],
+   [
+    132,
+    "whoosh",
+    0.8
+   ],
+   [
+    208,
+    "whoosh",
+    0.8
+   ],
+   [
+    216,
+    "tick",
+    0.8
+   ],
+   [
+    222,
+    "tick",
+    0.8
+   ],
+   [
+    228,
+    "tick",
+    0.8
+   ],
+   [
+    234,
+    "tick",
+    0.8
+   ]
+  ],
+  "meet": [
+   [
+    30,
+    "toggle",
+    1
+   ],
+   [
+    40,
+    "ping_soft",
+    1
+   ],
+   [
+    74,
+    "ping",
+    1
+   ],
+   [
+    88,
+    "pop",
+    1
+   ],
+   [
+    95,
+    "pop",
+    1
+   ],
+   [
+    102,
+    "pop",
+    0.9
+   ],
+   [
+    108,
+    "ping",
+    0.8
+   ],
+   [
+    109,
+    "pop",
+    0.9
+   ],
+   [
+    116,
+    "pop",
+    0.9
+   ],
+   [
+    158,
+    "whoosh",
+    0.8
+   ],
+   [
+    194,
+    "tap",
+    1
+   ],
+   [
+    200,
+    "chime",
+    1
+   ]
+  ],
+  "proof": [
+   [
+    4,
+    "whoosh",
+    0.7
+   ],
+   [
+    12,
+    "ping_soft",
+    0.8
+   ],
+   [
+    40,
+    "ping_soft",
+    0.8
+   ],
+   [
+    68,
+    "ping_soft",
+    0.8
+   ],
+   [
+    96,
+    "chime",
+    1
+   ],
+   [
+    114,
+    "whoosh",
+    0.7
+   ],
+   [
+    126,
+    "tick",
+    1
+   ],
+   [
+    160,
+    "whoosh",
+    0.7
+   ],
+   [
+    186,
+    "tap",
+    1
+   ],
+   [
+    200,
+    "tap",
+    1
+   ],
+   [
+    214,
+    "tap",
+    1
+   ],
+   [
+    238,
+    "tap",
+    1
+   ],
+   [
+    244,
+    "swish",
+    0.6
+   ],
+   [
+    250,
+    "chime",
+    1
+   ]
+  ],
+  "montage": [
+   [
+    0,
+    "swish",
+    1
+   ],
+   [
+    36,
+    "swish",
+    1
+   ],
+   [
+    80,
+    "swish",
+    1
+   ],
+   [
+    124,
+    "swish",
+    1
+   ],
+   [
+    168,
+    "swish",
+    1
+   ],
+   [
+    196,
+    "rise_long",
+    1
+   ]
+  ],
+  "constellation": [
+   [
+    0,
+    "impact_soft",
+    1
+   ],
+   [
+    100,
+    "whoosh",
+    0.9
+   ],
+   [
+    196,
+    "pop",
+    1
+   ],
+   [
+    200,
+    "ping_soft",
+    0.8
+   ],
+   [
+    210,
+    "ping",
+    0.8
+   ]
+  ],
+  "finale": [
+   [
+    6,
+    "tick",
+    1
+   ],
+   [
+    12,
+    "tick",
+    1
+   ],
+   [
+    18,
+    "tick",
+    1
+   ],
+   [
+    24,
+    "tick",
+    1
+   ],
+   [
+    30,
+    "tick",
+    1
+   ],
+   [
+    100,
+    "whoosh",
+    0.9
+   ],
+   [
+    138,
+    "impact",
+    1
+   ]
+  ],
+  "finale_v": [
+   [
+    4,
+    "whoosh",
+    0.8
+   ],
+   [
+    20,
+    "shimmer",
+    0.8
+   ],
+   [
+    38,
+    "impact",
+    1
+   ]
+  ]
+ }
+}

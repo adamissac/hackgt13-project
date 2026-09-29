@@ -1,3 +1,16 @@
+## 2026-09-29 17:59 | adam | Claude
+**Task:** Constellation launch trailer
+**Status:** done
+**What I did:**
+- Added `trailer/`: a Remotion project with a 75s 16:9 main cut, a 45s 9:16 cut and a 3s loopable logo sting. Rendered files are in `trailer/renders/`.
+- Phone screens are real captures from the Expo web export in demo mode (synthetic demo people only), with element positions in `trailer/public/screens/manifest.json`. The Constellation atom, the logo and the explanatory graphics (distance radar, Bluetooth signal, community map) are rebuilt from app code.
+- Original synthesized score and sound effects (`trailer/scripts/prepare.py`), cue sheet in `trailer/AUDIO_CUES.md`, scene notes in `trailer/BRIEF.md`.
+- No changes to `mobile/`, `ml/`, `dashboard/` or `supabase/`.
+**How to run/test it:** `cd trailer && npm install && npx remotion studio` to preview; `npm run render:all` to re-render into `trailer/out/`. `npm run prepare:assets` regenerates audio and cues (Python 3 with numpy and Pillow).
+**Next step for whoever continues:** Swap in a produced royalty-free track as `trailer/public/music.mp3` and render with `--props='{"musicFile":"music.mp3"}'`. Recapture screens with `trailer/scripts/capture/` if the UI changes before the demo.
+**Known issues / blockers:** Music is a synthesized placeholder. The community map gap label ("2 of ~11 expected") uses illustrative numbers. The radar is an explanatory graphic; the app itself shows nearby people on a map.
+**Contract changes:** none.
+
 ## 2026-09-27 06:41 | arjun | Codex
 **Task:** AK2/AK3/AK5 nearby discovery and in-person verification; AR4 Constellation entry points
 **Status:** done

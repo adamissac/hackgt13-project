@@ -1,0 +1,597 @@
+{
+ "signin": {
+  "file": "screens/signin.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "linkedin": [
+    127.1,
+    451.5,
+    165.8,
+    19
+   ],
+   "title": [
+    22,
+    174,
+    346,
+    80
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "onboarding": {
+  "file": "screens/onboarding.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "github": [
+    137.3,
+    328.5,
+    115.4,
+    19
+   ],
+   "githubCard": [
+    20,
+    202,
+    350,
+    182
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "onboarding_done": {
+  "file": "screens/onboarding_done.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "ready": [
+    20,
+    534,
+    350,
+    120
+   ],
+   "githubCard": [
+    20,
+    202,
+    350,
+    118
+   ],
+   "continue": [
+    162.1,
+    693.5,
+    65.8,
+    19
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "home_off": {
+  "file": "screens/home_off.png",
+  "w": 390,
+  "h": 1060,
+  "boxes": {
+   "meetCard": [
+    20,
+    73,
+    350,
+    219
+   ],
+   "findRow": [
+    39,
+    213,
+    312,
+    60
+   ],
+   "matchesTitle": [
+    20,
+    316.5,
+    157.0,
+    21
+   ],
+   "maya": [
+    41,
+    359,
+    308,
+    68
+   ],
+   "daniel": [
+    41,
+    441,
+    308,
+    69
+   ],
+   "sara": [
+    41,
+    524,
+    308,
+    69
+   ],
+   "matchesCard": [
+    20,
+    354,
+    350,
+    244
+   ],
+   "qr": [
+    84.9,
+    753.5,
+    220.1,
+    19
+   ],
+   "gps": [
+    86.6,
+    811.5,
+    216.7,
+    19
+   ],
+   "justMet": [
+    20,
+    614,
+    350,
+    253
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF"
+ },
+ "match_maya": {
+  "file": "screens/match_maya.png",
+  "w": 390,
+  "h": 2000,
+  "boxes": {
+   "header": [
+    121.8,
+    180,
+    146.3,
+    34
+   ],
+   "why": [
+    20,
+    538,
+    350,
+    412
+   ],
+   "icebreaker": [
+    41,
+    729,
+    308,
+    136
+   ],
+   "common": [
+    20,
+    1204,
+    223.0,
+    21
+   ],
+   "commonCard": [
+    20,
+    1241,
+    350,
+    342
+   ],
+   "overlapTitle": [
+    20,
+    1607,
+    132.7,
+    21
+   ],
+   "overlapCard": [
+    20,
+    1644,
+    350,
+    192
+   ],
+   "stepper": [
+    20,
+    324,
+    350,
+    198
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5",
+  "bars": [
+   {
+    "y0": 1670.0,
+    "y1": 1679.7,
+    "x0": 46.7,
+    "x1": 283.7,
+    "track": "#F0EFED"
+   },
+   {
+    "y0": 1703.0,
+    "y1": 1712.7,
+    "x0": 63.3,
+    "x1": 261.7,
+    "track": "#F0EFED"
+   },
+   {
+    "y0": 1736.0,
+    "y1": 1745.7,
+    "x0": 45.0,
+    "x1": 238.7,
+    "track": "#F0EFED"
+   },
+   {
+    "y0": 1769.0,
+    "y1": 1778.7,
+    "x0": 90.7,
+    "x1": 218.7,
+    "track": "#F0EFED"
+   }
+  ]
+ },
+ "home_on": {
+  "file": "screens/home_on.png",
+  "w": 390,
+  "h": 1300,
+  "boxes": {
+   "meetCard": [
+    20,
+    73,
+    350,
+    219
+   ],
+   "findRow": [
+    39,
+    213,
+    312,
+    60
+   ],
+   "sugCard": [
+    20,
+    308,
+    350,
+    281
+   ],
+   "want": [
+    219.2,
+    533.5,
+    95.9,
+    19
+   ],
+   "notnow": [
+    78.0,
+    533.5,
+    60.3,
+    19
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF",
+  "switchBox": [
+   311.0,
+   233.0,
+   39.7,
+   19.7
+  ]
+ },
+ "home_waiting": {
+  "file": "screens/home_waiting.png",
+  "w": 390,
+  "h": 1300,
+  "boxes": {
+   "sugCard": [
+    41,
+    537,
+    308,
+    66
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF"
+ },
+ "home_mutual": {
+  "file": "screens/home_mutual.png",
+  "w": 390,
+  "h": 1300,
+  "boxes": {
+   "mutualCard": [
+    20,
+    308,
+    350,
+    207
+   ],
+   "message": [
+    82.5,
+    459.5,
+    66.1,
+    19
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF"
+ },
+ "chat_maya": {
+  "file": "screens/chat_maya.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "lastMsg": null
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF"
+ },
+ "verify": {
+  "file": "screens/verify.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "qr": null
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "verify_code": {
+  "file": "screens/verify_code.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "tabs": [
+    0,
+    64,
+    390,
+    72
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "checklist": {
+  "file": "screens/checklist.png",
+  "w": 390,
+  "h": 1000,
+  "boxes": {
+   "title": [
+    41,
+    191,
+    308,
+    22
+   ],
+   "yes": [
+    148.1,
+    715.5,
+    93.7,
+    19
+   ],
+   "verified": [
+    90,
+    136,
+    280,
+    20
+   ],
+   "rows": [
+    [
+     41,
+     235,
+     308,
+     48
+    ],
+    [
+     41,
+     305,
+     308,
+     48
+    ],
+    [
+     41,
+     375,
+     308,
+     48
+    ],
+    [
+     41,
+     445,
+     308,
+     48
+    ]
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "checklist_checked": {
+  "file": "screens/checklist_checked.png",
+  "w": 390,
+  "h": 1000,
+  "boxes": {},
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "connected": {
+  "file": "screens/connected.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "draft": [
+    134.2,
+    392.5,
+    121.5,
+    19
+   ],
+   "chatBtn": [
+    138.9,
+    328.5,
+    112.2,
+    19
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "followup": {
+  "file": "screens/followup.png",
+  "w": 390,
+  "h": 1000,
+  "boxes": {
+   "draft": null
+  },
+  "top": "#F8F7F5",
+  "bottom": "#F8F7F5"
+ },
+ "assistant": {
+  "file": "screens/assistant.png",
+  "w": 390,
+  "h": 774,
+  "boxes": {
+   "q": [
+    102.3,
+    288,
+    257.7,
+    22
+   ]
+  },
+  "top": "#F8F7F5",
+  "bottom": "#FFFFFF"
+ },
+ "feed": {
+  "file": "screens/feed.png",
+  "w": 390,
+  "h": 1150,
+  "boxes": {
+   "post": [
+    20,
+    244,
+    350,
+    698
+   ],
+   "hero": [
+    20,
+    88,
+    350,
+    39
+   ]
+  },
+  "top": "#FFFFFF",
+  "bottom": "#FFFFFF",
+  "headerH": 64.0
+ },
+ "graph": {
+  "file": "screens/graph.png",
+  "w": 390,
+  "h": 1400,
+  "boxes": {
+   "sky": [
+    16,
+    652,
+    358,
+    475
+   ],
+   "hero": [
+    16,
+    413,
+    358,
+    35
+   ]
+  },
+  "top": "#FFFFFF",
+  "bottom": "#FFFFFF",
+  "headerH": 64.0
+ },
+ "profile_review": {
+  "file": "screens/profile_review.png",
+  "w": 390,
+  "h": 2300,
+  "boxes": {
+   "skills": [
+    20,
+    1227.5,
+    137.5,
+    21
+   ],
+   "technical": [
+    41,
+    1615,
+    308,
+    15
+   ],
+   "career": [
+    41,
+    2096,
+    308,
+    15
+   ],
+   "sources": [
+    20,
+    2573,
+    69.4,
+    21
+   ]
+  },
+  "top": "#FFFFFF",
+  "bottom": "#FFFFFF",
+  "headerH": 64.0,
+  "rows": [
+   {
+    "y0": 1639.3,
+    "y1": 1764.3,
+    "cy": 1701.8,
+    "checkX": 273.0,
+    "crossX": 327.0
+   },
+   {
+    "y0": 1766.3,
+    "y1": 1871.3,
+    "cy": 1818.8,
+    "checkX": 273.0,
+    "crossX": 327.0
+   },
+   {
+    "y0": 1873.3,
+    "y1": 1978.3,
+    "cy": 1925.8,
+    "checkX": 273.0,
+    "crossX": 327.0
+   },
+   {
+    "y0": 1980.3,
+    "y1": 2087,
+    "cy": 2033.7,
+    "checkX": 273.0,
+    "crossX": 327.0
+   },
+   {
+    "y0": 2120.3,
+    "y1": 2223.3,
+    "cy": 2171.8,
+    "checkX": 273.0,
+    "crossX": 361.8
+   }
+  ]
+ },
+ "graph_network": {
+  "file": "screens/graph_network.png",
+  "w": 390,
+  "h": 1400,
+  "boxes": {
+   "sky": [
+    16,
+    652,
+    358,
+    475
+   ]
+  },
+  "top": "#FFFFFF",
+  "bottom": "#FFFFFF",
+  "headerH": 64.0
+ },
+ "feed2": {
+  "file": "screens/feed2.png",
+  "w": 390,
+  "h": 1150,
+  "boxes": {
+   "post": [
+    20,
+    244,
+    350,
+    698
+   ]
+  },
+  "top": "#FFFFFF",
+  "bottom": "#FFFFFF",
+  "headerH": 64.0
+ }
+}
