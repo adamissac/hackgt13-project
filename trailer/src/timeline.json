@@ -425,7 +425,8 @@
     1980,
     2100
    ],
-   "final": 2100
+   "final": 2100,
+   "breakFlash": 0.5
   },
   "vertical": {
    "bpm": 150,

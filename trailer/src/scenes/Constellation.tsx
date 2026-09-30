@@ -107,7 +107,7 @@ export const Constellation: React.FC<{speed?: number; intro?: 'fade' | 'circle'}
   const ac = portrait ? {x: 540, y: 960} : {x: 960, y: 540};
   const R = portrait ? 380 : 470;
   const k = (R / 129) * 0.75;
-  const introO = intro === 'fade' ? tw(f, 0, 12, 0, 1, inOut) : 1;
+  const introO = intro === 'fade' ? tw(f, 0, 3, 0, 1, inOut) : 1;
   const clipR = intro === 'circle' ? tw(f, 0, 26, 0, Math.hypot(W, H) * 1.05, inCubic) : null;
   const pb = tw(f, 90, 142, 0, 1, inOut);
   const zc = mix(1, 0.3, pb);

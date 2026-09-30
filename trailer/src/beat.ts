@@ -32,7 +32,7 @@ export const punch = (cut: Cut, g: number) => {
 /** Light flash on the biggest hits (all land on dark scenes). */
 export const flash = (cut: Cut, g: number) => {
   const m = MU[cut];
-  let o = hit(g, m.drop, 0.55, 5) + hit(g, m.final, 0.6, 7) + hit(g, m.breakdown[0], 0.18, 6);
+  let o = hit(g, m.drop, 0.55, 5) + hit(g, m.final, 0.6, 7) + hit(g, m.breakdown[0], m.breakFlash ?? 0.18, 6);
   if (m.tech) o += hit(g, m.tech[0], 0.3, 5);
   return Math.min(0.7, o);
 };
