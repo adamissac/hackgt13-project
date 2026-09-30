@@ -18,25 +18,29 @@
     "id": "matches",
     "from": 660,
     "dur": 300,
-    "speed": 1
+    "speed": 1,
+    "zoomIn": true
    },
    {
     "id": "meet",
     "from": 960,
     "dur": 240,
-    "speed": 1
+    "speed": 1,
+    "zoomIn": true
    },
    {
     "id": "proof",
     "from": 1200,
     "dur": 300,
-    "speed": 1
+    "speed": 1,
+    "zoomIn": true
    },
    {
     "id": "montage",
     "from": 1500,
     "dur": 252,
-    "speed": 1
+    "speed": 1,
+    "zoomIn": true
    },
    {
     "id": "constellation",
@@ -59,46 +63,48 @@
   ]
  },
  "vertical": {
-  "duration": 1350,
+  "duration": 1296,
   "scenes": [
    {
     "id": "opening",
     "from": 0,
-    "dur": 316,
-    "speed": 1.2
-   },
-   {
-    "id": "you",
-    "from": 285,
-    "dur": 255,
-    "speed": 1.2353
-   },
-   {
-    "id": "meet",
-    "from": 540,
-    "dur": 195,
-    "speed": 1.2308
-   },
-   {
-    "id": "proof",
-    "from": 735,
-    "dur": 240,
+    "dur": 300,
     "speed": 1.25
    },
    {
-    "id": "constellation",
-    "from": 960,
+    "id": "you",
+    "from": 276,
+    "dur": 252,
+    "speed": 1.25
+   },
+   {
+    "id": "meet",
+    "from": 528,
+    "dur": 192,
+    "speed": 1.25,
+    "zoomIn": true
+   },
+   {
+    "id": "proof",
+    "from": 720,
     "dur": 240,
-    "speed": 1,
+    "speed": 1.25,
+    "zoomIn": true
+   },
+   {
+    "id": "constellation",
+    "from": 948,
+    "dur": 204,
+    "speed": 1.25,
     "props": {
      "intro": "circle"
     }
    },
    {
     "id": "finale",
-    "from": 1200,
-    "dur": 150,
-    "speed": 1,
+    "from": 1152,
+    "dur": 144,
+    "speed": 1.25,
     "props": {
      "techBeat": false
     },
@@ -109,41 +115,16 @@
  "cues": {
   "opening": [
    [
-    126,
+    120,
     "shimmer",
-    1
-   ],
-   [
-    186,
-    "whoosh",
-    0.8
-   ],
-   [
-    238,
-    "rise",
-    1
-   ],
-   [
-    270,
-    "impact",
     1
    ]
   ],
   "you": [
    [
-    2,
-    "whoosh",
-    1
-   ],
-   [
-    66,
+    75,
     "tap",
     1
-   ],
-   [
-    80,
-    "swish",
-    0.6
    ],
    [
     112,
@@ -151,17 +132,17 @@
     1
    ],
    [
-    120,
+    122,
     "chime_soft",
+    0.8
+   ],
+   [
+    180,
+    "tick",
     1
    ],
    [
-    164,
-    "swish",
-    0.6
-   ],
-   [
-    186,
+    187,
     "tick",
     1
    ],
@@ -171,84 +152,69 @@
     1
    ],
    [
-    204,
+    202,
     "tick",
     1
    ],
    [
-    213,
+    210,
     "tick",
     1
    ],
    [
-    222,
-    "tick",
-    1
-   ],
-   [
-    252,
+    255,
     "tap",
     1
-   ],
-   [
-    262,
-    "swish",
-    0.5
    ]
   ],
   "matches": [
    [
-    12,
+    15,
     "tick",
     1
    ],
    [
-    20,
+    22,
     "tick",
     1
    ],
    [
-    28,
+    30,
     "tick",
     1
    ],
    [
-    80,
+    75,
     "tap",
     1
    ],
    [
-    86,
+    127,
     "swish",
     0.6
    ],
    [
-    132,
-    "whoosh",
-    0.8
+    202,
+    "swish",
+    0.6
    ],
    [
-    208,
-    "whoosh",
-    0.8
-   ],
-   [
-    216,
+    210,
     "tick",
     0.8
    ],
    [
-    222,
+    217,
     "tick",
     0.8
    ],
    [
-    228,
+    225,
     "tick",
     0.8
    ],
    [
-    234,
+    232,
     "tick",
     0.8
    ]
@@ -260,14 +226,14 @@
     1
    ],
    [
-    40,
-    "ping_soft",
+    75,
+    "ping",
     1
    ],
    [
-    74,
+    105,
     "ping",
-    1
+    0.8
    ],
    [
     88,
@@ -280,190 +246,140 @@
     1
    ],
    [
-    102,
+    103,
     "pop",
     0.9
    ],
    [
-    108,
-    "ping",
-    0.8
-   ],
-   [
-    109,
+    110,
     "pop",
     0.9
    ],
    [
-    116,
+    118,
     "pop",
     0.9
    ],
    [
-    158,
-    "whoosh",
-    0.8
-   ],
-   [
-    194,
+    195,
     "tap",
     1
    ],
    [
-    200,
+    202,
     "chime",
     1
    ]
   ],
   "proof": [
    [
-    4,
-    "whoosh",
-    0.7
-   ],
-   [
-    12,
+    0,
     "ping_soft",
     0.8
    ],
    [
-    40,
+    30,
     "ping_soft",
     0.8
    ],
    [
-    68,
+    60,
     "ping_soft",
     0.8
    ],
    [
-    96,
+    90,
     "chime",
     1
    ],
    [
-    114,
-    "whoosh",
-    0.7
-   ],
-   [
-    126,
+    120,
     "tick",
     1
    ],
    [
-    160,
-    "whoosh",
-    0.7
-   ],
-   [
-    186,
+    180,
     "tap",
     1
    ],
    [
-    200,
+    195,
     "tap",
     1
    ],
    [
-    214,
+    210,
     "tap",
     1
    ],
    [
-    238,
+    240,
     "tap",
     1
    ],
    [
-    244,
-    "swish",
-    0.6
-   ],
-   [
-    250,
+    255,
     "chime",
     1
    ]
   ],
   "montage": [
    [
-    0,
+    24,
     "swish",
-    1
+    0.7
    ],
    [
-    36,
+    54,
     "swish",
-    1
+    0.7
    ],
    [
-    80,
+    84,
     "swish",
-    1
+    0.7
    ],
    [
-    124,
+    114,
     "swish",
-    1
+    0.7
    ],
    [
-    168,
+    144,
     "swish",
-    1
-   ],
-   [
-    196,
-    "rise_long",
-    1
+    0.7
    ]
   ],
   "constellation": [
    [
-    0,
-    "impact_soft",
-    1
-   ],
-   [
-    100,
-    "whoosh",
-    0.9
-   ],
-   [
-    196,
+    195,
     "pop",
     1
    ],
    [
-    200,
+    197,
     "ping_soft",
-    0.8
-   ],
-   [
-    210,
-    "ping",
     0.8
    ]
   ],
   "finale": [
    [
-    6,
+    0,
     "tick",
     1
    ],
    [
-    12,
+    7,
     "tick",
     1
    ],
    [
-    18,
+    15,
     "tick",
     1
    ],
    [
-    24,
+    22,
     "tick",
     1
    ],
@@ -473,32 +389,59 @@
     1
    ],
    [
-    100,
+    97,
     "whoosh",
-    0.9
-   ],
-   [
-    138,
-    "impact",
-    1
+    0.7
    ]
   ],
   "finale_v": [
    [
-    4,
-    "whoosh",
-    0.8
-   ],
-   [
-    20,
+    0,
     "shimmer",
     0.8
-   ],
-   [
-    38,
-    "impact",
-    1
    ]
   ]
+ },
+ "music": {
+  "main": {
+   "bpm": 120,
+   "drop": 240,
+   "fills": [
+    360,
+    660,
+    960,
+    1200,
+    1500
+   ],
+   "peak": [
+    1500,
+    1740
+   ],
+   "breakdown": [
+    1740,
+    1980
+   ],
+   "tech": [
+    1980,
+    2100
+   ],
+   "final": 2100
+  },
+  "vertical": {
+   "bpm": 150,
+   "drop": 192,
+   "fills": [
+    288,
+    528,
+    720
+   ],
+   "peak": null,
+   "breakdown": [
+    960,
+    1152
+   ],
+   "tech": null,
+   "final": 1152
+  }
  }
 }

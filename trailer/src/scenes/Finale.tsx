@@ -12,24 +12,24 @@ export const Finale: React.FC<{speed?: number; techBeat?: boolean}> = ({speed = 
   const f = useCurrentFrame() * speed;
   const {W, H, portrait} = useLayout();
   const lock = lockup(W, H, portrait);
-  const e0 = techBeat ? 118 : 0;
+  const e0 = techBeat ? 120 : 0;
   const fadeIn = tw(f, 0, 14, 0, 1, inOut);
   let mx = lock.cx, my = lock.cy, ms = lock.size;
   if (techBeat) {
-    const t = tw(f, e0, e0 + 34, 0, 1, inOut);
+    const t = tw(f, e0 - 22, e0, 0, 1, inOut);
     mx = mix(W / 2, lock.cx, t); my = mix(H / 2, lock.cy, t); ms = mix(150, lock.size, t);
   }
-  const draw = techBeat ? tw(f, 2, 34, 0, 1, inOut) : tw(f, 18, 48, 0, 1, inOut);
+  const draw = techBeat ? tw(f, 0, 30, 0, 1, inOut) : tw(f, 6, 34, 0, 1, inOut);
   const settle = Math.min(f, e0 + 90);
   return (
     <AbsoluteFill style={{background: C.sky, opacity: fadeIn, overflow: 'hidden'}}>
       <AbsoluteFill style={{background: `radial-gradient(circle at ${mx}px ${my}px, rgba(82,109,170,0.28) 0px, rgba(82,109,170,0) ${Math.max(W, H) * 0.42}px)`}} />
       <SkyField W={W} H={H} f={settle} n={160} k={2.2} />
       {techBeat && TECH.map((label, i) => {
-        const tin = spr(f, 6 + i * 6, {stiffness: 90, damping: 16});
-        const tout = tw(f, 98, 122, 0, 1, inCubic);
+        const tin = spr(f, i * 7.5, {stiffness: 120, damping: 15});
+        const tout = tw(f, 97, 118, 0, 1, inCubic);
         if (tin <= 0 || tout >= 1) return null;
-        const ang = -Math.PI / 2 + i * ((Math.PI * 2) / 5) + f * 0.005;
+        const ang = -Math.PI / 2 + i * ((Math.PI * 2) / 5) + f * 0.008;
         const rr = (0.6 + 0.4 * tin) * (1 - tout);
         const x = W / 2 + Math.cos(ang) * 560 * rr, y = H / 2 + Math.sin(ang) * 210 * rr;
         const depth = (Math.sin(ang) + 1) / 2;
@@ -46,7 +46,7 @@ export const Finale: React.FC<{speed?: number; techBeat?: boolean}> = ({speed = 
         <MarkStars cx={mx} cy={my} size={ms} f={settle} />
       ) : (
         [0, 1, 2, 3, 4, 5].map((i) => {
-          const g = spr(f, 2 + i * 3, {stiffness: 60, damping: 14});
+          const g = spr(f, i * 2.5, {stiffness: 90, damping: 14});
           const end = markPt(mx, my, ms, i);
           const a = (i / 6) * Math.PI * 2 + 0.4;
           const start = {x: W / 2 + Math.cos(a) * W * 0.55, y: H * 0.4 + Math.sin(a) * H * 0.3};
@@ -60,10 +60,10 @@ export const Finale: React.FC<{speed?: number; techBeat?: boolean}> = ({speed = 
           );
         })
       )}
-      <Wordmark lock={lock} reveal={tw(f, e0 + 20, e0 + 52, 0, 1, outExpo)} />
-      <Caption lines={portrait ? ['Real conversations.', 'Real connections.'] : ['Real conversations. Real connections.']} f={f} at={e0 + 38}
+      <Wordmark lock={lock} reveal={tw(f, e0, e0 + 28, 0, 1, outExpo)} />
+      <Caption lines={portrait ? ['Real conversations.', 'Real connections.'] : ['Real conversations. Real connections.']} f={f} at={e0 + 37}
         size={portrait ? 62 : 50} weight={600} color={C.nightInk} align="center" tracking="-0.02em" style={{left: 0, right: 0, top: lock.subY}} />
-      <Caption lines={['Built at HackGT 13.']} f={f} at={e0 + 54} size={portrait ? 32 : 28} weight={500} color={C.skyLabel} align="center" tracking="0em"
+      <Caption lines={['Built at HackGT 13.']} f={f} at={e0 + 52} size={portrait ? 32 : 28} weight={500} color={C.skyLabel} align="center" tracking="0em"
         style={{left: 0, right: 0, top: H - (portrait ? 200 : 110)}} />
     </AbsoluteFill>
   );

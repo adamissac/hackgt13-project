@@ -47,21 +47,21 @@ const dotPos = (c: Cl, i: number) => {
 };
 
 const CommunityMap: React.FC<{f: number; cl: Cl[]; W: number; H: number; portrait: boolean}> = ({f, cl, W, H, portrait}) => {
-  const grow = mix(0.45, 1, tw(f, 150, 214, 0, 1, inOut));
+  const grow = mix(0.45, 1, tw(f, 150, 210, 0, 1, inOut));
   const [A, B, , Cc] = cl;
   const pC = dotPos(Cc, 2), pA = dotPos(A, 9);
-  const live = tw(f, 178, 196, 0, 1, inOut);
-  const flash = tw(f, 196, 200) * (1 - tw(f, 200, 224));
+  const live = tw(f, 180, 195, 0, 1, inOut);
+  const flash = tw(f, 195, 199) * (1 - tw(f, 199, 222));
   const dx = B.x - A.x, dy = B.y - A.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
   const g0 = {x: A.x + ux * (A.r + 14), y: A.y + uy * (A.r + 14)};
   const g1 = {x: B.x - ux * (B.r + 14), y: B.y - uy * (B.r + 14)};
   const bow = portrait ? -1 : 1;
   const mid = {x: (g0.x + g1.x) / 2 + uy * 80 * bow, y: (g0.y + g1.y) / 2 - ux * 80 * bow};
   const apex = {x: (g0.x + 2 * mid.x + g1.x) / 4, y: (g0.y + 2 * mid.y + g1.y) / 4};
-  const gapT = tw(f, 198, 224, 0, 1, inOut);
-  const pulse = 0.5 + 0.5 * Math.sin((f - 198) * 0.2);
+  const gapT = tw(f, 195, 216, 0, 1, inOut);
+  const pulse = 0.5 + 0.5 * Math.cos(((f - 195) * Math.PI * 2) / 15);
   const tl = portrait ? {x0: 250, x1: 830, y: 1720} : {x0: 1210, x1: 1790, y: 1010};
-  const kpos = tw(f, 150, 214, 0.35, 1, inOut);
+  const kpos = tw(f, 150, 210, 0.35, 1, inOut);
   const kx = mix(tl.x0, tl.x1, kpos);
   return (
     <>
@@ -109,15 +109,15 @@ export const Constellation: React.FC<{speed?: number; intro?: 'fade' | 'circle'}
   const k = (R / 129) * 0.75;
   const introO = intro === 'fade' ? tw(f, 0, 12, 0, 1, inOut) : 1;
   const clipR = intro === 'circle' ? tw(f, 0, 26, 0, Math.hypot(W, H) * 1.05, inCubic) : null;
-  const pb = tw(f, 100, 152, 0, 1, inOut);
+  const pb = tw(f, 90, 142, 0, 1, inOut);
   const zc = mix(1, 0.3, pb);
   const cxA = mix(ac.x, A.x, pb), cyA = mix(ac.y, A.y, pb);
-  const names = 1 - tw(f, 96, 116);
-  const atomO = 1 - tw(f, 134, 158, 0, 1, inOut);
-  const mapO = tw(f, 128, 158, 0, 1, inOut);
+  const names = 1 - tw(f, 86, 104);
+  const atomO = 1 - tw(f, 124, 148, 0, 1, inOut);
+  const mapO = tw(f, 118, 148, 0, 1, inOut);
   const prog = f / (30 * 50);
   const nodes = atom(R, 5, prog);
-  const thick = tw(f, 28, 70, 0, 1, inOut);
+  const thick = tw(f, 30, 75, 0, 1, inOut);
   const pop = (i: number) => (intro === 'circle' ? clamp01(spr(f, 10 + i * 6, {stiffness: 120, damping: 14})) : 1);
   const core = 86 * k;
   return (
@@ -155,7 +155,7 @@ export const Constellation: React.FC<{speed?: number; intro?: 'fade' | 'circle'}
         </div>
       )}
       {mapO > 0 && <div style={{position: 'absolute', inset: 0, opacity: mapO}}><CommunityMap f={f} cl={cl} W={W} H={H} portrait={portrait} /></div>}
-      <Caption lines={['See the connections', 'that should happen.']} f={f} at={166} out={246} size={portrait ? 66 : 64} color={C.nightInk}
+      <Caption lines={['See the connections', 'that should happen.']} f={f} at={165} out={240} size={portrait ? 66 : 64} color={C.nightInk}
         align={portrait ? 'center' : 'left'} style={portrait ? {left: 0, right: 0, top: 170} : {left: 120, top: 830}} />
     </AbsoluteFill>
   );

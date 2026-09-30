@@ -1,3 +1,15 @@
+## 2026-09-29 23:16 | adam | Claude
+**Task:** Trailer update: beat-synced music and a more dynamic edit
+**Status:** done
+**What I did:**
+- New score from `trailer/scripts/music.py`: 120 BPM (exactly 15 frames per beat) with drums, bass, chords, a bell hook, fills into every scene change, a break under the Constellation shot and a final hit on the lockup. The vertical cut plays the same edit at 1.25x with a 150 BPM version, so it stays on the grid too.
+- Re-timed every scene so cuts sit on bar lines and captions, taps, pings and checks land on beats. Added camera punches on the drop, scene changes and final hit, light flashes on the big hits, floating phones, stars that pulse with the kick, and a faster montage (six screens, one every two beats).
+- Re-rendered `trailer/renders/`: 16:9 is 75s, 9:16 is now 43.2s. The sting is unchanged.
+**How to run/test it:** `cd trailer && npm run prepare:assets && npx remotion studio`. Section timings live in the `music` block of `trailer/src/timeline.json`; sound cues are listed in `trailer/AUDIO_CUES.md`.
+**Next step for whoever continues:** Listen through and tune the mix bus at the end of `build()` in `scripts/music.py`, or drop a produced track in as `trailer/public/music.mp3`.
+**Known issues / blockers:** The music is still synthesized, and levels were checked by waveform, not by ear.
+**Contract changes:** none.
+
 ## 2026-09-29 17:59 | adam | Claude
 **Task:** Constellation launch trailer
 **Status:** done

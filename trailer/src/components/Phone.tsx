@@ -3,6 +3,7 @@ import {Img, staticFile} from 'remotion';
 import {M, fixedTop, fixedBottom, Box} from '../screens';
 import {C, FONT} from '../theme';
 import {tw, outCubic} from '../motion';
+import {BeatCtx} from '../beat';
 
 // iPhone-proportioned device, in points. Screens were captured at 390 x 774 content + 50 status + 20 home strip.
 export const PH = {W: 390, H: 844, status: 50, content: 774, home: 20, bezel: 11, bodyR: 66, screenR: 55};
@@ -58,16 +59,21 @@ const StatusBar: React.FC<{s: number; color: string; bg: string}> = ({s, color, 
 
 export const Phone: React.FC<{
   s: number; cx: number; cy: number; layers?: Layer[]; screen?: React.ReactNode;
-  rotY?: number; rotX?: number; opacity?: number; shadow?: number; style?: React.CSSProperties;
-}> = ({s, cx, cy, layers = [], screen, rotY = 0, rotX = 0, opacity = 1, shadow = 1, style}) => {
+  rotY?: number; rotX?: number; opacity?: number; shadow?: number; style?: React.CSSProperties; sway?: number;
+}> = ({s, cx, cy, layers = [], screen, rotY = 0, rotX = 0, opacity = 1, shadow = 1, style, sway = 0}) => {
   const {w, h} = phoneSize(s);
+  // Gentle float so held shots never sit still.
+  const {g} = useContext(BeatCtx);
+  const ry = rotY + sway * 4 * Math.sin(g * 0.021);
+  const rx = rotX + sway * 2.2 * Math.sin(g * 0.017 + 1);
+  const ty = sway * 7 * Math.sin(g * 0.025 + 0.5);
   const topLayer = layers[layers.length - 1];
   const topBg = screen ? C.sky : topLayer ? M[topLayer.id].top : C.paper;
   const botBg = screen ? 'transparent' : topLayer ? M[topLayer.id].bottom : C.paper;
   const ink = screen ? '#FFFFFF' : C.ink;
   return (
     <div style={{position: 'absolute', left: cx - w / 2, top: cy - h / 2, width: w, height: h, opacity,
-      transform: rotY || rotX ? `perspective(${2600 * s}px) rotateY(${rotY}deg) rotateX(${rotX}deg)` : undefined, ...style}}>
+      transform: ry || rx || ty ? `perspective(${2600 * s}px) translateY(${ty}px) rotateY(${ry}deg) rotateX(${rx}deg)` : undefined, ...style}}>
       <div style={{position: 'absolute', inset: 0, borderRadius: PH.bodyR * s,
         background: 'linear-gradient(145deg, #40444C 0%, #1B1D22 36%, #0C0D10 100%)',
         boxShadow: shadow > 0 ? `0 ${42 * s}px ${84 * s}px rgba(15,23,42,${0.24 * shadow}), 0 ${10 * s}px ${24 * s}px rgba(15,23,42,${0.16 * shadow})` : 'none'}} />

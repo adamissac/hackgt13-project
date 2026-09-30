@@ -10,13 +10,13 @@ import {M, bx} from '../screens';
 // Ranked match rows drop into the list, then Maya's row is highlighted and tapped.
 const Cascade: React.FC<{f: number}> = ({f}) => {
   const s = useS();
-  const tT = tw(f, 4, 18, 0, 1, outCubic);
+  const tT = tw(f, 3, 15, 0, 1, outCubic);
   return (
     <>
       {tT < 1 && <div style={{position: 'absolute', left: (20 + 350 * tT) * s, top: 308 * s, width: 350 * (1 - tT) * s + 1, height: 36 * s, background: C.paper}} />}
       {['maya', 'daniel', 'sara'].map((key, i) => {
         const b = bx('home_off', key);
-        const t = spr(f, 12 + i * 8, {stiffness: 130, damping: 19});
+        const t = spr(f, 11 + i * 7.5, {stiffness: 150, damping: 17});
         if (t > 0.998) return null;
         return (
           <React.Fragment key={key}>
@@ -25,8 +25,8 @@ const Cascade: React.FC<{f: number}> = ({f}) => {
           </React.Fragment>
         );
       })}
-      <Glow f={f} at={56} box={[30, 352, 330, 82]} color={C.tint} radius={16} />
-      <Tap f={f} at={80} x={195} y={393} />
+      <Glow f={f} at={52} box={[30, 352, 330, 82]} color={C.tint} radius={16} />
+      <Tap f={f} at={75} x={195} y={393} />
     </>
   );
 };
@@ -38,39 +38,39 @@ export const Matches: React.FC<{speed?: number}> = ({speed = 1}) => {
   const s = 0.98;
   const enter = spr(f, 0, {stiffness: 90, damping: 18});
   const cx = mix(700, 610, enter), cy = 548;
-  const mScroll = keys(f, [[100, 0], [130, 440], [184, 440], [216, 1180]]);
+  const mScroll = keys(f, [[97, 0], [125, 440], [180, 440], [208, 1180]]);
   const shots: Shot[] = [
     {id: 'home_off', at: 0, overlay: <Cascade f={f} />},
-    {id: 'match_maya', at: 86, tr: 'push', scroll: mScroll},
+    {id: 'match_maya', at: 82, tr: 'push', scroll: mScroll},
   ];
   const why = bx('match_maya', 'why');
   const ov = bx('match_maya', 'overlapCard');
-  const aIn = spr(f, 132, {stiffness: 80, damping: 16});
-  const aOut = tw(f, 196, 214, 0, 1, inCubic);
-  const bIn = spr(f, 208, {stiffness: 80, damping: 16});
+  const aIn = spr(f, 128, {stiffness: 110, damping: 15});
+  const aOut = tw(f, 192, 206, 0, 1, inCubic);
+  const bIn = spr(f, 203, {stiffness: 110, damping: 15});
   const bars = (M.match_maya.bars ?? []) as Bar[];
   const shadow = '0 34px 70px rgba(15,23,42,0.16), 0 10px 22px rgba(15,23,42,0.08)';
   const B = 1.9;
   return (
     <AbsoluteFill style={{background: C.paper}}>
-      <Phone s={s} cx={cx} cy={cy} layers={stackAt(f, shots)} />
-      {f >= 128 && aOut < 1 && (
+      <Phone s={s} cx={cx} cy={cy} sway={1} layers={stackAt(f, shots)} />
+      {f >= 124 && aOut < 1 && (
         <div style={{position: 'absolute', left: 1080 - (1 - aIn) * 180, top: 330 - aOut * 50, opacity: clamp01(aIn * 1.4) * (1 - aOut), transform: `scale(${0.9 + 0.1 * aIn})`, transformOrigin: 'left center'}}>
           <Crop id="match_maya" box={why} s={1.4} radius={20} style={{position: 'relative', boxShadow: shadow}} />
         </div>
       )}
-      {f >= 204 && (
+      {f >= 199 && (
         <div style={{position: 'absolute', left: 1080 - (1 - bIn) * 180, top: 400, opacity: clamp01(bIn * 1.4), transform: `scale(${0.9 + 0.1 * bIn})`, transformOrigin: 'left center'}}>
           <Crop id="match_maya" box={ov} s={B} radius={20} style={{position: 'relative', boxShadow: shadow}}>
             {bars.map((b, i) => {
-              const t = tw(f, 214 + i * 6, 240 + i * 6, 0, 1, outCubic);
+              const t = tw(f, 210 + i * 7.5, 230 + i * 7.5, 0, 1, outCubic);
               if (t >= 1) return null;
               return <div key={i} style={{position: 'absolute', left: (b.x0 + (b.x1 - b.x0) * t) * B, top: (b.y0 - 0.6) * B, width: (b.x1 - b.x0) * (1 - t) * B + 1.5, height: (b.y1 - b.y0 + 1.2) * B, background: b.track}} />;
             })}
           </Crop>
         </div>
       )}
-      <Caption lines={['Ranked matches.', 'Every one explained.']} f={f} at={22} out={284} size={74} color={C.ink} style={{left: 1080, top: 150}} />
+      <Caption lines={['Ranked matches.', 'Every one explained.']} f={f} at={8} out={282} size={74} color={C.ink} style={{left: 1080, top: 150}} />
     </AbsoluteFill>
   );
 };

@@ -4,7 +4,7 @@ import cues from '../audio/cues.json';
 
 /** Score bed plus individually timed sound effects. Pass musicFile (e.g. "music.mp3" in public/) to swap the bed. */
 export const AudioLayer: React.FC<{cut: 'main' | 'vertical'; music?: boolean; sfx?: boolean; musicFile?: string | null; musicVolume?: number}> = ({
-  cut, music = true, sfx = true, musicFile, musicVolume = 0.55,
+  cut, music = true, sfx = true, musicFile, musicVolume = 0.85,
 }) => (
   <>
     {music && musicFile ? <Audio src={staticFile(musicFile)} volume={musicVolume} /> : null}

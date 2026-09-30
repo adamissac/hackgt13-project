@@ -1,5 +1,6 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import {C, FONT} from '../theme';
+import {BeatCtx, kickEnv} from '../beat';
 
 // The app's logo mark (components/Brand.tsx), in its 40 x 40 viewBox.
 export const MARK_STARS: [number, number, number][] = [[30, 8, 3], [16, 6, 2.5], [7, 19, 3], [14, 32, 2.5], [30, 29, 3], [20, 20, 2]];
@@ -31,18 +32,22 @@ export const Sphere: React.FC<{size: number; color: string; style?: React.CSSPro
 };
 
 /** Background stars laid out like the app's constellation card. */
-export const SkyField: React.FC<{W: number; H: number; f: number; n?: number; k?: number; opacity?: number; period?: number}> = ({W, H, f, n = 150, k = 2.2, opacity = 1, period}) => (
+export const SkyField: React.FC<{W: number; H: number; f: number; n?: number; k?: number; opacity?: number; period?: number}> = ({W, H, f, n = 150, k = 2.2, opacity = 1, period}) => {
+  const b = useContext(BeatCtx);
+  const kk = kickEnv(b.cut, b.g); // stars flare on the kick while drums play
+  return (
   <svg width={W} height={H} style={{position: 'absolute', left: 0, top: 0, opacity}}>
     {Array.from({length: n}, (_, i) => {
       const x = (((i * 137.508) % 100) / 100) * W;
       const y = (((i * 73.31 + 17) % 100) / 100) * H;
-      const r = (i % 11 === 0 ? 1.3 : 0.55) * k;
+      const r = (i % 11 === 0 ? 1.3 : 0.55) * k * (1 + 0.3 * kk);
       const ph = period ? (f / period) * Math.PI * 2 : f * 0.06;
       const twk = 0.72 + 0.28 * Math.sin(ph + i * 1.7);
-      return <circle key={i} cx={x} cy={y} r={r} fill={i % 3 === 0 ? '#B7C7EF' : '#FFFFFF'} opacity={(0.16 + (i % 5) * 0.1) * twk} />;
+      return <circle key={i} cx={x} cy={y} r={r} fill={i % 3 === 0 ? '#B7C7EF' : '#FFFFFF'} opacity={Math.min(1, (0.16 + (i % 5) * 0.1) * twk * (1 + 0.8 * kk))} />;
     })}
   </svg>
-);
+  );
+};
 
 export const MarkLines: React.FC<{cx: number; cy: number; size: number; draw: number; color: string; opacity?: number; width?: number}> = ({cx, cy, size, draw, color, opacity = 0.75, width = 2.2}) => (
   <svg style={{position: 'absolute', left: cx - size / 2, top: cy - size / 2, overflow: 'visible'}} width={size} height={size} viewBox="0 0 40 40">

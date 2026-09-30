@@ -48,19 +48,19 @@ export const Opening: React.FC<{speed?: number}> = ({speed = 1}) => {
   const net = useMemo(() => buildNet(W, H, mc0), [W, H]);
   const realSet = useMemo(() => new Set(net.real), [net]);
 
-  const dimT = tw(f, 124, 160, 0, 1, inOut);
-  const goneT = tw(f, 178, 214, 0, 1, inOut);
-  const skyT = tw(f, 176, 280, 0, 1, inOut);
+  const dimT = tw(f, 120, 158, 0, 1, inOut);
+  const goneT = tw(f, 172, 206, 0, 1, inOut);
+  const skyT = tw(f, 170, 240, 0, 1, inOut);
   const zoom = 1 + 0.06 * tw(f, 0, 200, 0, 1, inOut);
   const Z = (p: {x: number; y: number}) => ({x: W / 2 + (p.x - W / 2) * zoom, y: H / 2 + (p.y - H / 2) * zoom});
-  const moveT = tw(f, 262, 302, 0, 1, inOut);
+  const moveT = tw(f, 214, 240, 0, 1, inOut);
   const mcx = mix(mc0.x, lock.cx, moveT), mcy = mix(mc0.y, lock.cy, moveT), msz = mix(mc0.size, lock.size, moveT);
   const appear = (i: number) => tw(f, 4 + net.pts[i].rank * 108, 12 + net.pts[i].rank * 108, 0, 1, outCubic);
-  const growT = tw(f, 126, 172, 0, 1, inOut);
-  const drawT = tw(f, 238, 280, 0, 1, inOut);
+  const growT = tw(f, 120, 165, 0, 1, inOut);
+  const drawT = tw(f, 204, 240, 0, 1, inOut);
   const px = portrait ? 1.25 : 1;
   const cap = portrait ? 76 : 86;
-  const textShade = 1 - tw(f, 170, 190);
+  const textShade = 1 - tw(f, 166, 184);
 
   return (
     <AbsoluteFill style={{background: C.night, overflow: 'hidden'}}>
@@ -91,10 +91,10 @@ export const Opening: React.FC<{speed?: number}> = ({speed = 1}) => {
         const start = Z(net.pts[idx]);
         const [sx, sy, sr] = MARK_STARS[i];
         const target = {x: mcx + ((sx - 20) / 40) * msz, y: mcy + ((sy - 20) / 40) * msz};
-        const g = spr(f, 186 + i * 4, {stiffness: 55, damping: 13});
+        const g = spr(f, 180 + i * 3.75, {stiffness: 70, damping: 14});
         const x = mix(start.x, target.x, g), y = mix(start.y, target.y, g);
         const a = appear(idx);
-        const coreR = mix(2.4 * px, (sr / 40) * msz * 0.5, tw(f, 186, 250, 0, 1, inOut));
+        const coreR = mix(2.4 * px, (sr / 40) * msz * 0.5, tw(f, 180, 232, 0, 1, inOut));
         const glow = growT * (msz / 330) * 150 * (1 + 0.06 * Math.sin(f * 0.1 + i));
         return (
           <React.Fragment key={i}>
@@ -103,13 +103,13 @@ export const Opening: React.FC<{speed?: number}> = ({speed = 1}) => {
           </React.Fragment>
         );
       })}
-      <Caption lines={['Networking has a', 'quantity problem.']} f={f} at={10} out={66} size={cap} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - cap * 1.1}} />
-      <Caption lines={['500+ connections.']} f={f} at={74} out={114} size={portrait ? 104 : 128} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - (portrait ? 58 : 70)}} />
-      <Caption lines={['How many have you', 'actually talked to?']} f={f} at={120} out={172} size={cap} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - cap * 1.1}} />
-      <Caption lines={['What if every', 'connection was real?']} f={f} at={192} out={250} size={portrait ? 70 : 72} color={C.nightInk} align="center" style={{left: 0, right: 0, top: portrait ? H * 0.64 : H * 0.72}} />
-      <Wordmark lock={lock} reveal={tw(f, 272, 306, 0, 1, outExpo)} />
+      <Caption lines={['Networking has a', 'quantity problem.']} f={f} at={8} out={67} size={cap} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - cap * 1.1}} />
+      <Caption lines={['500+ connections.']} f={f} at={75} out={112} size={portrait ? 104 : 128} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - (portrait ? 58 : 70)}} />
+      <Caption lines={['How many have you', 'actually talked to?']} f={f} at={120} out={165} size={cap} color={C.nightInk} align="center" style={{left: 0, right: 0, top: H / 2 - cap * 1.1}} />
+      <Caption lines={['What if every', 'connection was real?']} f={f} at={180} out={225} size={portrait ? 70 : 72} color={C.nightInk} align="center" style={{left: 0, right: 0, top: portrait ? H * 0.64 : H * 0.72}} />
+      <Wordmark lock={lock} reveal={tw(f, 240, 268, 0, 1, outExpo)} />
       <Caption lines={portrait ? ['Only connect with people', 'you’ve actually talked to.'] : ['Only connect with people you’ve actually talked to.']}
-        f={f} at={292} size={portrait ? 44 : 40} weight={500} color={C.skyLabel} align="center" tracking="-0.015em" style={{left: 0, right: 0, top: lock.subY}} />
+        f={f} at={262} size={portrait ? 44 : 40} weight={500} color={C.skyLabel} align="center" tracking="-0.015em" style={{left: 0, right: 0, top: lock.subY}} />
     </AbsoluteFill>
   );
 };

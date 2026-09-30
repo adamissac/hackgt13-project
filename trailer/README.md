@@ -5,7 +5,7 @@ Remotion project for the Constellation launch trailer (HackGT 13).
 | Output | Size | Length |
 |---|---|---|
 | `Trailer16x9` | 1920 x 1080, 30fps | 75s (2250 frames) |
-| `Trailer9x16` | 1080 x 1920, 30fps | 45s (1350 frames) |
+| `Trailer9x16` | 1080 x 1920, 30fps | 43.2s (1296 frames) |
 | `Sting` | 1920 x 1080, 30fps | 3s loop (90 frames) |
 
 Rendered copies live in `renders/`.

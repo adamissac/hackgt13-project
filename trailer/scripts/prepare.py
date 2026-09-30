@@ -162,95 +162,25 @@ def write_wav(path, x):
         wf.setnchannels(ch); wf.setsampwidth(2); wf.setframerate(SR); wf.writeframes((data * 32767).astype('<i2').tobytes())
 for k, v in SFX.items(): write_wav(P('public', 'sfx', k + '.wav'), v)
 
-# ---------------------------------------------------------------- score
-def midi(m): return 440 * 2 ** ((m - 69) / 12)
-CHORDS = [[50, 57, 61, 64, 66], [47, 54, 57, 61, 62], [43, 50, 54, 57, 59], [45, 52, 54, 59, 62]]  # Dmaj9, Bm9, Gmaj9, A6sus
-def pad_note(fr, d, att=0.8, rel=1.6):
-    n = int((d + rel) * SR); tt = np.arange(n) / SR; x = np.zeros(n)
-    for dt in (-0.0035, 0.0, 0.0035):
-        for k, amp in enumerate([1, 0.42, 0.2, 0.1, 0.05]):
-            x += amp * np.sin(2 * np.pi * fr * (1 + dt) * (k + 1) * tt + k * 0.7 + dt * 1000)
-    env = np.minimum(1, tt / att) * np.where(tt < d, 1, np.exp(-(tt - d) / (rel / 3)))
-    return x * env / 12
-def reverb(x, dur=2.4, decay=0.55, wet=0.28):
-    r = np.random.default_rng(1); n = int(dur * SR)
-    ir = lp(r.standard_normal(n) * np.exp(-np.arange(n) / SR / decay), 6000); ir /= np.sqrt(np.sum(ir ** 2))
-    N = 1 << (len(x) + n - 1).bit_length()
-    y = np.fft.irfft(np.fft.rfft(x, N) * np.fft.rfft(ir, N), N)[:len(x)]
-    return x * (1 - wet) + y * wet
-def score(total, bloom, pulse_end, final, arp=None, calm=None, tech=None, bpm=116):
-    out = np.zeros(int((total + 4) * SR))
-    def add(sig, t0, g=1.0): place(out, sig * g, int(t0 * SR))
-    d0 = bloom + 1.5; tt = t_(d0)
-    drone = np.sin(2 * np.pi * midi(38) * tt) + 0.6 * np.sin(2 * np.pi * midi(45) * tt) + 0.25 * np.sin(2 * np.pi * midi(50) * 1.002 * tt)
-    drone *= (0.35 + 0.65 * np.clip(tt / bloom, 0, 1) ** 1.5) * (1 - np.clip((tt - bloom) / 1.5, 0, 1))
-    air = lp(noise(d0), 900) * np.clip(tt / bloom, 0, 1) ** 2 * (1 - np.clip((tt - bloom) / 1.0, 0, 1))
-    add(drone * 0.22 + air * 0.03, 0)
-    seg = 2 * 240 / bpm; t, ci = bloom, 0
-    while t < final - 0.5:
-        d = min(seg, final - t)
-        for m in CHORDS[ci % 4]: add(pad_note(midi(m), d), t, 0.9)
-        dd = d + 0.8; ts = t_(dd)
-        add(np.sin(2 * np.pi * midi(CHORDS[ci % 4][0] - 12) * ts) * np.minimum(1, ts / 0.3) * np.where(ts < d, 1, np.exp(-(ts - d) / 0.25)), t, 0.3)
-        t += seg; ci += 1
-    for m in CHORDS[0] + [69, 73, 78]:
-        add(pad_note(midi(m), max(1.0, total - final - 1.2), att=0.05, rel=2.5), final, 1.0 if m < 69 else 0.35)
-    beat = 60 / bpm
-    kd = 0.35; kt = t_(kd)
-    K = np.sin(2 * np.pi * np.cumsum(48 + 70 * np.exp(-kt / 0.03)) / SR) * np.exp(-kt / 0.12) + 0.2 * bp(noise(kd), 1000, 6000) * np.exp(-kt / 0.004)
-    Hh = hp(noise(0.06), 7000) * ed(0.06, 0.012)
-    b, k = bloom, 0
-    while b < pulse_end:
-        quiet = calm and calm[0] <= b < calm[1]
-        if not quiet:
-            if k % 2 == 0: add(K, b, 0.4 if (tech and tech[0] <= b < tech[1]) else 0.55)
-            add(Hh, b + beat / 2, 0.08 if (arp and arp[0] <= b < arp[1]) else 0.05)
-        k += 1; b += beat
-    if arp:
-        seq = [74, 78, 81, 83, 81, 78, 76, 81]; t, i = arp[0], 0
-        while t < arp[1]:
-            fr = midi(seq[i % 8]); x = (sine(fr, 0.35) + 0.3 * sine(2 * fr, 0.35)) * ed(0.35, 0.09)
-            add(fade(x, 0.002, 0.05), t, 0.12); t += beat / 2; i += 1
-    if calm:
-        r = np.random.default_rng(5); t = calm[0]; pent = [86, 90, 93, 95, 88, 98]
-        while t < calm[1]:
-            if r.random() < 0.6: add(0.5 * bell(midi(pent[r.integers(len(pent))]), 1.6, 0.45), t, 0.1)
-            t += beat / 2
-    if tech:
-        add(sfx_rise(tech[1] - tech[0]) * 0.18, tech[0])
-    out = reverb(out)[:int(total * SR)]
-    fl = int(1.5 * SR); out[-fl:] *= np.linspace(1, 0, fl)
-    return norm(out, 0.8)
-def stereo(x): return np.stack([x, 0.72 * x + 0.28 * np.roll(x, int(0.011 * SR))])
-
+# ---------------------------------------------------------------- score (beat-synced, see scripts/music.py)
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import music
 TL = json.load(open(P('src', 'timeline.json')))
-def sc(cut, sid): return next(s for s in TL[cut]['scenes'] if s['id'] == sid)
-def at(cut, sid, local): s = sc(cut, sid); return (s['from'] + local / s['speed']) / FPS
-params = {
-    'main': dict(total=TL['main']['duration'] / FPS, bloom=at('main', 'opening', 270), final=at('main', 'finale', 138), pulse_end=at('main', 'finale', 138),
-                 arp=(sc('main', 'montage')['from'] / FPS, sc('main', 'constellation')['from'] / FPS),
-                 calm=(sc('main', 'constellation')['from'] / FPS, sc('main', 'finale')['from'] / FPS),
-                 tech=(sc('main', 'finale')['from'] / FPS, at('main', 'finale', 138))),
-    'vertical': dict(total=TL['vertical']['duration'] / FPS, bloom=at('vertical', 'opening', 270), final=at('vertical', 'finale', 38),
-                     pulse_end=sc('vertical', 'constellation')['from'] / FPS, arp=None,
-                     calm=(sc('vertical', 'constellation')['from'] / FPS, sc('vertical', 'finale')['from'] / FPS), tech=None),
-}
 cues_out = {}
 for cut, name in (('main', 'score-16x9'), ('vertical', 'score-9x16')):
-    pr = params[cut]; print(cut, {k: (round(v, 2) if isinstance(v, float) else v) for k, v in pr.items()})
-    bed = score(**pr)
-    write_wav(P('public', 'audio', name + '.wav'), stereo(bed))
+    bed = music.build(TL['music'][cut], TL[cut]['duration'])
+    write_wav(P('public', 'audio', name + '.wav'), bed)
     cues = []
-    for s in TL[cut]['scenes']:
-        for lf, nm, g in TL['cues'][s.get('cueKey', s['id'])]:
-            fr = int(round(s['from'] + lf / s['speed']))
-            if fr < min(s['from'] + s['dur'], TL[cut]['duration']): cues.append([fr, nm, round(LEVEL[nm] * g, 3)])
+    for sc in TL[cut]['scenes']:
+        for lf, nm, g in TL['cues'][sc.get('cueKey', sc['id'])]:
+            fr = int(round(sc['from'] + lf / sc['speed']))
+            if fr < min(sc['from'] + sc['dur'], TL[cut]['duration']): cues.append([fr, nm, round(LEVEL[nm] * g * 0.8, 3)])
     cues.sort(); cues_out[cut] = cues
-    mixbuf = stereo(bed) * 0.55
+    mixbuf = bed * 0.9
     for fr, nm, g in cues:
-        i = int(fr / FPS * SR); src = SFX[nm] * g; j = min(mixbuf.shape[1], i + len(src))
-        mixbuf[:, i:j] += src[:j - i]
-    mixbuf = np.tanh(mixbuf * 1.1) / np.tanh(1.1)
-    write_wav(P('out', f'mix-{name.split("-")[1]}.wav'), norm(mixbuf, 0.89))
+        i = int(fr / FPS * SR); src = SFX[nm] * g; j = min(mixbuf.shape[1], i + len(src)); mixbuf[:, i:j] += src[:j - i]
+    mixbuf = np.tanh(mixbuf * 1.15) / np.tanh(1.15)
+    write_wav(P('out', f'mix-{name.split("-")[1]}.wav'), norm(mixbuf, 0.9))
+    print(cut, 'score', bed.shape, 'cues', len(cues))
 json.dump(cues_out, open(P('src', 'audio', 'cues.json'), 'w'))
-print('cues', {k: len(v) for k, v in cues_out.items()})

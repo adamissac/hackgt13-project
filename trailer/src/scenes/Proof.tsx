@@ -31,8 +31,8 @@ const Waves: React.FC<{f: number; x1: number; x2: number; y: number; opacity: nu
   const arcs: React.ReactNode[] = [];
   for (const side of [0, 1]) {
     for (let k = 0; k < 4; k++) {
-      if (f < 4 + k * 9) continue;
-      const t = ((((f - 4 - k * 9) % 36) + 36) % 36) / 36;
+      if (f < k * 7.5) continue;
+      const t = ((((f - k * 7.5) % 30) + 30) % 30) / 30;
       const r = 18 + t * gap * 0.55;
       const ox = side === 0 ? x1 : x2;
       const dir = side === 0 ? 1 : -1;
@@ -47,7 +47,7 @@ const Waves: React.FC<{f: number; x1: number; x2: number; y: number; opacity: nu
 
 const Signal: React.FC<{f: number; x: number; y: number; w: number; h: number; opacity: number; W: number; H: number}> = ({f, x, y, w, h, opacity, W, H}) => {
   const N = 90;
-  const prog = tw(f, 14, 96, 0, 1, inOut);
+  const prog = tw(f, 12, 86, 0, 1, inOut);
   const v = (i: number) => {
     const t = i / (N - 1);
     const base = t < 0.32 ? mix(0.16, 0.74, (t / 0.32) ** 1.3) : 0.76;
@@ -85,15 +85,15 @@ const Checks: React.FC<{f: number; rows: Box[]; yes: [number, number]}> = ({f, r
   return (
     <>
       {rows.slice(0, 3).map((b, i) => {
-        const t = tw(f, 188 + i * 14, 194 + i * 14, 0, 1, outCubic);
+        const t = tw(f, 182 + i * 15, 188 + i * 15, 0, 1, outCubic);
         return (
           <React.Fragment key={i}>
             {t > 0 && <Crop id="checklist_checked" box={b} s={s} radius={12} style={{left: b[0] * s, top: b[1] * s, opacity: t, transform: `scale(${0.96 + 0.04 * t})`}} />}
-            <Tap f={f} at={186 + i * 14} x={b[0] + b[2] * 0.35} y={b[1] + b[3] / 2} />
+            <Tap f={f} at={180 + i * 15} x={b[0] + b[2] * 0.35} y={b[1] + b[3] / 2} />
           </React.Fragment>
         );
       })}
-      <Tap f={f} at={238} x={yes[0]} y={yes[1]} />
+      <Tap f={f} at={240} x={yes[0]} y={yes[1]} />
     </>
   );
 };
@@ -106,15 +106,15 @@ export const Proof: React.FC<{speed?: number}> = ({speed = 1}) => {
   const lx = portrait ? 290 : 620, rx = portrait ? 790 : 1300;
   const pw = phoneSize(ps).w;
   const inL = spr(f, 0, {stiffness: 80, damping: 17});
-  const out1 = tw(f, 106, 124, 0, 1, inCubic);
-  const verified = spr(f, 96, {stiffness: 170, damping: 14});
-  const in2 = spr(f, 114, {stiffness: 90, damping: 18});
-  const out2 = tw(f, 156, 170, 0, 1, inCubic);
+  const out1 = tw(f, 105, 120, 0, 1, inCubic);
+  const verified = spr(f, 88, {stiffness: 190, damping: 13});
+  const in2 = spr(f, 107, {stiffness: 120, damping: 17});
+  const out2 = tw(f, 150, 163, 0, 1, inCubic);
   const s2 = portrait ? 1.25 : 0.98;
   const c2 = {x: W / 2, y: portrait ? 1000 : 548};
   const tb = bx('verify_code', 'tabs');
   const tabs: Box = tb[2] ? [tb[0] + 10, tb[1] + 2, tb[2] - 20, tb[3] - 4] : [12, 44, 366, 50];
-  const in3 = spr(f, 160, {stiffness: 85, damping: 17});
+  const in3 = spr(f, 150, {stiffness: 115, damping: 16});
   const s3 = portrait ? 1.3 : 0.98;
   const c3 = portrait ? {x: 540, y: 1200} : {x: 1330, y: 548};
   const rows = (M.checklist.boxes.rows ?? []) as Box[];
@@ -122,7 +122,7 @@ export const Proof: React.FC<{speed?: number}> = ({speed = 1}) => {
   const yes: [number, number] = yesB[2] ? ctr(yesB) : [195, 725];
   const shots: Shot[] = [
     {id: 'checklist', at: 0, overlay: <Checks f={f} rows={rows} yes={yes} />},
-    {id: 'connected', at: 244, tr: 'push'},
+    {id: 'connected', at: 247, tr: 'push'},
   ];
   return (
     <AbsoluteFill style={{background: C.paper, overflow: 'hidden'}}>
@@ -130,22 +130,22 @@ export const Proof: React.FC<{speed?: number}> = ({speed = 1}) => {
         <>
           <Phone s={ps} cx={lx - (1 - inL) * 520 - out1 * 700} cy={py} rotY={18} screen={<LockScreen f={f} />} />
           <Phone s={ps} cx={rx + (1 - inL) * 520 + out1 * 700} cy={py} rotY={-18} screen={<LockScreen f={f + 17} />} />
-          <Waves f={f} x1={lx + pw * 0.46} x2={rx - pw * 0.46} y={py} opacity={(1 - out1) * tw(f, 8, 18) * (1 - 0.6 * tw(f, 96, 110))} W={W} H={H} />
+          <Waves f={f} x1={lx + pw * 0.46} x2={rx - pw * 0.46} y={py} opacity={(1 - out1) * tw(f, 6, 16) * (1 - 0.6 * tw(f, 90, 104))} W={W} H={H} />
           <Signal f={f} x={W / 2} y={portrait ? 1330 : 915} w={portrait ? 820 : 720} h={portrait ? 200 : 150} opacity={(1 - out1) * tw(f, 10, 22)} W={W} H={H} />
-          {f >= 94 && <Chip x={W / 2} y={py} t={verified} opacity={1 - out1} />}
+          {f >= 87 && <Chip x={W / 2} y={py} t={verified} opacity={1 - out1} />}
         </>
       )}
-      {f >= 110 && f < 172 && (
+      {f >= 104 && f < 166 && (
         <div style={{position: 'absolute', inset: 0, opacity: clamp01(in2 * 1.4) * (1 - out2), transform: `translate(${-out2 * 300}px, ${(1 - in2) * 120}px)`}}>
-          <Phone s={s2} cx={c2.x} cy={c2.y} layers={[{id: 'verify_code', overlay: <Glow f={f} at={126} box={tabs} color={C.tint} radius={12} />}]} />
+          <Phone s={s2} cx={c2.x} cy={c2.y} layers={[{id: 'verify_code', overlay: <Glow f={f} at={120} box={tabs} color={C.tint} radius={12} />}]} />
         </div>
       )}
-      {f >= 156 && (
+      {f >= 148 && (
         <div style={{position: 'absolute', inset: 0, opacity: clamp01(in3 * 1.5), transform: `translateX(${(1 - in3) * 260}px)`}}>
-          <Phone s={s3} cx={c3.x} cy={c3.y} layers={stackAt(f, shots)} />
+          <Phone s={s3} cx={c3.x} cy={c3.y} sway={1} layers={stackAt(f, shots)} />
         </div>
       )}
-      <Caption lines={['Verified in person.', 'Mutual. Private.']} f={f} at={170} out={288} size={portrait ? 70 : 76} color={C.ink}
+      <Caption lines={['Verified in person.', 'Mutual. Private.']} f={f} at={165} out={285} size={portrait ? 70 : 76} color={C.ink}
         align={portrait ? 'center' : 'left'} style={portrait ? {left: 0, right: 0, top: 190} : {left: 150, top: 400}} />
     </AbsoluteFill>
   );
